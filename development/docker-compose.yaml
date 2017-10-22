@@ -1,0 +1,30 @@
+version: "3"
+
+services:
+  portainer:
+    container_name: portainer
+    image: portainer/portainer
+    volumes:
+      - ./portainer:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "127.0.0.1:9000:9000"
+    restart: always
+  mysql:
+    container_name: mysql
+    image: mysql
+    volumes:
+      - ./mysql:/var/lib/mysql
+    ports:
+      - "127.0.0.1:3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=111111
+    restart: always
+  mongo:
+    container_name: mongo
+    image: mongo
+    volumes:
+      - ./mongo:/data/db
+    ports:
+      - "127.0.0.1:27017:27017"
+    restart: always
