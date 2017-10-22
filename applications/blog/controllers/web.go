@@ -27,13 +27,14 @@
  *     Initial: 2017/10/22        Feng Yifei
  */
 
-package main
+package controllers
 
-import (
-	"github.com/astaxie/beego"
-	_ "github.com/fengyfei/gu/applications/blog/routers"
-)
+// Web - Blog main controller.
+type Web struct {
+	baseController
+}
 
-func main() {
-	beego.Run()
+// Home page handler.
+func (c *Web) Home() {
+	c.TplName = "home.html"
 }

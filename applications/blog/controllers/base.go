@@ -27,13 +27,12 @@
  *     Initial: 2017/10/22        Feng Yifei
  */
 
-package main
+package controllers
 
 import (
 	"github.com/astaxie/beego"
-	_ "github.com/fengyfei/gu/applications/blog/routers"
 )
 
-func main() {
-	beego.Run()
+type baseController struct {
+	beego.Controller
 }
