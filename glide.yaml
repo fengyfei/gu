@@ -4,6 +4,8 @@ import:
   version: v1.9.0
 - package: github.com/go-mgo/mgo
 - package: github.com/fengyfei/nuts
+- package: go.uber.org/zap
+  version: ^1.7.1
 testImport:
 - package: github.com/smartystreets/goconvey
   version: 1.6.3
