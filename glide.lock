@@ -1,16 +1,19 @@
-hash: 33da1f3fdb177f72a363904a1092c7b3f1e397b1c3b01ec92867238a02aeb1b3
-updated: 2017-10-24T10:04:11.470266+08:00
+hash: 2a34b45542844ad6c4af161c3dd90589a0f5ca960e0c5de63feac5f6da3078ee
+updated: 2017-10-24T10:17:15.572192+08:00
 imports:
 - name: github.com/astaxie/beego
   version: d96289a81bf67728cff7a19b067aaecc65a62ec6
   subpackages:
   - config
   - context
+  - context/param
   - grace
   - logs
   - session
   - toolbox
   - utils
+- name: github.com/fengyfei/nuts
+  version: 860b9728d7f73b2064e10fe63a458bc910edbdbe
 - name: github.com/go-mgo/mgo
   version: ac340de385459c6fec994606fb457b6ffe69d55f
 testImports:

@@ -3,6 +3,7 @@ import:
 - package: github.com/astaxie/beego
   version: v1.9.0
 - package: github.com/go-mgo/mgo
+- package: github.com/fengyfei/nuts
 testImport:
 - package: github.com/smartystreets/goconvey
   version: 1.6.3
