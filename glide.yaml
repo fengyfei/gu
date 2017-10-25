@@ -2,7 +2,6 @@ package: github.com/fengyfei/gu
 import:
 - package: github.com/astaxie/beego
   version: v1.9.0
-- package: github.com/go-mgo/mgo
 - package: github.com/fengyfei/nuts
 - package: go.uber.org/zap
   version: ^1.7.1
