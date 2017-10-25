@@ -1,5 +1,5 @@
-hash: a636f6546b62b949745b89adaf0028dd23431ffe319afbaafbae5f08c0200af9
-updated: 2017-10-24T10:48:35.539758+08:00
+hash: f77b3170f856c1d9f10d191c3b8084da561ef3df31cea55c979f930e329b8f11
+updated: 2017-10-25T10:57:42.423143+08:00
 imports:
 - name: github.com/astaxie/beego
   version: d96289a81bf67728cff7a19b067aaecc65a62ec6
@@ -18,8 +18,20 @@ imports:
   - mgo/copy
 - name: github.com/go-mgo/mgo
   version: ac340de385459c6fec994606fb457b6ffe69d55f
+  subpackages:
+  - bson
+- name: go.uber.org/atomic
+  version: 4e336646b2ef9fc6e47be8e21594178f98e5ebcf
+- name: go.uber.org/multierr
+  version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
 - name: go.uber.org/zap
   version: 35aad584952c3e7020db7b839f6b102de6271f89
+  subpackages:
+  - buffer
+  - internal/bufferpool
+  - internal/color
+  - internal/exit
+  - zapcore
 - name: gopkg.in/mgo.v2
   version: 3f83fa5005286a7fe593b055f0d7771a7dce4655
   subpackages:
