@@ -35,5 +35,5 @@ import (
 
 // InitMongoCollections initializing MongoDB collections.
 func InitMongoCollections() {
-	article.PrepareArticle()
+	article.Prepare()
 }

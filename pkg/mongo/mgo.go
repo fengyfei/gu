@@ -36,21 +36,19 @@ import (
 	"github.com/fengyfei/gu/pkg/log"
 )
 
-const (
-	MDBlogName = "blog"
-)
-
+// Session represents a communication session with the database.
 type Session struct {
 	CollInfo *copy.CollectionInfo
 }
 
+// InitMDSess establishes a new session to the cluster.
 func InitMDSess(url, db, coll string, index *mgo.Index) *Session {
 	s, err := mgo.Dial(url)
 	if err != nil {
 		panic(err)
 	}
 
-	log.Logger.Debug("The MongoDB of %s server connected.", MDBlogName)
+	log.Logger.Debug("The MongoDB of %s server connected.", db)
 
 	s.SetMode(mgo.Monotonic, true)
 

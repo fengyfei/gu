@@ -41,15 +41,16 @@ import (
 	"github.com/fengyfei/gu/pkg/mongo"
 )
 
-type ArticleServiceProvider struct{}
+type serviceProvider struct{}
 
 var (
-	ArticleService *ArticleServiceProvider
-	mdSess         *mongo.Session
+	// Service expose serviceProvider
+	Service *serviceProvider
+	mdSess *mongo.Session
 )
 
-// PrepareArticle initializing database and create index.
-func PrepareArticle() {
+// Prepare initializing database and create index.
+func Prepare() {
 	url := beego.AppConfig.String("mongo::url") + "/" + common.MDBlogDName
 
 	titleIndex := &mgo.Index{
@@ -60,7 +61,7 @@ func PrepareArticle() {
 	}
 
 	mdSess = mongo.InitMDSess(url, common.MDBlogDName, common.MDArticleColl, titleIndex)
-	ArticleService = &ArticleServiceProvider{}
+	Service = &serviceProvider{}
 }
 
 // MDArticle represents the article information.
@@ -96,7 +97,7 @@ type MDModifyArticle struct {
 }
 
 // GetList get all the articles.
-func (asp *ArticleServiceProvider) GetList() ([]MDArticle, error) {
+func (sp *serviceProvider) GetList() ([]MDArticle, error) {
 	var (
 		articles []MDArticle
 		err      error
@@ -108,7 +109,7 @@ func (asp *ArticleServiceProvider) GetList() ([]MDArticle, error) {
 }
 
 // GetByID get article based on article id.
-func (asp *ArticleServiceProvider) GetByID(id string) (MDArticle, error) {
+func (sp *serviceProvider) GetByID(id string) (MDArticle, error) {
 	var (
 		article MDArticle
 		err     error
@@ -122,7 +123,7 @@ func (asp *ArticleServiceProvider) GetByID(id string) (MDArticle, error) {
 }
 
 // Create create article.
-func (asp *ArticleServiceProvider) Create(article *MDCreateArticle) error {
+func (sp *serviceProvider) Create(article *MDCreateArticle) error {
 	articleInfo := MDArticle{
 		ArticleID: bson.NewObjectId(),
 		Author:    article.Author,
@@ -136,7 +137,7 @@ func (asp *ArticleServiceProvider) Create(article *MDCreateArticle) error {
 }
 
 // Modify modify article information.
-func (asp *ArticleServiceProvider) Modify(update *MDModifyArticle) error {
+func (sp *serviceProvider) Modify(update *MDModifyArticle) error {
 	selector := bson.M{"_id": bson.ObjectIdHex(update.ArticleID)}
 	updater := bson.M{"$set": bson.M{
 		"Title":    update.Title,
