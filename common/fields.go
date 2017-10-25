@@ -35,4 +35,5 @@ const (
 
 	// MongoDB collection name
 	MDArticleColl = "article"
+	MDTagColl     = "tag"
 )
