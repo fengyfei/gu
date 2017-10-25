@@ -27,7 +27,7 @@
  *     Initial: 2017/10/24        Jia Chenhui
  */
 
-package initialize
+package main
 
 import (
 	"github.com/fengyfei/gu/models/blog/article"

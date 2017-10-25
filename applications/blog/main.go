@@ -32,12 +32,10 @@ package main
 import (
 	"github.com/astaxie/beego"
 	_ "github.com/fengyfei/gu/applications/blog/routers"
-
-	"github.com/fengyfei/gu/initialize"
 )
 
 func initBeforeRun() {
-	initialize.InitMongoCollections()
+	InitMongoCollections()
 }
 
 func main() {
