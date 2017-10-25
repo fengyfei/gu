@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd..
+ * Copyright (c) 2017 SmartestEE Co., Ltd.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,23 +24,16 @@
 
 /*
  * Revision History:
- *     Initial: 2017/10/22        Feng Yifei
+ *     Initial: 2017/10/24        Jia Chenhui
  */
 
-package main
+package initialize
 
 import (
-	"github.com/astaxie/beego"
-	_ "github.com/fengyfei/gu/applications/blog/routers"
-
-	"github.com/fengyfei/gu/initialize"
+	"github.com/fengyfei/gu/models/blog/article"
 )
 
-func initBeforeRun() {
-	initialize.InitMongoCollections()
-}
-
-func main() {
-	initBeforeRun()
-	beego.Run()
+// InitMongoCollections initializing MongoDB collections.
+func InitMongoCollections() {
+	article.PrepareArticle()
 }

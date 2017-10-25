@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd..
+ * Copyright (c) 2017 SmartestEE Co., Ltd.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,23 +24,44 @@
 
 /*
  * Revision History:
- *     Initial: 2017/10/22        Feng Yifei
+ *     Initial: 2017/10/24        Jia Chenhui
  */
 
-package main
+package mongo
 
 import (
-	"github.com/astaxie/beego"
-	_ "github.com/fengyfei/gu/applications/blog/routers"
+	"github.com/fengyfei/nuts/mgo/copy"
+	"gopkg.in/mgo.v2"
 
-	"github.com/fengyfei/gu/initialize"
+	"github.com/fengyfei/gu/pkg/log"
 )
 
-func initBeforeRun() {
-	initialize.InitMongoCollections()
+const (
+	MDBlogName = "blog"
+)
+
+type Session struct {
+	CollInfo *copy.CollectionInfo
 }
 
-func main() {
-	initBeforeRun()
-	beego.Run()
+func InitMDSess(url, db, coll string, index *mgo.Index) *Session {
+	s, err := mgo.Dial(url)
+	if err != nil {
+		panic(err)
+	}
+
+	log.Logger.Debug("The MongoDB of %s server connected.", MDBlogName)
+
+	s.SetMode(mgo.Monotonic, true)
+
+	collInfo := &copy.CollectionInfo{
+		Session:    s,
+		Database:   db,
+		Collection: coll,
+		Index:      index,
+	}
+
+	return &Session{
+		CollInfo: collInfo,
+	}
 }
