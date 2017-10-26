@@ -170,69 +170,16 @@ func (sp *serviceProvider) Modify(update *MDModifyArticle) error {
 
 // AddTags add tags to specified article.
 func (sp *serviceProvider) AddTags(articleID string, tags []string) error {
-	var (
-		article MDArticle
-		tagList []string
-		err     error
-	)
-
 	selector := bson.M{"_id": bson.ObjectIdHex(articleID)}
-	err = copy.GetByID(mdSess.CollInfo, selector, &article)
-	if err != nil {
-		return err
-	}
-
-	tagList = article.Tag
-	tagList = append(tagList, tags...)
-	updater := bson.M{"$set": bson.M{
-		"Tag": tagList,
-	}}
+	updater := bson.M{"$pushAll": bson.M{"Tag": tags}}
 
 	return copy.Update(mdSess.CollInfo, selector, updater)
 }
 
 // RemoveTags remove tags from specified article.
 func (sp *serviceProvider) RemoveTags(articleID string, tags []string) error {
-	var (
-		article MDArticle
-		tagList []string
-		err     error
-	)
-
 	selector := bson.M{"_id": bson.ObjectIdHex(articleID)}
-	err = copy.GetByID(mdSess.CollInfo, selector, &article)
-	if err != nil {
-		return err
-	}
-
-	tagList = article.Tag
-
-	for _, tag := range tags {
-		index := find(tagList, tag)
-		if index != -1 {
-			tagList = remove(tagList, index)
-		}
-	}
-
-	updater := bson.M{"$set": bson.M{
-		"Tag": tagList,
-	}}
+	updater := bson.M{"$pullAll": bson.M{"Tag": tags}}
 
 	return copy.Update(mdSess.CollInfo, selector, updater)
-}
-
-// find returns the index of a tag containing the given tag.
-func find(tags []string, tag string) int {
-	for i, t := range tags {
-		if t == tag {
-			return i
-		}
-	}
-
-	return -1
-}
-
-// remove removes the given tag from tags.
-func remove(tags []string, index int) []string {
-	return append(tags[:index], tags[index+1:]...)
 }
