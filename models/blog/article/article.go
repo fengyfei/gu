@@ -46,7 +46,7 @@ type serviceProvider struct{}
 var (
 	// Service expose serviceProvider
 	Service *serviceProvider
-	mdSess *mongo.Session
+	mdSess  *mongo.Session
 )
 
 // Prepare initializing database and create index.
@@ -86,14 +86,19 @@ type MDCreateArticle struct {
 	Tag      []string
 }
 
-// MDModifyArticle use to modify article information.
+// MDModifyArticle use to modify the information of the specified article.
 type MDModifyArticle struct {
 	ArticleID string
 	Title     string
 	Content   string
 	Abstract  string
-	Tag       []string
 	Active    bool
+}
+
+// ModifyTag use to modify the tags of the specified article.
+type MDModifyTag struct {
+	ArticleID string
+	Tag       []string
 }
 
 // GetList get all the articles.
@@ -108,6 +113,19 @@ func (sp *serviceProvider) GetList() ([]MDArticle, error) {
 	return articles, err
 }
 
+// GetActiveList get all the active articles.
+func (sp *serviceProvider) GetActiveList() ([]MDArticle, error) {
+	var (
+		articles []MDArticle
+		err      error
+	)
+
+	selector := bson.M{"Active": true}
+	err = copy.GetMany(mdSess.CollInfo, selector, &articles)
+
+	return articles, err
+}
+
 // GetByID get article based on article id.
 func (sp *serviceProvider) GetByID(id string) (MDArticle, error) {
 	var (
@@ -115,9 +133,8 @@ func (sp *serviceProvider) GetByID(id string) (MDArticle, error) {
 		err     error
 	)
 
-	bsonID := bson.M{"_id": bson.ObjectIdHex(id)}
-
-	err = copy.GetByID(mdSess.CollInfo, bsonID, &article)
+	selector := bson.M{"_id": bson.ObjectIdHex(id)}
+	err = copy.GetByID(mdSess.CollInfo, selector, &article)
 
 	return article, err
 }
@@ -129,6 +146,8 @@ func (sp *serviceProvider) Create(article *MDCreateArticle) error {
 		Author:    article.Author,
 		Title:     article.Title,
 		Content:   article.Content,
+		Abstract:  article.Abstract,
+		Tag:       article.Tag,
 		CreatedAt: time.Now(),
 		Active:    true,
 	}
@@ -143,9 +162,77 @@ func (sp *serviceProvider) Modify(update *MDModifyArticle) error {
 		"Title":    update.Title,
 		"Content":  update.Content,
 		"Abstract": update.Abstract,
-		"Tag":      update.Tag,
 		"Active":   update.Active,
 	}}
 
 	return copy.Update(mdSess.CollInfo, selector, updater)
+}
+
+// AddTags add tags to specified article.
+func (sp *serviceProvider) AddTags(articleID string, tags []string) error {
+	var (
+		article MDArticle
+		tagList []string
+		err     error
+	)
+
+	selector := bson.M{"_id": bson.ObjectIdHex(articleID)}
+	err = copy.GetByID(mdSess.CollInfo, selector, &article)
+	if err != nil {
+		return err
+	}
+
+	tagList = article.Tag
+	tagList = append(tagList, tags...)
+	updater := bson.M{"$set": bson.M{
+		"Tag": tagList,
+	}}
+
+	return copy.Update(mdSess.CollInfo, selector, updater)
+}
+
+// RemoveTags remove tags from specified article.
+func (sp *serviceProvider) RemoveTags(articleID string, tags []string) error {
+	var (
+		article MDArticle
+		tagList []string
+		err     error
+	)
+
+	selector := bson.M{"_id": bson.ObjectIdHex(articleID)}
+	err = copy.GetByID(mdSess.CollInfo, selector, &article)
+	if err != nil {
+		return err
+	}
+
+	tagList = article.Tag
+
+	for _, tag := range tags {
+		index := find(tagList, tag)
+		if index != -1 {
+			tagList = remove(tagList, index)
+		}
+	}
+
+	updater := bson.M{"$set": bson.M{
+		"Tag": tagList,
+	}}
+
+	return copy.Update(mdSess.CollInfo, selector, updater)
+}
+
+// find returns the index of a tag containing the given tag.
+func find(tags []string, tag string) int {
+	for i, t := range tags {
+		if t == tag {
+			return i
+		}
+	}
+
+	return -1
+}
+
+// remove removes the given tag from tags.
+func remove(tags []string, index int) []string {
+	return append(tags[:index], tags[index+1:]...)
 }
