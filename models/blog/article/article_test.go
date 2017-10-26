@@ -92,9 +92,21 @@ func TestCreateModify(t *testing.T) {
 		Title:     "stop",
 		Content:   "stop stop",
 		Abstract:  "stop",
+		Active:    false,
 	}
 
 	err = article.Service.Modify(&stop)
+	checkError("Modify", err)
+
+	newStop := article.MDModifyArticle{
+		ArticleID: id,
+		Title:     "stop",
+		Content:   "stop stop",
+		Abstract:  "stop",
+		Active:    true,
+	}
+
+	err = article.Service.Modify(&newStop)
 	checkError("Modify", err)
 
 	a, err := article.Service.GetByID(id)
@@ -173,5 +185,5 @@ func checkGetByIDResp(resp article.MDArticle) bool {
 }
 
 func checkModifyResp(resp article.MDArticle) bool {
-	return resp.Title == "stop" && resp.Content == "stop stop" && resp.Abstract == "stop" && resp.Active == false
+	return resp.Title == "stop" && resp.Content == "stop stop" && resp.Abstract == "stop"
 }
