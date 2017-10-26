@@ -139,6 +139,19 @@ func (sp *serviceProvider) GetByID(id string) (MDArticle, error) {
 	return article, err
 }
 
+// GetByTags get articles based on tag id.
+func (sp *serviceProvider) GetByTags(tags []string) ([]MDArticle, error) {
+	var (
+		articles []MDArticle
+		err      error
+	)
+
+	selector := bson.M{"Tag": bson.M{"$all": tags}}
+	err = copy.GetMany(mdSess.CollInfo, selector, &articles)
+
+	return articles, err
+}
+
 // Create create article.
 func (sp *serviceProvider) Create(article *MDCreateArticle) error {
 	articleInfo := MDArticle{
@@ -159,10 +172,11 @@ func (sp *serviceProvider) Create(article *MDCreateArticle) error {
 func (sp *serviceProvider) Modify(update *MDModifyArticle) error {
 	selector := bson.M{"_id": bson.ObjectIdHex(update.ArticleID)}
 	updater := bson.M{"$set": bson.M{
-		"Title":    update.Title,
-		"Content":  update.Content,
-		"Abstract": update.Abstract,
-		"Active":   update.Active,
+		"Title":     update.Title,
+		"Content":   update.Content,
+		"Abstract":  update.Abstract,
+		"Active":    update.Active,
+		"UpdatedAt": time.Now(),
 	}}
 
 	return copy.Update(mdSess.CollInfo, selector, updater)
