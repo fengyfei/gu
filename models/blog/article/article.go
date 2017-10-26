@@ -133,8 +133,8 @@ func (sp *serviceProvider) GetByID(id string) (MDArticle, error) {
 		err     error
 	)
 
-	selector := bson.M{"_id": bson.ObjectIdHex(id)}
-	err = copy.GetByID(mdSess.CollInfo, selector, &article)
+	objID := bson.ObjectIdHex(id)
+	err = copy.GetByID(mdSess.CollInfo, objID, &article)
 
 	return article, err
 }
@@ -153,7 +153,7 @@ func (sp *serviceProvider) GetByTags(tags []string) ([]MDArticle, error) {
 }
 
 // Create create article.
-func (sp *serviceProvider) Create(article *MDCreateArticle) error {
+func (sp *serviceProvider) Create(article *MDCreateArticle) (string, error) {
 	articleInfo := MDArticle{
 		ArticleID: bson.NewObjectId(),
 		Author:    article.Author,
@@ -165,7 +165,12 @@ func (sp *serviceProvider) Create(article *MDCreateArticle) error {
 		Active:    true,
 	}
 
-	return copy.Insert(mdSess.CollInfo, &articleInfo)
+	err := copy.Insert(mdSess.CollInfo, &articleInfo)
+	if err != nil {
+		return "", err
+	}
+
+	return articleInfo.ArticleID.Hex(), nil
 }
 
 // Modify modify article information.
