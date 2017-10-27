@@ -1,16 +1,47 @@
-hash: 6910688df6f8f1bea37e5972a4ed12dced44528456a7857e9db7d621a7699805
-updated: 2017-10-27T19:53:51.047037+08:00
+hash: f7ff580e48b41abc380456733d3da3e8a6226a95463e97f24b25fa6300c9bf27
+updated: 2017-10-27T21:02:13.876766+08:00
 imports:
 - name: github.com/astaxie/beego
   version: d96289a81bf67728cff7a19b067aaecc65a62ec6
+  subpackages:
+  - config
+  - context
+  - context/param
+  - grace
+  - logs
+  - session
+  - toolbox
+  - utils
 - name: github.com/fengyfei/nuts
   version: c65f6b9db9e4714b438d0f591fcf025b102183d8
+  subpackages:
+  - mgo/copy
 - name: go.uber.org/multierr
   version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
+- name: gopkg.in/go-playground/validator.v9
+  version: 1304298bf10d085adec514b076772a79c9cadb6b
 - name: gopkg.in/mgo.v2
   version: 3f83fa5005286a7fe593b055f0d7771a7dce4655
+  subpackages:
+  - bson
+  - internal/json
+  - internal/sasl
+  - internal/scram
 testImports:
+- name: github.com/gopherjs/gopherjs
+  version: a0a7cfed7b2a54080888fd2b3d4a3ec14562c86c
+  subpackages:
+  - js
+- name: github.com/jtolds/gls
+  version: 77f18212c9c7edc9bd6a33d383a7b545ce62f064
+- name: github.com/smartystreets/assertions
+  version: 0b37b35ec7434b77e77a4bb29b79677cced992ea
+  subpackages:
+  - internal/go-render/render
+  - internal/oglematchers
 - name: github.com/smartystreets/goconvey
-  version: ""
+  version: 9e8dc3f972df6c8fcc0375ef492c24d0bb204857
   subpackages:
   - convey
+  - convey/gotest
+  - convey/reporting
