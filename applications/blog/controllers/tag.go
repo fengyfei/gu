@@ -47,7 +47,7 @@ func (tc *Tag) List() {
 	tagList, err := tag.Service.GetList()
 
 	if err != nil {
-		log.Logger.Error("Tag.List returned error: %v", err)
+		log.Logger.Error("Tag.List returned error:", err)
 
 		tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrMongoDB}
 	} else {
@@ -67,7 +67,7 @@ func (tc *Tag) ActiveList() {
 	tagList, err := tag.Service.GetActiveList()
 
 	if err != nil {
-		log.Logger.Error("Tag.ActiveList returned error: %v", err)
+		log.Logger.Error("Tag.ActiveList returned error:", err)
 
 		tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrMongoDB}
 	} else {
@@ -89,7 +89,7 @@ func (tc *Tag) TagInfo() {
 	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &info)
 
 	if err != nil {
-		log.Logger.Error("Tag.TagInfo returned error: %v", err)
+		log.Logger.Error("Tag.TagInfo returned error:", err)
 
 		tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrInvalidParam}
 	} else {
@@ -111,14 +111,14 @@ func (tc *Tag) Create() {
 	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &info)
 
 	if err != nil {
-		log.Logger.Error("Tag.Create returned error: %v", err)
+		log.Logger.Error("Tag.Create returned error:", err)
 
 		tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrInvalidParam}
 	} else {
 		id, err := tag.Service.Create(info.Tag)
 
 		if err != nil {
-			log.Logger.Error("Tag.Create returned error: %v", err)
+			log.Logger.Error("Tag.Create returned error:", err)
 
 			tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrMongoDB}
 		} else {
@@ -141,14 +141,14 @@ func (tc *Tag) Modify() {
 	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &info)
 
 	if err != nil {
-		log.Logger.Error("Tag.Modify returned error: %v", err)
+		log.Logger.Error("Tag.Modify returned error:", err)
 
 		tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrInvalidParam}
 	} else {
 		err := tag.Service.Modify(&info)
 
 		if err != nil {
-			log.Logger.Error("Tag.Modify returned error: %v", err)
+			log.Logger.Error("Tag.Modify returned error:", err)
 
 			tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrMongoDB}
 		} else {
