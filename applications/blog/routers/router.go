@@ -47,4 +47,11 @@ func init() {
 	// bio router
 	beego.Router("/blog/bio/info", &controllers.Bio{}, "get:BioInfo")
 	beego.Router("/blog/bio/create", &controllers.Bio{}, "post:Create")
+
+	// article router
+	beego.Router("/blog/article/create", &controllers.ArticleController{}, "post:AddArticle")
+	beego.Router("/blog/article/listall", &controllers.ArticleController{}, "get:ListAll")
+	beego.Router("/blog/article/getbytag", &controllers.ArticleController{}, "post:GetArticleByTag")
+	beego.Router("/blog/article/getbyid", &controllers.ArticleController{}, "post:GetArticleById")
+	beego.Router("/blog/article/update", &controllers.ArticleController{}, "post:ModifyArticle")
 }
