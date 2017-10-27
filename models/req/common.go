@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd..
+ * Copyright (c) 2017 SmartestEE Co., Ltd.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,23 +24,12 @@
 
 /*
  * Revision History:
- *     Initial: 2017/10/22        Feng Yifei
+ *     Initial: 2017/10/27        Jia Chenhui
  */
 
-package routers
+package req
 
-import (
-	"github.com/astaxie/beego"
-	"github.com/fengyfei/gu/applications/blog/controllers"
-)
-
-func init() {
-	beego.Router("/", &controllers.Web{}, "*:Home")
-
-	// tag router
-	beego.Router("/blog/tag/list", &controllers.Tag{}, "get:List")
-	beego.Router("/blog/tag/activelist", &controllers.Tag{}, "get:ActiveList")
-	beego.Router("/blog/tag/info", &controllers.Tag{}, "post:TagInfo")
-	beego.Router("/blog/tag/create", &controllers.Tag{}, "post:Create")
-	beego.Router("/blog/tag/modify", &controllers.Tag{}, "post:Modify")
+// MDTagInfoReq used to send request.
+type MDTagInfoReq struct {
+	TagID string
 }

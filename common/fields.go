@@ -37,4 +37,8 @@ const (
 	MDArticleColl = "article"
 	MDTagColl     = "tag"
 	MDBioColl     = "bio"
+
+	// Response
+	RespKeyStatus = "status"
+	RespKeyData   = "data"
 )
