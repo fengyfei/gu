@@ -82,7 +82,7 @@ func (tc *Tag) ActiveList() {
 	tc.ServeJSON()
 }
 
-// @router /blog/tag/info [post]
+// @router /blog/tag/info [get]
 func (tc *Tag) TagInfo() {
 	var info req.MDTagInfoReq
 

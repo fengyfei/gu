@@ -43,4 +43,8 @@ func init() {
 	beego.Router("/blog/tag/info", &controllers.Tag{}, "post:TagInfo")
 	beego.Router("/blog/tag/create", &controllers.Tag{}, "post:Create")
 	beego.Router("/blog/tag/modify", &controllers.Tag{}, "post:Modify")
+
+	// bio router
+	beego.Router("/blog/bio/info", &controllers.Bio{}, "get:BioInfo")
+	beego.Router("/blog/bio/create", &controllers.Bio{}, "post:Create")
 }
