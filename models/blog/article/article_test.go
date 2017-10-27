@@ -153,6 +153,7 @@ func TestCreateAddTagsRemoveTags(t *testing.T) {
 
 	a, err := article.Service.GetByTags(tags)
 	checkError("GetByTags 2", err)
+
 	if len(a) != 1 {
 		log.Logger.Debug("%s failure.", "GetByTags 2")
 	} else {
@@ -175,13 +176,13 @@ func TestCreateAddTagsRemoveTags(t *testing.T) {
 func checkError(method string, err error) {
 	if err != nil {
 		log.Logger.Debug("%s returned error: %s", method, err)
+	} else {
+		log.Logger.Debug("%s execute success.", method)
 	}
-
-	log.Logger.Debug("%s execute success.", method)
 }
 
 func checkGetByIDResp(resp article.MDArticle) bool {
-	return resp.Author == "jch" && resp.Title == "running" && resp.Content == "running running"
+	return resp.Author == running.Author && resp.Title == running.Title && resp.Content == running.Content
 }
 
 func checkModifyResp(resp article.MDArticle) bool {
