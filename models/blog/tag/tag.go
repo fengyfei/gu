@@ -105,21 +105,26 @@ func (sp *serviceProvider) GetByID(id string) (MDTag, error) {
 		err error
 	)
 
-	selector := bson.M{"_id": bson.ObjectIdHex(id)}
-	err = copy.GetMany(mdSess.CollInfo, selector, &tag)
+	objID := bson.ObjectIdHex(id)
+	err = copy.GetByID(mdSess.CollInfo, objID, &tag)
 
 	return tag, err
 }
 
 // Create create tag.
-func (sp *serviceProvider) Create(tag string) error {
+func (sp *serviceProvider) Create(tag string) (string, error) {
 	tagInfo := MDTag{
 		TagID:  bson.NewObjectId(),
 		Tag:    tag,
 		Active: true,
 	}
 
-	return copy.Insert(mdSess.CollInfo, &tagInfo)
+	err := copy.Insert(mdSess.CollInfo, &tagInfo)
+	if err != nil {
+		return "", err
+	}
+
+	return tagInfo.TagID.Hex(), nil
 }
 
 // Modify modify tag information.
