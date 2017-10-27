@@ -24,42 +24,35 @@
 
 /*
  * Revision History:
- *     Initial: 2017/10/24        Jia Chenhui
+ *     Initial: 2017/10/27        Jia Chenhui
  */
 
-package mongo
+package log
 
 import (
-	"github.com/fengyfei/nuts/mgo/copy"
-	"gopkg.in/mgo.v2"
-
-	"github.com/fengyfei/gu/pkg/log"
+	"github.com/astaxie/beego"
 )
 
-// Session represents a communication session with the database.
-type Session struct {
-	CollInfo *copy.CollectionInfo
+type LogReport struct{}
+
+var GlobalLogReporter *LogReport
+
+func init() {
+	GlobalLogReporter = &LogReport{}
 }
 
-// InitMDSess establishes a new session to the cluster.
-func InitMDSess(url, db, coll string, index *mgo.Index) *Session {
-	s, err := mgo.Dial(url)
-	if err != nil {
-		panic(err)
-	}
+func (lr *LogReport) Debug(v ...interface{}) {
+	beego.Debug(v...)
+}
 
-	log.GlobalLogReporter.Debug("The MongoDB of blog server connected.")
+func (lr *LogReport) Info(v ...interface{}) {
+	beego.Info(v...)
+}
 
-	s.SetMode(mgo.Monotonic, true)
+func (lr *LogReport) Warn(v ...interface{}) {
+	beego.Warn(v...)
+}
 
-	collInfo := &copy.CollectionInfo{
-		Session:    s,
-		Database:   db,
-		Collection: coll,
-		Index:      index,
-	}
-
-	return &Session{
-		CollInfo: collInfo,
-	}
+func (lr *LogReport) Error(err error) {
+	beego.Error(err)
 }

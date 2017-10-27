@@ -47,11 +47,11 @@ func (tc *Tag) List() {
 	tagList, err := tag.Service.GetList()
 
 	if err != nil {
-		log.Logger.Error("Tag.List returned error:", err)
+		log.GlobalLogReporter.Error(err)
 
 		tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrMongoDB}
 	} else {
-		log.Logger.Debug("Get tag list success.")
+		log.GlobalLogReporter.Debug("Get tag list success.")
 
 		tc.Data["json"] = map[string]interface{}{
 			common.RespKeyStatus: common.ErrSucceed,
@@ -67,11 +67,11 @@ func (tc *Tag) ActiveList() {
 	tagList, err := tag.Service.GetActiveList()
 
 	if err != nil {
-		log.Logger.Error("Tag.ActiveList returned error:", err)
+		log.GlobalLogReporter.Error(err)
 
 		tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrMongoDB}
 	} else {
-		log.Logger.Debug("Get tag active list success.")
+		log.GlobalLogReporter.Debug("Get tag active list success.")
 
 		tc.Data["json"] = map[string]interface{}{
 			common.RespKeyStatus: common.ErrSucceed,
@@ -89,11 +89,11 @@ func (tc *Tag) TagInfo() {
 	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &info)
 
 	if err != nil {
-		log.Logger.Error("Tag.TagInfo returned error:", err)
+		log.GlobalLogReporter.Error(err)
 
 		tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrInvalidParam}
 	} else {
-		log.Logger.Debug("Get tag information success.")
+		log.GlobalLogReporter.Debug("Get tag information success.")
 
 		tc.Data["json"] = map[string]interface{}{
 			common.RespKeyStatus: common.ErrSucceed,
@@ -111,18 +111,18 @@ func (tc *Tag) Create() {
 	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &info)
 
 	if err != nil {
-		log.Logger.Error("Tag.Create returned error:", err)
+		log.GlobalLogReporter.Error(err)
 
 		tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrInvalidParam}
 	} else {
 		id, err := tag.Service.Create(info.Tag)
 
 		if err != nil {
-			log.Logger.Error("Tag.Create returned error:", err)
+			log.GlobalLogReporter.Error(err)
 
 			tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrMongoDB}
 		} else {
-			log.Logger.Debug("Create tag information success.")
+			log.GlobalLogReporter.Debug("Create tag information success.")
 
 			tc.Data["json"] = map[string]interface{}{
 				common.RespKeyStatus: common.ErrSucceed,
@@ -141,18 +141,18 @@ func (tc *Tag) Modify() {
 	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &info)
 
 	if err != nil {
-		log.Logger.Error("Tag.Modify returned error:", err)
+		log.GlobalLogReporter.Error(err)
 
 		tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrInvalidParam}
 	} else {
 		err := tag.Service.Modify(&info)
 
 		if err != nil {
-			log.Logger.Error("Tag.Modify returned error:", err)
+			log.GlobalLogReporter.Error(err)
 
 			tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrMongoDB}
 		} else {
-			log.Logger.Debug("Modify tag success.")
+			log.GlobalLogReporter.Debug("Modify tag success.")
 
 			tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrSucceed}
 		}

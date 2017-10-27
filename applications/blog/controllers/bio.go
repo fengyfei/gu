@@ -46,11 +46,11 @@ func (tc *Bio) BioInfo() {
 	info, err := bio.Service.GetBio()
 
 	if err != nil {
-		log.Logger.Error("Bio.BioInfo returned error:", err)
+		log.GlobalLogReporter.Error(err)
 
 		tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrMongoDB}
 	} else {
-		log.Logger.Debug("Get bio information success.")
+		log.GlobalLogReporter.Debug("Get bio information success.")
 
 		tc.Data["json"] = map[string]interface{}{
 			common.RespKeyStatus: common.ErrSucceed,
@@ -68,18 +68,18 @@ func (tc *Bio) Create() {
 	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &info)
 
 	if err != nil {
-		log.Logger.Error("Bio.Create returned error:", err)
+		log.GlobalLogReporter.Error(err)
 
 		tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrInvalidParam}
 	} else {
 		err := bio.Service.Create(&info)
 
 		if err != nil {
-			log.Logger.Error("Bio.Create returned error:", err)
+			log.GlobalLogReporter.Error(err)
 
 			tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrMongoDB}
 		} else {
-			log.Logger.Debug("Create bio information success.")
+			log.GlobalLogReporter.Debug("Create bio information success.")
 
 			tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrSucceed}
 		}
