@@ -11,12 +11,10 @@ import (
 	"unicode/utf8"
 )
 
-// Func accepts a FieldLevel interface for all validation needs. The return
-// value should be true when validation succeeds.
+// Func accepts a FieldLevel interface for all validation needs
 type Func func(fl FieldLevel) bool
 
-// FuncCtx accepts a context.Context and FieldLevel interface for all
-// validation needs. The return value should be true when validation succeeds.
+// FuncCtx accepts a context.Context and FieldLevel interface for all validation needs
 type FuncCtx func(ctx context.Context, fl FieldLevel) bool
 
 // wrapFunc wraps noramal Func makes it compatible with FuncCtx
@@ -39,7 +37,6 @@ var (
 		utf8Pipe:          {},
 		noStructLevelTag:  {},
 		requiredTag:       {},
-		isdefault:         {},
 	}
 
 	// BakedInAliasValidators is a default mapping of a single validation tag that
@@ -54,7 +51,6 @@ var (
 	// or even disregard and use your own map if so desired.
 	bakedInValidators = map[string]Func{
 		"required":        hasValue,
-		"isdefault":       isDefault,
 		"len":             hasLengthOf,
 		"min":             hasMinOf,
 		"max":             hasMaxOf,
@@ -131,28 +127,8 @@ var (
 		"mac":             isMAC,
 		"hostname":        isHostname,
 		"fqdn":            isFQDN,
-		"unique":          isUnique,
 	}
 )
-
-// isUnique is the validation function for validating if each array|slice element is unique
-func isUnique(fl FieldLevel) bool {
-
-	field := fl.Field()
-	v := reflect.ValueOf(struct{}{})
-
-	switch field.Kind() {
-	case reflect.Slice, reflect.Array:
-		m := reflect.MakeMap(reflect.MapOf(fl.Field().Type().Elem(), v.Type()))
-
-		for i := 0; i < field.Len(); i++ {
-			m.SetMapIndex(field.Index(i), v)
-		}
-		return field.Len() == m.Len()
-	default:
-		panic(fmt.Sprintf("Bad field type %T", field.Interface()))
-	}
-}
 
 // IsMAC is the validation function for validating if the field's value is a valid MAC address.
 func isMAC(fl FieldLevel) bool {
@@ -927,11 +903,6 @@ func isAlphaUnicode(fl FieldLevel) bool {
 	return alphaUnicodeRegex.MatchString(fl.Field().String())
 }
 
-// isDefault is the opposite of required aka hasValue
-func isDefault(fl FieldLevel) bool {
-	return !hasValue(fl)
-}
-
 // HasValue is the validation function for validating if the current field's value is not the default static value.
 func hasValue(fl FieldLevel) bool {
 
@@ -1515,10 +1486,6 @@ func isHostname(fl FieldLevel) bool {
 
 func isFQDN(fl FieldLevel) bool {
 	val := fl.Field().String()
-
-	if val == "" {
-		return false
-	}
 
 	if val[len(val)-1] == '.' {
 		val = val[0 : len(val)-1]

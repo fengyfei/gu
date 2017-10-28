@@ -101,9 +101,7 @@ type FieldError interface {
 	// returns the namespace for the field error, with the tag
 	// name taking precedence over the fields actual name.
 	//
-	// eg. JSON name "User.fname"
-	//
-	// See StructNamespace() for a version that returns actual names.
+	// eq. JSON name "User.fname" see ActualNamespace for comparison
 	//
 	// NOTE: this field can be blank when validating a single primitive field
 	// using validate.Field(...) as there is no way to extract it's name
