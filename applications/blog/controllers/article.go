@@ -152,15 +152,15 @@ finish:
 	ac.ServeJSON(true)
 }
 
-// GetArticleById get by id
-func (ac *ArticleController) GetArticleById() {
+// GetArticleByID get by id
+func (ac *ArticleController) GetArticleByID() {
 	var (
 		articleRes article.Article
-		articleId  string
+		articleID  string
 		err        error
 	)
 
-	err = json.Unmarshal(ac.Ctx.Input.RequestBody, &articleId)
+	err = json.Unmarshal(ac.Ctx.Input.RequestBody, &articleID)
 	if err != nil {
 		logger.Error(err)
 		ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
@@ -168,7 +168,7 @@ func (ac *ArticleController) GetArticleById() {
 		goto finish
 	}
 
-	articleRes, err = article.Service.GetByID(articleId)
+	articleRes, err = article.Service.GetByID(articleID)
 	if err != nil {
 		logger.Error(err)
 		ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMongoDB}

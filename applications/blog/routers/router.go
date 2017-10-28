@@ -48,6 +48,6 @@ func init() {
 	beego.Router("/blog/article/create", &controllers.ArticleController{}, "post:Create")
 	beego.Router("/blog/article/listall", &controllers.ArticleController{}, "get:List")
 	beego.Router("/blog/article/getbytag", &controllers.ArticleController{}, "post:GetArticleByTag")
-	beego.Router("/blog/article/getbyid", &controllers.ArticleController{}, "post:GetArticleById")
+	beego.Router("/blog/article/getbyid", &controllers.ArticleController{}, "post:GetArticleByID")
 	beego.Router("/blog/article/update", &controllers.ArticleController{}, "post:ModifyArticle")
 }
