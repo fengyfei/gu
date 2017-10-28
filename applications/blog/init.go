@@ -30,12 +30,10 @@
 package main
 
 import (
-	"github.com/fengyfei/gu/models/blog/article"
-	"github.com/fengyfei/gu/models/blog/tag"
+	_ "github.com/fengyfei/gu/models/blog/article"
+	_ "github.com/fengyfei/gu/models/blog/tag"
 )
 
-// InitMongoCollections initializing MongoDB collections.
-func InitMongoCollections() {
-	article.Prepare()
-	tag.Prepare()
+func init() {
+	
 }

@@ -32,10 +32,4 @@ package blog
 const (
 	// Database name.
 	Database = "blog"
-
-	// TagIndex - index name
-	TagIndex = "Tag"
-
-	// ArticleTitleIndex - article title index name
-	ArticleTitleIndex = "Title"
 )

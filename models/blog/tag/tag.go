@@ -31,11 +31,11 @@ package tag
 
 import (
 	"github.com/astaxie/beego"
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/fengyfei/gu/libs/mongo"
 	"github.com/fengyfei/gu/models/blog"
-	"github.com/fengyfei/nuts/mgo/copy"
 )
 
 type serviceProvider struct{}
@@ -43,14 +43,31 @@ type serviceProvider struct{}
 var (
 	// Service expose serviceProvider
 	Service *serviceProvider
-	session *mongo.Session
+	session *mongo.Connection
 )
 
-// Prepare initializing database.
-func Prepare() {
+func init() {
+	const (
+		cname = "tag"
+	)
+
 	url := beego.AppConfig.String("mongo::url") + "/" + blog.Database
 
-	session = mongo.InitSession(url, blog.Database, blog.TagIndex, nil)
+	s, err := mgo.Dial(url)
+	if err != nil {
+		panic(err)
+	}
+
+	s.SetMode(mgo.Monotonic, true)
+
+	s.DB(blog.Database).C(cname).EnsureIndex(mgo.Index{
+		Key:        []string{"Tag"},
+		Unique:     true,
+		Background: true,
+		Sparse:     true,
+	})
+
+	session = mongo.NewConnection(s, blog.Database, cname)
 	Service = &serviceProvider{}
 }
 
@@ -68,7 +85,10 @@ func (sp *serviceProvider) GetList() ([]Tag, error) {
 		err  error
 	)
 
-	err = copy.GetMany(session.CollInfo, nil, &tags)
+	conn := session.Connect()
+	defer conn.Disconnect()
+
+	err = conn.GetMany(nil, &tags)
 
 	return tags, err
 }
@@ -80,8 +100,10 @@ func (sp *serviceProvider) GetActiveList() ([]Tag, error) {
 		err  error
 	)
 
-	selector := bson.M{"Active": true}
-	err = copy.GetMany(session.CollInfo, selector, &tags)
+	conn := session.Connect()
+	defer conn.Disconnect()
+
+	err = conn.GetMany(bson.M{"Active": true}, &tags)
 
 	return tags, err
 }
@@ -93,8 +115,10 @@ func (sp *serviceProvider) GetByID(id string) (Tag, error) {
 		err error
 	)
 
-	objID := bson.ObjectIdHex(id)
-	err = copy.GetByID(session.CollInfo, objID, &tag)
+	conn := session.Connect()
+	defer conn.Disconnect()
+
+	err = conn.GetByID(bson.ObjectIdHex(id), &tag)
 
 	return tag, err
 }
@@ -107,7 +131,10 @@ func (sp *serviceProvider) Create(tag string) (string, error) {
 		Active: true,
 	}
 
-	err := copy.Insert(session.CollInfo, &tagInfo)
+	conn := session.Connect()
+	defer conn.Disconnect()
+
+	err := conn.Insert(&tagInfo)
 	if err != nil {
 		return "", err
 	}
@@ -117,11 +144,11 @@ func (sp *serviceProvider) Create(tag string) (string, error) {
 
 // Modify modify tag information.
 func (sp *serviceProvider) Modify(update *Tag) error {
-	selector := bson.M{"_id": bson.ObjectId(update.TagID)}
-	updater := bson.M{"$set": bson.M{
+	conn := session.Connect()
+	defer conn.Disconnect()
+
+	return conn.Update(bson.M{"_id": bson.ObjectId(update.TagID)}, bson.M{"$set": bson.M{
 		"Tag":    update.Tag,
 		"Active": update.Active,
-	}}
-
-	return copy.Update(session.CollInfo, selector, updater)
+	}})
 }

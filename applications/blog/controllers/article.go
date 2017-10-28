@@ -49,7 +49,7 @@ type ArticleController struct {
 	baseController
 }
 
-// AddArticle creates a new article
+// Create a new article
 func (ac *ArticleController) Create() {
 	var (
 		articleInfo article.Article

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd.
+ * Copyright (c) 2017 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,42 +24,21 @@
 
 /*
  * Revision History:
- *     Initial: 2017/10/24        Jia Chenhui
+ *     Initial: 2017/10/28        Feng Yifei
  */
 
 package mongo
 
 import (
-	"github.com/fengyfei/nuts/mgo/copy"
-	"gopkg.in/mgo.v2"
-
-	"github.com/fengyfei/gu/libs/logger"
+	"gopkg.in/mgo.v2/bson"
 )
 
-// Session represents a communication session with the database.
-type Session struct {
-	CollInfo *copy.CollectionInfo
+// IsValidObjectID check whether the id is a qualified ObjectId
+func IsValidObjectID(id bson.ObjectId) bool {
+	return IsValidObjectHex(id.Hex())
 }
 
-// InitSession establishes a new session to the cluster.
-func InitSession(url, db, coll string, index *mgo.Index) *Session {
-	s, err := mgo.Dial(url)
-	if err != nil {
-		panic(err)
-	}
-
-	logger.Debug("The MongoDB of blog server connected.")
-
-	s.SetMode(mgo.Monotonic, true)
-
-	collInfo := &copy.CollectionInfo{
-		Session:    s,
-		Database:   db,
-		Collection: coll,
-		Index:      index,
-	}
-
-	return &Session{
-		CollInfo: collInfo,
-	}
+// IsValidObjectHex check whether the id can be converted to be a qualified ObjectId
+func IsValidObjectHex(id string) bool {
+	return bson.IsObjectIdHex(id)
 }

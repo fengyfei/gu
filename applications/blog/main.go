@@ -34,11 +34,6 @@ import (
 	_ "github.com/fengyfei/gu/applications/blog/routers"
 )
 
-func initBeforeRun() {
-	InitMongoCollections()
-}
-
 func main() {
-	initBeforeRun()
 	beego.Run()
 }
