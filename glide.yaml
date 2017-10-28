@@ -13,3 +13,9 @@ testImport:
   version: 1.6.3
   subpackages:
   - convey
+- package: golang.org/x/net
+  subpackages:
+  - html
+- package: golang.org/x/text
+  subpackages:
+  - encoding
