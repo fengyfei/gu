@@ -1,6 +1,8 @@
-hash: 251dd650a2b088ca52fb4a29818006ec3212338492caca2caab063f4c0a1621b
-updated: 2017-10-28T15:24:07.614741+08:00
+hash: 6265793a74a3c9a7f5d3e93497ca78ce2a332c0ed81115b48e0b0b366627f51e
+updated: 2017-10-28T16:38:20.189279+08:00
 imports:
+- name: github.com/asciimoo/colly
+  version: 58388fa643769b9cc14b60b4657c67d7a6347b9c
 - name: github.com/astaxie/beego
   version: d96289a81bf67728cff7a19b067aaecc65a62ec6
   subpackages:
