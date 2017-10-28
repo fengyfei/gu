@@ -36,7 +36,4 @@ import (
 
 func main() {
 	crawler.StartCrawler(devto.NewDevToCrawler())
-
-	for {
-	}
 }
