@@ -7189,6 +7189,7 @@ func TestFQDNValidation(t *testing.T) {
 		{"2001:cdba:0000:0000:0000:0000:3257:9652", false},
 		{"2001:cdba:0:0:0:0:3257:9652", false},
 		{"2001:cdba::3257:9652", false},
+		{"", false},
 	}
 
 	validate := New()
@@ -7212,4 +7213,103 @@ func TestFQDNValidation(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestIsDefault(t *testing.T) {
+
+	validate := New()
+
+	type Inner struct {
+		String string `validate:"isdefault"`
+	}
+	type Test struct {
+		String string `validate:"isdefault"`
+		Inner  *Inner `validate:"isdefault"`
+	}
+
+	var tt Test
+
+	errs := validate.Struct(tt)
+	Equal(t, errs, nil)
+
+	tt.Inner = &Inner{String: ""}
+	errs = validate.Struct(tt)
+	NotEqual(t, errs, nil)
+
+	fe := errs.(ValidationErrors)[0]
+	Equal(t, fe.Field(), "Inner")
+	Equal(t, fe.Namespace(), "Test.Inner")
+	Equal(t, fe.Tag(), "isdefault")
+
+	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
+		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
+
+		if name == "-" {
+			return ""
+		}
+
+		return name
+	})
+
+	type Inner2 struct {
+		String string `validate:"isdefault"`
+	}
+
+	type Test2 struct {
+		Inner Inner2 `validate:"isdefault" json:"inner"`
+	}
+
+	var t2 Test2
+	errs = validate.Struct(t2)
+	Equal(t, errs, nil)
+
+	t2.Inner.String = "Changed"
+	errs = validate.Struct(t2)
+	NotEqual(t, errs, nil)
+
+	fe = errs.(ValidationErrors)[0]
+	Equal(t, fe.Field(), "inner")
+	Equal(t, fe.Namespace(), "Test2.inner")
+	Equal(t, fe.Tag(), "isdefault")
+}
+
+func TestUniqueValidation(t *testing.T) {
+	tests := []struct {
+		param    interface{}
+		expected bool
+	}{
+		{[]string{"a", "b"}, true},
+		{[]int{1, 2}, true},
+		{[]float64{1, 2}, true},
+		{[]interface{}{"a", "b"}, true},
+		{[]interface{}{"a", 1}, true},
+		{[]float64{1, 1}, false},
+		{[]int{1, 1}, false},
+		{[]string{"a", "a"}, false},
+		{[]interface{}{"a", "a"}, false},
+		{[]interface{}{"a", 1, "b", 1}, false},
+	}
+
+	validate := New()
+
+	for i, test := range tests {
+
+		errs := validate.Var(test.param, "unique")
+
+		if test.expected {
+			if !IsEqual(errs, nil) {
+				t.Fatalf("Index: %d unique failed Error: %v", i, errs)
+			}
+		} else {
+			if IsEqual(errs, nil) {
+				t.Fatalf("Index: %d unique failed Error: %v", i, errs)
+			} else {
+				val := getError(errs, "", "")
+				if val.Tag() != "unique" {
+					t.Fatalf("Index: %d unique failed Error: %v", i, errs)
+				}
+			}
+		}
+	}
+	PanicMatches(t, func() { validate.Var(1.0, "unique") }, "Bad field type float64")
 }
