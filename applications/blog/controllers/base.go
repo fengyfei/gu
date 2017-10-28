@@ -31,8 +31,16 @@ package controllers
 
 import (
 	"github.com/astaxie/beego"
+	"gopkg.in/go-playground/validator.v9"
 )
 
 type baseController struct {
 	beego.Controller
+}
+
+// Validate the parameters.
+func (base baseController) Validate(val interface{}) error {
+	validator := validator.New()
+
+	return validator.Struct(val)
 }

@@ -32,17 +32,10 @@ package controllers
 import (
 	"encoding/json"
 
-	"github.com/astaxie/beego/validation"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/models/blog/article"
 )
-
-var GlobalValid *validation.Validation
-
-func init() {
-	GlobalValid = &validation.Validation{}
-}
 
 // ArticleController - article associated handler.
 type ArticleController struct {
@@ -65,6 +58,7 @@ func (ac *ArticleController) Create() {
 		goto finish
 	}
 
+	err = ac.Validate(&articleInfo)
 	if err != nil {
 		logger.Error(err)
 		ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}

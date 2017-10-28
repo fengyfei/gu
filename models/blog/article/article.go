@@ -75,7 +75,7 @@ func init() {
 
 // Article represents the article information.
 type Article struct {
-	ArticleID bson.ObjectId `bson:"_id,omitempty" json:"id"`
+	ArticleID bson.ObjectId `bson:"_id,omitempty" json:"id" validate:"required"`
 	Author    string        `bson:"Author" json:"author"`
 	Title     string        `bson:"Title" json:"title"`
 	Content   string        `bson:"Content" json:"content"`
