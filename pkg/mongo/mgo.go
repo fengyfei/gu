@@ -41,8 +41,8 @@ type Session struct {
 	CollInfo *copy.CollectionInfo
 }
 
-// InitMDSess establishes a new session to the cluster.
-func InitMDSess(url, db, coll string, index *mgo.Index) *Session {
+// InitSession establishes a new session to the cluster.
+func InitSession(url, db, coll string, index *mgo.Index) *Session {
 	s, err := mgo.Dial(url)
 	if err != nil {
 		panic(err)

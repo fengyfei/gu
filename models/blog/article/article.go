@@ -60,12 +60,12 @@ func Prepare() {
 		Sparse:     true,
 	}
 
-	mdSess = mongo.InitMDSess(url, common.MDBlogDName, common.MDArticleColl, titleIndex)
+	mdSess = mongo.InitSession(url, common.MDBlogDName, common.ArticleColl, titleIndex)
 	Service = &serviceProvider{}
 }
 
-// MDArticle represents the article information.
-type MDArticle struct {
+// Article represents the article information.
+type Article struct {
 	ArticleID bson.ObjectId `bson:"_id,omitempty" json:"id"`
 	Author    string        `bson:"Author" json:"author"`
 	Title     string        `bson:"Title" json:"title"`
@@ -77,34 +77,10 @@ type MDArticle struct {
 	Active    bool          `bson:"Active" json:"active"`
 }
 
-// MDCreateArticle use to create article.
-type MDCreateArticle struct {
-	Author   string
-	Title    string
-	Content  string
-	Abstract string
-	Tag      []string
-}
-
-// MDModifyArticle use to modify the information of the specified article.
-type MDModifyArticle struct {
-	ArticleID string
-	Title     string
-	Content   string
-	Abstract  string
-	Active    bool
-}
-
-// ModifyTag use to modify the tags of the specified article.
-type MDModifyTag struct {
-	ArticleID string
-	Tag       []string
-}
-
 // GetList get all the articles.
-func (sp *serviceProvider) GetList() ([]MDArticle, error) {
+func (sp *serviceProvider) GetList() ([]Article, error) {
 	var (
-		articles []MDArticle
+		articles []Article
 		err      error
 	)
 
@@ -114,9 +90,9 @@ func (sp *serviceProvider) GetList() ([]MDArticle, error) {
 }
 
 // GetActiveList get all the active articles.
-func (sp *serviceProvider) GetActiveList() ([]MDArticle, error) {
+func (sp *serviceProvider) GetActiveList() ([]Article, error) {
 	var (
-		articles []MDArticle
+		articles []Article
 		err      error
 	)
 
@@ -127,9 +103,9 @@ func (sp *serviceProvider) GetActiveList() ([]MDArticle, error) {
 }
 
 // GetByID get article based on article id.
-func (sp *serviceProvider) GetByID(id string) (MDArticle, error) {
+func (sp *serviceProvider) GetByID(id string) (Article, error) {
 	var (
-		article MDArticle
+		article Article
 		err     error
 	)
 
@@ -140,9 +116,9 @@ func (sp *serviceProvider) GetByID(id string) (MDArticle, error) {
 }
 
 // GetByTags get articles based on tag id.
-func (sp *serviceProvider) GetByTags(tags []string) ([]MDArticle, error) {
+func (sp *serviceProvider) GetByTags(tags []string) ([]Article, error) {
 	var (
-		articles []MDArticle
+		articles []Article
 		err      error
 	)
 
@@ -153,8 +129,8 @@ func (sp *serviceProvider) GetByTags(tags []string) ([]MDArticle, error) {
 }
 
 // Create create article.
-func (sp *serviceProvider) Create(article *MDCreateArticle) (string, error) {
-	articleInfo := MDArticle{
+func (sp *serviceProvider) Create(article *Article) (string, error) {
+	articleInfo := Article{
 		ArticleID: bson.NewObjectId(),
 		Author:    article.Author,
 		Title:     article.Title,
@@ -174,8 +150,7 @@ func (sp *serviceProvider) Create(article *MDCreateArticle) (string, error) {
 }
 
 // Modify modify article information.
-func (sp *serviceProvider) Modify(update *MDModifyArticle) error {
-	selector := bson.M{"_id": bson.ObjectIdHex(update.ArticleID)}
+func (sp *serviceProvider) Modify(update *Article) error {
 	updater := bson.M{"$set": bson.M{
 		"Title":     update.Title,
 		"Content":   update.Content,
@@ -184,7 +159,7 @@ func (sp *serviceProvider) Modify(update *MDModifyArticle) error {
 		"UpdatedAt": time.Now(),
 	}}
 
-	return copy.Update(mdSess.CollInfo, selector, updater)
+	return copy.Update(mdSess.CollInfo, bson.M{"_id": bson.ObjectId(update.ArticleID)}, updater)
 }
 
 // AddTags add tags to specified article.
