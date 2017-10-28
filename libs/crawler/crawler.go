@@ -27,49 +27,19 @@
  *     Initial: 2017/10/28        Feng Yifei
  */
 
-package devto
+package crawler
 
-import (
-	"fmt"
-	"strings"
-
-	"github.com/PuerkitoBio/goquery"
-	"github.com/asciimoo/colly"
-
-	"github.com/fengyfei/gu/libs/crawler"
-)
-
-type devToCrawler struct {
-	collector *colly.Collector
+// Crawler interface
+type Crawler interface {
+	Init() error
+	Start() error
 }
 
-// NewDevToCrawler generates a crawler for dev.to.
-func NewDevToCrawler() crawler.Crawler {
-	return &devToCrawler{
-		collector: colly.NewCollector(),
+// StartCrawler executes the crawler
+func StartCrawler(c Crawler) error {
+	if err := c.Init(); err != nil {
+		return err
 	}
-}
 
-// Crawler interface Init
-func (c *devToCrawler) Init() error {
-	c.collector.OnHTML("div.single-article", c.parse)
-	return nil
-}
-
-// Crawler interface Start
-func (c *devToCrawler) Start() error {
-	return c.collector.Visit("https://dev.to/t/go")
-}
-
-func (c *devToCrawler) parse(e *colly.HTMLElement) {
-	e.DOM.Each(c.parseContent)
-}
-
-func (c *devToCrawler) parseContent(_ int, s *goquery.Selection) {
-	cls, _ := s.Attr("class")
-
-	if strings.Contains(cls, "single-article-small-pic") {
-		fmt.Println(s.Children().Eq(1).Attr("href"))
-		fmt.Println(s.Find("h3").Text())
-	}
+	return c.Start()
 }
