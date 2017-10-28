@@ -27,27 +27,13 @@
  *     Initial: 2017/10/22        Feng Yifei
  */
 
-package routers
+package main
 
 import (
 	"github.com/astaxie/beego"
-	"github.com/fengyfei/gu/applications/blog/controllers"
+	_ "github.com/fengyfei/gu/applications/beego/blog/routers"
 )
 
-func init() {
-	beego.Router("/", &controllers.Web{}, "*:Home")
-
-	// tag router
-	beego.Router("/blog/tag/list", &controllers.TagController{}, "get:List")
-	beego.Router("/blog/tag/activelist", &controllers.TagController{}, "get:ActiveList")
-	beego.Router("/blog/tag/info", &controllers.TagController{}, "post:Info")
-	beego.Router("/blog/tag/create", &controllers.TagController{}, "post:Create")
-	beego.Router("/blog/tag/modify", &controllers.TagController{}, "post:Modify")
-
-	// article router
-	beego.Router("/blog/article/create", &controllers.ArticleController{}, "post:Create")
-	beego.Router("/blog/article/listall", &controllers.ArticleController{}, "get:List")
-	beego.Router("/blog/article/getbytag", &controllers.ArticleController{}, "post:GetArticleByTag")
-	beego.Router("/blog/article/getbyid", &controllers.ArticleController{}, "post:GetArticleByID")
-	beego.Router("/blog/article/update", &controllers.ArticleController{}, "post:ModifyArticle")
+func main() {
+	beego.Run()
 }
