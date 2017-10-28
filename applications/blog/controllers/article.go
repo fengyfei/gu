@@ -31,10 +31,11 @@ package controllers
 
 import (
 	"encoding/json"
-	"github.com/fengyfei/gu/models/blog/article"
+
 	"github.com/astaxie/beego/validation"
-	"github.com/fengyfei/gu/common"
-	"github.com/astaxie/beego/logs"
+	"github.com/fengyfei/gu/libs/constants"
+	"github.com/fengyfei/gu/libs/logger"
+	"github.com/fengyfei/gu/models/blog/article"
 )
 
 var GlobalValid *validation.Validation
@@ -43,173 +44,174 @@ func init() {
 	GlobalValid = &validation.Validation{}
 }
 
+// ArticleController - article associated handler.
 type ArticleController struct {
 	baseController
 }
 
-// add article
-func (ac *ArticleController) AddArticle() {
+// AddArticle creates a new article
+func (ac *ArticleController) Create() {
 	var (
-		articleInfo article.MDCreateArticle
+		articleInfo article.Article
 		err         error
-		articleId   string
+		articleID   string
 	)
 
 	err = json.Unmarshal(ac.Ctx.Input.RequestBody, &articleInfo)
 	if err != nil {
-		logs.Error("article unmarshal err: ", err)
-		ac.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrInvalidParam, "data": ac.Ctx.Input.RequestBody}
+		logger.Error(err)
+		ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam, constants.RespKeyData: ac.Ctx.Input.RequestBody}
 
 		goto finish
 	}
 
 	if err != nil {
-		logs.Error("article validation err: ", err)
-		ac.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrInvalidParam}
+		logger.Error(err)
+		ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
 
 		goto finish
 	}
 
-	articleId, err = article.Service.Create(&articleInfo)
+	articleID, err = article.Service.Create(&articleInfo)
 	if err != nil {
-		logs.Error("article mongo err: ", err)
-		ac.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrMongoDB}
+		logger.Error(err)
+		ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMongoDB}
 
 		goto finish
 	}
-	ac.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrSucceed, common.RespKeyData: articleId}
-	logs.Info("add article success")
+	ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed, constants.RespKeyData: articleID}
+	logger.Info("add article success")
 
 finish:
 	ac.ServeJSON(true)
 }
 
-// get article list
-func (ac *ArticleController) ListAll() {
+// List gets all article list
+func (ac *ArticleController) List() {
 	var (
-		articleList []article.MDArticle
+		articleList []article.Article
 		err         error
 	)
 
-	articleList, err = article.Service.GetList()
+	articleList, err = article.Service.List()
 	if err != nil {
-		logs.Error("article mongo err: ", err)
-		ac.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrMongoDB}
+		logger.Error(err)
+		ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMongoDB}
 
 		goto finish
 	}
-	ac.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrSucceed, common.RespKeyData: articleList}
-	logs.Info("add article success")
+	ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed, constants.RespKeyData: articleList}
+	logger.Info("add article success")
 
 finish:
 	ac.ServeJSON(true)
 }
 
-// get active article list
+// ActiveList gets active article list
 func (ac *ArticleController) ActiveList() {
 	var (
-		activeArticleList []article.MDArticle
+		activeArticleList []article.Article
 		err               error
 	)
 
-	activeArticleList, err = article.Service.GetActiveList()
+	activeArticleList, err = article.Service.ActiveList()
 	if err != nil {
-		logs.Error("article mongo err: ", err)
-		ac.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrMongoDB}
+		logger.Error(err)
+		ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMongoDB}
 
 		goto finish
 	}
-	ac.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrSucceed, common.RespKeyData: activeArticleList}
-	logs.Info("add article success")
+	ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed, constants.RespKeyData: activeArticleList}
+	logger.Info("add article success")
 
 finish:
 	ac.ServeJSON(true)
 }
 
-// get articles by tag
+// GetArticleByTag get articles by tag
 func (ac *ArticleController) GetArticleByTag() {
 	var (
-		articleList []article.MDArticle
+		articleList []article.Article
 		tags        []string
 		err         error
 	)
 
 	err = json.Unmarshal(ac.Ctx.Input.RequestBody, &tags)
 	if err != nil {
-		logs.Error("article unmarshal err: ", err)
-		ac.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrInvalidParam}
+		logger.Error(err)
+		ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
 
 		goto finish
 	}
 
 	articleList, err = article.Service.GetByTags(tags)
 	if err != nil {
-		logs.Error("article mongo err: ", err)
-		ac.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrMongoDB}
+		logger.Error(err)
+		ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMongoDB}
 
 		goto finish
 	}
-	ac.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrSucceed, common.RespKeyData: articleList}
-	logs.Info("get article by tags success")
+	ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed, constants.RespKeyData: articleList}
+	logger.Info("get article by tags success")
 
 finish:
 	ac.ServeJSON(true)
 }
 
-// get by id
+// GetArticleById get by id
 func (ac *ArticleController) GetArticleById() {
 	var (
-		articleRes article.MDArticle
+		articleRes article.Article
 		articleId  string
 		err        error
 	)
 
 	err = json.Unmarshal(ac.Ctx.Input.RequestBody, &articleId)
 	if err != nil {
-		logs.Error("article unmarshal err: ", err)
-		ac.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrInvalidParam}
+		logger.Error(err)
+		ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
 
 		goto finish
 	}
 
 	articleRes, err = article.Service.GetByID(articleId)
 	if err != nil {
-		logs.Error("article mongo err: ", err)
-		ac.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrMongoDB}
+		logger.Error(err)
+		ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMongoDB}
 
 		goto finish
 	}
-	ac.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrSucceed, common.RespKeyData: articleRes}
-	logs.Info("get article by id success")
+	ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed, constants.RespKeyData: articleRes}
+	logger.Info("get article by id success")
 
 finish:
 	ac.ServeJSON(true)
 }
 
-// modify article
+// ModifyArticle modify article
 func (ac *ArticleController) ModifyArticle() {
 	var (
-		articleToModify article.MDModifyArticle
+		articleToModify article.Article
 		err             error
 	)
 
 	err = json.Unmarshal(ac.Ctx.Input.RequestBody, &articleToModify)
 	if err != nil {
-		logs.Error("article unmarshal err: ", err)
-		ac.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrInvalidParam}
+		logger.Error(err)
+		ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
 
 		goto finish
 	}
 
 	err = article.Service.Modify(&articleToModify)
 	if err != nil {
-		logs.Error("article mongo err: ", err)
-		ac.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrMongoDB}
+		logger.Error(err)
+		ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMongoDB}
 
 		goto finish
 	}
-	ac.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrSucceed}
-	logs.Info("modify article by tags success")
+	ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+	logger.Info("modify article by tags success")
 
 finish:
 	ac.ServeJSON(true)

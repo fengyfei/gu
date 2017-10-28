@@ -31,11 +31,11 @@ package tag
 
 import (
 	"github.com/astaxie/beego"
-	"github.com/fengyfei/nuts/mgo/copy"
 	"gopkg.in/mgo.v2/bson"
 
-	"github.com/fengyfei/gu/common"
-	"github.com/fengyfei/gu/pkg/mongo"
+	"github.com/fengyfei/gu/libs/mongo"
+	"github.com/fengyfei/gu/models/blog"
+	"github.com/fengyfei/nuts/mgo/copy"
 )
 
 type serviceProvider struct{}
@@ -43,83 +43,71 @@ type serviceProvider struct{}
 var (
 	// Service expose serviceProvider
 	Service *serviceProvider
-	mdSess  *mongo.Session
+	session *mongo.Session
 )
 
 // Prepare initializing database.
 func Prepare() {
-	url := beego.AppConfig.String("mongo::url") + "/" + common.MDBlogDName
+	url := beego.AppConfig.String("mongo::url") + "/" + blog.Database
 
-	mdSess = mongo.InitMDSess(url, common.MDBlogDName, common.MDTagColl, nil)
+	session = mongo.InitSession(url, blog.Database, blog.TagIndex, nil)
 	Service = &serviceProvider{}
 }
 
-// MDTag represents the tag information.
-type MDTag struct {
+// Tag represents the tag information.
+type Tag struct {
 	TagID  bson.ObjectId `bson:"_id,omitempty" json:"id"`
 	Tag    string        `bson:"Tag" json:"tag"`
 	Active bool          `bson:"Active" json:"active"`
 }
 
-// MDCreateTag use to create article.
-type MDCreateTag struct {
-	Tag string
-}
-
-// MDModifyTag use to modify tag information.
-type MDModifyTag struct {
-	TagID  string
-	Tag    string
-	Active bool
-}
-
 // GetList get all the tags.
-func (sp *serviceProvider) GetList() ([]MDTag, error) {
+func (sp *serviceProvider) GetList() ([]Tag, error) {
 	var (
-		tags []MDTag
+		tags []Tag
 		err  error
 	)
 
-	err = copy.GetMany(mdSess.CollInfo, nil, &tags)
+	err = copy.GetMany(session.CollInfo, nil, &tags)
 
 	return tags, err
 }
 
 // GetActiveList get all the active tags.
-func (sp *serviceProvider) GetActiveList() ([]MDTag, error) {
+func (sp *serviceProvider) GetActiveList() ([]Tag, error) {
 	var (
-		tags []MDTag
+		tags []Tag
 		err  error
 	)
 
 	selector := bson.M{"Active": true}
-	err = copy.GetMany(mdSess.CollInfo, selector, &tags)
+	err = copy.GetMany(session.CollInfo, selector, &tags)
 
 	return tags, err
 }
 
 // GetByID get tag based on article id.
-func (sp *serviceProvider) GetByID(id string) (MDTag, error) {
+func (sp *serviceProvider) GetByID(id string) (Tag, error) {
 	var (
-		tag MDTag
+		tag Tag
 		err error
 	)
 
 	objID := bson.ObjectIdHex(id)
-	err = copy.GetByID(mdSess.CollInfo, objID, &tag)
+	err = copy.GetByID(session.CollInfo, objID, &tag)
 
 	return tag, err
 }
 
 // Create create tag.
 func (sp *serviceProvider) Create(tag string) (string, error) {
-	tagInfo := MDTag{
+	tagInfo := Tag{
 		TagID:  bson.NewObjectId(),
 		Tag:    tag,
 		Active: true,
 	}
 
-	err := copy.Insert(mdSess.CollInfo, &tagInfo)
+	err := copy.Insert(session.CollInfo, &tagInfo)
 	if err != nil {
 		return "", err
 	}
@@ -128,12 +116,12 @@ func (sp *serviceProvider) Create(tag string) (string, error) {
 }
 
 // Modify modify tag information.
-func (sp *serviceProvider) Modify(update *MDModifyTag) error {
-	selector := bson.M{"_id": bson.ObjectIdHex(update.TagID)}
+func (sp *serviceProvider) Modify(update *Tag) error {
+	selector := bson.M{"_id": bson.ObjectId(update.TagID)}
 	updater := bson.M{"$set": bson.M{
 		"Tag":    update.Tag,
 		"Active": update.Active,
 	}}
 
-	return copy.Update(mdSess.CollInfo, selector, updater)
+	return copy.Update(session.CollInfo, selector, updater)
 }

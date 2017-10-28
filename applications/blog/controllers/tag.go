@@ -32,101 +32,101 @@ package controllers
 import (
 	"encoding/json"
 
-	"github.com/fengyfei/gu/common"
+	"github.com/fengyfei/gu/libs/constants"
+	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/models/blog/tag"
-	"github.com/fengyfei/gu/models/req"
-	"github.com/fengyfei/gu/pkg/log"
 )
 
-type Tag struct {
+// TagController - tag associated handlers
+type TagController struct {
 	baseController
 }
 
-// @router /blog/tag/list [get]
-func (tc *Tag) List() {
+// List all tags;
+func (tc *TagController) List() {
 	tagList, err := tag.Service.GetList()
 
 	if err != nil {
-		log.GlobalLogReporter.Error(err)
+		logger.Error(err)
 
-		tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrMongoDB}
+		tc.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMongoDB}
 	} else {
-		log.GlobalLogReporter.Debug("Get tag list success.")
+		logger.Debug("Get tag list success.")
 
 		tc.Data["json"] = map[string]interface{}{
-			common.RespKeyStatus: common.ErrSucceed,
-			common.RespKeyData:   tagList,
+			constants.RespKeyStatus: constants.ErrSucceed,
+			constants.RespKeyData:   tagList,
 		}
 	}
 
 	tc.ServeJSON()
 }
 
-// @router /blog/tag/activelist [get]
-func (tc *Tag) ActiveList() {
+// ActiveList returns all active tags.
+func (tc *TagController) ActiveList() {
 	tagList, err := tag.Service.GetActiveList()
 
 	if err != nil {
-		log.GlobalLogReporter.Error(err)
+		logger.Error(err)
 
-		tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrMongoDB}
+		tc.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMongoDB}
 	} else {
-		log.GlobalLogReporter.Debug("Get tag active list success.")
+		logger.Debug("Get tag active list success.")
 
 		tc.Data["json"] = map[string]interface{}{
-			common.RespKeyStatus: common.ErrSucceed,
-			common.RespKeyData:   tagList,
+			constants.RespKeyStatus: constants.ErrSucceed,
+			constants.RespKeyData:   tagList,
 		}
 	}
 
 	tc.ServeJSON()
 }
 
-// @router /blog/tag/info [get]
-func (tc *Tag) TagInfo() {
-	var info req.MDTagInfoReq
+// Info for specific tag
+func (tc *TagController) Info() {
+	var info tag.Tag
 
 	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &info)
 
 	if err != nil {
-		log.GlobalLogReporter.Error(err)
+		logger.Error(err)
 
-		tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrInvalidParam}
+		tc.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
 	} else {
-		log.GlobalLogReporter.Debug("Get tag information success.")
+		logger.Debug("Get tag information success.")
 
 		tc.Data["json"] = map[string]interface{}{
-			common.RespKeyStatus: common.ErrSucceed,
-			common.RespKeyData:   info,
+			constants.RespKeyStatus: constants.ErrSucceed,
+			constants.RespKeyData:   info,
 		}
 	}
 
 	tc.ServeJSON()
 }
 
-// @router /blog/tag/create [post]
-func (tc *Tag) Create() {
-	var info tag.MDCreateTag
+// Create a new tag.
+func (tc *TagController) Create() {
+	var info tag.Tag
 
 	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &info)
 
 	if err != nil {
-		log.GlobalLogReporter.Error(err)
+		logger.Error(err)
 
-		tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrInvalidParam}
+		tc.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
 	} else {
 		id, err := tag.Service.Create(info.Tag)
 
 		if err != nil {
-			log.GlobalLogReporter.Error(err)
+			logger.Error(err)
 
-			tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrMongoDB}
+			tc.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMongoDB}
 		} else {
-			log.GlobalLogReporter.Debug("Create tag information success.")
+			logger.Debug("Create tag information success.")
 
 			tc.Data["json"] = map[string]interface{}{
-				common.RespKeyStatus: common.ErrSucceed,
-				common.RespKeyData:   id,
+				constants.RespKeyStatus: constants.ErrSucceed,
+				constants.RespKeyData:   id,
 			}
 		}
 	}
@@ -134,27 +134,27 @@ func (tc *Tag) Create() {
 	tc.ServeJSON()
 }
 
-// @router /blog/tag/modify [post]
-func (tc *Tag) Modify() {
-	var info tag.MDModifyTag
+// Modify a specific tag.
+func (tc *TagController) Modify() {
+	var info tag.Tag
 
 	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &info)
 
 	if err != nil {
-		log.GlobalLogReporter.Error(err)
+		logger.Error(err)
 
-		tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrInvalidParam}
+		tc.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
 	} else {
 		err := tag.Service.Modify(&info)
 
 		if err != nil {
-			log.GlobalLogReporter.Error(err)
+			logger.Error(err)
 
-			tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrMongoDB}
+			tc.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMongoDB}
 		} else {
-			log.GlobalLogReporter.Debug("Modify tag success.")
+			logger.Debug("Modify tag success.")
 
-			tc.Data["json"] = map[string]interface{}{common.RespKeyStatus: common.ErrSucceed}
+			tc.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
 		}
 	}
 

@@ -24,35 +24,31 @@
 
 /*
  * Revision History:
- *     Initial: 2017/10/27        Jia Chenhui
+ *     Initial: 2017/10/28        Feng Yifei
  */
 
-package log
+package logger
 
 import (
 	"github.com/astaxie/beego"
 )
 
-type LogReport struct{}
-
-var GlobalLogReporter *LogReport
-
-func init() {
-	GlobalLogReporter = &LogReport{}
-}
-
-func (lr *LogReport) Debug(v ...interface{}) {
+// Debug prints debug messages.
+func Debug(v ...interface{}) {
 	beego.Debug(v...)
 }
 
-func (lr *LogReport) Info(v ...interface{}) {
+// Info prints normal messages.
+func Info(v ...interface{}) {
 	beego.Info(v...)
 }
 
-func (lr *LogReport) Warn(v ...interface{}) {
+// Warn prints warning messages.
+func Warn(v ...interface{}) {
 	beego.Warn(v...)
 }
 
-func (lr *LogReport) Error(err error) {
+// Error prints error.
+func Error(err error) {
 	beego.Error(err)
 }

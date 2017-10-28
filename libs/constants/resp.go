@@ -24,57 +24,15 @@
 
 /*
  * Revision History:
- *     Initial: 2017/10/27        Jia Chenhui
+ *     Initial: 2017/10/28        Feng Yifei
  */
 
-package bio_test
+package constants
 
-import (
-	"testing"
+const (
+	// RespKeyStatus - json key 'status'
+	RespKeyStatus = "status"
 
-	"github.com/fengyfei/gu/models/blog/bio"
-	"github.com/fengyfei/gu/pkg/log"
+	// RespKeyData - json key 'data'
+	RespKeyData = "data"
 )
-
-var (
-	me = bio.MDCreateBio{
-		Title: "about me",
-		Bio:   "biobio",
-	}
-
-	newMe = bio.MDCreateBio{
-		Title: "new me",
-		Bio:   "bio",
-	}
-)
-
-func TestCreateAndGetBio(t *testing.T) {
-	m := "TestCreateAndGetBio"
-	bio.Prepare()
-
-	err := bio.Service.Create(&me)
-	checkError("Create 1", err)
-
-	b1, err := bio.Service.GetBio()
-	checkError("GetBio 1", err)
-
-	err = bio.Service.Create(&newMe)
-	checkError("Create 2", err)
-
-	b2, err := bio.Service.GetBio()
-	checkError("GetBio 2", err)
-
-	if b1.BioID != b2.BioID {
-		log.Logger.Debug("%s failure.", m)
-	} else {
-		log.Logger.Debug("%s success.", m)
-	}
-}
-
-func checkError(method string, err error) {
-	if err != nil {
-		log.Logger.Debug("%s returned error: %s", method, err)
-	} else {
-		log.Logger.Debug("%s execute success.", method)
-	}
-}

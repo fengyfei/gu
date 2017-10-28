@@ -27,18 +27,39 @@
  *     Initial: 2017/10/24        Jia Chenhui
  */
 
-package common
+package mongo
 
-const (
-	// MongoDB database name
-	MDBlogDName = "blog"
+import (
+	"github.com/fengyfei/nuts/mgo/copy"
+	"gopkg.in/mgo.v2"
 
-	// MongoDB collection name
-	MDArticleColl = "article"
-	MDTagColl     = "tag"
-	MDBioColl     = "bio"
-
-	// Response
-	RespKeyStatus = "status"
-	RespKeyData   = "data"
+	"github.com/fengyfei/gu/libs/logger"
 )
+
+// Session represents a communication session with the database.
+type Session struct {
+	CollInfo *copy.CollectionInfo
+}
+
+// InitSession establishes a new session to the cluster.
+func InitSession(url, db, coll string, index *mgo.Index) *Session {
+	s, err := mgo.Dial(url)
+	if err != nil {
+		panic(err)
+	}
+
+	logger.Debug("The MongoDB of blog server connected.")
+
+	s.SetMode(mgo.Monotonic, true)
+
+	collInfo := &copy.CollectionInfo{
+		Session:    s,
+		Database:   db,
+		Collection: coll,
+		Index:      index,
+	}
+
+	return &Session{
+		CollInfo: collInfo,
+	}
+}

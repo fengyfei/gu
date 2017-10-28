@@ -24,42 +24,18 @@
 
 /*
  * Revision History:
- *     Initial: 2017/10/24        Jia Chenhui
+ *     Initial: 2017/10/28        Feng Yifei
  */
 
-package mongo
+package constants
 
-import (
-	"github.com/fengyfei/nuts/mgo/copy"
-	"gopkg.in/mgo.v2"
+const (
+	// ErrSucceed - Succeed
+	ErrSucceed = 0
 
-	"github.com/fengyfei/gu/pkg/log"
+	// ErrInvalidParam - Invalid Parameter
+	ErrInvalidParam = 1
+
+	// ErrMongoDB - MongoDB operations error.
+	ErrMongoDB = 600
 )
-
-// Session represents a communication session with the database.
-type Session struct {
-	CollInfo *copy.CollectionInfo
-}
-
-// InitSession establishes a new session to the cluster.
-func InitSession(url, db, coll string, index *mgo.Index) *Session {
-	s, err := mgo.Dial(url)
-	if err != nil {
-		panic(err)
-	}
-
-	log.GlobalLogReporter.Debug("The MongoDB of blog server connected.")
-
-	s.SetMode(mgo.Monotonic, true)
-
-	collInfo := &copy.CollectionInfo{
-		Session:    s,
-		Database:   db,
-		Collection: coll,
-		Index:      index,
-	}
-
-	return &Session{
-		CollInfo: collInfo,
-	}
-}

@@ -38,19 +38,15 @@ func init() {
 	beego.Router("/", &controllers.Web{}, "*:Home")
 
 	// tag router
-	beego.Router("/blog/tag/list", &controllers.Tag{}, "get:List")
-	beego.Router("/blog/tag/activelist", &controllers.Tag{}, "get:ActiveList")
-	beego.Router("/blog/tag/info", &controllers.Tag{}, "post:TagInfo")
-	beego.Router("/blog/tag/create", &controllers.Tag{}, "post:Create")
-	beego.Router("/blog/tag/modify", &controllers.Tag{}, "post:Modify")
-
-	// bio router
-	beego.Router("/blog/bio/info", &controllers.Bio{}, "get:BioInfo")
-	beego.Router("/blog/bio/create", &controllers.Bio{}, "post:Create")
+	beego.Router("/blog/tag/list", &controllers.TagController{}, "get:List")
+	beego.Router("/blog/tag/activelist", &controllers.TagController{}, "get:ActiveList")
+	beego.Router("/blog/tag/info", &controllers.TagController{}, "post:Info")
+	beego.Router("/blog/tag/create", &controllers.TagController{}, "post:Create")
+	beego.Router("/blog/tag/modify", &controllers.TagController{}, "post:Modify")
 
 	// article router
-	beego.Router("/blog/article/create", &controllers.ArticleController{}, "post:AddArticle")
-	beego.Router("/blog/article/listall", &controllers.ArticleController{}, "get:ListAll")
+	beego.Router("/blog/article/create", &controllers.ArticleController{}, "post:Create")
+	beego.Router("/blog/article/listall", &controllers.ArticleController{}, "get:List")
 	beego.Router("/blog/article/getbytag", &controllers.ArticleController{}, "post:GetArticleByTag")
 	beego.Router("/blog/article/getbyid", &controllers.ArticleController{}, "post:GetArticleById")
 	beego.Router("/blog/article/update", &controllers.ArticleController{}, "post:ModifyArticle")

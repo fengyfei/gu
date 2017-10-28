@@ -24,14 +24,18 @@
 
 /*
  * Revision History:
- *     Initial: 2017/10/27        Jia Chenhui
+ *     Initial: 2017/10/28        Feng Yifei
  */
 
-package common
+package blog
 
 const (
-	ErrSucceed      = 0
-	ErrInvalidParam = 1
+	// Database name.
+	Database = "blog"
 
-	ErrMongoDB = 600
+	// TagIndex - index name
+	TagIndex = "Tag"
+
+	// ArticleTitleIndex - article title index name
+	ArticleTitleIndex = "Title"
 )

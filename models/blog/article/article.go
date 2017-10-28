@@ -37,8 +37,8 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
-	"github.com/fengyfei/gu/common"
-	"github.com/fengyfei/gu/pkg/mongo"
+	"github.com/fengyfei/gu/libs/mongo"
+	"github.com/fengyfei/gu/models/blog"
 )
 
 type serviceProvider struct{}
@@ -46,12 +46,12 @@ type serviceProvider struct{}
 var (
 	// Service expose serviceProvider
 	Service *serviceProvider
-	mdSess  *mongo.Session
+	session *mongo.Session
 )
 
 // Prepare initializing database and create index.
 func Prepare() {
-	url := beego.AppConfig.String("mongo::url") + "/" + common.MDBlogDName
+	url := beego.AppConfig.String("mongo::url") + "/" + blog.Database
 
 	titleIndex := &mgo.Index{
 		Key:        []string{"title"},
@@ -60,7 +60,7 @@ func Prepare() {
 		Sparse:     true,
 	}
 
-	mdSess = mongo.InitSession(url, common.MDBlogDName, common.ArticleColl, titleIndex)
+	session = mongo.InitSession(url, blog.Database, blog.ArticleTitleIndex, titleIndex)
 	Service = &serviceProvider{}
 }
 
@@ -77,27 +77,27 @@ type Article struct {
 	Active    bool          `bson:"Active" json:"active"`
 }
 
-// GetList get all the articles.
-func (sp *serviceProvider) GetList() ([]Article, error) {
+// List get all the articles.
+func (sp *serviceProvider) List() ([]Article, error) {
 	var (
 		articles []Article
 		err      error
 	)
 
-	err = copy.GetMany(mdSess.CollInfo, nil, &articles)
+	err = copy.GetMany(session.CollInfo, nil, &articles)
 
 	return articles, err
 }
 
-// GetActiveList get all the active articles.
-func (sp *serviceProvider) GetActiveList() ([]Article, error) {
+// ActiveList get all the active articles.
+func (sp *serviceProvider) ActiveList() ([]Article, error) {
 	var (
 		articles []Article
 		err      error
 	)
 
 	selector := bson.M{"Active": true}
-	err = copy.GetMany(mdSess.CollInfo, selector, &articles)
+	err = copy.GetMany(session.CollInfo, selector, &articles)
 
 	return articles, err
 }
@@ -110,7 +110,7 @@ func (sp *serviceProvider) GetByID(id string) (Article, error) {
 	)
 
 	objID := bson.ObjectIdHex(id)
-	err = copy.GetByID(mdSess.CollInfo, objID, &article)
+	err = copy.GetByID(session.CollInfo, objID, &article)
 
 	return article, err
 }
@@ -123,7 +123,7 @@ func (sp *serviceProvider) GetByTags(tags []string) ([]Article, error) {
 	)
 
 	selector := bson.M{"Tag": bson.M{"$all": tags}}
-	err = copy.GetMany(mdSess.CollInfo, selector, &articles)
+	err = copy.GetMany(session.CollInfo, selector, &articles)
 
 	return articles, err
 }
@@ -141,7 +141,7 @@ func (sp *serviceProvider) Create(article *Article) (string, error) {
 		Active:    true,
 	}
 
-	err := copy.Insert(mdSess.CollInfo, &articleInfo)
+	err := copy.Insert(session.CollInfo, &articleInfo)
 	if err != nil {
 		return "", err
 	}
@@ -159,7 +159,7 @@ func (sp *serviceProvider) Modify(update *Article) error {
 		"UpdatedAt": time.Now(),
 	}}
 
-	return copy.Update(mdSess.CollInfo, bson.M{"_id": bson.ObjectId(update.ArticleID)}, updater)
+	return copy.Update(session.CollInfo, bson.M{"_id": bson.ObjectId(update.ArticleID)}, updater)
 }
 
 // AddTags add tags to specified article.
@@ -167,7 +167,7 @@ func (sp *serviceProvider) AddTags(articleID string, tags []string) error {
 	selector := bson.M{"_id": bson.ObjectIdHex(articleID)}
 	updater := bson.M{"$pushAll": bson.M{"Tag": tags}}
 
-	return copy.Update(mdSess.CollInfo, selector, updater)
+	return copy.Update(session.CollInfo, selector, updater)
 }
 
 // RemoveTags remove tags from specified article.
@@ -175,5 +175,5 @@ func (sp *serviceProvider) RemoveTags(articleID string, tags []string) error {
 	selector := bson.M{"_id": bson.ObjectIdHex(articleID)}
 	updater := bson.M{"$pullAll": bson.M{"Tag": tags}}
 
-	return copy.Update(mdSess.CollInfo, selector, updater)
+	return copy.Update(session.CollInfo, selector, updater)
 }

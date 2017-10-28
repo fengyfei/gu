@@ -31,7 +31,6 @@ package main
 
 import (
 	"github.com/fengyfei/gu/models/blog/article"
-	"github.com/fengyfei/gu/models/blog/bio"
 	"github.com/fengyfei/gu/models/blog/tag"
 )
 
@@ -39,5 +38,4 @@ import (
 func InitMongoCollections() {
 	article.Prepare()
 	tag.Prepare()
-	bio.Prepare()
 }
