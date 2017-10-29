@@ -32,6 +32,7 @@ package controllers
 import (
 	json "github.com/json-iterator/go"
 
+	"github.com/fengyfei/gu/applications/beego/base"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/models/blog/article"
@@ -39,7 +40,7 @@ import (
 
 // ArticleController - article associated handler.
 type ArticleController struct {
-	baseController
+	base.Controller
 }
 
 // Create a new article

@@ -32,6 +32,7 @@ package controllers
 import (
 	json "github.com/json-iterator/go"
 
+	"github.com/fengyfei/gu/applications/beego/base"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/models/blog/tag"
@@ -39,7 +40,7 @@ import (
 
 // TagController - tag associated handlers
 type TagController struct {
-	baseController
+	base.Controller
 }
 
 // List all tags;

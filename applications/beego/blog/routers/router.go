@@ -35,8 +35,6 @@ import (
 )
 
 func init() {
-	beego.Router("/", &controllers.Web{}, "*:Home")
-
 	// tag router
 	beego.Router("/blog/tag/list", &controllers.TagController{}, "get:List")
 	beego.Router("/blog/tag/activelist", &controllers.TagController{}, "get:ActiveList")
