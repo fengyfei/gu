@@ -30,6 +30,8 @@
 package controllers
 
 import (
+	"errors"
+
 	json "github.com/json-iterator/go"
 
 	"github.com/fengyfei/gu/applications/beego/base"
@@ -85,53 +87,107 @@ func (tc *Tag) ActiveList() {
 
 // Info for specific tag
 func (tc *Tag) Info() {
-	var info tag.Tag
+	var (
+		t    tag.Tag
+		info tag.Tag
+	)
 
-	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &info)
+	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &t)
+	if err != nil {
+		logger.Error(err)
 
+		tc.Data["json"] = map[string]interface{}{
+			constants.RespKeyStatus: constants.ErrInvalidParam,
+			constants.RespKeyData:   t,
+		}
+		goto finish
+	}
+
+	if t.Tag == nil {
+		err = errors.New("empty parameter")
+		logger.Error(err)
+
+		tc.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		goto finish
+	}
+
+	err = tc.Validate(&t)
 	if err != nil {
 		logger.Error(err)
 
 		tc.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-	} else {
-		logger.Debug("Get tag information success.")
-
-		tc.Data["json"] = map[string]interface{}{
-			constants.RespKeyStatus: constants.ErrSucceed,
-			constants.RespKeyData:   info,
-		}
+		goto finish
 	}
 
+	info, err = tag.Service.GetByID(t.Tag)
+	if err != nil {
+		logger.Error(err)
+
+		tc.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMongoDB}
+		goto finish
+	}
+
+	logger.Debug("Get tag information success.")
+
+	tc.Data["json"] = map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+		constants.RespKeyData:   info,
+	}
+
+finish:
 	tc.ServeJSON()
 }
 
 // Create a new tag.
 func (tc *Tag) Create() {
-	var info tag.Tag
+	var (
+		info tag.Tag
+		id   string
+	)
 
 	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &info)
+	if err != nil {
+		logger.Error(err)
 
+		tc.Data["json"] = map[string]interface{}{
+			constants.RespKeyStatus: constants.ErrInvalidParam,
+			constants.RespKeyData:   info,
+		}
+		goto finish
+	}
+
+	if info.Tag == nil {
+		err = errors.New("empty parameter")
+		logger.Error(err)
+
+		tc.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		goto finish
+	}
+
+	err = tc.Validate(&info)
 	if err != nil {
 		logger.Error(err)
 
 		tc.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-	} else {
-		id, err := tag.Service.Create(info.Tag)
-
-		if err != nil {
-			logger.Error(err)
-
-			tc.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMongoDB}
-		} else {
-			logger.Debug("Create tag information success.")
-
-			tc.Data["json"] = map[string]interface{}{
-				constants.RespKeyStatus: constants.ErrSucceed,
-				constants.RespKeyData:   id,
-			}
-		}
+		goto finish
 	}
 
+	id, err = tag.Service.Create(info.Tag)
+	if err != nil {
+		logger.Error(err)
+
+		tc.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMongoDB}
+		goto finish
+	}
+
+	logger.Debug("Create tag information success.")
+
+	tc.Data["json"] = map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+		constants.RespKeyData:   id,
+	}
+
+finish:
 	tc.ServeJSON()
 }
 
@@ -140,24 +196,44 @@ func (tc *Tag) Modify() {
 	var info tag.Tag
 
 	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &info)
+	if err != nil {
+		logger.Error(err)
 
+		tc.Data["json"] = map[string]interface{}{
+			constants.RespKeyStatus: constants.ErrInvalidParam,
+			constants.RespKeyData:   info,
+		}
+		goto finish
+	}
+
+	if info.Tag == nil || info.Active == nil {
+		err = errors.New("empty parameter")
+		logger.Error(err)
+
+		tc.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		goto finish
+	}
+
+	err = tc.Validate(&info)
 	if err != nil {
 		logger.Error(err)
 
 		tc.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-	} else {
-		err := tag.Service.Modify(&info)
-
-		if err != nil {
-			logger.Error(err)
-
-			tc.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMongoDB}
-		} else {
-			logger.Debug("Modify tag success.")
-
-			tc.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
-		}
+		goto finish
 	}
 
+	err = tag.Service.Modify(&info)
+	if err != nil {
+		logger.Error(err)
+
+		tc.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMongoDB}
+		goto finish
+	}
+
+	logger.Debug("Modify tag success.")
+
+	tc.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+
+finish:
 	tc.ServeJSON()
 }

@@ -74,8 +74,8 @@ func init() {
 // Tag represents the tag information.
 type Tag struct {
 	TagID  bson.ObjectId `bson:"_id,omitempty" json:"id"`
-	Tag    string        `bson:"Tag" json:"tag"`
-	Active bool          `bson:"Active" json:"active"`
+	Tag    *string       `bson:"Tag" json:"tag"`
+	Active *bool         `bson:"Active" json:"active"`
 }
 
 // GetList get all the tags.
@@ -109,7 +109,7 @@ func (sp *serviceProvider) GetActiveList() ([]Tag, error) {
 }
 
 // GetByID get tag based on article id.
-func (sp *serviceProvider) GetByID(id string) (Tag, error) {
+func (sp *serviceProvider) GetByID(id *string) (Tag, error) {
 	var (
 		tag Tag
 		err error
@@ -118,17 +118,19 @@ func (sp *serviceProvider) GetByID(id string) (Tag, error) {
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	err = conn.GetByID(bson.ObjectIdHex(id), &tag)
+	err = conn.GetByID(bson.ObjectIdHex(*id), &tag)
 
 	return tag, err
 }
 
 // Create create tag.
-func (sp *serviceProvider) Create(tag string) (string, error) {
+func (sp *serviceProvider) Create(tag *string) (string, error) {
+	active := true
+
 	tagInfo := Tag{
 		TagID:  bson.NewObjectId(),
 		Tag:    tag,
-		Active: true,
+		Active: &active,
 	}
 
 	conn := session.Connect()
