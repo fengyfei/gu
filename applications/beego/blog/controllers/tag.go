@@ -30,7 +30,7 @@
 package controllers
 
 import (
-	"encoding/json"
+	json "github.com/json-iterator/go"
 
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/logger"
