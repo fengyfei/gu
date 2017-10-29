@@ -38,13 +38,13 @@ import (
 	"github.com/fengyfei/gu/models/blog/tag"
 )
 
-// TagController - tag associated handlers
-type TagController struct {
+// Tag - tag associated handlers
+type Tag struct {
 	base.Controller
 }
 
 // List all tags;
-func (tc *TagController) List() {
+func (tc *Tag) List() {
 	tagList, err := tag.Service.GetList()
 
 	if err != nil {
@@ -64,7 +64,7 @@ func (tc *TagController) List() {
 }
 
 // ActiveList returns all active tags.
-func (tc *TagController) ActiveList() {
+func (tc *Tag) ActiveList() {
 	tagList, err := tag.Service.GetActiveList()
 
 	if err != nil {
@@ -84,7 +84,7 @@ func (tc *TagController) ActiveList() {
 }
 
 // Info for specific tag
-func (tc *TagController) Info() {
+func (tc *Tag) Info() {
 	var info tag.Tag
 
 	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &info)
@@ -106,7 +106,7 @@ func (tc *TagController) Info() {
 }
 
 // Create a new tag.
-func (tc *TagController) Create() {
+func (tc *Tag) Create() {
 	var info tag.Tag
 
 	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &info)
@@ -136,7 +136,7 @@ func (tc *TagController) Create() {
 }
 
 // Modify a specific tag.
-func (tc *TagController) Modify() {
+func (tc *Tag) Modify() {
 	var info tag.Tag
 
 	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &info)

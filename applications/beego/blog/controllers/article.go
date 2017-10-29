@@ -38,13 +38,13 @@ import (
 	"github.com/fengyfei/gu/models/blog/article"
 )
 
-// ArticleController - article associated handler.
-type ArticleController struct {
+// Article - article associated handler.
+type Article struct {
 	base.Controller
 }
 
 // Create a new article
-func (ac *ArticleController) Create() {
+func (ac *Article) Create() {
 	var (
 		articleInfo article.Article
 		err         error
@@ -82,7 +82,7 @@ finish:
 }
 
 // List gets all article list
-func (ac *ArticleController) List() {
+func (ac *Article) List() {
 	var (
 		articleList []article.Article
 		err         error
@@ -103,7 +103,7 @@ finish:
 }
 
 // ActiveList gets active article list
-func (ac *ArticleController) ActiveList() {
+func (ac *Article) ActiveList() {
 	var (
 		activeArticleList []article.Article
 		err               error
@@ -123,8 +123,8 @@ finish:
 	ac.ServeJSON(true)
 }
 
-// GetArticleByTag get articles by tag
-func (ac *ArticleController) GetArticleByTag() {
+// GetByTag get articles by tag
+func (ac *Article) GetByTag() {
 	var (
 		articleList []article.Article
 		tags        []string
@@ -153,8 +153,8 @@ finish:
 	ac.ServeJSON(true)
 }
 
-// GetArticleByID get by id
-func (ac *ArticleController) GetArticleByID() {
+// GetByID get by id
+func (ac *Article) GetByID() {
 	var (
 		articleRes article.Article
 		articleID  string
@@ -183,8 +183,8 @@ finish:
 	ac.ServeJSON(true)
 }
 
-// ModifyArticle modify article
-func (ac *ArticleController) ModifyArticle() {
+// Modify modify article
+func (ac *Article) Modify() {
 	var (
 		articleToModify article.Article
 		err             error
