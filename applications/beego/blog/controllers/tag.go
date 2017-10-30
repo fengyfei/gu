@@ -88,22 +88,22 @@ func (tc *Tag) ActiveList() {
 // Info for specific tag
 func (tc *Tag) Info() {
 	var (
-		t    tag.Tag
-		info tag.Tag
+		req  tag.Tag
+		resp tag.Tag
 	)
 
-	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &t)
+	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &req)
 	if err != nil {
 		logger.Error(err)
 
 		tc.Data["json"] = map[string]interface{}{
 			constants.RespKeyStatus: constants.ErrInvalidParam,
-			constants.RespKeyData:   t,
+			constants.RespKeyData:   req,
 		}
 		goto finish
 	}
 
-	if t.Tag == nil {
+	if req.Tag == nil {
 		err = errors.New("empty parameter")
 		logger.Error(err)
 
@@ -111,7 +111,7 @@ func (tc *Tag) Info() {
 		goto finish
 	}
 
-	err = tc.Validate(&t)
+	err = tc.Validate(&req)
 	if err != nil {
 		logger.Error(err)
 
@@ -119,7 +119,7 @@ func (tc *Tag) Info() {
 		goto finish
 	}
 
-	info, err = tag.Service.GetByID(t.Tag)
+	resp, err = tag.Service.GetByID(req.Tag)
 	if err != nil {
 		logger.Error(err)
 
@@ -131,7 +131,7 @@ func (tc *Tag) Info() {
 
 	tc.Data["json"] = map[string]interface{}{
 		constants.RespKeyStatus: constants.ErrSucceed,
-		constants.RespKeyData:   info,
+		constants.RespKeyData:   resp,
 	}
 
 finish:
@@ -141,22 +141,22 @@ finish:
 // Create a new tag.
 func (tc *Tag) Create() {
 	var (
-		info tag.Tag
-		id   string
+		req  tag.Tag
+		resp string
 	)
 
-	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &info)
+	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &req)
 	if err != nil {
 		logger.Error(err)
 
 		tc.Data["json"] = map[string]interface{}{
 			constants.RespKeyStatus: constants.ErrInvalidParam,
-			constants.RespKeyData:   info,
+			constants.RespKeyData:   req,
 		}
 		goto finish
 	}
 
-	if info.Tag == nil {
+	if req.Tag == nil {
 		err = errors.New("empty parameter")
 		logger.Error(err)
 
@@ -164,7 +164,7 @@ func (tc *Tag) Create() {
 		goto finish
 	}
 
-	err = tc.Validate(&info)
+	err = tc.Validate(&req)
 	if err != nil {
 		logger.Error(err)
 
@@ -172,7 +172,7 @@ func (tc *Tag) Create() {
 		goto finish
 	}
 
-	id, err = tag.Service.Create(info.Tag)
+	resp, err = tag.Service.Create(req.Tag)
 	if err != nil {
 		logger.Error(err)
 
@@ -184,7 +184,7 @@ func (tc *Tag) Create() {
 
 	tc.Data["json"] = map[string]interface{}{
 		constants.RespKeyStatus: constants.ErrSucceed,
-		constants.RespKeyData:   id,
+		constants.RespKeyData:   resp,
 	}
 
 finish:
@@ -193,20 +193,20 @@ finish:
 
 // Modify a specific tag.
 func (tc *Tag) Modify() {
-	var info tag.Tag
+	var req tag.Tag
 
-	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &info)
+	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &req)
 	if err != nil {
 		logger.Error(err)
 
 		tc.Data["json"] = map[string]interface{}{
 			constants.RespKeyStatus: constants.ErrInvalidParam,
-			constants.RespKeyData:   info,
+			constants.RespKeyData:   req,
 		}
 		goto finish
 	}
 
-	if info.Tag == nil || info.Active == nil {
+	if req.Tag == nil || req.Active == nil {
 		err = errors.New("empty parameter")
 		logger.Error(err)
 
@@ -214,7 +214,7 @@ func (tc *Tag) Modify() {
 		goto finish
 	}
 
-	err = tc.Validate(&info)
+	err = tc.Validate(&req)
 	if err != nil {
 		logger.Error(err)
 
@@ -222,7 +222,7 @@ func (tc *Tag) Modify() {
 		goto finish
 	}
 
-	err = tag.Service.Modify(&info)
+	err = tag.Service.Modify(&req)
 	if err != nil {
 		logger.Error(err)
 

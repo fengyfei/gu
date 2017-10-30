@@ -74,8 +74,8 @@ func init() {
 // Tag represents the tag information.
 type Tag struct {
 	TagID  bson.ObjectId `bson:"_id,omitempty" json:"id"`
-	Tag    *string       `bson:"Tag" json:"tag"`
-	Active *bool         `bson:"Active" json:"active"`
+	Tag    *string       `bson:"Tag" json:"tag" validate:"alphanumunicode"`
+	Active *bool         `bson:"Active" json:"active" validate:"alphanumunicode"`
 }
 
 // GetList get all the tags.
