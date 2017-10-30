@@ -30,8 +30,6 @@
 package controllers
 
 import (
-	"errors"
-
 	json "github.com/json-iterator/go"
 
 	"github.com/fengyfei/gu/applications/beego/base"
@@ -43,6 +41,23 @@ import (
 // Tag - tag associated handlers
 type Tag struct {
 	base.Controller
+}
+
+// infoReq - the request struct that get tag information by id.
+type infoReq struct {
+	TagID string `json:"tagid" validate:"required"`
+}
+
+// createReq - the request struct that create tag information.
+type createReq struct {
+	Tag string `json:"tag" validate:"required"`
+}
+
+// modifyReq - the request struct that modify the tag information.
+type modifyReq struct {
+	TagID  string `json:"tagid" validate:"required"`
+	Tag    string `json:"tag" validate:"required"`
+	Active *bool  `json:"active" validate:"required"`
 }
 
 // List all tags;
@@ -88,7 +103,7 @@ func (tc *Tag) ActiveList() {
 // Info for specific tag
 func (tc *Tag) Info() {
 	var (
-		req  tag.Tag
+		req  infoReq
 		resp tag.Tag
 	)
 
@@ -103,14 +118,6 @@ func (tc *Tag) Info() {
 		goto finish
 	}
 
-	if req.Tag == nil {
-		err = errors.New("empty parameter")
-		logger.Error(err)
-
-		tc.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-		goto finish
-	}
-
 	err = tc.Validate(&req)
 	if err != nil {
 		logger.Error(err)
@@ -119,7 +126,7 @@ func (tc *Tag) Info() {
 		goto finish
 	}
 
-	resp, err = tag.Service.GetByID(req.Tag)
+	resp, err = tag.Service.GetByID(&req.TagID)
 	if err != nil {
 		logger.Error(err)
 
@@ -141,7 +148,7 @@ finish:
 // Create a new tag.
 func (tc *Tag) Create() {
 	var (
-		req  tag.Tag
+		req  createReq
 		resp string
 	)
 
@@ -156,14 +163,6 @@ func (tc *Tag) Create() {
 		goto finish
 	}
 
-	if req.Tag == nil {
-		err = errors.New("empty parameter")
-		logger.Error(err)
-
-		tc.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-		goto finish
-	}
-
 	err = tc.Validate(&req)
 	if err != nil {
 		logger.Error(err)
@@ -172,7 +171,7 @@ func (tc *Tag) Create() {
 		goto finish
 	}
 
-	resp, err = tag.Service.Create(req.Tag)
+	resp, err = tag.Service.Create(&req.Tag)
 	if err != nil {
 		logger.Error(err)
 
@@ -193,7 +192,7 @@ finish:
 
 // Modify a specific tag.
 func (tc *Tag) Modify() {
-	var req tag.Tag
+	var req modifyReq
 
 	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &req)
 	if err != nil {
@@ -206,14 +205,6 @@ func (tc *Tag) Modify() {
 		goto finish
 	}
 
-	if req.Tag == nil || req.Active == nil {
-		err = errors.New("empty parameter")
-		logger.Error(err)
-
-		tc.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-		goto finish
-	}
-
 	err = tc.Validate(&req)
 	if err != nil {
 		logger.Error(err)
@@ -222,7 +213,7 @@ func (tc *Tag) Modify() {
 		goto finish
 	}
 
-	err = tag.Service.Modify(&req)
+	err = tag.Service.Modify(&req.TagID, &req.Tag, req.Active)
 	if err != nil {
 		logger.Error(err)
 

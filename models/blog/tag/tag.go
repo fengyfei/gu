@@ -74,8 +74,8 @@ func init() {
 // Tag represents the tag information.
 type Tag struct {
 	TagID  bson.ObjectId `bson:"_id,omitempty" json:"id"`
-	Tag    *string       `bson:"Tag" json:"tag" validate:"alphanumunicode"`
-	Active *bool         `bson:"Active" json:"active" validate:"alphanumunicode"`
+	Tag    string        `bson:"Tag" json:"tag"`
+	Active bool          `bson:"Active" json:"active"`
 }
 
 // GetList get all the tags.
@@ -125,12 +125,10 @@ func (sp *serviceProvider) GetByID(id *string) (Tag, error) {
 
 // Create create tag.
 func (sp *serviceProvider) Create(tag *string) (string, error) {
-	active := true
-
 	tagInfo := Tag{
 		TagID:  bson.NewObjectId(),
-		Tag:    tag,
-		Active: &active,
+		Tag:    *tag,
+		Active: true,
 	}
 
 	conn := session.Connect()
@@ -145,12 +143,12 @@ func (sp *serviceProvider) Create(tag *string) (string, error) {
 }
 
 // Modify modify tag information.
-func (sp *serviceProvider) Modify(update *Tag) error {
+func (sp *serviceProvider) Modify(id, tag *string, active *bool) error {
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	return conn.Update(bson.M{"_id": bson.ObjectId(update.TagID)}, bson.M{"$set": bson.M{
-		"Tag":    update.Tag,
-		"Active": update.Active,
+	return conn.Update(bson.M{"_id": bson.ObjectIdHex(*id)}, bson.M{"$set": bson.M{
+		"Tag":    *tag,
+		"Active": *active,
 	}})
 }
