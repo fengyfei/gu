@@ -8,17 +8,20 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"mime"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/charset"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/kennygrant/sanitize"
 	"github.com/temoto/robotstxt"
 )
 
@@ -54,10 +57,12 @@ type Collector struct {
 	IgnoreRobotsTxt   bool
 	visitedURLs       []string
 	robotsMap         map[string]*robotstxt.RobotsData
-	htmlCallbacks     map[string]HTMLCallback
+	htmlCallbacks     []*htmlCallbackContainer
 	requestCallbacks  []RequestCallback
 	responseCallbacks []ResponseCallback
 	errorCallbacks    []ErrorCallback
+	requestCount      int64
+	responseCount     int64
 	backend           *httpBackend
 	wg                *sync.WaitGroup
 	lock              *sync.RWMutex
@@ -123,6 +128,11 @@ type HTMLCallback func(*HTMLElement)
 // ErrorCallback is a type alias for OnError callback functions
 type ErrorCallback func(*Response, error)
 
+type htmlCallbackContainer struct {
+	Selector string
+	Function HTMLCallback
+}
+
 // NewCollector creates a new Collector instance with default configuration
 func NewCollector() *Collector {
 	c := &Collector{}
@@ -144,7 +154,7 @@ func (c *Collector) Init() {
 	c.UserAgent = "colly - https://github.com/asciimoo/colly"
 	c.MaxDepth = 0
 	c.visitedURLs = make([]string, 0, 8)
-	c.htmlCallbacks = make(map[string]HTMLCallback, 0)
+	c.htmlCallbacks = make([]*htmlCallbackContainer, 0, 8)
 	c.requestCallbacks = make([]RequestCallback, 0, 8)
 	c.responseCallbacks = make([]ResponseCallback, 0, 8)
 	c.errorCallbacks = make([]ErrorCallback, 0, 8)
@@ -231,6 +241,7 @@ func (c *Collector) scrape(u, method string, depth int, requestData io.Reader, c
 		collector: c,
 	}
 
+	atomic.AddInt64(&c.requestCount, 1)
 	c.handleOnRequest(request)
 
 	if method == "POST" && req.Header.Get("Content-Type") == "" {
@@ -240,13 +251,14 @@ func (c *Collector) scrape(u, method string, depth int, requestData io.Reader, c
 	if err := c.handleOnError(response, err, request, ctx); err != nil {
 		return err
 	}
+	atomic.AddInt64(&c.responseCount, 1)
 	response.Ctx = ctx
 	response.Request = request
 	response.fixCharset()
 
 	c.handleOnResponse(response)
 
-	c.handleOnHTML(request, response)
+	c.handleOnHTML(response)
 
 	return nil
 }
@@ -332,6 +344,20 @@ func (c *Collector) checkRobots(u *url.URL) error {
 	return nil
 }
 
+// String is the text representation of the collector.
+// It contains useful debug information about the collector's internals
+func (c *Collector) String() string {
+	return fmt.Sprintf(
+		"Requests made: %d (%d responses) | Callbacks: OnRequest: %d, OnHTML: %d, OnResponse: %d, OnError: %d",
+		c.requestCount,
+		c.responseCount,
+		len(c.requestCallbacks),
+		len(c.htmlCallbacks),
+		len(c.responseCallbacks),
+		len(c.errorCallbacks),
+	)
+}
+
 // Wait returns when the collector jobs are finished
 func (c *Collector) Wait() {
 	c.wg.Wait()
@@ -357,14 +383,26 @@ func (c *Collector) OnResponse(f ResponseCallback) {
 // GoQuery Selector is a selector used by https://github.com/PuerkitoBio/goquery
 func (c *Collector) OnHTML(goquerySelector string, f HTMLCallback) {
 	c.lock.Lock()
-	c.htmlCallbacks[goquerySelector] = f
+	c.htmlCallbacks = append(c.htmlCallbacks, &htmlCallbackContainer{
+		Selector: goquerySelector,
+		Function: f,
+	})
 	c.lock.Unlock()
 }
 
 // OnHTMLDetach deregister a function. Function will not be execute after detached
 func (c *Collector) OnHTMLDetach(goquerySelector string) {
 	c.lock.Lock()
-	delete(c.htmlCallbacks, goquerySelector)
+	deleteIdx := -1
+	for i, cc := range c.htmlCallbacks {
+		if cc.Selector == goquerySelector {
+			deleteIdx = i
+			break
+		}
+	}
+	if deleteIdx != -1 {
+		c.htmlCallbacks = append(c.htmlCallbacks[:deleteIdx], c.htmlCallbacks[deleteIdx+1:]...)
+	}
 	c.lock.Unlock()
 }
 
@@ -423,7 +461,7 @@ func (c *Collector) handleOnResponse(r *Response) {
 	}
 }
 
-func (c *Collector) handleOnHTML(req *Request, resp *Response) {
+func (c *Collector) handleOnHTML(resp *Response) {
 	if strings.Index(strings.ToLower(resp.Headers.Get("Content-Type")), "html") == -1 {
 		return
 	}
@@ -431,18 +469,18 @@ func (c *Collector) handleOnHTML(req *Request, resp *Response) {
 	if err != nil {
 		return
 	}
-	for expr, f := range c.htmlCallbacks {
-		doc.Find(expr).Each(func(i int, s *goquery.Selection) {
+	for _, cc := range c.htmlCallbacks {
+		doc.Find(cc.Selector).Each(func(i int, s *goquery.Selection) {
 			for _, n := range s.Nodes {
 				e := &HTMLElement{
 					Name:       n.Data,
-					Request:    req,
+					Request:    resp.Request,
 					Response:   resp,
 					Text:       goquery.NewDocumentFromNode(n).Text(),
 					DOM:        s,
 					attributes: n.Attr,
 				}
-				f(e)
+				cc.Function(e)
 			}
 		})
 	}
@@ -551,6 +589,15 @@ func (h *HTMLElement) ChildText(goquerySelector string) string {
 	return strings.TrimSpace(h.DOM.Find(goquerySelector).Text())
 }
 
+// ChildAttr returns the stripped text content of the first matching
+// element's attribute.
+func (h *HTMLElement) ChildAttr(goquerySelector, attrName string) string {
+	if attr, ok := h.DOM.Find(goquerySelector).Attr(attrName); ok {
+		return strings.TrimSpace(attr)
+	}
+	return ""
+}
+
 // AbsoluteURL returns with the resolved absolute URL of an URL chunk.
 // AbsoluteURL returns empty string if the URL chunk is a fragment or
 // could not be parsed
@@ -630,6 +677,24 @@ func (c *Context) Get(key string) string {
 	}
 	c.lock.RUnlock()
 	return ""
+}
+
+// Save writes response body to disk
+func (r *Response) Save(fileName string) error {
+	return ioutil.WriteFile(fileName, r.Body, 0644)
+}
+
+// FileName returns the sanitized file name parsed from "Content-Disposition"
+// header or from URL
+func (r *Response) FileName() string {
+	_, params, err := mime.ParseMediaType(r.Headers.Get("Content-Disposition"))
+	if fName, ok := params["filename"]; ok && err == nil {
+		return sanitize.BaseName(fName)
+	}
+	if r.Request.URL.RawQuery != "" {
+		return sanitize.BaseName(fmt.Sprintf("%s_%s", r.Request.URL.Path, r.Request.URL.RawQuery))
+	}
+	return sanitize.BaseName(r.Request.URL.Path)
 }
 
 func createFormReader(data map[string]string) io.Reader {
