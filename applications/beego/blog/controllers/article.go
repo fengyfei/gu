@@ -43,10 +43,39 @@ type Article struct {
 	base.Controller
 }
 
+// createArticleReq - the request struct that get article information by id.
+type createArticleReq struct {
+	Author   string   `json:"author" validate:"required"`
+	Title    string   `json:"title" validate:"required,alphanumunicode,len=24"`
+	Content  string   `json:"content" validate:"required"`
+	Abstract string   `json:"abstract" validate:"required"`
+	Tags      []string `json:"tag" validate:"required"`
+	Active   bool     `json:"active" validate:"required"`
+}
+
+// getByTagReq - the request struct that get article information by tag.
+type getByTagReq struct {
+	Tags []string `json:"tags" validate:"required"`
+}
+
+// getByIdReq - the request struct that get article information by id.
+type getByIdReq struct {
+	ID string `json:"id" validate:"required"`
+}
+
+// modifyArticleReq - the request struct that modify article information by id.
+type modifyArticleReq struct {
+	ArticleID string `json:"id" validate:"required"`
+	Title     string `json:"title" validate:"required,alphanumunicode,len=24"`
+	Content   string `json:"content" validate:"required"`
+	Abstract  string `json:"abstract" validate:"required"`
+	Active    bool   `json:"active" validate:"required"`
+}
+
 // Create a new article
 func (ac *Article) Create() {
 	var (
-		articleInfo article.Article
+		articleInfo createArticleReq
 		err         error
 		articleID   string
 	)
@@ -67,7 +96,7 @@ func (ac *Article) Create() {
 		goto finish
 	}
 
-	articleID, err = article.Service.Create(&articleInfo)
+	articleID, err = article.Service.Create(&articleInfo.Author, &articleInfo.Title, &articleInfo.Abstract, &articleInfo.Content, &articleInfo.Tags)
 	if err != nil {
 		logger.Error(err)
 		ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMongoDB}
@@ -127,11 +156,11 @@ finish:
 func (ac *Article) GetByTag() {
 	var (
 		articleList []article.Article
-		tags        []string
+		tagArr      getByTagReq
 		err         error
 	)
 
-	err = json.Unmarshal(ac.Ctx.Input.RequestBody, &tags)
+	err = json.Unmarshal(ac.Ctx.Input.RequestBody, &tagArr)
 	if err != nil {
 		logger.Error(err)
 		ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
@@ -139,7 +168,7 @@ func (ac *Article) GetByTag() {
 		goto finish
 	}
 
-	articleList, err = article.Service.GetByTags(tags)
+	articleList, err = article.Service.GetByTags(&tagArr.Tags)
 	if err != nil {
 		logger.Error(err)
 		ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMongoDB}
@@ -157,7 +186,7 @@ finish:
 func (ac *Article) GetByID() {
 	var (
 		articleRes article.Article
-		articleID  string
+		articleID  getByIdReq
 		err        error
 	)
 
@@ -169,7 +198,7 @@ func (ac *Article) GetByID() {
 		goto finish
 	}
 
-	articleRes, err = article.Service.GetByID(articleID)
+	articleRes, err = article.Service.GetByID(articleID.ID)
 	if err != nil {
 		logger.Error(err)
 		ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMongoDB}
@@ -186,7 +215,7 @@ finish:
 // Modify modify article
 func (ac *Article) Modify() {
 	var (
-		articleToModify article.Article
+		articleToModify modifyArticleReq
 		err             error
 	)
 
@@ -198,7 +227,7 @@ func (ac *Article) Modify() {
 		goto finish
 	}
 
-	err = article.Service.Modify(&articleToModify)
+	err = article.Service.Modify(&articleToModify.ArticleID, &articleToModify.Title, &articleToModify.Content, &articleToModify.Abstract, &articleToModify.Active)
 	if err != nil {
 		logger.Error(err)
 		ac.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMongoDB}

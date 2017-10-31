@@ -132,7 +132,7 @@ func (sp *serviceProvider) GetByID(id string) (Article, error) {
 }
 
 // GetByTags get articles based on tag id.
-func (sp *serviceProvider) GetByTags(tags []string) ([]Article, error) {
+func (sp *serviceProvider) GetByTags(tags *[]string) ([]Article, error) {
 	var (
 		articles []Article
 		err      error
@@ -141,20 +141,20 @@ func (sp *serviceProvider) GetByTags(tags []string) ([]Article, error) {
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	err = conn.GetMany(bson.M{"Tag": bson.M{"$all": tags}}, &articles)
+	err = conn.GetMany(bson.M{"Tag": bson.M{"$all": *tags}}, &articles)
 
 	return articles, err
 }
 
 // Create create article.
-func (sp *serviceProvider) Create(article *Article) (string, error) {
+func (sp *serviceProvider) Create(author, title, abstract, content *string, tag *[]string) (string, error) {
 	articleInfo := Article{
 		ArticleID: bson.NewObjectId(),
-		Author:    article.Author,
-		Title:     article.Title,
-		Content:   article.Content,
-		Abstract:  article.Abstract,
-		Tag:       article.Tag,
+		Author:    *author,
+		Title:     *title,
+		Content:   *content,
+		Abstract:  *abstract,
+		Tag:       *tag,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 		Active:    true,
@@ -172,19 +172,19 @@ func (sp *serviceProvider) Create(article *Article) (string, error) {
 }
 
 // Modify modify article information.
-func (sp *serviceProvider) Modify(update *Article) error {
+func (sp *serviceProvider) Modify(id, title, content, abstract *string, active *bool) error {
 	updater := bson.M{"$set": bson.M{
-		"Title":     update.Title,
-		"Content":   update.Content,
-		"Abstract":  update.Abstract,
-		"Active":    update.Active,
+		"Title":     *title,
+		"Content":   *content,
+		"Abstract":  *abstract,
+		"Active":    *active,
 		"UpdatedAt": time.Now(),
 	}}
 
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	return conn.Update(bson.M{"_id": bson.ObjectId(update.ArticleID)}, updater)
+	return conn.Update(bson.M{"_id": bson.ObjectIdHex(*id)}, updater)
 }
 
 // AddTags add tags to specified article.
