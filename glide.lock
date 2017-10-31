@@ -1,5 +1,5 @@
-hash: df8f0cbb923babcad2d6c8b5c4ed0ffc0c9d95ac9a2dc899c6a3a8d034056935
-updated: 2017-10-31T14:49:40.650543+08:00
+hash: 468670c452c66216318a599747240a89655bd10e16e65f24b928151084250cb8
+updated: 2017-10-31T14:54:08.663268+08:00
 imports:
 - name: github.com/andybalholm/cascadia
   version: 349dd0209470eabd9514242c688c403c0926d266
@@ -42,6 +42,10 @@ imports:
   version: 6240e1e7983a85228f7fd9c3e1b6932d46ec58e2
 - name: github.com/kennygrant/sanitize
   version: 2e6820834a1f36c626bf19a253b7d3cc060e9b8b
+- name: github.com/labstack/echo
+  version: cec7629194fe4bf83b0c72d9a02d340c7a1468ac
+  subpackages:
+  - '...'
 - name: github.com/PuerkitoBio/goquery
   version: 1a71cc719d0d5b9e4f14ae072bef08b576b0bab5
 - name: github.com/temoto/robotstxt
