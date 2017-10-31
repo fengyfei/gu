@@ -43,18 +43,18 @@ type Tag struct {
 	base.Controller
 }
 
-// infoReq - the request struct that get tag information by id.
-type infoReq struct {
+// tagInfoReq - the request struct that get tag information by id.
+type tagInfoReq struct {
 	TagID string `json:"tagid" validate:"required,alphanumunicode,len=24"`
 }
 
-// createReq - the request struct that create tag information.
-type createReq struct {
+// createTagReq - the request struct that create tag information.
+type createTagReq struct {
 	Tag string `json:"tag" validate:"required,alphaunicode,min=2,max=6"`
 }
 
-// modifyReq - the request struct that modify the tag information.
-type modifyReq struct {
+// modifyTagReq - the request struct that modify the tag information.
+type modifyTagReq struct {
 	TagID  string `json:"tagid" validate:"required,alphanumunicode,len=24"`
 	Tag    string `json:"tag" validate:"required,alphaunicode,min=2,max=6"`
 	Active *bool  `json:"active" validate:"required"`
@@ -103,7 +103,7 @@ func (tc *Tag) ActiveList() {
 // Info for specific tag
 func (tc *Tag) Info() {
 	var (
-		req  infoReq
+		req  tagInfoReq
 		resp tag.Tag
 	)
 
@@ -148,7 +148,7 @@ finish:
 // Create a new tag.
 func (tc *Tag) Create() {
 	var (
-		req  createReq
+		req  createTagReq
 		resp string
 	)
 
@@ -192,7 +192,7 @@ finish:
 
 // Modify a specific tag.
 func (tc *Tag) Modify() {
-	var req modifyReq
+	var req modifyTagReq
 
 	err := json.Unmarshal(tc.Ctx.Input.RequestBody, &req)
 	if err != nil {
