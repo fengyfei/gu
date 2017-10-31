@@ -12,6 +12,8 @@ import:
   version: 1.0.3
 - package: github.com/go-xorm/xorm
   version: ^0.6.3
+- package: github.com/go-xorm/core
+  version: ^0.5.7
 testImport:
 - package: github.com/smartystreets/goconvey
   version: 1.6.3

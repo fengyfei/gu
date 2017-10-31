@@ -1,5 +1,5 @@
-hash: ffe277290d5a0f3e9e42b320eba87eb072cc99339014853eb30a1c55e6972c6d
-updated: 2017-10-31T11:24:59.992907+08:00
+hash: df8f0cbb923babcad2d6c8b5c4ed0ffc0c9d95ac9a2dc899c6a3a8d034056935
+updated: 2017-10-31T14:49:40.650543+08:00
 imports:
 - name: github.com/andybalholm/cascadia
   version: 349dd0209470eabd9514242c688c403c0926d266
@@ -22,6 +22,10 @@ imports:
   - currency
 - name: github.com/go-playground/universal-translator
   version: 71201497bace774495daed26a3874fd339e0b538
+- name: github.com/go-xorm/builder
+  version: a4a881a4e552fcb5473f39e8b9f7d9f3457a7fb0
+- name: github.com/go-xorm/core
+  version: da1adaf7a28ca792961721a34e6e04945200c890
 - name: github.com/go-xorm/xorm
   version: d7f04c3cecff8d8c9321b2c39940e1992ce9f01a
 - name: github.com/gobwas/glob
