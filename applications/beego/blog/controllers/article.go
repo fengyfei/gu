@@ -45,30 +45,30 @@ type Article struct {
 
 // createArticleReq - the request struct that get article information by id.
 type createArticleReq struct {
-	Author   string   `json:"author" validate:"required"`
-	Title    string   `json:"title" validate:"required,alphanumunicode,len=24"`
-	Content  string   `json:"content" validate:"required"`
-	Abstract string   `json:"abstract" validate:"required"`
-	Tags      []string `json:"tag" validate:"required"`
+	Author   string   `json:"author"`
+	Title    string   `json:"title" validate:"required,alphaunicode,min=5,max=20"`
+	Content  string   `json:"content" validate:"required,min=50"`
+	Abstract string   `json:"abstract" validate:"required,min=10"`
+	Tags     []string `json:"tag" validate:"required,dive,alphaunicode,min=2,max=6"`
 	Active   bool     `json:"active" validate:"required"`
 }
 
 // getByTagReq - the request struct that get article information by tag.
 type getByTagReq struct {
-	Tags []string `json:"tags" validate:"required"`
+	Tags []string `json:"tags" validate:"required,dive,alphaunicode,min=2,max=6"`
 }
 
 // getByIdReq - the request struct that get article information by id.
 type getByIdReq struct {
-	ID string `json:"id" validate:"required"`
+	ID string `json:"id" validate:"required,alphanumunicode,len=24"`
 }
 
 // modifyArticleReq - the request struct that modify article information by id.
 type modifyArticleReq struct {
-	ArticleID string `json:"id" validate:"required"`
-	Title     string `json:"title" validate:"required,alphanumunicode,len=24"`
-	Content   string `json:"content" validate:"required"`
-	Abstract  string `json:"abstract" validate:"required"`
+	ArticleID string `json:"id" validate:"required,alphanumunicode,len=24"`
+	Title     string `json:"title" validate:"required,alphaunicode,min=6"`
+	Content   string `json:"content" validate:"required,min=50"`
+	Abstract  string `json:"abstract" validate:"required,min=10"`
 	Active    bool   `json:"active" validate:"required"`
 }
 
