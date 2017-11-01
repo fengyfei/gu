@@ -27,28 +27,27 @@
  *     Initial: 2017/11/01        Jia Chenhui
  */
 
-package general
+package core
 
 import (
-	"github.com/fengyfei/gu/applications/echo/core/general/errcode"
+	"github.com/labstack/echo"
+	"gopkg.in/go-playground/validator.v9"
 )
 
-type ErrorResp struct {
-	Code int    `json:"status"`
-	Msg  string `json:"msg"`
+// EchoValidator wrap the validate struct of validator.v9.
+type EchoValidator struct {
+	validator *validator.Validate
 }
 
-func NewErrorWithMsg(code int, msg string) *ErrorResp {
-	if code == errcode.ErrSucceed {
-		msg = ""
-	}
-
-	return &ErrorResp{
-		Code: code,
-		Msg:  msg,
-	}
+// Validate validates a structs exposed fields, and automatically validates
+// nested structs, unless otherwise specified.
+func (ev *EchoValidator) Validate(i interface{}) error {
+	return ev.validator.Struct(i)
 }
 
-func (er *ErrorResp) Error() string {
-	return er.Msg
+// NewEchoValidator create a echo.Validator.
+func NewEchoValidator() echo.Validator {
+	return &EchoValidator{
+		validator: validator.New(),
+	}
 }

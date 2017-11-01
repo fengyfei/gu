@@ -27,23 +27,45 @@
  *     Initial: 2017/11/01        Jia Chenhui
  */
 
-package general
+package core
 
 import (
+	"net/http"
+
 	"github.com/labstack/echo"
-	"gopkg.in/go-playground/validator.v9"
+
+	"github.com/fengyfei/gu/libs/logger"
 )
 
-type EchoValidator struct {
-	validator *validator.Validate
-}
+var (
+	code = http.StatusInternalServerError
+	msg  string
+)
 
-func (ev *EchoValidator) Validate(i interface{}) error {
-	return ev.validator.Struct(i)
-}
+// EchoRestfulErrorHandler use to handle error.
+func EchoRestfulErrorHandler(err error, c echo.Context) {
+	logger.Error(err)
 
-func NewEchoValidator() echo.Validator {
-	return &EchoValidator{
-		validator: validator.New(),
+	if resp, ok := err.(*ErrorResp); ok {
+		code = resp.Code
+		msg = resp.Msg
+	} else {
+		msg = http.StatusText(code)
+	}
+
+	if !c.Response().Committed {
+		if c.Request().Method == echo.HEAD {
+			err := c.NoContent(code)
+
+			if err != nil {
+				c.Logger().Error(err)
+			}
+		} else {
+			err := c.JSON(code, NewErrorWithMsg(code, msg))
+
+			if err != nil {
+				c.Logger().Error(err)
+			}
+		}
 	}
 }
