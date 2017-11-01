@@ -27,44 +27,31 @@
  *     Initial: 2017/11/01        Jia Chenhui
  */
 
-package general
+package core
 
 import (
-	"net/http"
-
-	"github.com/labstack/echo"
-
-	"github.com/fengyfei/gu/libs/logger"
+	"github.com/fengyfei/gu/libs/constants"
 )
 
-var (
-	code = http.StatusInternalServerError
-	msg  string
-)
+// ErrorResp represents response error code and message.
+type ErrorResp struct {
+	Code int    `json:"status"`
+	Msg  string `json:"msg"`
+}
 
-func EchoRestfulErrorHandler(err error, c echo.Context) {
-	logger.Error(err)
-
-	if resp, ok := err.(*ErrorResp); ok {
-		code = resp.Code
-		msg = resp.Msg
-	} else {
-		msg = http.StatusText(code)
+// NewErrorWithMsg create ErrorResp with code and msg.
+func NewErrorWithMsg(code int, msg string) *ErrorResp {
+	if code == constants.ErrSucceed {
+		msg = ""
 	}
 
-	if !c.Response().Committed {
-		if c.Request().Method == echo.HEAD {
-			err := c.NoContent(code)
-
-			if err != nil {
-				c.Logger().Error(err)
-			}
-		} else {
-			err := c.JSON(code, NewErrorWithMsg(code, msg))
-
-			if err != nil {
-				c.Logger().Error(err)
-			}
-		}
+	return &ErrorResp{
+		Code: code,
+		Msg:  msg,
 	}
+}
+
+// Error return error message.
+func (er *ErrorResp) Error() string {
+	return er.Msg
 }
