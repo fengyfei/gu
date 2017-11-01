@@ -30,8 +30,9 @@
 package staff
 
 import (
-	"strconv"
 	"time"
+
+	"github.com/fengyfei/gu/libs/helper"
 )
 
 const (
@@ -144,11 +145,7 @@ func (sp *serviceProvider) LeaveOffice(uid *int32, r *RegisterOverview) error {
 func todayToInt() int32 {
 	today := time.Now().Format(dateFormat)
 
-	i, _ := strToInt32(today)
+	i, _ := helper.StrToInt32(today)
 
 	return i
-}
-
-func strToInt32(value string) (int32, error) {
-	return strconv.ParseInt(value, 10, 32)
 }
