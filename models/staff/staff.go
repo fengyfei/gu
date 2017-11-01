@@ -96,7 +96,7 @@ func (sp *serviceProvider) Login(name, pwd *string) (int32, error) {
 }
 
 // Create create a new staff account.
-func (sp *serviceProvider) Create(name, pwd, realname, githubname, mobile, email *string, hireat time.Time, male bool) error {
+func (sp *serviceProvider) Create(name, pwd, realname, mobile, email *string, hireat time.Time, male bool) error {
 	salt, err := security.SaltHashGenerate(pwd)
 	if err != nil {
 		return err
