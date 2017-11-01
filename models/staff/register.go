@@ -32,8 +32,6 @@ package staff
 import (
 	"strconv"
 	"time"
-
-	"github.com/fengyfei/gu/applications/echo/core/orm"
 )
 
 const (
@@ -69,7 +67,7 @@ func (sp *serviceProvider) Register(uid *int32) error {
 	staff := &Staff{}
 	today := todayToInt()
 
-	_, err := orm.Engine.ID(*uid).Get(&staff)
+	_, err := Engine.ID(*uid).Get(&staff)
 	if err != nil {
 		return err
 	}
@@ -82,7 +80,7 @@ func (sp *serviceProvider) Register(uid *int32) error {
 		CreatedDate:  today,
 	}
 
-	_, err = orm.Engine.Insert(register)
+	_, err = Engine.Insert(register)
 
 	return err
 }
@@ -92,7 +90,7 @@ func (sp *serviceProvider) IsRegistered(uid *int32) (*RegisterOverview, bool, er
 	register := &Register{}
 	today := todayToInt()
 
-	_, err := orm.Engine.Where("id=? AND createddate=?", *uid, today).Get(register)
+	_, err := Engine.Where("id=? AND createddate=?", *uid, today).Get(register)
 	if err != nil {
 		return nil, false, err
 	}
@@ -114,7 +112,7 @@ func (sp *serviceProvider) RegisterAgain(uid *int32) error {
 		Registered:   true,
 	}
 
-	_, err := orm.Engine.Where("id=? AND createddate=?", *uid, today).Update(updater)
+	_, err := Engine.Where("id=? AND createddate=?", *uid, today).Update(updater)
 	if err != nil {
 		return err
 	}
@@ -135,7 +133,7 @@ func (sp *serviceProvider) LeaveOffice(uid *int32, r *RegisterOverview) error {
 		StayTime:   staytime,
 	}
 
-	_, err := orm.Engine.Where("id=? AND createddate=?", *uid, today).Update(updater)
+	_, err := Engine.Where("id=? AND createddate=?", *uid, today).Update(updater)
 	if err != nil {
 		return err
 	}
