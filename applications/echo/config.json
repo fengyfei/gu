@@ -1,0 +1,11 @@
+{
+  "server": {
+    "address": ":21000",
+    "debug": true
+  },
+  "middleware": {
+    "jwt": {
+      "tokenkey": "PXL0we7gqrgskjnPwiXXwVeXY4pFGvcnq4zImdN1L4"
+    }
+  }
+}
