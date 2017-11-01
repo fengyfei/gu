@@ -31,8 +31,6 @@ package staff
 
 import (
 	"time"
-
-	"github.com/fengyfei/gu/applications/echo/core/orm"
 )
 
 // ContactInfo is the more detail of one particular staff.
@@ -57,7 +55,7 @@ func (sp *serviceProvider) OverviewList() ([]ContactOverview, error) {
 	slist := []Staff{}
 	clist := []ContactOverview{}
 
-	_, err := orm.Engine.Where("resigned=?", false).Get(&slist)
+	_, err := Engine.Where("resigned=?", false).Get(&slist)
 	if err != nil {
 		return clist, err
 	}
@@ -79,7 +77,7 @@ func (sp *serviceProvider) InfoList() ([]ContactInfo, error) {
 	slist := []Staff{}
 	clist := &ContactInfo{}
 
-	_, err := orm.Engine.Where("resigned=?", false).Get(&slist)
+	_, err := Engine.Where("resigned=?", false).Get(&slist)
 	if err != nil {
 		return clist, err
 	}
@@ -106,7 +104,7 @@ func (sp *serviceProvider) GetByID(uid *int32) (*ContactInfo, error) {
 	staff := &Staff{}
 	contact := &ContactInfo{}
 
-	_, err := orm.Engine.ID(*uid).Get(staff)
+	_, err := Engine.ID(*uid).Get(staff)
 	if err != nil {
 		return nil, err
 	}

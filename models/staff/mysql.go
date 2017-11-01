@@ -27,7 +27,7 @@
  *     Initial: 2017/10/31        Jia Chenhui
  */
 
-package orm
+package staff
 
 import (
 	_ "github.com/go-sql-driver/mysql"
@@ -35,6 +35,9 @@ import (
 )
 
 const (
+	maxIdle = 2
+	maxOpen = 10
+
 	driver  = "mysql"
 	staffDb = "root:111111@tcp(0.0.0.0:3306)/staff?charset=utf8"
 )
