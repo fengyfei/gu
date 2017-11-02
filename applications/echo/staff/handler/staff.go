@@ -56,7 +56,6 @@ type (
 		RealName *string `josn:"realname" validate:"required,alphanumunicode,min=2,max=20"`
 		Mobile   *string `json:"mobile" validate:"required,numeric,len=11"`
 		Email    *string `json:"email" validate:"required,email"`
-		HireAt   *string `json:"hireat" validate:"required"`
 		Male     bool    `json:"male"`
 	}
 
@@ -134,9 +133,8 @@ func Login(c echo.Context) error {
 // Create - Create staff information.
 func Create(c echo.Context) error {
 	var (
-		err    error
-		hireAt time.Time
-		req    createReq
+		err error
+		req createReq
 	)
 
 	if err = c.Bind(&req); err != nil {
@@ -153,12 +151,11 @@ func Create(c echo.Context) error {
 	}
 	defer mysql.Pool.Release(conn)
 
-	hireAt, err = time.Parse("2006-01-02", *req.HireAt)
 	if err != nil {
 		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
 	}
 
-	err = staff.Service.Create(conn, req.Name, req.Pwd, req.RealName, req.Mobile, req.Email, hireAt, req.Male)
+	err = staff.Service.Create(conn, req.Name, req.Pwd, req.RealName, req.Mobile, req.Email, req.Male)
 	if err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}

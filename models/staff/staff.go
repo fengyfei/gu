@@ -93,7 +93,7 @@ func (sp *serviceProvider) Login(conn orm.Connection, name, pwd *string) (int32,
 }
 
 // Create create a new staff account.
-func (sp *serviceProvider) Create(conn orm.Connection, name, pwd, realname, mobile, email *string, hireat time.Time, male bool) error {
+func (sp *serviceProvider) Create(conn orm.Connection, name, pwd, realname, mobile, email *string, male bool) error {
 	salt, err := security.SaltHashGenerate(pwd)
 	if err != nil {
 		return err
