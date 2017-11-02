@@ -32,8 +32,10 @@ package staff
 import (
 	"time"
 
-	"github.com/fengyfei/gu/applications/echo/staff/orm"
+	"github.com/go-xorm/xorm"
+
 	"github.com/fengyfei/gu/libs/helper"
+	"github.com/fengyfei/gu/libs/orm"
 )
 
 const (
@@ -65,11 +67,11 @@ func (Register) TableName() string {
 }
 
 // Register represents the first sign in.
-func (sp *serviceProvider) Register(uid *int32) error {
+func (sp *serviceProvider) Register(conn orm.Connection, uid *int32) error {
 	staff := &Staff{}
 	today := todayToInt()
 
-	_, err := orm.Engine.ID(*uid).Get(&staff)
+	_, err := conn.(*xorm.Engine).ID(*uid).Get(&staff)
 	if err != nil {
 		return err
 	}
@@ -82,17 +84,17 @@ func (sp *serviceProvider) Register(uid *int32) error {
 		CreatedDate:  today,
 	}
 
-	_, err = orm.Engine.Insert(register)
+	_, err = conn.(*xorm.Engine).Insert(register)
 
 	return err
 }
 
 // IsRegistered decide whether to sign in or not.
-func (sp *serviceProvider) IsRegistered(uid *int32) (*RegisterOverview, bool, error) {
+func (sp *serviceProvider) IsRegistered(conn orm.Connection, uid *int32) (*RegisterOverview, bool, error) {
 	register := &Register{}
 	today := todayToInt()
 
-	_, err := orm.Engine.Where("id=? AND createddate=?", *uid, today).Get(register)
+	_, err := conn.(*xorm.Engine).Where("id=? AND createddate=?", *uid, today).Get(register)
 	if err != nil {
 		return nil, false, err
 	}
@@ -106,7 +108,7 @@ func (sp *serviceProvider) IsRegistered(uid *int32) (*RegisterOverview, bool, er
 }
 
 // RegisterAgain sign in again.
-func (sp *serviceProvider) RegisterAgain(uid *int32) error {
+func (sp *serviceProvider) RegisterAgain(conn orm.Connection, uid *int32) error {
 	today := todayToInt()
 
 	updater := &Register{
@@ -114,7 +116,7 @@ func (sp *serviceProvider) RegisterAgain(uid *int32) error {
 		Registered:   true,
 	}
 
-	_, err := orm.Engine.Where("id=? AND createddate=?", *uid, today).Update(updater)
+	_, err := conn.(*xorm.Engine).Where("id=? AND createddate=?", *uid, today).Update(updater)
 	if err != nil {
 		return err
 	}
@@ -123,7 +125,7 @@ func (sp *serviceProvider) RegisterAgain(uid *int32) error {
 }
 
 // LeaveOffice represents sign out.
-func (sp *serviceProvider) LeaveOffice(uid *int32, r *RegisterOverview) error {
+func (sp *serviceProvider) LeaveOffice(conn orm.Connection, uid *int32, r *RegisterOverview) error {
 	today := todayToInt()
 
 	d := time.Now().Sub(r.RegisterAt) / time.Minute
@@ -135,7 +137,7 @@ func (sp *serviceProvider) LeaveOffice(uid *int32, r *RegisterOverview) error {
 		StayTime:   staytime,
 	}
 
-	_, err := orm.Engine.Where("id=? AND createddate=?", *uid, today).Update(updater)
+	_, err := conn.(*xorm.Engine).Where("id=? AND createddate=?", *uid, today).Update(updater)
 	if err != nil {
 		return err
 	}

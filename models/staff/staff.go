@@ -33,7 +33,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/fengyfei/gu/applications/echo/staff/orm"
+	"github.com/go-xorm/xorm"
+
+	"github.com/fengyfei/gu/libs/orm"
 	"github.com/fengyfei/gu/libs/security"
 )
 
@@ -72,19 +74,14 @@ var (
 )
 
 func init() {
-	err := orm.Engine.Sync2(new(Staff), new(Register))
-	if err != nil {
-		panic(err)
-	}
-
 	Service = &serviceProvider{}
 }
 
 // Login return user id and nil if login success.
-func (sp *serviceProvider) Login(name, pwd *string) (int32, error) {
+func (sp *serviceProvider) Login(conn orm.Connection, name, pwd *string) (int32, error) {
 	staff := &Staff{}
 
-	_, err := orm.Engine.Where("name=?", *name).Get(staff)
+	_, err := conn.(*xorm.Engine).Where("name=?", *name).Get(staff)
 	if err != nil {
 		return 0, err
 	}
@@ -97,7 +94,7 @@ func (sp *serviceProvider) Login(name, pwd *string) (int32, error) {
 }
 
 // Create create a new staff account.
-func (sp *serviceProvider) Create(name, pwd, realname, mobile, email *string, hireat time.Time, male bool) error {
+func (sp *serviceProvider) Create(conn orm.Connection, name, pwd, realname, mobile, email *string, hireat time.Time, male bool) error {
 	salt, err := security.SaltHashGenerate(pwd)
 	if err != nil {
 		return err
@@ -114,29 +111,29 @@ func (sp *serviceProvider) Create(name, pwd, realname, mobile, email *string, hi
 		Active:   true,
 	}
 
-	_, err = orm.Engine.Insert(staff)
+	_, err = conn.(*xorm.Engine).Insert(staff)
 
 	return err
 }
 
 // Modify modify staff information.
-func (sp *serviceProvider) Modify(uid *int32, name, mobile, email *string) error {
+func (sp *serviceProvider) Modify(conn orm.Connection, uid *int32, name, mobile, email *string) error {
 	staff := &Staff{
 		Name:   *name,
 		Mobile: *mobile,
 		Email:  *email,
 	}
 
-	_, err := orm.Engine.ID(*uid).Update(staff)
+	_, err := conn.(*xorm.Engine).ID(*uid).Update(staff)
 
 	return err
 }
 
 // ModifyPwd modify staff password.
-func (sp *serviceProvider) ModifyPwd(uid *int32, oldpwd, newpwd *string) error {
+func (sp *serviceProvider) ModifyPwd(conn orm.Connection, uid *int32, oldpwd, newpwd *string) error {
 	staff := &Staff{}
 
-	_, err := orm.Engine.ID(*uid).Get(staff)
+	_, err := conn.(*xorm.Engine).ID(*uid).Get(staff)
 	if err != nil {
 		return err
 	}
@@ -154,51 +151,51 @@ func (sp *serviceProvider) ModifyPwd(uid *int32, oldpwd, newpwd *string) error {
 		Pwd: string(salt),
 	}
 
-	_, err = orm.Engine.ID(*uid).Update(update)
+	_, err = conn.(*xorm.Engine).ID(*uid).Update(update)
 
 	return err
 }
 
 // ModifyMobile modify staff mobile.
-func (sp *serviceProvider) ModifyMobile(uid *int32, mobile *string) error {
+func (sp *serviceProvider) ModifyMobile(conn orm.Connection, uid *int32, mobile *string) error {
 	staff := &Staff{
 		Mobile: *mobile,
 	}
 
-	_, err := orm.Engine.ID(*uid).Update(staff)
+	_, err := conn.(*xorm.Engine).ID(*uid).Update(staff)
 
 	return err
 }
 
 // ModifyActive modify staff status.
-func (sp *serviceProvider) ModifyActive(uid *int32, active *bool) error {
+func (sp *serviceProvider) ModifyActive(conn orm.Connection, uid *int32, active *bool) error {
 	staff := &Staff{
 		Active: *active,
 	}
 
-	_, err := orm.Engine.ID(*uid).Update(staff)
+	_, err := conn.(*xorm.Engine).ID(*uid).Update(staff)
 
 	return err
 }
 
 // Dismiss modify staff active to false and dismiss to true.
-func (sp *serviceProvider) Dismiss(uid *int32) error {
+func (sp *serviceProvider) Dismiss(conn orm.Connection, uid *int32) error {
 	staff := &Staff{
 		Active:   false,
 		Resigned: true,
 		ResignAt: time.Now(),
 	}
 
-	_, err := orm.Engine.ID(*uid).Update(staff)
+	_, err := conn.(*xorm.Engine).ID(*uid).Update(staff)
 
 	return err
 }
 
 //IsActive return staff.Active and nil if query success
-func (sp *serviceProvider) IsActive(uid *int32) (bool, error) {
+func (sp *serviceProvider) IsActive(conn orm.Connection, uid *int32) (bool, error) {
 	staff := &Staff{}
 
-	_, err := orm.Engine.ID(*uid).Get(staff)
+	_, err := conn.(*xorm.Engine).ID(*uid).Get(staff)
 
 	return staff.Active, err
 }
