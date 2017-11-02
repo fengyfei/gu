@@ -45,14 +45,13 @@ const (
 
 type Staff struct {
 	Id        int32
-	Name      string `xorm:"varchar(30) notnull unique"`
-	Pwd       string `xorm:"varchar(128) notnull"`
-	RealName  string
+	Name      string    `xorm:"varchar(30) notnull unique"`
+	Pwd       string    `xorm:"varchar(128) notnull"`
+	RealName  string    `xorm:"realname varchar(256) notnull unique"`
 	Mobile    string    `xorm:"unique"`
 	Email     string    `xorm:"varchar(80) unique"`
 	CreatedAt time.Time `xorm:"created"`
-	HireAt    time.Time
-	ResignAt  time.Time
+	ResignAt  time.Time `xorm:"resignat"`
 	Male      bool
 	Active    bool
 	Resigned  bool
@@ -106,7 +105,6 @@ func (sp *serviceProvider) Create(conn orm.Connection, name, pwd, realname, mobi
 		RealName: *realname,
 		Mobile:   *mobile,
 		Email:    *email,
-		HireAt:   hireat,
 		Male:     male,
 		Active:   true,
 	}
@@ -198,4 +196,28 @@ func (sp *serviceProvider) IsActive(conn orm.Connection, uid *int32) (bool, erro
 	_, err := conn.(*xorm.Engine).ID(*uid).Get(staff)
 
 	return staff.Active, err
+}
+
+// List list all on the job staff.
+func (sp *serviceProvider) List(conn orm.Connection) ([]Staff, error) {
+	list := []Staff{}
+
+	_, err := conn.(*xorm.Engine).Where("resigned=?", false).Get(&list)
+	if err != nil {
+		return list, err
+	}
+
+	return list, nil
+}
+
+// GetByID get one staff detail information.
+func (sp *serviceProvider) GetByID(conn orm.Connection, uid *int32) (*Staff, error) {
+	staff := &Staff{}
+
+	_, err := conn.(*xorm.Engine).ID(*uid).Get(staff)
+	if err != nil {
+		return nil, err
+	}
+
+	return staff, nil
 }
