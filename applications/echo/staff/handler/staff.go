@@ -72,7 +72,7 @@ type (
 
 	// modifyActiveReq - The request struct that modify staff status.
 	modifyActiveReq struct {
-		Active bool `json:"active"  validate:"required"`
+		Active *bool `json:"active"  validate:"required"`
 	}
 )
 
@@ -198,7 +198,7 @@ func ModifyActive(c echo.Context) error {
 	}
 
 	uid := core.UserID(c)
-	if err = staff.Service.ModifyActive(&uid); err != nil {
+	if err = staff.Service.ModifyActive(&uid, req.Active); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 

@@ -85,10 +85,10 @@ func (sp *serviceProvider) Login(name, pwd *string) (int32, error) {
 
 	_, err := Engine.Where("name=?", *name).Get(staff)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	if !security.SaltHashCompare([]byte(staff.Pwd), *pwd) {
+	if !security.SaltHashCompare([]byte(staff.Pwd), pwd) {
 		return 0, errLoginFailed
 	}
 
@@ -140,7 +140,7 @@ func (sp *serviceProvider) ModifyPwd(uid *int32, oldpwd, newpwd *string) error {
 		return err
 	}
 
-	if !security.SaltHashCompare([]byte(staff.Pwd), *oldpwd) {
+	if !security.SaltHashCompare([]byte(staff.Pwd), oldpwd) {
 		return errPwdNotMatch
 	}
 
