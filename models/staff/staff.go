@@ -33,6 +33,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/fengyfei/gu/applications/echo/staff/orm"
 	"github.com/fengyfei/gu/libs/security"
 )
 
@@ -71,7 +72,7 @@ var (
 )
 
 func init() {
-	err := Engine.Sync2(new(Staff), new(Register))
+	err := orm.Engine.Sync2(new(Staff), new(Register))
 	if err != nil {
 		panic(err)
 	}
@@ -83,7 +84,7 @@ func init() {
 func (sp *serviceProvider) Login(name, pwd *string) (int32, error) {
 	staff := &Staff{}
 
-	_, err := Engine.Where("name=?", *name).Get(staff)
+	_, err := orm.Engine.Where("name=?", *name).Get(staff)
 	if err != nil {
 		return 0, err
 	}
@@ -113,7 +114,7 @@ func (sp *serviceProvider) Create(name, pwd, realname, mobile, email *string, hi
 		Active:   true,
 	}
 
-	_, err = Engine.Insert(staff)
+	_, err = orm.Engine.Insert(staff)
 
 	return err
 }
@@ -126,7 +127,7 @@ func (sp *serviceProvider) Modify(uid *int32, name, mobile, email *string) error
 		Email:  *email,
 	}
 
-	_, err := Engine.ID(*uid).Update(staff)
+	_, err := orm.Engine.ID(*uid).Update(staff)
 
 	return err
 }
@@ -135,7 +136,7 @@ func (sp *serviceProvider) Modify(uid *int32, name, mobile, email *string) error
 func (sp *serviceProvider) ModifyPwd(uid *int32, oldpwd, newpwd *string) error {
 	staff := &Staff{}
 
-	_, err := Engine.ID(*uid).Get(staff)
+	_, err := orm.Engine.ID(*uid).Get(staff)
 	if err != nil {
 		return err
 	}
@@ -153,7 +154,7 @@ func (sp *serviceProvider) ModifyPwd(uid *int32, oldpwd, newpwd *string) error {
 		Pwd: string(salt),
 	}
 
-	_, err = Engine.ID(*uid).Update(update)
+	_, err = orm.Engine.ID(*uid).Update(update)
 
 	return err
 }
@@ -164,7 +165,7 @@ func (sp *serviceProvider) ModifyMobile(uid *int32, mobile *string) error {
 		Mobile: *mobile,
 	}
 
-	_, err := Engine.ID(*uid).Update(staff)
+	_, err := orm.Engine.ID(*uid).Update(staff)
 
 	return err
 }
@@ -175,7 +176,7 @@ func (sp *serviceProvider) ModifyActive(uid *int32, active *bool) error {
 		Active: *active,
 	}
 
-	_, err := Engine.ID(*uid).Update(staff)
+	_, err := orm.Engine.ID(*uid).Update(staff)
 
 	return err
 }
@@ -188,7 +189,7 @@ func (sp *serviceProvider) Dismiss(uid *int32) error {
 		ResignAt: time.Now(),
 	}
 
-	_, err := Engine.ID(*uid).Update(staff)
+	_, err := orm.Engine.ID(*uid).Update(staff)
 
 	return err
 }
@@ -197,7 +198,7 @@ func (sp *serviceProvider) Dismiss(uid *int32) error {
 func (sp *serviceProvider) IsActive(uid *int32) (bool, error) {
 	staff := &Staff{}
 
-	_, err := Engine.ID(*uid).Get(staff)
+	_, err := orm.Engine.ID(*uid).Get(staff)
 
 	return staff.Active, err
 }

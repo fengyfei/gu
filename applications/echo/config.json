@@ -7,5 +7,12 @@
     "jwt": {
       "tokenkey": "PXL0we7gqrgskjnPwiXXwVeXY4pFGvcnq4zImdN1L4"
     }
+  },
+  "mysql": {
+    "host" : "127.0.0.1",
+    "port" : ":3306",
+    "user" : "root",
+    "pass" : "111111",
+    "db" : "staff"
   }
 }

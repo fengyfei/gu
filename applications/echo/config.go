@@ -33,18 +33,26 @@ import (
 	"github.com/spf13/viper"
 )
 
+// staffServerConfig represents the server config struct.
 type staffServerConfig struct {
 	address   string
 	isDebug   bool
 	corsHosts []string
 	tokenKey  string
 	mongoURL  string
+	mysqlHost string
+	mysqlPort string
+	mysqlUser string
+	mysqlPass string
+	mysqlDb   string
+	mysqlSize int
 }
 
 var (
 	configuration *staffServerConfig
 )
 
+// readConfiguration read config file.
 func readConfiguration() {
 	viper.AddConfigPath("./")
 	viper.SetConfigName("config")
@@ -58,5 +66,11 @@ func readConfiguration() {
 		isDebug:   viper.GetBool("server.debug"),
 		corsHosts: viper.GetStringSlice("middleware.cors.hosts"),
 		tokenKey:  viper.GetString("middleware.jwt.tokenkey"),
+		mysqlHost: viper.GetString("mysql.host"),
+		mysqlPort: viper.GetString("mysql.port"),
+		mysqlUser: viper.GetString("mysql.user"),
+		mysqlPass: viper.GetString("mysql.pass"),
+		mysqlDb:   viper.GetString("mysql.db"),
+		mysqlSize: viper.GetInt("mysql.size"),
 	}
 }

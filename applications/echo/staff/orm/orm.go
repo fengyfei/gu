@@ -24,40 +24,32 @@
 
 /*
  * Revision History:
- *     Initial: 2017/10/31        Jia Chenhui
+ *     Initial: 2017/11/02        Jia Chenhui
  */
 
-package staff
+package orm
 
 import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
+
+	"github.com/fengyfei/gu/libs/logger"
 )
 
 const (
-	maxIdle = 2
-	maxOpen = 10
-
-	driver  = "mysql"
-	staffDb = "root:111111@tcp(0.0.0.0:3306)/staff?charset=utf8"
+	driver = "mysql"
 )
 
 var (
 	Engine *xorm.Engine
+	err    error
 )
 
-func init() {
-	Engine = InitOrm()
-}
-
-func InitOrm() *xorm.Engine {
-	e, err := xorm.NewEngine(driver, staffDb)
+func InitOrm(dataSource string) {
+	Engine, err = xorm.NewEngine(driver, dataSource)
 	if err != nil {
 		panic(err)
 	}
 
-	e.SetMaxIdleConns(maxIdle)
-	e.SetMaxOpenConns(maxOpen)
-
-	return e
+	logger.Debug("DB connected to %s.", driver)
 }

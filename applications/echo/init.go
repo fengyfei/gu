@@ -30,11 +30,14 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/labstack/gommon/log"
 
 	"github.com/fengyfei/gu/applications/echo/core"
+	"github.com/fengyfei/gu/applications/echo/staff/orm"
 	"github.com/fengyfei/gu/applications/echo/staff/routers"
 )
 
@@ -44,6 +47,19 @@ var (
 
 func init() {
 	readConfiguration()
+	initMysql()
+}
+
+func initMysql() {
+	user := configuration.mysqlUser
+	pass := configuration.mysqlPass
+	url := configuration.mysqlHost
+	port := configuration.mysqlPort
+	sqlName := configuration.mysqlDb
+
+	dataSource := fmt.Sprintf(user + ":" + pass + "@" + "tcp(" + url + port + ")/" + sqlName + "?charset=utf8&parseTime=True&loc=Local")
+
+	orm.InitOrm(dataSource)
 }
 
 func startEchoServer() {
