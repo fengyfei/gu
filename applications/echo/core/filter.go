@@ -35,6 +35,7 @@ import (
 	jwtgo "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 
+	"github.com/fengyfei/gu/applications/echo/staff/mysql"
 	"github.com/fengyfei/gu/libs/helper"
 	"github.com/fengyfei/gu/models/staff"
 )
@@ -59,9 +60,14 @@ func MustLoginIn(next echo.HandlerFunc) echo.HandlerFunc {
 
 func IsActiveMiddleWare(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		uid := UserID(c)
+		conn, err := mysql.Pool.Get()
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, err.Error())
+		}
+		defer mysql.Pool.Release(conn)
 
-		ok, err := staff.Service.IsActive(&uid)
+		uid := UserID(c)
+		ok, err := staff.Service.IsActive(conn, &uid)
 
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, err.Error())
