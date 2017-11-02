@@ -46,17 +46,11 @@ func InitRouter(server *echo.Echo, token string) {
 	// Staff
 	server.POST("/staff/login", handler.Login)
 	server.POST("/staff/create", handler.Create, core.MustLoginIn, core.IsActiveMiddleWare)
-	server.POST("/modify/pwd", handler.ModifyPwd, core.MustLoginIn, core.IsActiveMiddleWare)
-	server.POST("/modify/mobile", handler.ModifyMobile, core.MustLoginIn, core.IsActiveMiddleWare)
-	server.POST("/modify/active", handler.ModifyActive, core.MustLoginIn, core.IsActiveMiddleWare)
+	server.POST("/staff/modify/pwd", handler.ModifyPwd, core.MustLoginIn, core.IsActiveMiddleWare)
+	server.POST("/staff/modify/mobile", handler.ModifyMobile, core.MustLoginIn, core.IsActiveMiddleWare)
+	server.POST("/staff/modify/active", handler.ModifyActive, core.MustLoginIn, core.IsActiveMiddleWare)
 	server.POST("/staff/dismiss", handler.Dismiss, core.MustLoginIn, core.IsActiveMiddleWare)
-
-	// Events
-	server.GET("/events/checkin", handler.CheckIn, core.MustLoginIn, core.IsActiveMiddleWare)
-	server.GET("/events/checkout", handler.CheckOut, core.MustLoginIn, core.IsActiveMiddleWare)
-
-	// Contact
-	server.GET("/contact/list", handler.ContactList, core.MustLoginIn, core.IsActiveMiddleWare)
-	server.GET("/contact/list/detail", handler.InfoList, core.MustLoginIn, core.IsActiveMiddleWare)
-	server.POST("/contact/detail", handler.Info, core.MustLoginIn, core.IsActiveMiddleWare)
+	server.GET("/staff/overview/list", handler.OverviewList, core.MustLoginIn, core.IsActiveMiddleWare)
+	server.GET("/staff/detail/list", handler.InfoList, core.MustLoginIn, core.IsActiveMiddleWare)
+	server.POST("/staff/detail", handler.Info, core.MustLoginIn, core.IsActiveMiddleWare)
 }

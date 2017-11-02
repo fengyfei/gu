@@ -75,6 +75,23 @@ type (
 	modifyActiveReq struct {
 		Active *bool `json:"active"  validate:"required"`
 	}
+
+	// overviewResp - Overview of a staff.
+	overviewResp struct {
+		Id       int32
+		RealName string
+	}
+
+	// infoResp - The more detail of one particular staff.
+	infoResp struct {
+		Id        int32
+		Name      string
+		RealName  string
+		Mobile    string
+		Email     string
+		Male      bool
+		CreatedAt time.Time
+	}
 )
 
 // Login - Staff login.
@@ -254,80 +271,17 @@ func Dismiss(c echo.Context) error {
 	return c.JSON(http.StatusOK, nil)
 }
 
-// CheckIn - Staff check in.
-func CheckIn(c echo.Context) error {
-	var err error
-
-	conn, err := mysql.Pool.Get()
-	if err != nil {
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
-	}
-	defer mysql.Pool.Release(conn)
-
-	uid := core.UserID(c)
-	_, ok, err := staff.Service.IsRegistered(conn, &uid)
-	if err != nil {
-		if err == xorm.ErrNotExist {
-
-			if err = staff.Service.Register(conn, &uid); err != nil {
-				return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
-			}
-
-			goto finish
-		}
-
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
-	}
-
-	if ok {
-		return core.NewErrorWithMsg(http.StatusForbidden, "staff already registered")
-	}
-
-	if err = staff.Service.RegisterAgain(conn, &uid); err != nil {
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
-	}
-
-finish:
-	return c.JSON(http.StatusOK, nil)
-}
-
-// CheckOut - Staff check out.
-func CheckOut(c echo.Context) error {
-	var err error
-
-	conn, err := mysql.Pool.Get()
-	if err != nil {
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
-	}
-	defer mysql.Pool.Release(conn)
-
-	uid := core.UserID(c)
-	r, ok, err := staff.Service.IsRegistered(conn, &uid)
-	if err != nil {
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
-	}
-
-	if !ok {
-		return core.NewErrorWithMsg(http.StatusInternalServerError, "not register yet")
-	}
-
-	if err = staff.Service.LeaveOffice(conn, &uid, r); err != nil {
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
-	}
-
-	return c.JSON(http.StatusOK, nil)
-}
-
 // ContactList - Get a list of on-the-job staff.
-func ContactList(c echo.Context) error {
+func OverviewList(c echo.Context) error {
+	var resp []overviewResp
+
 	conn, err := mysql.Pool.Get()
 	if err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 	defer mysql.Pool.Release(conn)
 
-	list, err := staff.Service.OverviewList(conn)
-
+	slist, err := staff.Service.List(conn)
 	if err != nil {
 		if err == xorm.ErrNotExist {
 			return core.NewErrorWithMsg(http.StatusNotFound, err.Error())
@@ -336,18 +290,29 @@ func ContactList(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, list)
+	for _, s := range slist {
+		info := overviewResp{
+			Id:       s.Id,
+			RealName: s.RealName,
+		}
+
+		resp = append(resp, info)
+	}
+
+	return c.JSON(http.StatusOK, resp)
 }
 
 // InfoList - Get a list of on-the-job staff details.
 func InfoList(c echo.Context) error {
+	var resp []infoResp
+
 	conn, err := mysql.Pool.Get()
 	if err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 	defer mysql.Pool.Release(conn)
 
-	list, err := staff.Service.InfoList(conn)
+	slist, err := staff.Service.List(conn)
 	if err != nil {
 		if err == xorm.ErrNotExist {
 			return core.NewErrorWithMsg(http.StatusNotFound, err.Error())
@@ -356,7 +321,20 @@ func InfoList(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, list)
+	for _, s := range slist {
+		info := infoResp{
+			Id:        s.Id,
+			Name:      s.Name,
+			RealName:  s.RealName,
+			Email:     s.Email,
+			Male:      s.Male,
+			CreatedAt: s.CreatedAt,
+		}
+
+		resp = append(resp, info)
+	}
+
+	return c.JSON(http.StatusOK, resp)
 }
 
 // Info - Get detail information for specified staff.
@@ -377,5 +355,5 @@ func Info(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, info)
+	return c.JSON(http.StatusOK, *info)
 }
