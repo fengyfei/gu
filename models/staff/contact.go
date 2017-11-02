@@ -32,7 +32,9 @@ package staff
 import (
 	"time"
 
-	"github.com/fengyfei/gu/applications/echo/staff/orm"
+	"github.com/go-xorm/xorm"
+
+	"github.com/fengyfei/gu/libs/orm"
 )
 
 // ContactInfo is the more detail of one particular staff.
@@ -53,11 +55,11 @@ type ContactOverview struct {
 }
 
 // OverviewList list all on the job staff.
-func (sp *serviceProvider) OverviewList() ([]ContactOverview, error) {
+func (sp *serviceProvider) OverviewList(conn orm.Connection) ([]ContactOverview, error) {
 	slist := []Staff{}
 	clist := []ContactOverview{}
 
-	_, err := orm.Engine.Where("resigned=?", false).Get(&slist)
+	_, err := conn.(*xorm.Engine).Where("resigned=?", false).Get(&slist)
 	if err != nil {
 		return clist, err
 	}
@@ -75,11 +77,11 @@ func (sp *serviceProvider) OverviewList() ([]ContactOverview, error) {
 }
 
 // InfoList get all staff detail information.
-func (sp *serviceProvider) InfoList() ([]ContactInfo, error) {
+func (sp *serviceProvider) InfoList(conn orm.Connection) ([]ContactInfo, error) {
 	slist := []Staff{}
 	clist := []ContactInfo{}
 
-	_, err := orm.Engine.Where("resigned=?", false).Get(&slist)
+	_, err := conn.(*xorm.Engine).Where("resigned=?", false).Get(&slist)
 	if err != nil {
 		return clist, err
 	}
@@ -102,11 +104,11 @@ func (sp *serviceProvider) InfoList() ([]ContactInfo, error) {
 }
 
 // GetByID get one staff detail information.
-func (sp *serviceProvider) GetByID(uid *int32) (*ContactInfo, error) {
+func (sp *serviceProvider) GetByID(conn orm.Connection, uid *int32) (*ContactInfo, error) {
 	staff := &Staff{}
 	contact := &ContactInfo{}
 
-	_, err := orm.Engine.ID(*uid).Get(staff)
+	_, err := conn.(*xorm.Engine).ID(*uid).Get(staff)
 	if err != nil {
 		return nil, err
 	}
