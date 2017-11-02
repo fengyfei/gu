@@ -48,10 +48,8 @@ const (
 )
 
 var (
-	// TokenHMACKey .
 	TokenHMACKey string
-
-	urlMap map[string]struct{}
+	urlMap       map[string]struct{}
 )
 
 func CustomJWT(tokenkey string) echo.MiddlewareFunc {
@@ -96,6 +94,6 @@ func UserID(c echo.Context) int32 {
 func init() {
 	urlMap = make(map[string]struct{})
 
-	urlMap["/login"] = struct{}{}
-	urlMap["/metrics"] = struct{}{}
+	urlMap["/staff/login"] = struct{}{}
+	urlMap["/staff/create"] = struct{}{}
 }
