@@ -147,5 +147,5 @@ func todayToInt() int32 {
 
 	i, _ := helper.StrToInt32(today)
 
-	return i
+	return int32(i)
 }

@@ -81,7 +81,7 @@ func NewToken(uid int32) (string, string, error) {
 	token := jwtgo.New(jwtgo.SigningMethodHS256)
 
 	claims := token.Claims.(jwtgo.MapClaims)
-	claims[ClaimUID] = strconv.FormatInt(uid, 10)
+	claims[ClaimUID] = strconv.FormatInt(int64(uid), 10)
 	claims[ClaimExpire] = time.Now().Add(time.Hour * tokenExpireInHour).Unix()
 
 	t, err := token.SignedString([]byte(TokenHMACKey))

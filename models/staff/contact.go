@@ -75,7 +75,7 @@ func (sp *serviceProvider) OverviewList() ([]ContactOverview, error) {
 // InfoList get all staff detail information.
 func (sp *serviceProvider) InfoList() ([]ContactInfo, error) {
 	slist := []Staff{}
-	clist := &ContactInfo{}
+	clist := []ContactInfo{}
 
 	_, err := Engine.Where("resigned=?", false).Get(&slist)
 	if err != nil {
