@@ -38,6 +38,7 @@ import (
 	"github.com/labstack/echo"
 
 	"github.com/fengyfei/gu/applications/echo/core"
+	"github.com/fengyfei/gu/applications/echo/staff/mysql"
 	"github.com/fengyfei/gu/models/staff"
 )
 
@@ -91,7 +92,13 @@ func Login(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
 	}
 
-	uid, err := staff.Service.Login(req.Name, req.Pwd)
+	conn, err := mysql.Pool.Get()
+	if err != nil {
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+	defer mysql.Pool.Release(conn)
+
+	uid, err := staff.Service.Login(conn, req.Name, req.Pwd)
 	if err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
@@ -123,12 +130,18 @@ func Create(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
 	}
 
+	conn, err := mysql.Pool.Get()
+	if err != nil {
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+	defer mysql.Pool.Release(conn)
+
 	hireAt, err = time.Parse("2006-01-02", *req.HireAt)
 	if err != nil {
 		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
 	}
 
-	err = staff.Service.Create(req.Name, req.Pwd, req.RealName, req.Mobile, req.Email, hireAt, req.Male)
+	err = staff.Service.Create(conn, req.Name, req.Pwd, req.RealName, req.Mobile, req.Email, hireAt, req.Male)
 	if err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
@@ -151,8 +164,14 @@ func ModifyPwd(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
 	}
 
+	conn, err := mysql.Pool.Get()
+	if err != nil {
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+	defer mysql.Pool.Release(conn)
+
 	uid := core.UserID(c)
-	if err = staff.Service.ModifyPwd(&uid, req.OldPwd, req.NewPwd); err != nil {
+	if err = staff.Service.ModifyPwd(conn, &uid, req.OldPwd, req.NewPwd); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
@@ -174,8 +193,14 @@ func ModifyMobile(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
 	}
 
+	conn, err := mysql.Pool.Get()
+	if err != nil {
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+	defer mysql.Pool.Release(conn)
+
 	uid := core.UserID(c)
-	if err = staff.Service.ModifyMobile(&uid, req.Mobile); err != nil {
+	if err = staff.Service.ModifyMobile(conn, &uid, req.Mobile); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
@@ -197,8 +222,14 @@ func ModifyActive(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
 	}
 
+	conn, err := mysql.Pool.Get()
+	if err != nil {
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+	defer mysql.Pool.Release(conn)
+
 	uid := core.UserID(c)
-	if err = staff.Service.ModifyActive(&uid, req.Active); err != nil {
+	if err = staff.Service.ModifyActive(conn, &uid, req.Active); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
@@ -209,8 +240,14 @@ func ModifyActive(c echo.Context) error {
 func Dismiss(c echo.Context) error {
 	var err error
 
+	conn, err := mysql.Pool.Get()
+	if err != nil {
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+	defer mysql.Pool.Release(conn)
+
 	uid := core.UserID(c)
-	if err = staff.Service.Dismiss(&uid); err != nil {
+	if err = staff.Service.Dismiss(conn, &uid); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
@@ -221,12 +258,18 @@ func Dismiss(c echo.Context) error {
 func CheckIn(c echo.Context) error {
 	var err error
 
+	conn, err := mysql.Pool.Get()
+	if err != nil {
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+	defer mysql.Pool.Release(conn)
+
 	uid := core.UserID(c)
-	_, ok, err := staff.Service.IsRegistered(&uid)
+	_, ok, err := staff.Service.IsRegistered(conn, &uid)
 	if err != nil {
 		if err == xorm.ErrNotExist {
 
-			if err = staff.Service.Register(&uid); err != nil {
+			if err = staff.Service.Register(conn, &uid); err != nil {
 				return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 			}
 
@@ -240,7 +283,7 @@ func CheckIn(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusForbidden, "staff already registered")
 	}
 
-	if err = staff.Service.RegisterAgain(&uid); err != nil {
+	if err = staff.Service.RegisterAgain(conn, &uid); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
@@ -252,8 +295,14 @@ finish:
 func CheckOut(c echo.Context) error {
 	var err error
 
+	conn, err := mysql.Pool.Get()
+	if err != nil {
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+	defer mysql.Pool.Release(conn)
+
 	uid := core.UserID(c)
-	r, ok, err := staff.Service.IsRegistered(&uid)
+	r, ok, err := staff.Service.IsRegistered(conn, &uid)
 	if err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
@@ -262,7 +311,7 @@ func CheckOut(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, "not register yet")
 	}
 
-	if err = staff.Service.LeaveOffice(&uid, r); err != nil {
+	if err = staff.Service.LeaveOffice(conn, &uid, r); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
@@ -271,7 +320,13 @@ func CheckOut(c echo.Context) error {
 
 // ContactList - Get a list of on-the-job staff.
 func ContactList(c echo.Context) error {
-	list, err := staff.Service.OverviewList()
+	conn, err := mysql.Pool.Get()
+	if err != nil {
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+	defer mysql.Pool.Release(conn)
+
+	list, err := staff.Service.OverviewList(conn)
 
 	if err != nil {
 		if err == xorm.ErrNotExist {
@@ -286,8 +341,13 @@ func ContactList(c echo.Context) error {
 
 // InfoList - Get a list of on-the-job staff details.
 func InfoList(c echo.Context) error {
-	list, err := staff.Service.InfoList()
+	conn, err := mysql.Pool.Get()
+	if err != nil {
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+	defer mysql.Pool.Release(conn)
 
+	list, err := staff.Service.InfoList(conn)
 	if err != nil {
 		if err == xorm.ErrNotExist {
 			return core.NewErrorWithMsg(http.StatusNotFound, err.Error())
@@ -301,9 +361,14 @@ func InfoList(c echo.Context) error {
 
 // Info - Get detail information for specified staff.
 func Info(c echo.Context) error {
-	uid := core.UserID(c)
+	conn, err := mysql.Pool.Get()
+	if err != nil {
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+	defer mysql.Pool.Release(conn)
 
-	info, err := staff.Service.GetByID(&uid)
+	uid := core.UserID(c)
+	info, err := staff.Service.GetByID(conn, &uid)
 	if err != nil {
 		if err == xorm.ErrNotExist {
 			return core.NewErrorWithMsg(http.StatusNotFound, err.Error())

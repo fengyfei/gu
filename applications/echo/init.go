@@ -37,7 +37,7 @@ import (
 	"github.com/labstack/gommon/log"
 
 	"github.com/fengyfei/gu/applications/echo/core"
-	"github.com/fengyfei/gu/applications/echo/staff/orm"
+	"github.com/fengyfei/gu/applications/echo/staff/mysql"
 	"github.com/fengyfei/gu/applications/echo/staff/routers"
 )
 
@@ -59,7 +59,8 @@ func initMysql() {
 
 	dataSource := fmt.Sprintf(user + ":" + pass + "@" + "tcp(" + url + port + ")/" + sqlName + "?charset=utf8&parseTime=True&loc=Local")
 
-	orm.InitOrm(dataSource)
+	mysql.InitPool(dataSource)
+
 }
 
 func startEchoServer() {

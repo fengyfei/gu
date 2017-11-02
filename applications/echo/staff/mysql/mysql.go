@@ -27,29 +27,25 @@
  *     Initial: 2017/11/02        Jia Chenhui
  */
 
-package orm
+package mysql
 
 import (
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/go-xorm/xorm"
-
-	"github.com/fengyfei/gu/libs/logger"
+	"github.com/fengyfei/gu/libs/orm/mysql"
 )
 
 const (
-	driver = "mysql"
+	poolSize = 20
 )
 
 var (
-	Engine *xorm.Engine
-	err    error
+	Pool *mysql.Pool
 )
 
-func InitOrm(dataSource string) {
-	Engine, err = xorm.NewEngine(driver, dataSource)
-	if err != nil {
-		panic(err)
-	}
+// InitPool initialize the connection pool.
+func InitPool(db string) {
+	Pool = mysql.NewPool(db, poolSize)
 
-	logger.Debug("DB connected to %s.", driver)
+	if Pool == nil {
+		panic("MySQL DB connection error.")
+	}
 }
