@@ -124,7 +124,7 @@ func Login(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
-	fmt.Println("token", token)
+	fmt.Println("token:", token)
 
 	return c.JSON(http.StatusOK, map[string]interface{}{key: token})
 

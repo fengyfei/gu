@@ -45,7 +45,7 @@ func InitRouter(server *echo.Echo, token string) {
 
 	// Staff
 	server.POST("/staff/login", handler.Login)
-	server.POST("/staff/create", handler.Create, core.MustLoginIn, core.IsActiveMiddleWare)
+	server.POST("/staff/create", handler.Create)
 	server.POST("/staff/modify/pwd", handler.ModifyPwd, core.MustLoginIn, core.IsActiveMiddleWare)
 	server.POST("/staff/modify/mobile", handler.ModifyMobile, core.MustLoginIn, core.IsActiveMiddleWare)
 	server.POST("/staff/modify/active", handler.ModifyActive, core.MustLoginIn, core.IsActiveMiddleWare)

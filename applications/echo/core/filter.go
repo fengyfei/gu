@@ -46,7 +46,7 @@ func MustLoginIn(next echo.HandlerFunc) echo.HandlerFunc {
 		claims := user.Claims.(jwtgo.MapClaims)
 		strUID := claims[ClaimUID].(string)
 
-		uid, err := helper.StrToInt32(strUID)
+		uid, err := helper.StrToInt64(strUID)
 
 		if err != nil {
 			return NewErrorWithMsg(http.StatusInternalServerError, err.Error())
