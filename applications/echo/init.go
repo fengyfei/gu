@@ -32,6 +32,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/go-xorm/xorm"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/labstack/gommon/log"
@@ -39,6 +40,7 @@ import (
 	"github.com/fengyfei/gu/applications/echo/core"
 	"github.com/fengyfei/gu/applications/echo/staff/mysql"
 	"github.com/fengyfei/gu/applications/echo/staff/routers"
+	"github.com/fengyfei/gu/models/staff"
 )
 
 var (
@@ -48,8 +50,10 @@ var (
 func init() {
 	readConfiguration()
 	initMysql()
+	initTable()
 }
 
+// initMysql  initializes the MySQL connection.
 func initMysql() {
 	user := configuration.mysqlUser
 	pass := configuration.mysqlPass
@@ -60,9 +64,23 @@ func initMysql() {
 	dataSource := fmt.Sprintf(user + ":" + pass + "@" + "tcp(" + url + port + ")/" + sqlName + "?charset=utf8&parseTime=True&loc=Local")
 
 	mysql.InitPool(dataSource)
-
 }
 
+// initTable create the MySQL table. All MySQL tables need to be created here.
+func initTable() {
+	conn, err := mysql.Pool.Get()
+	if err != nil {
+		panic(err)
+	}
+	defer mysql.Pool.Release(conn)
+
+	err = conn.(*xorm.Engine).Sync2(new(staff.Staff))
+	if err != nil {
+		panic(err)
+	}
+}
+
+// startEchoServer starts an HTTP server.
 func startEchoServer() {
 	server = echo.New()
 

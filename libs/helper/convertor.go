@@ -33,6 +33,6 @@ import (
 	"strconv"
 )
 
-func StrToInt32(value string) (int64, error) {
+func StrToInt64(value string) (int64, error) {
 	return strconv.ParseInt(value, 10, 32)
 }
