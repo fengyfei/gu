@@ -88,7 +88,9 @@ func NewToken(uid int32) (string, string, error) {
 
 // UserID returns user identity.
 func UserID(c echo.Context) int32 {
-	return c.Get(ClaimUID).(int32)
+	uid := c.Get(ClaimUID).(int64)
+
+	return int32(uid)
 }
 
 func init() {
