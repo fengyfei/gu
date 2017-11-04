@@ -33,13 +33,10 @@ import (
 	"fmt"
 	"github.com/astaxie/beego"
 	"github.com/fengyfei/gu/applications/beego/shop/mysql"
-	"github.com/fengyfei/gu/models/shop/user"
-	"github.com/go-xorm/xorm"
 )
 
 func init() {
 	initMysql()
-	initTable()
 }
 
 func initMysql() {
@@ -52,19 +49,4 @@ func initMysql() {
 	dataSource := fmt.Sprintf(user + ":" + pass + "@" + "tcp(" + url + ":" + port + ")/" + sqlName + "?charset=utf8&parseTime=True&loc=Local")
 
 	mysql.InitPool(dataSource)
-
-}
-
-// initTable create the MySQL table. All MySQL tables need to be created here.
-func initTable() {
-	conn, err := mysql.Pool.Get()
-	if err != nil {
-		panic(err)
-	}
-	defer mysql.Pool.Release(conn)
-
-	err = conn.(*xorm.Engine).Sync2(new(user.User))
-	if err != nil {
-		panic(err)
-	}
 }
