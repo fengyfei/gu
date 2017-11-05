@@ -33,7 +33,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/go-xorm/xorm"
+	"github.com/jinzhu/gorm"
 
 	"github.com/fengyfei/gu/libs/orm"
 	"github.com/fengyfei/gu/libs/security"
@@ -44,17 +44,17 @@ const (
 )
 
 type Staff struct {
-	Id        int32
-	Name      string    `xorm:"varchar(30) notnull unique"`
-	Pwd       string    `xorm:"varchar(128) notnull"`
-	RealName  string    `xorm:"realname varchar(256) notnull unique"`
-	Mobile    string    `xorm:"unique"`
-	Email     string    `xorm:"varchar(80) unique"`
-	CreatedAt time.Time `xorm:"created"`
-	ResignAt  time.Time `xorm:"resignat"`
-	Male      bool
-	Active    bool
-	Resigned  bool
+	Id        int32     `json:"id" gorm:"primary_key;auto_increment"`
+	Name      string    `json:"name" gorm:"type:varchar(30);not null;unique"`
+	Pwd       string    `json:"pwd" gorm:"type:varchar(128);not null"`
+	RealName  string    `json:"realname" gorm:"type:varchar(256);not null;unique"`
+	Mobile    string    `json:"mobile" gorm:"unique"`
+	Email     string    `json:"email" gorm:"type:varchar(80);unique"`
+	CreatedAt time.Time `json:"createdat"`
+	ResignAt  time.Time `json:"resignat"`
+	Male      bool      `json:"male"`
+	Active    bool      `json:"active"`
+	Resigned  bool      `json:"resigned"`
 }
 
 // TableName returns table name in database.
@@ -80,7 +80,8 @@ func init() {
 func (sp *serviceProvider) Login(conn orm.Connection, name, pwd *string) (int32, error) {
 	staff := &Staff{}
 
-	_, err := conn.(*xorm.Engine).Where("name=?", *name).Get(staff)
+	db := conn.(*gorm.DB).Exec("SET DATABASE = staff")
+	err := db.Model(staff).Where("name = ?", *name).First(staff).Error
 	if err != nil {
 		return 0, err
 	}
@@ -100,38 +101,40 @@ func (sp *serviceProvider) Create(conn orm.Connection, name, pwd, realname, mobi
 	}
 
 	staff := &Staff{
-		Name:     *name,
-		Pwd:      string(salt),
-		RealName: *realname,
-		Mobile:   *mobile,
-		Email:    *email,
-		Male:     male,
-		Active:   true,
+		Name:      *name,
+		Pwd:       string(salt),
+		RealName:  *realname,
+		Mobile:    *mobile,
+		Email:     *email,
+		CreatedAt: time.Now(),
+		Male:      male,
+		Active:    true,
 	}
 
-	_, err = conn.(*xorm.Engine).Insert(staff)
+	db := conn.(*gorm.DB).Exec("SET DATABASE = staff")
 
-	return err
+	return db.Create(staff).Error
 }
 
 // Modify modify staff information.
 func (sp *serviceProvider) Modify(conn orm.Connection, uid *int32, name, mobile, email *string) error {
-	staff := &Staff{
-		Name:   *name,
-		Mobile: *mobile,
-		Email:  *email,
-	}
+	staff := &Staff{}
 
-	_, err := conn.(*xorm.Engine).ID(*uid).Update(staff)
+	db := conn.(*gorm.DB).Exec("SET DATABASE = staff")
 
-	return err
+	return db.Model(staff).Where("id = ?", *uid).Updates(map[string]interface{}{
+		"name":   *name,
+		"mobile": *mobile,
+		"email":  *email}).Error
 }
 
 // ModifyPwd modify staff password.
 func (sp *serviceProvider) ModifyPwd(conn orm.Connection, uid *int32, oldpwd, newpwd *string) error {
 	staff := &Staff{}
 
-	_, err := conn.(*xorm.Engine).ID(*uid).Get(staff)
+	db := conn.(*gorm.DB).Exec("SET DATABASE = staff")
+	err := db.Where("id = ?", *uid).Find(staff).Error
+
 	if err != nil {
 		return err
 	}
@@ -145,55 +148,45 @@ func (sp *serviceProvider) ModifyPwd(conn orm.Connection, uid *int32, oldpwd, ne
 		return err
 	}
 
-	update := &Staff{
-		Pwd: string(salt),
-	}
-
-	_, err = conn.(*xorm.Engine).ID(*uid).Update(update)
-
-	return err
+	return db.Model(staff).Where("id = ?", *uid).Update("pwd", string(salt)).Error
 }
 
 // ModifyMobile modify staff mobile.
 func (sp *serviceProvider) ModifyMobile(conn orm.Connection, uid *int32, mobile *string) error {
-	staff := &Staff{
-		Mobile: *mobile,
-	}
+	staff := &Staff{}
 
-	_, err := conn.(*xorm.Engine).ID(*uid).Update(staff)
+	db := conn.(*gorm.DB).Exec("SET DATABASE = staff")
 
-	return err
+	return db.Model(staff).Where("id = ?", *uid).Update("mobile", *mobile).Error
 }
 
 // ModifyActive modify staff status.
 func (sp *serviceProvider) ModifyActive(conn orm.Connection, uid *int32, active *bool) error {
-	staff := &Staff{
-		Active: *active,
-	}
+	staff := &Staff{}
 
-	_, err := conn.(*xorm.Engine).ID(*uid).Update(staff)
+	db := conn.(*gorm.DB).Exec("SET DATABASE = staff")
 
-	return err
+	return db.Model(staff).Where("id = ?", *uid).Update("active", *active).Error
 }
 
 // Dismiss modify staff active to false and dismiss to true.
 func (sp *serviceProvider) Dismiss(conn orm.Connection, uid *int32) error {
-	staff := &Staff{
-		Active:   false,
-		Resigned: true,
-		ResignAt: time.Now(),
-	}
+	staff := &Staff{}
 
-	_, err := conn.(*xorm.Engine).ID(*uid).Update(staff)
+	db := conn.(*gorm.DB).Exec("SET DATABASE = staff")
 
-	return err
+	return db.Model(staff).Where("id = ?", *uid).Updates(map[string]interface{}{
+		"active":   false,
+		"resigned": true,
+		"resignat": time.Now()}).Error
 }
 
 //IsActive return staff.Active and nil if query success
 func (sp *serviceProvider) IsActive(conn orm.Connection, uid *int32) (bool, error) {
 	staff := &Staff{}
 
-	_, err := conn.(*xorm.Engine).ID(*uid).Get(staff)
+	db := conn.(*gorm.DB).Exec("SET DATABASE = staff")
+	err := db.Where("id = ?", *uid).First(staff).Error
 
 	return staff.Active, err
 }
@@ -202,7 +195,9 @@ func (sp *serviceProvider) IsActive(conn orm.Connection, uid *int32) (bool, erro
 func (sp *serviceProvider) List(conn orm.Connection) ([]Staff, error) {
 	list := []Staff{}
 
-	_, err := conn.(*xorm.Engine).Where("resigned=?", false).Get(&list)
+	db := conn.(*gorm.DB).Exec("SET DATABASE = staff")
+	err := db.Model(list).Where("resigned=?", false).Find(&list).Error
+
 	if err != nil {
 		return list, err
 	}
@@ -214,7 +209,9 @@ func (sp *serviceProvider) List(conn orm.Connection) ([]Staff, error) {
 func (sp *serviceProvider) GetByID(conn orm.Connection, uid *int32) (*Staff, error) {
 	staff := &Staff{}
 
-	_, err := conn.(*xorm.Engine).ID(*uid).Get(staff)
+	db := conn.(*gorm.DB).Exec("SET DATABASE = staff")
+	err := db.Model(staff).Where("id=? AND resigned=?", *uid, false).First(staff).Error
+
 	if err != nil {
 		return nil, err
 	}
