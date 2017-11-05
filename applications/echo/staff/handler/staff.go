@@ -34,7 +34,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-xorm/xorm"
+	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 
 	"github.com/fengyfei/gu/applications/echo/core"
@@ -280,7 +280,7 @@ func OverviewList(c echo.Context) error {
 
 	slist, err := staff.Service.List(conn)
 	if err != nil {
-		if err == xorm.ErrNotExist {
+		if err == gorm.ErrRecordNotFound {
 			return core.NewErrorWithMsg(http.StatusNotFound, err.Error())
 		}
 
@@ -311,7 +311,7 @@ func InfoList(c echo.Context) error {
 
 	slist, err := staff.Service.List(conn)
 	if err != nil {
-		if err == xorm.ErrNotExist {
+		if err == gorm.ErrRecordNotFound {
 			return core.NewErrorWithMsg(http.StatusNotFound, err.Error())
 		}
 
@@ -345,7 +345,7 @@ func Info(c echo.Context) error {
 	uid := core.UserID(c)
 	info, err := staff.Service.GetByID(conn, &uid)
 	if err != nil {
-		if err == xorm.ErrNotExist {
+		if err == gorm.ErrRecordNotFound {
 			return core.NewErrorWithMsg(http.StatusNotFound, err.Error())
 		}
 
