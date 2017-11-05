@@ -24,6 +24,8 @@ import:
 - package: golang.org/x/sys
 - package: github.com/spf13/viper
   version: v1.0.0
+- package: github.com/jinzhu/gorm
+  version: v1.0
 testImport:
 - package: github.com/smartystreets/goconvey
   version: 1.6.3
