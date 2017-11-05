@@ -1,5 +1,5 @@
-hash: d8ccca3423c009ff8bde3ebedc3c9fd9258bf94841a00838656a9a45c938e321
-updated: 2017-11-05T11:02:10.261451+08:00
+hash: d9fa1ed2927d1d076b9b08932f4cff3fbabd4e59e31ee82cf92f379fc667d511
+updated: 2017-11-05T11:05:26.290782+08:00
 imports:
 - name: github.com/asciimoo/colly
   version: ca0b7983f7a266a74fa1a6ba5d9bfa91fd82b7b3
@@ -7,8 +7,6 @@ imports:
   version: d96289a81bf67728cff7a19b067aaecc65a62ec6
 - name: github.com/go-sql-driver/mysql
   version: a0583e0143b1624142adab07e0e97fe106d99561
-- name: github.com/go-xorm/core
-  version: da1adaf7a28ca792961721a34e6e04945200c890
 - name: github.com/jinzhu/gorm
   version: 5174cc5c242a728b435ea2be8a2f7f998e15429b
 - name: github.com/json-iterator/go
