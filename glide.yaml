@@ -22,6 +22,8 @@ import:
   version: v1.0.0
 - package: github.com/jinzhu/gorm
   version: v1.0
+- package: github.com/go-playground/universal-translator
+  version: v0.16.0
 testImport:
 - package: github.com/smartystreets/goconvey
   version: 1.6.3
