@@ -32,7 +32,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/go-xorm/xorm"
+	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/labstack/gommon/log"
@@ -74,10 +74,7 @@ func initTable() {
 	}
 	defer mysql.Pool.Release(conn)
 
-	err = conn.(*xorm.Engine).Sync2(new(staff.Staff))
-	if err != nil {
-		panic(err)
-	}
+	conn.(*gorm.DB).Set("gorm:table_options", "ENGINE=InnoDB").CreateTable(&staff.Staff{})
 }
 
 // startEchoServer starts an HTTP server.
