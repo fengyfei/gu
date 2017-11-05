@@ -84,10 +84,12 @@ func NewPool(db string, size int) *Pool {
 		pool.pool.Link(conn)
 	}
 
-	pool.size = pool.pool.Len()
+	pool.size = pool.pool.Len() - 1
 	if pool.size != size {
 		logger.Debug("New pool not enough!")
 	}
+
+	logger.Debug("Pool size:", pool.size)
 
 	return pool
 }
