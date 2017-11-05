@@ -59,10 +59,17 @@ type (
 		Male     bool    `json:"male"`
 	}
 
+	// modifyReq - The request struct that modify staff information.
+	modifyReq struct {
+		Name   *string `json:"name" validate:"required,alphanum,min=6,max=30"`
+		Mobile *string `json:"mobile" validate:"required,numeric,len=11"`
+		Email  *string `json:"email" validate:"required,email"`
+	}
+
 	// modifyPwdReq - The request struct that modify staff password.
 	modifyPwdReq struct {
-		OldPwd *string `json:"oldpass" validate:"required,printascii,excludesall=@-,min=6,max=30"`
-		NewPwd *string `json:"newpass" validate:"required,printascii,excludesall=@-,min=6,max=30"`
+		OldPwd *string `json:"oldpwd" validate:"required,printascii,excludesall=@-,min=6,max=30"`
+		NewPwd *string `json:"newpwd" validate:"required,printascii,excludesall=@-,min=6,max=30"`
 	}
 
 	// modifyMobileReq - The request struct that modify staff mobile.
@@ -157,6 +164,35 @@ func Create(c echo.Context) error {
 
 	err = staff.Service.Create(conn, req.Name, req.Pwd, req.RealName, req.Mobile, req.Email, req.Male)
 	if err != nil {
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, nil)
+}
+
+// Modify - Modify staff information.
+func Modify(c echo.Context) error {
+	var (
+		err error
+		req modifyReq
+	)
+
+	if err = c.Bind(&req); err != nil {
+		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+	}
+
+	if err = c.Validate(&req); err != nil {
+		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+	}
+
+	conn, err := mysql.Pool.Get()
+	if err != nil {
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+	defer mysql.Pool.Release(conn)
+
+	uid := core.UserID(c)
+	if err = staff.Service.Modify(conn, &uid, req.Name, req.Mobile, req.Email); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
@@ -325,7 +361,7 @@ func InfoList(c echo.Context) error {
 			RealName:  s.RealName,
 			Email:     s.Email,
 			Male:      s.Male,
-			CreatedAt: s.CreatedAt,
+			CreatedAt: *s.CreatedAt,
 		}
 
 		resp = append(resp, info)
