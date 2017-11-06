@@ -35,7 +35,7 @@ import (
 	jwtgo "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 
-	"github.com/fengyfei/gu/applications/echo/staff/mysql"
+	"github.com/fengyfei/gu/applications/echo/admin/mysql"
 	"github.com/fengyfei/gu/models/staff"
 )
 

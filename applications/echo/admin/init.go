@@ -37,9 +37,9 @@ import (
 	"github.com/labstack/echo/middleware"
 	"github.com/labstack/gommon/log"
 
+	"github.com/fengyfei/gu/applications/echo/admin/mysql"
+	"github.com/fengyfei/gu/applications/echo/admin/routers"
 	"github.com/fengyfei/gu/applications/echo/core"
-	"github.com/fengyfei/gu/applications/echo/staff/mysql"
-	"github.com/fengyfei/gu/applications/echo/staff/routers"
 	"github.com/fengyfei/gu/models/staff"
 )
 

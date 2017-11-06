@@ -32,8 +32,8 @@ package routers
 import (
 	"github.com/labstack/echo"
 
+	"github.com/fengyfei/gu/applications/echo/admin/handler"
 	"github.com/fengyfei/gu/applications/echo/core"
-	"github.com/fengyfei/gu/applications/echo/staff/handler"
 )
 
 func InitRouter(server *echo.Echo, token string) {
@@ -44,14 +44,14 @@ func InitRouter(server *echo.Echo, token string) {
 	core.InitJWTWithToken(token)
 
 	// Staff
-	server.POST("/staff/login", handler.Login)
-	server.POST("/staff/create", handler.Create)
-	server.POST("/staff/modify/info", handler.Modify, core.MustLoginIn, core.IsActiveMiddleWare)
-	server.POST("/staff/modify/pwd", handler.ModifyPwd, core.MustLoginIn, core.IsActiveMiddleWare)
-	server.POST("/staff/modify/mobile", handler.ModifyMobile, core.MustLoginIn, core.IsActiveMiddleWare)
-	server.POST("/staff/modify/active", handler.ModifyActive, core.MustLoginIn)
-	server.POST("/staff/dismiss", handler.Dismiss, core.MustLoginIn, core.IsActiveMiddleWare)
-	server.GET("/staff/overview/list", handler.OverviewList, core.MustLoginIn, core.IsActiveMiddleWare)
-	server.GET("/staff/detail/list", handler.InfoList, core.MustLoginIn, core.IsActiveMiddleWare)
-	server.POST("/staff/detail", handler.Info, core.MustLoginIn, core.IsActiveMiddleWare)
+	server.POST("/api/v1/staff/login", handler.Login)
+	server.POST("/api/v1/staff/create", handler.Create)
+	server.POST("/api/v1/staff/modify/info", handler.Modify, core.MustLoginIn, core.IsActiveMiddleWare)
+	server.POST("/api/v1/staff/modify/pwd", handler.ModifyPwd, core.MustLoginIn, core.IsActiveMiddleWare)
+	server.POST("/api/v1/staff/modify/mobile", handler.ModifyMobile, core.MustLoginIn, core.IsActiveMiddleWare)
+	server.POST("/api/v1/staff/modify/active", handler.ModifyActive, core.MustLoginIn)
+	server.POST("/api/v1/staff/dismiss", handler.Dismiss, core.MustLoginIn, core.IsActiveMiddleWare)
+	server.GET("/api/v1/staff/overview/list", handler.OverviewList, core.MustLoginIn, core.IsActiveMiddleWare)
+	server.GET("/api/v1/staff/detail/list", handler.InfoList, core.MustLoginIn, core.IsActiveMiddleWare)
+	server.POST("/api/v1/staff/detail", handler.Info, core.MustLoginIn, core.IsActiveMiddleWare)
 }

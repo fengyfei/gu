@@ -96,6 +96,6 @@ func UserID(c echo.Context) int32 {
 func init() {
 	urlMap = make(map[string]struct{})
 
-	urlMap["/staff/login"] = struct{}{}
-	urlMap["/staff/create"] = struct{}{}
+	urlMap["/api/v1/staff/login"] = struct{}{}
+	urlMap["/api/v1/staff/create"] = struct{}{}
 }
