@@ -25,6 +25,7 @@
 /*
  * Revision History:
  *     Initial: 2017/11/02        Jia Chenhui
+ *     Modify : 2017/11/04        Yang Chenglong
  */
 
 package mysql
@@ -35,7 +36,6 @@ import (
 	"sync"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/go-xorm/xorm"
 
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/libs/orm"
@@ -75,7 +75,7 @@ func NewPool(db string, size int) *Pool {
 
 	for i := 0; i < size; i++ {
 		conn = ring.New(1)
-		conn.Value, err = xorm.NewEngine(dialect, db)
+		conn.Value, err = gorm.Open(dialect, db)
 
 		if err != nil {
 			continue
@@ -84,10 +84,12 @@ func NewPool(db string, size int) *Pool {
 		pool.pool.Link(conn)
 	}
 
-	pool.size = pool.pool.Len()
+	pool.size = pool.pool.Len() - 1
 	if pool.size != size {
 		logger.Debug("New pool not enough!")
 	}
+
+	logger.Debug("Pool size:", pool.size)
 
 	return pool
 }
