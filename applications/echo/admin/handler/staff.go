@@ -37,8 +37,8 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 
+	"github.com/fengyfei/gu/applications/echo/admin/mysql"
 	"github.com/fengyfei/gu/applications/echo/core"
-	"github.com/fengyfei/gu/applications/echo/staff/mysql"
 	"github.com/fengyfei/gu/models/staff"
 )
 
