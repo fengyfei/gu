@@ -36,7 +36,6 @@ import (
 	"github.com/labstack/echo"
 
 	"github.com/fengyfei/gu/applications/echo/staff/mysql"
-	"github.com/fengyfei/gu/libs/helper"
 	"github.com/fengyfei/gu/models/staff"
 )
 
@@ -44,13 +43,7 @@ func MustLoginIn(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		user := c.Get("user").(*jwtgo.Token)
 		claims := user.Claims.(jwtgo.MapClaims)
-		strUID := claims[ClaimUID].(string)
-
-		uid, err := helper.StrToInt64(strUID)
-
-		if err != nil {
-			return NewErrorWithMsg(http.StatusInternalServerError, err.Error())
-		}
+		uid := claims[ClaimUID]
 
 		c.Set(ClaimUID, uid)
 
