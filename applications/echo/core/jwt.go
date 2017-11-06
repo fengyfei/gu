@@ -48,9 +48,14 @@ const (
 
 var (
 	TokenHMACKey string
-	urlMap       map[string]struct{}
+	URLMap       map[string]struct{}
 )
 
+func init() {
+	URLMap = make(map[string]struct{})
+}
+
+// CustomJWT defines the config for JWT middleware.
 func CustomJWT(tokenkey string) echo.MiddlewareFunc {
 	jwtconf := middleware.JWTConfig{
 		Skipper:    CustomSkipper,
@@ -60,8 +65,9 @@ func CustomJWT(tokenkey string) echo.MiddlewareFunc {
 	return middleware.JWTWithConfig(jwtconf)
 }
 
+// CustomSkipper defines a function to skip middleware.
 func CustomSkipper(c echo.Context) bool {
-	if _, ok := urlMap[c.Request().RequestURI]; ok {
+	if _, ok := URLMap[c.Request().RequestURI]; ok {
 		return true
 	}
 
@@ -91,11 +97,4 @@ func UserID(c echo.Context) int32 {
 	uid := rawUID.(float64)
 
 	return int32(uid)
-}
-
-func init() {
-	urlMap = make(map[string]struct{})
-
-	urlMap["/api/v1/staff/login"] = struct{}{}
-	urlMap["/api/v1/staff/create"] = struct{}{}
 }
