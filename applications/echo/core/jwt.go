@@ -30,7 +30,6 @@
 package core
 
 import (
-	"strconv"
 	"time"
 
 	jwtgo "github.com/dgrijalva/jwt-go"
@@ -49,9 +48,14 @@ const (
 
 var (
 	TokenHMACKey string
-	urlMap       map[string]struct{}
+	URLMap       map[string]struct{}
 )
 
+func init() {
+	URLMap = make(map[string]struct{})
+}
+
+// CustomJWT defines the config for JWT middleware.
 func CustomJWT(tokenkey string) echo.MiddlewareFunc {
 	jwtconf := middleware.JWTConfig{
 		Skipper:    CustomSkipper,
@@ -61,8 +65,9 @@ func CustomJWT(tokenkey string) echo.MiddlewareFunc {
 	return middleware.JWTWithConfig(jwtconf)
 }
 
+// CustomSkipper defines a function to skip middleware.
 func CustomSkipper(c echo.Context) bool {
-	if _, ok := urlMap[c.Request().RequestURI]; ok {
+	if _, ok := URLMap[c.Request().RequestURI]; ok {
 		return true
 	}
 
@@ -79,7 +84,7 @@ func NewToken(uid int32) (string, string, error) {
 	token := jwtgo.New(jwtgo.SigningMethodHS256)
 
 	claims := token.Claims.(jwtgo.MapClaims)
-	claims[ClaimUID] = strconv.FormatInt(int64(uid), 10)
+	claims[ClaimUID] = uid
 	claims[ClaimExpire] = time.Now().Add(time.Hour * tokenExpireInHour).Unix()
 
 	t, err := token.SignedString([]byte(TokenHMACKey))
@@ -88,14 +93,8 @@ func NewToken(uid int32) (string, string, error) {
 
 // UserID returns user identity.
 func UserID(c echo.Context) int32 {
-	uid := c.Get(ClaimUID).(int64)
+	rawUID := c.Get(ClaimUID)
+	uid := rawUID.(float64)
 
 	return int32(uid)
-}
-
-func init() {
-	urlMap = make(map[string]struct{})
-
-	urlMap["/staff/login"] = struct{}{}
-	urlMap["/staff/create"] = struct{}{}
 }

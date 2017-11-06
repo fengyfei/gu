@@ -1,5 +1,5 @@
-hash: 2a968b622dadef5478bf8911994e9f2b4c54d04365ff139a35a468a2e7ea9b4c
-updated: 2017-11-02T10:31:22.011736+08:00
+hash: 82b17b9e0266021ee6958204f46339aa17bdfe61fde4acfd118dbda591b4c28a
+updated: 2017-11-05T11:21:01.54828+08:00
 imports:
 - name: github.com/andybalholm/cascadia
   version: 349dd0209470eabd9514242c688c403c0926d266
@@ -25,15 +25,9 @@ imports:
   subpackages:
   - currency
 - name: github.com/go-playground/universal-translator
-  version: 71201497bace774495daed26a3874fd339e0b538
+  version: b32fa301c9fe55953584134cb6853a13c87ec0a1
 - name: github.com/go-sql-driver/mysql
   version: a0583e0143b1624142adab07e0e97fe106d99561
-- name: github.com/go-xorm/builder
-  version: a4a881a4e552fcb5473f39e8b9f7d9f3457a7fb0
-- name: github.com/go-xorm/core
-  version: da1adaf7a28ca792961721a34e6e04945200c890
-- name: github.com/go-xorm/xorm
-  version: d7f04c3cecff8d8c9321b2c39940e1992ce9f01a
 - name: github.com/gobwas/glob
   version: 51eb1ee00b6d931c66d229ceeb7c31b985563420
   subpackages:
@@ -55,6 +49,10 @@ imports:
   - json/parser
   - json/scanner
   - json/token
+- name: github.com/jinzhu/gorm
+  version: 5174cc5c242a728b435ea2be8a2f7f998e15429b
+- name: github.com/jinzhu/inflection
+  version: 1c35d901db3da928c72a72d8458480cc9ade058f
 - name: github.com/json-iterator/go
   version: 6240e1e7983a85228f7fd9c3e1b6932d46ec58e2
 - name: github.com/kennygrant/sanitize
@@ -117,7 +115,7 @@ imports:
   - html/atom
   - html/charset
 - name: golang.org/x/sys
-  version: 95c6576299259db960f6c5b9b69ea52422860fce
+  version: 8eb05f94d449fdf134ec24630ce69ada5b469c1c
   subpackages:
   - unix
 - name: golang.org/x/text
