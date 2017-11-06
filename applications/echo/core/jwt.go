@@ -30,7 +30,6 @@
 package core
 
 import (
-	"strconv"
 	"time"
 
 	jwtgo "github.com/dgrijalva/jwt-go"
@@ -79,7 +78,7 @@ func NewToken(uid int32) (string, string, error) {
 	token := jwtgo.New(jwtgo.SigningMethodHS256)
 
 	claims := token.Claims.(jwtgo.MapClaims)
-	claims[ClaimUID] = strconv.FormatInt(int64(uid), 10)
+	claims[ClaimUID] = uid
 	claims[ClaimExpire] = time.Now().Add(time.Hour * tokenExpireInHour).Unix()
 
 	t, err := token.SignedString([]byte(TokenHMACKey))
@@ -88,7 +87,8 @@ func NewToken(uid int32) (string, string, error) {
 
 // UserID returns user identity.
 func UserID(c echo.Context) int32 {
-	uid := c.Get(ClaimUID).(int64)
+	rawUID := c.Get(ClaimUID)
+	uid := rawUID.(float64)
 
 	return int32(uid)
 }
