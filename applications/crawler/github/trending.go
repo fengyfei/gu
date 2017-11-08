@@ -24,18 +24,54 @@
 
 /*
  * Revision History:
- *     Initial: 2017/10/28        Feng Yifei
+ *     Initial: 2017/11/08        Feng Yifei
  */
 
-package main
+package github
 
 import (
-	"github.com/fengyfei/gu/applications/crawler/devto"
-	"github.com/fengyfei/gu/applications/crawler/github"
+	"fmt"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/asciimoo/colly"
 	"github.com/fengyfei/gu/libs/crawler"
 )
 
-func main() {
-	crawler.StartCrawler(devto.NewDevToCrawler())
-	crawler.StartCrawler(github.NewTrendingCrawler("go"))
+type trendingCrawler struct {
+	collector *colly.Collector
+	topic     *string
+}
+
+// NewTrendingCrawler generates a crawler for github trending.
+func NewTrendingCrawler(tag string) crawler.Crawler {
+	return &trendingCrawler{
+		collector: colly.NewCollector(),
+		topic:     &tag,
+	}
+}
+
+// Crawler interface Init
+func (c *trendingCrawler) Init() error {
+	c.collector.OnHTML("ol.repo-list", c.parse)
+	return nil
+}
+
+// Crawler interface Start
+func (c *trendingCrawler) Start() error {
+	return c.collector.Visit("https://github.com/trending/" + *c.topic)
+}
+
+func (c *trendingCrawler) parse(e *colly.HTMLElement) {
+	e.DOM.Children().Each(c.parseContent)
+}
+
+func (c *trendingCrawler) parseContent(_ int, s *goquery.Selection) {
+	fmt.Print(s.Children().Eq(0).Find("a").Attr("href"))
+	fmt.Print("\t")
+	fmt.Print(s.Children().Eq(2).Find("p").Text())
+	fmt.Print("\t")
+	fmt.Print(s.Children().Eq(3).Children().Eq(1).Text())
+	fmt.Print("\t")
+	fmt.Print(s.Children().Eq(3).Find("span.float-sm-right").Text())
+	fmt.Println()
 }
