@@ -110,7 +110,7 @@ func (sp *serviceProvider) List(conn orm.Connection) ([]Role, error) {
 	list := []Role{}
 
 	db := conn.(*gorm.DB).Exec("USE staff")
-	err := db.Model(r).Where("active = ?", true).Find(&list).Error
+	err := db.Model(r).Where("active = true").Find(&list).Error
 
 	if err != nil {
 		return list, err
@@ -124,7 +124,7 @@ func (sp *serviceProvider) GetByID(conn orm.Connection, id *int16) (*Role, error
 	role := &Role{}
 
 	db := conn.(*gorm.DB).Exec("USE staff")
-	err := db.Model(role).Where("id = ? AND active = ?", *id, true).First(role).Error
+	err := db.Model(role).Where("id = ? AND active = true", *id).First(role).Error
 
 	if err != nil {
 		return nil, err
