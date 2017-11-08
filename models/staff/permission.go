@@ -148,7 +148,7 @@ finish:
 }
 
 // RoleList lists all the roles of the specified staff.
-func (sp *serviceProvider) RoleList(conn orm.Connection, sid *int32) ([]role.Role, error) {
+func (sp *serviceProvider) RoleList(conn orm.Connection, sid *int32) ([]Permission, error) {
 	s := &Staff{}
 	p := &Permission{}
 	result := []Permission{}
