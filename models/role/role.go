@@ -76,7 +76,7 @@ func (sp *serviceProvider) Create(conn orm.Connection, name, intro *string) erro
 		Created: &now,
 	}
 
-	db := conn.(*gorm.DB).Exec("USE role")
+	db := conn.(*gorm.DB).Exec("USE staff")
 
 	return db.Create(role).Error
 }
@@ -85,7 +85,7 @@ func (sp *serviceProvider) Create(conn orm.Connection, name, intro *string) erro
 func (sp *serviceProvider) Modify(conn orm.Connection, id *int16, name, intro *string) error {
 	role := &Role{}
 
-	db := conn.(*gorm.DB).Exec("USE role")
+	db := conn.(*gorm.DB).Exec("USE staff")
 
 	return db.Model(role).Where("id = ?", *id).Update(map[string]interface{}{
 		"name":  *name,
@@ -97,7 +97,7 @@ func (sp *serviceProvider) Modify(conn orm.Connection, id *int16, name, intro *s
 func (sp *serviceProvider) ModifyActive(conn orm.Connection, id *int16, active *bool) error {
 	role := &Role{}
 
-	db := conn.(*gorm.DB).Exec("USE role")
+	db := conn.(*gorm.DB).Exec("USE staff")
 
 	return db.Model(role).Where("id = ?", *id).Update(map[string]interface{}{
 		"active": *active,
@@ -109,7 +109,7 @@ func (sp *serviceProvider) List(conn orm.Connection) ([]Role, error) {
 	r := &Role{}
 	list := []Role{}
 
-	db := conn.(*gorm.DB).Exec("USE role")
+	db := conn.(*gorm.DB).Exec("USE staff")
 	err := db.Model(r).Where("active = ?", true).Find(&list).Error
 
 	if err != nil {
@@ -123,7 +123,7 @@ func (sp *serviceProvider) List(conn orm.Connection) ([]Role, error) {
 func (sp *serviceProvider) GetByID(conn orm.Connection, id *int16) (*Role, error) {
 	role := &Role{}
 
-	db := conn.(*gorm.DB).Exec("USE role")
+	db := conn.(*gorm.DB).Exec("USE staff")
 	err := db.Model(role).Where("id = ? AND active = ?", *id, true).First(role).Error
 
 	if err != nil {
