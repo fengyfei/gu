@@ -40,11 +40,11 @@ import (
 )
 
 const (
-	roleManagerName = "rolemanager"
+	permissionName = "permission"
 )
 
 // Staff role management table.
-type RoleManager struct {
+type Permission struct {
 	Id      int32 `json:"id" gorm:"primary_key;auto_increment"`
 	StaffID int32 `json:"staffid"`
 	RoleID  int16 `json:"roleid"`
@@ -52,8 +52,8 @@ type RoleManager struct {
 }
 
 // TableName returns table name in database.
-func (RoleManager) TableName() string {
-	return roleManagerName
+func (Permission) TableName() string {
+	return permissionName
 }
 
 // AddRole add a role to staff.
@@ -61,7 +61,8 @@ func (sp *serviceProvider) AddRole(conn orm.Connection, sid *int32, rid *int16) 
 	now := time.Now()
 	s := &Staff{}
 	r := &role.Role{}
-	rm := &RoleManager{
+	p := &Permission{}
+	value := &Permission{
 		StaffID: *sid,
 		RoleID:  *rid,
 		Created: &now,
@@ -90,7 +91,7 @@ func (sp *serviceProvider) AddRole(conn orm.Connection, sid *int32, rid *int16) 
 		goto finish
 	}
 
-	err = txn.Create(rm).Error
+	err = txn.Model(p).Create(value).Error
 
 finish:
 	if err == nil {
@@ -108,8 +109,8 @@ finish:
 func (sp *serviceProvider) RemoveRole(conn orm.Connection, sid *int32, rid *int16) error {
 	s := &Staff{}
 	r := &role.Role{}
-	rm := &RoleManager{}
-	condition := &RoleManager{
+	p := &Permission{}
+	condition := &Permission{
 		StaffID: *sid,
 		RoleID:  *rid,
 	}
@@ -132,7 +133,7 @@ func (sp *serviceProvider) RemoveRole(conn orm.Connection, sid *int32, rid *int1
 		goto finish
 	}
 
-	err = txn.Model(rm).Delete(condition).Error
+	err = txn.Model(p).Delete(condition).Error
 
 finish:
 	if err == nil {
@@ -149,8 +150,8 @@ finish:
 // RoleList lists all the roles of the specified staff.
 func (sp *serviceProvider) RoleList(conn orm.Connection, sid *int32) ([]role.Role, error) {
 	s := &Staff{}
-	rm := &RoleManager{}
-	result := []RoleManager{}
+	p := &Permission{}
+	result := []Permission{}
 
 	db := conn.(*gorm.DB)
 	txn := db.Begin().Exec("USE staff")
@@ -165,7 +166,7 @@ func (sp *serviceProvider) RoleList(conn orm.Connection, sid *int32) ([]role.Rol
 		goto finish
 	}
 
-	err = txn.Model(rm).Where("staffid = ?", *sid).Find(&result).Error
+	err = txn.Model(p).Where("staffid = ?", *sid).Find(&result).Error
 
 finish:
 	if err == nil {
