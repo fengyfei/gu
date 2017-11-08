@@ -102,7 +102,8 @@ func (sp *serviceProvider) Create(conn orm.Connection, name, pwd, realname, mobi
 
 	now := time.Now()
 
-	staff := &Staff{
+	staff := &Staff{}
+	value := &Staff{
 		Name:      *name,
 		Pwd:       string(salt),
 		RealName:  *realname,
@@ -115,7 +116,7 @@ func (sp *serviceProvider) Create(conn orm.Connection, name, pwd, realname, mobi
 
 	db := conn.(*gorm.DB).Exec("USE staff")
 
-	return db.Create(staff).Error
+	return db.Model(staff).Create(value).Error
 }
 
 // Modify modify staff information.
@@ -188,7 +189,7 @@ func (sp *serviceProvider) IsActive(conn orm.Connection, uid *int32) (bool, erro
 	staff := &Staff{}
 
 	db := conn.(*gorm.DB).Exec("USE staff")
-	err := db.Where("id = ?", *uid).First(staff).Error
+	err := db.Model(staff).Where("id = ?", *uid).First(staff).Error
 
 	return staff.Active, err
 }
@@ -198,7 +199,7 @@ func (sp *serviceProvider) List(conn orm.Connection) ([]Staff, error) {
 	list := []Staff{}
 
 	db := conn.(*gorm.DB).Exec("USE staff")
-	err := db.Model(list).Where("resigned=?", false).Find(&list).Error
+	err := db.Model(list).Where("resigned = false").Find(&list).Error
 
 	if err != nil {
 		return list, err
@@ -212,7 +213,7 @@ func (sp *serviceProvider) GetByID(conn orm.Connection, uid *int32) (*Staff, err
 	staff := &Staff{}
 
 	db := conn.(*gorm.DB).Exec("USE staff")
-	err := db.Model(staff).Where("id=? AND resigned=?", *uid, false).First(staff).Error
+	err := db.Model(staff).Where("id = ? AND resigned = false", *uid).First(staff).Error
 
 	if err != nil {
 		return nil, err
