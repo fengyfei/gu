@@ -36,6 +36,6 @@ import (
 )
 
 func main() {
-	crawler.StartCrawler(devto.NewDevToCrawler())
+	crawler.StartCrawler(devto.NewDevToCrawler("go"))
 	crawler.StartCrawler(github.NewTrendingCrawler("go"))
 }

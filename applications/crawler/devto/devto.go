@@ -41,12 +41,14 @@ import (
 
 type devToCrawler struct {
 	collector *colly.Collector
+	topic     *string
 }
 
 // NewDevToCrawler generates a crawler for dev.to.
-func NewDevToCrawler() crawler.Crawler {
+func NewDevToCrawler(topic string) crawler.Crawler {
 	return &devToCrawler{
 		collector: colly.NewCollector(),
+		topic:     &topic,
 	}
 }
 
@@ -58,7 +60,7 @@ func (c *devToCrawler) Init() error {
 
 // Crawler interface Start
 func (c *devToCrawler) Start() error {
-	return c.collector.Visit("https://dev.to/t/go")
+	return c.collector.Visit("https://dev.to/t/" + *c.topic)
 }
 
 func (c *devToCrawler) parse(e *colly.HTMLElement) {
