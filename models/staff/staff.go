@@ -128,7 +128,8 @@ func (sp *serviceProvider) Modify(conn orm.Connection, uid *int32, name, mobile,
 	return db.Model(staff).Where("id = ?", *uid).Updates(map[string]interface{}{
 		"name":   *name,
 		"mobile": *mobile,
-		"email":  *email}).Error
+		"email":  *email,
+	}).Error
 }
 
 // ModifyPwd modify staff password.
@@ -181,7 +182,8 @@ func (sp *serviceProvider) Dismiss(conn orm.Connection, uid *int32) error {
 	return db.Model(staff).Where("id = ?", *uid).Updates(map[string]interface{}{
 		"active":    false,
 		"resigned":  true,
-		"resign_at": time.Now()}).Error
+		"resign_at": time.Now(),
+	}).Error
 }
 
 //IsActive return staff.Active and nil if query success
