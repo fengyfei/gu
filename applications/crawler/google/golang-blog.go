@@ -24,20 +24,45 @@
 
 /*
  * Revision History:
- *     Initial: 2017/10/28        Feng Yifei
+ *     Initial: 2017/11/13        Feng Yifei
  */
 
-package main
+package google
 
 import (
-	"github.com/fengyfei/gu/applications/crawler/devto"
-	"github.com/fengyfei/gu/applications/crawler/github"
-	"github.com/fengyfei/gu/applications/crawler/google"
+	"fmt"
+
+	"github.com/asciimoo/colly"
 	"github.com/fengyfei/gu/libs/crawler"
 )
 
-func main() {
-	crawler.StartCrawler(devto.NewDevToCrawler("go"))
-	crawler.StartCrawler(github.NewTrendingCrawler("go"))
-	crawler.StartCrawler(google.NewGolangBlogCrawler())
+type golangBlogCrawler struct {
+	collector *colly.Collector
+}
+
+// NewGolangBlogCrawler generates a crawler for github trending.
+func NewGolangBlogCrawler() crawler.Crawler {
+	return &golangBlogCrawler{
+		collector: colly.NewCollector(),
+	}
+}
+
+// Crawler interface Init
+func (c *golangBlogCrawler) Init() error {
+	c.collector.OnHTML("p.blogtitle", c.parse)
+	return nil
+}
+
+// Crawler interface Start
+func (c *golangBlogCrawler) Start() error {
+	return c.collector.Visit("https://blog.golang.org/index")
+}
+
+func (c *golangBlogCrawler) parse(e *colly.HTMLElement) {
+	fmt.Print(e.DOM.Find("a").Attr("href"))
+	fmt.Print("\t")
+	fmt.Print(e.DOM.Find("a").Text())
+	fmt.Print("\t")
+	fmt.Print(e.DOM.Find("span").Text())
+	fmt.Println()
 }
