@@ -27,7 +27,7 @@
  *     Initial: 2017/11/13        Jia Chenhui
  */
 
-package filter
+package permission
 
 import (
 	"net/http"
@@ -37,29 +37,29 @@ import (
 
 	"github.com/fengyfei/gu/applications/echo/admin/mysql"
 	"github.com/fengyfei/gu/applications/echo/core"
-	"github.com/fengyfei/gu/models/url"
+	"github.com/fengyfei/gu/models/staff"
 )
 
 type (
-	// createReq - The request struct that create filter information.
+	// createReq - The request struct that create permission information.
 	createReq struct {
-		URLId  *int16 `json:"urlid" validate:"required,numeric"`
-		RoleId *int16 `json:"roleid" validate:"required,numeric"`
+		URL    *string `json:"url" validate:"required,url"`
+		RoleId *int16  `json:"roleid" validate:"required,numeric"`
 	}
 
-	// removeReq - The request struct that remove filter information.
+	// removeReq - The request struct that remove permission information.
 	removeReq struct {
-		URLId  *int16 `json:"urlid" validate:"required,numeric"`
-		RoleId *int16 `json:"roleid" validate:"required,numeric"`
+		URL    *string `json:"url" validate:"required,url"`
+		RoleId *int16  `json:"roleid" validate:"required,numeric"`
 	}
 
-	// listReq - The request struct that get a list of filter for specified URL.
+	// listReq - The request struct that get a list of permission for specified URL.
 	listReq struct {
-		URLId *int16 `json:"urlid" validate:"required,numeric"`
+		URL *string `json:"url" validate:"required,url"`
 	}
 )
 
-// Create - Create filter information.
+// Create - Create permission information.
 func Create(c echo.Context) error {
 	var (
 		err error
@@ -80,7 +80,7 @@ func Create(c echo.Context) error {
 	}
 	defer mysql.Pool.Release(conn)
 
-	err = url.Service.AddFilter(conn, req.URLId, req.RoleId)
+	err = staff.Service.AddURLPermission(conn, req.URL, req.RoleId)
 	if err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
@@ -88,7 +88,7 @@ func Create(c echo.Context) error {
 	return c.JSON(http.StatusOK, nil)
 }
 
-// Remove - Remove filter information.
+// Remove - Remove permission information.
 func Remove(c echo.Context) error {
 	var (
 		err error
@@ -113,14 +113,14 @@ func Remove(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
 	}
 
-	if err = url.Service.RemoveFilter(conn, req.URLId, req.RoleId); err != nil {
+	if err = staff.Service.RemoveURLPermission(conn, req.URL, req.RoleId); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, nil)
 }
 
-// List - Get a list of filter for specified URL.
+// List - Get a list of permission for specified URL.
 func List(c echo.Context) error {
 	var (
 		err error
@@ -141,7 +141,7 @@ func List(c echo.Context) error {
 	}
 	defer mysql.Pool.Release(conn)
 
-	resp, err := url.Service.FilterList(conn, req.URLId)
+	resp, err := staff.Service.URLPermissionList(conn, req.URL)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return core.NewErrorWithMsg(http.StatusNotFound, err.Error())
