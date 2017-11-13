@@ -44,9 +44,8 @@ const (
 
 // Permission represents permission of URL.
 type Permission struct {
-	Id      int16  `json:"id" gorm:"primary_key;auto_increment"`
-	URL     string `json:"url"`
-	RoleId  int16  `json:"roleid"`
+	URL     string `json:"url" gorm:"primary_key"`
+	RoleId  int16  `json:"roleid" gorm:"primary_key"`
 	Created *time.Time
 }
 
