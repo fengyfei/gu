@@ -1,0 +1,154 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2017 SmartestEE Co., Ltd.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+/*
+ * Revision History:
+ *     Initial: 2017/11/13        Jia Chenhui
+ */
+
+package filter
+
+import (
+	"net/http"
+
+	"github.com/jinzhu/gorm"
+	"github.com/labstack/echo"
+
+	"github.com/fengyfei/gu/applications/echo/admin/mysql"
+	"github.com/fengyfei/gu/applications/echo/core"
+	"github.com/fengyfei/gu/models/url"
+)
+
+type (
+	// createReq - The request struct that create filter information.
+	createReq struct {
+		URLId  *int16 `json:"urlid" validate:"required,numeric"`
+		RoleId *int16 `json:"roleid" validate:"required,numeric"`
+	}
+
+	// removeReq - The request struct that remove filter information.
+	removeReq struct {
+		URLId  *int16 `json:"urlid" validate:"required,numeric"`
+		RoleId *int16 `json:"roleid" validate:"required,numeric"`
+	}
+
+	// listReq - The request struct that get a list of filter for specified URL.
+	listReq struct {
+		URLId *int16 `json:"urlid" validate:"required,numeric"`
+	}
+)
+
+// Create - Create filter information.
+func Create(c echo.Context) error {
+	var (
+		err error
+		req createReq
+	)
+
+	if err = c.Bind(&req); err != nil {
+		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+	}
+
+	if err = c.Validate(&req); err != nil {
+		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+	}
+
+	conn, err := mysql.Pool.Get()
+	if err != nil {
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+	defer mysql.Pool.Release(conn)
+
+	err = url.Service.AddFilter(conn, req.URLId, req.RoleId)
+	if err != nil {
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, nil)
+}
+
+// Remove - Remove filter information.
+func Remove(c echo.Context) error {
+	var (
+		err error
+		req removeReq
+	)
+
+	if err = c.Bind(&req); err != nil {
+		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+	}
+
+	if err = c.Validate(&req); err != nil {
+		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+	}
+
+	conn, err := mysql.Pool.Get()
+	if err != nil {
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+	defer mysql.Pool.Release(conn)
+
+	if err != nil {
+		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+	}
+
+	if err = url.Service.RemoveFilter(conn, req.URLId, req.RoleId); err != nil {
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, nil)
+}
+
+// List - Get a list of filter for specified URL.
+func List(c echo.Context) error {
+	var (
+		err error
+		req listReq
+	)
+
+	if err = c.Bind(&req); err != nil {
+		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+	}
+
+	if err = c.Validate(&req); err != nil {
+		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+	}
+
+	conn, err := mysql.Pool.Get()
+	if err != nil {
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+	defer mysql.Pool.Release(conn)
+
+	resp, err := url.Service.FilterList(conn, req.URLId)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return core.NewErrorWithMsg(http.StatusNotFound, err.Error())
+		}
+
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, resp)
+}
