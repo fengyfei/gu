@@ -208,6 +208,10 @@ func Info(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
 	}
 
+	if err = c.Validate(&req); err != nil {
+		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+	}
+
 	conn, err := mysql.Pool.Get()
 	if err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
