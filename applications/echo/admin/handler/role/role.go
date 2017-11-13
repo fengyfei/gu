@@ -44,14 +44,14 @@ import (
 type (
 	// createReq - The request struct that create role information.
 	createReq struct {
-		name  *string `json:"name" validate:"required,alphanum,min=6,max=30"`
-		intro *string `json:"intro" validate:"required,alphanum,min=6,max=140"`
+		Name  *string `json:"name" validate:"required,alphanum,min=6,max=30"`
+		Intro *string `json:"intro" validate:"required,alphanum,min=6,max=140"`
 	}
 
 	// modifyReq - The request struct that modify role information.
 	modifyReq struct {
-		name  *string `json:"name" validate:"required,alphanum,min=6,max=30"`
-		intro *string `json:"intro" validate:"required,alphanum,min=6,max=140"`
+		Name  *string `json:"name" validate:"required,alphanum,min=6,max=30"`
+		Intro *string `json:"intro" validate:"required,alphanum,min=6,max=140"`
 	}
 
 	// modifyActiveReq - The request struct that modify role status.
@@ -89,7 +89,7 @@ func Create(c echo.Context) error {
 	}
 	defer mysql.Pool.Release(conn)
 
-	err = role.Service.Create(conn, req.name, req.intro)
+	err = role.Service.Create(conn, req.Name, req.Intro)
 	if err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
@@ -123,7 +123,7 @@ func Modify(c echo.Context) error {
 	}
 
 	uid := int16(core.UserID(c))
-	if err = role.Service.Modify(conn, &uid, req.name, req.intro); err != nil {
+	if err = role.Service.Modify(conn, &uid, req.Name, req.Intro); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
