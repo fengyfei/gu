@@ -158,10 +158,6 @@ func Create(c echo.Context) error {
 	}
 	defer mysql.Pool.Release(conn)
 
-	if err != nil {
-		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
-	}
-
 	err = staff.Service.Create(conn, req.Name, req.Pwd, req.RealName, req.Mobile, req.Email, req.Male)
 	if err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
