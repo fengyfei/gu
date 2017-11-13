@@ -50,13 +50,20 @@ type (
 
 	// modifyReq - The request struct that modify role information.
 	modifyReq struct {
+		Id    *int16  `json:"id" validate:"required,numeric"`
 		Name  *string `json:"name" validate:"required,alphanum,min=6,max=30"`
 		Intro *string `json:"intro" validate:"required,alphanum,min=6,max=140"`
 	}
 
 	// modifyActiveReq - The request struct that modify role status.
 	modifyActiveReq struct {
-		Active *bool `json:"active"  validate:"required"`
+		Id     *int16 `json:"id" validate:"required,numeric"`
+		Active *bool  `json:"active"  validate:"required"`
+	}
+
+	// infoReq - The request struct for get detail of specified role.
+	infoReq struct {
+		Id *int16 `json:"id" validate:"required,numeric"`
 	}
 
 	// infoResp - The detail information for role.
@@ -122,8 +129,7 @@ func Modify(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
 	}
 
-	uid := int16(core.UserID(c))
-	if err = role.Service.Modify(conn, &uid, req.Name, req.Intro); err != nil {
+	if err = role.Service.Modify(conn, req.Id, req.Name, req.Intro); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
@@ -151,8 +157,7 @@ func ModifyActive(c echo.Context) error {
 	}
 	defer mysql.Pool.Release(conn)
 
-	uid := int16(core.UserID(c))
-	if err = role.Service.ModifyActive(conn, &uid, req.Active); err != nil {
+	if err = role.Service.ModifyActive(conn, req.Id, req.Active); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
@@ -194,14 +199,22 @@ func InfoList(c echo.Context) error {
 
 // Info - Get detail information for specified role.
 func Info(c echo.Context) error {
+	var (
+		err error
+		req infoReq
+	)
+
+	if err = c.Bind(&req); err != nil {
+		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+	}
+
 	conn, err := mysql.Pool.Get()
 	if err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 	defer mysql.Pool.Release(conn)
 
-	uid := int16(core.UserID(c))
-	info, err := role.Service.GetByID(conn, &uid)
+	info, err := role.Service.GetByID(conn, req.Id)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return core.NewErrorWithMsg(http.StatusNotFound, err.Error())
