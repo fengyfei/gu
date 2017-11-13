@@ -27,7 +27,7 @@
  *     Initial: 2017/11/08        Jia Chenhui
  */
 
-package role
+package staff
 
 import (
 	"time"
@@ -54,22 +54,12 @@ func (Role) TableName() string {
 	return roleName
 }
 
-type serviceProvider struct{}
-
-var (
-	// Service handles operations on model Role.
-	Service *serviceProvider
-)
-
-func init() {
-	Service = &serviceProvider{}
-}
-
-// Create insert the value into database
-func (sp *serviceProvider) Create(conn orm.Connection, name, intro *string) error {
+// CreateRole create role information.
+func (sp *serviceProvider) CreateRole(conn orm.Connection, name, intro *string) error {
 	now := time.Now()
 
-	role := &Role{
+	role := &Role{}
+	value := &Role{
 		Name:    *name,
 		Intro:   *intro,
 		Active:  true,
@@ -78,11 +68,11 @@ func (sp *serviceProvider) Create(conn orm.Connection, name, intro *string) erro
 
 	db := conn.(*gorm.DB).Exec("USE staff")
 
-	return db.Create(role).Error
+	return db.Model(role).Create(value).Error
 }
 
-// Modify modify role information.
-func (sp *serviceProvider) Modify(conn orm.Connection, id *int16, name, intro *string) error {
+// ModifyRole modify role information.
+func (sp *serviceProvider) ModifyRole(conn orm.Connection, id *int16, name, intro *string) error {
 	role := &Role{}
 
 	db := conn.(*gorm.DB).Exec("USE staff")
@@ -93,8 +83,8 @@ func (sp *serviceProvider) Modify(conn orm.Connection, id *int16, name, intro *s
 	}).Error
 }
 
-// ModifyActive modify role status.
-func (sp *serviceProvider) ModifyActive(conn orm.Connection, id *int16, active *bool) error {
+// ModifyRoleActive modify role status.
+func (sp *serviceProvider) ModifyRoleActive(conn orm.Connection, id *int16, active *bool) error {
 	role := &Role{}
 
 	db := conn.(*gorm.DB).Exec("USE staff")
@@ -104,8 +94,8 @@ func (sp *serviceProvider) ModifyActive(conn orm.Connection, id *int16, active *
 	}).Error
 }
 
-// List list all on the active role.
-func (sp *serviceProvider) List(conn orm.Connection) ([]Role, error) {
+// RoleList list all on the active role.
+func (sp *serviceProvider) RoleList(conn orm.Connection) ([]Role, error) {
 	r := &Role{}
 	list := []Role{}
 
@@ -119,8 +109,8 @@ func (sp *serviceProvider) List(conn orm.Connection) ([]Role, error) {
 	return list, nil
 }
 
-// GetByID get one role detail information.
-func (sp *serviceProvider) GetByID(conn orm.Connection, id *int16) (*Role, error) {
+// GetRoleByID get one role detail information.
+func (sp *serviceProvider) GetRoleByID(conn orm.Connection, id *int16) (*Role, error) {
 	role := &Role{}
 
 	db := conn.(*gorm.DB).Exec("USE staff")
