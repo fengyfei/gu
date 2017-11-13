@@ -146,7 +146,7 @@ finish:
 	return err
 }
 
-// Roles lists all the roles of the specified staff.
+// AssociatedRoleList list all the roles of the specified staff.
 func (sp *serviceProvider) AssociatedRoleList(conn orm.Connection, sid *int32) ([]Relation, error) {
 	s := &Staff{}
 	relation := &Relation{}
