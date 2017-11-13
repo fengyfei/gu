@@ -36,18 +36,17 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"github.com/fengyfei/gu/libs/orm"
-	"github.com/fengyfei/gu/models/role"
 )
 
 const (
 	permissionName = "permission"
 )
 
-// Staff role management table.
+// Permission represents permission of URL.
 type Permission struct {
-	Id      int32 `json:"id" gorm:"primary_key;auto_increment"`
-	StaffID int32 `json:"staffid"`
-	RoleID  int16 `json:"roleid"`
+	Id      int16  `json:"id" gorm:"primary_key;auto_increment"`
+	URL     string `json:"url"`
+	RoleId  int16  `json:"roleid"`
 	Created *time.Time
 }
 
@@ -56,32 +55,21 @@ func (Permission) TableName() string {
 	return permissionName
 }
 
-// AddRole add a role to staff.
-func (sp *serviceProvider) AddRole(conn orm.Connection, sid *int32, rid *int16) error {
+// AddPermission create an associated record of the specified URL and role.
+func (sp *serviceProvider) AddURLPermission(conn orm.Connection, url *string, rid *int16) error {
 	now := time.Now()
-	s := &Staff{}
-	r := &role.Role{}
-	p := &Permission{}
+	r := &Role{}
+	permission := &Permission{}
 	value := &Permission{
-		StaffID: *sid,
-		RoleID:  *rid,
+		URL:     *url,
+		RoleId:  *rid,
 		Created: &now,
 	}
 
 	db := conn.(*gorm.DB)
 	txn := db.Begin().Exec("USE staff")
 
-	err := txn.Model(s).Where("id = ?", *sid).First(s).Error
-	if err != nil {
-		goto finish
-	}
-
-	if !s.Active || s.Resigned {
-		err = errors.New("the staff is not activated")
-		goto finish
-	}
-
-	err = txn.Model(r).Where("id = ?", *rid).First(r).Error
+	err := txn.Model(r).Where("id = ?", *rid).First(r).Error
 	if err != nil {
 		goto finish
 	}
@@ -91,7 +79,7 @@ func (sp *serviceProvider) AddRole(conn orm.Connection, sid *int32, rid *int16) 
 		goto finish
 	}
 
-	err = txn.Model(p).Create(value).Error
+	err = txn.Model(permission).Create(value).Error
 
 finish:
 	if err == nil {
@@ -105,35 +93,29 @@ finish:
 	return err
 }
 
-// RemoveRole remove role from staff.
-func (sp *serviceProvider) RemoveRole(conn orm.Connection, sid *int32, rid *int16) error {
-	s := &Staff{}
-	r := &role.Role{}
-	p := &Permission{}
+// RemovePermission remove the associated records of the specified URL and role.
+func (sp *serviceProvider) RemoveURLPermission(conn orm.Connection, url *string, rid *int16) error {
+	r := &Role{}
+	permission := &Permission{}
 	condition := &Permission{
-		StaffID: *sid,
-		RoleID:  *rid,
+		URL:    *url,
+		RoleId: *rid,
 	}
 
 	db := conn.(*gorm.DB)
 	txn := db.Begin().Exec("USE staff")
 
-	err := txn.Model(s).Where("id = ?", *sid).First(s).Error
+	err := txn.Model(r).Where("id = ?", *rid).First(r).Error
 	if err != nil {
 		goto finish
 	}
 
-	if !s.Active || s.Resigned {
-		err = errors.New("the staff is not activated")
+	if !r.Active {
+		err = errors.New("the role is not activated")
 		goto finish
 	}
 
-	err = txn.Model(r).Where("id = ?", *rid).First(r).Error
-	if err != nil {
-		goto finish
-	}
-
-	err = txn.Model(p).Delete(condition).Error
+	err = txn.Model(permission).Delete(condition).Error
 
 finish:
 	if err == nil {
@@ -147,35 +129,17 @@ finish:
 	return err
 }
 
-// RoleList lists all the roles of the specified staff.
-func (sp *serviceProvider) RoleList(conn orm.Connection, sid *int32) ([]Permission, error) {
-	s := &Staff{}
-	p := &Permission{}
+// PermissionList lists all the roles of the specified URL.
+func (sp *serviceProvider) URLPermissionList(conn orm.Connection, url *string) ([]Permission, error) {
+	permission := &Permission{}
 	result := []Permission{}
 
-	db := conn.(*gorm.DB)
-	txn := db.Begin().Exec("USE staff")
-
-	err := txn.Model(s).Where("id = ?", *sid).First(s).Error
-	if err != nil {
-		goto finish
-	}
-
-	if !s.Active || s.Resigned {
-		err = errors.New("the staff is not activated")
-		goto finish
-	}
-
-	err = txn.Model(p).Where("staffid = ?", *sid).Find(&result).Error
-
-finish:
-	if err == nil {
-		err = txn.Commit().Error
-	}
+	db := conn.(*gorm.DB).Exec("USE staff")
+	err := db.Model(permission).Where("url = ?", *url).Find(&result).Error
 
 	if err != nil {
-		txn.Rollback()
+		return result, err
 	}
 
-	return result, err
+	return result, nil
 }
