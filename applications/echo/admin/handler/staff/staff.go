@@ -98,6 +98,23 @@ type (
 		Male      bool
 		CreatedAt time.Time
 	}
+
+	// addRoleReq - The request struct that add role to staff.
+	addRoleReq struct {
+		StaffId *int32 `json:"staffid" validate:"required,numeric"`
+		RoleId  *int16 `json:"roleid" validate:"required,numeric"`
+	}
+
+	// removeRoleReq - The request struct that remove role from staff.
+	removeRoleReq struct {
+		StaffId *int32 `json:"staffid" validate:"required,numeric"`
+		RoleId  *int16 `json:"roleid" validate:"required,numeric"`
+	}
+
+	// roleListReq - The request struct that list all the roles of the specified staff.
+	roleListReq struct {
+		StaffId *int32 `json:"staffid" validate:"required,numeric"`
+	}
 )
 
 // Login - Staff login.
@@ -386,4 +403,93 @@ func Info(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, *info)
+}
+
+// AddRole - Add a role to staff.
+func AddRole(c echo.Context) error {
+	var (
+		err error
+		req addRoleReq
+	)
+
+	if err = c.Bind(&req); err != nil {
+		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+	}
+
+	if err = c.Validate(&req); err != nil {
+		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+	}
+
+	conn, err := mysql.Pool.Get()
+	if err != nil {
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+	defer mysql.Pool.Release(conn)
+
+	if err = staff.Service.AddRole(conn, req.StaffId, req.RoleId); err != nil {
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, nil)
+}
+
+// RemoveRole - Remove role from staff.
+func RemoveRole(c echo.Context) error {
+	var (
+		err error
+		req removeRoleReq
+	)
+
+	if err = c.Bind(&req); err != nil {
+		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+	}
+
+	if err = c.Validate(&req); err != nil {
+		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+	}
+
+	conn, err := mysql.Pool.Get()
+	if err != nil {
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+	defer mysql.Pool.Release(conn)
+
+	if err = staff.Service.RemoveRole(conn, req.StaffId, req.RoleId); err != nil {
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, nil)
+}
+
+// RoleList - List all the roles of the specified staff.
+func RoleList(c echo.Context) error {
+	var (
+		err error
+		req roleListReq
+	)
+
+	if err = c.Bind(&req); err != nil {
+		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+	}
+
+	if err = c.Validate(&req); err != nil {
+		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+	}
+
+	conn, err := mysql.Pool.Get()
+	if err != nil {
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+	defer mysql.Pool.Release(conn)
+
+	resp, err := staff.Service.AssociatedRoleList(conn, req.StaffId)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return core.NewErrorWithMsg(http.StatusNotFound, err.Error())
+		}
+
+		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, resp)
 }
