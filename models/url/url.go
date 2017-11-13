@@ -113,7 +113,7 @@ func (sp *serviceProvider) List(conn orm.Connection) ([]URL, error) {
 }
 
 // GetByID get the specified URL information.
-func (sp *serviceProvider) GetByID(conn orm.Connection, uid *int32) (*URL, error) {
+func (sp *serviceProvider) GetByID(conn orm.Connection, uid *int16) (*URL, error) {
 	u := &URL{}
 
 	db := conn.(*gorm.DB).Exec("USE staff")
