@@ -359,6 +359,7 @@ func InfoList(c echo.Context) error {
 			Id:        s.Id,
 			Name:      s.Name,
 			RealName:  s.RealName,
+			Mobile:    s.Mobile,
 			Email:     s.Email,
 			Male:      s.Male,
 			CreatedAt: *s.CreatedAt,
