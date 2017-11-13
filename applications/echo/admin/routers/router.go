@@ -34,6 +34,7 @@ import (
 
 	"github.com/fengyfei/gu/applications/echo/admin/handler/role"
 	"github.com/fengyfei/gu/applications/echo/admin/handler/staff"
+	"github.com/fengyfei/gu/applications/echo/admin/handler/url"
 	"github.com/fengyfei/gu/applications/echo/core"
 )
 
@@ -63,7 +64,14 @@ func InitRouter(server *echo.Echo, token string) {
 	// Role
 	server.POST("/api/v1/role/create", role.Create)
 	server.POST("/api/v1/role/modify/info", role.Modify, core.MustLoginIn, core.IsActiveMiddleWare)
-	server.POST("/api/v1/role/modify/active", role.ModifyActive, core.MustLoginIn)
+	server.POST("/api/v1/role/modify/active", role.ModifyActive, core.MustLoginIn, core.IsActiveMiddleWare)
 	server.GET("/api/v1/role/detail/list", role.InfoList, core.MustLoginIn, core.IsActiveMiddleWare)
 	server.POST("/api/v1/role/detail", role.Info, core.MustLoginIn, core.IsActiveMiddleWare)
+
+	// URL
+	server.POST("/api/v1/url/create", url.Create)
+	server.POST("/api/v1/url/modify/info", url.Modify, core.MustLoginIn, core.IsActiveMiddleWare)
+	server.POST("/api/v1/url/modify/active", url.ModifyActive, core.MustLoginIn, core.IsActiveMiddleWare)
+	server.GET("/api/v1/url/detail/list", url.InfoList, core.MustLoginIn, core.IsActiveMiddleWare)
+	server.POST("/api/v1/url/detail", url.Info, core.MustLoginIn, core.IsActiveMiddleWare)
 }
