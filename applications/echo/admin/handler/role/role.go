@@ -38,7 +38,7 @@ import (
 
 	"github.com/fengyfei/gu/applications/echo/admin/mysql"
 	"github.com/fengyfei/gu/applications/echo/core"
-	"github.com/fengyfei/gu/models/role"
+	"github.com/fengyfei/gu/models/staff"
 )
 
 type (
@@ -96,7 +96,7 @@ func Create(c echo.Context) error {
 	}
 	defer mysql.Pool.Release(conn)
 
-	err = role.Service.Create(conn, req.Name, req.Intro)
+	err = staff.Service.CreateRole(conn, req.Name, req.Intro)
 	if err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
@@ -129,7 +129,7 @@ func Modify(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
 	}
 
-	if err = role.Service.Modify(conn, req.Id, req.Name, req.Intro); err != nil {
+	if err = staff.Service.ModifyRole(conn, req.Id, req.Name, req.Intro); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
@@ -157,7 +157,7 @@ func ModifyActive(c echo.Context) error {
 	}
 	defer mysql.Pool.Release(conn)
 
-	if err = role.Service.ModifyActive(conn, req.Id, req.Active); err != nil {
+	if err = staff.Service.ModifyRoleActive(conn, req.Id, req.Active); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
@@ -174,7 +174,7 @@ func InfoList(c echo.Context) error {
 	}
 	defer mysql.Pool.Release(conn)
 
-	rlist, err := role.Service.List(conn)
+	rlist, err := staff.Service.RoleList(conn)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return core.NewErrorWithMsg(http.StatusNotFound, err.Error())
@@ -218,7 +218,7 @@ func Info(c echo.Context) error {
 	}
 	defer mysql.Pool.Release(conn)
 
-	info, err := role.Service.GetByID(conn, req.Id)
+	info, err := staff.Service.GetRoleByID(conn, req.Id)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return core.NewErrorWithMsg(http.StatusNotFound, err.Error())

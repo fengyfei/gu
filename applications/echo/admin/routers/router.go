@@ -32,10 +32,9 @@ package routers
 import (
 	"github.com/labstack/echo"
 
-	"github.com/fengyfei/gu/applications/echo/admin/handler/filter"
+	"github.com/fengyfei/gu/applications/echo/admin/handler/permission"
 	"github.com/fengyfei/gu/applications/echo/admin/handler/role"
 	"github.com/fengyfei/gu/applications/echo/admin/handler/staff"
-	"github.com/fengyfei/gu/applications/echo/admin/handler/url"
 	"github.com/fengyfei/gu/applications/echo/core"
 )
 
@@ -69,15 +68,8 @@ func InitRouter(server *echo.Echo, token string) {
 	server.GET("/api/v1/role/detail/list", role.InfoList, core.MustLoginIn, core.IsActiveMiddleWare)
 	server.POST("/api/v1/role/detail", role.Info, core.MustLoginIn, core.IsActiveMiddleWare)
 
-	// URL
-	server.POST("/api/v1/url/create", url.Create)
-	server.POST("/api/v1/url/modify/info", url.Modify, core.MustLoginIn, core.IsActiveMiddleWare)
-	server.POST("/api/v1/url/modify/active", url.ModifyActive, core.MustLoginIn, core.IsActiveMiddleWare)
-	server.GET("/api/v1/url/detail/list", url.InfoList, core.MustLoginIn, core.IsActiveMiddleWare)
-	server.POST("/api/v1/url/detail", url.Info, core.MustLoginIn, core.IsActiveMiddleWare)
-
-	// Filter
-	server.POST("/api/v1/filter/create", filter.Create)
-	server.POST("/api/v1/filter/remove", filter.Remove, core.MustLoginIn, core.IsActiveMiddleWare)
-	server.POST("/api/v1/filter/list", filter.List, core.MustLoginIn, core.IsActiveMiddleWare)
+	// Permission
+	server.POST("/api/v1/permission/create", permission.Create)
+	server.POST("/api/v1/permission/remove", permission.Remove, core.MustLoginIn, core.IsActiveMiddleWare)
+	server.POST("/api/v1/permission/list", permission.List, core.MustLoginIn, core.IsActiveMiddleWare)
 }
