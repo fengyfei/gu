@@ -74,7 +74,12 @@ func initTable() {
 	}
 	defer mysql.Pool.Release(conn)
 
-	conn.(*gorm.DB).Set("gorm:table_options", "ENGINE=InnoDB").CreateTable(&staff.Staff{})
+	conn.(*gorm.DB).Set("gorm:table_options", "ENGINE=InnoDB").CreateTable(
+		&staff.Staff{},
+		&staff.Role{},
+		&staff.Relation{},
+		&staff.Permission{},
+	)
 }
 
 // startEchoServer starts an HTTP server.
