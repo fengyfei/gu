@@ -32,6 +32,7 @@ package routers
 import (
 	"github.com/labstack/echo"
 
+	"github.com/fengyfei/gu/applications/echo/admin/handler/role"
 	"github.com/fengyfei/gu/applications/echo/admin/handler/staff"
 	"github.com/fengyfei/gu/applications/echo/core"
 )
@@ -58,4 +59,11 @@ func InitRouter(server *echo.Echo, token string) {
 	server.GET("/api/v1/staff/overview/list", staff.OverviewList, core.MustLoginIn, core.IsActiveMiddleWare)
 	server.GET("/api/v1/staff/detail/list", staff.InfoList, core.MustLoginIn, core.IsActiveMiddleWare)
 	server.POST("/api/v1/staff/detail", staff.Info, core.MustLoginIn, core.IsActiveMiddleWare)
+
+	// Role
+	server.POST("/api/v1/role/create", role.Create)
+	server.POST("/api/v1/role/modify/info", role.Modify, core.MustLoginIn, core.IsActiveMiddleWare)
+	server.POST("/api/v1/role/modify/active", role.ModifyActive, core.MustLoginIn)
+	server.GET("/api/v1/role/detail/list", role.InfoList, core.MustLoginIn, core.IsActiveMiddleWare)
+	server.POST("/api/v1/role/detail", role.Info, core.MustLoginIn, core.IsActiveMiddleWare)
 }
