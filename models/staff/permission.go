@@ -44,8 +44,8 @@ const (
 
 // Permission represents permission of URL.
 type Permission struct {
-	URL     string `json:"url" gorm:"primary_key" sql:"type:varchar(255) NOT NULL DEFAULT ''"`
-	RoleId  int16  `json:"roleid" gorm:"primary_key" sql:"type:SMALLINT NOT NULL DEFAULT 0"`
+	URL     string `gorm:"primary_key" sql:"type:varchar(255) NOT NULL DEFAULT ''"`
+	RoleId  int16  `gorm:"column:roleid;primary_key" sql:"type:SMALLINT NOT NULL DEFAULT 0"`
 	Created *time.Time
 }
 
