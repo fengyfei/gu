@@ -55,21 +55,21 @@ func (Relation) TableName() string {
 }
 
 // AddRole add a role to staff.
-func (sp *serviceProvider) AddRole(conn orm.Connection, sid *int32, rid *int16) error {
+func (sp *serviceProvider) AddRole(conn orm.Connection, sid int32, rid int16) error {
 	now := time.Now()
 	s := &Staff{}
 	r := &Role{}
 	relation := &Relation{}
 	value := &Relation{
-		StaffId: *sid,
-		RoleId:  *rid,
+		StaffId: sid,
+		RoleId:  rid,
 		Created: &now,
 	}
 
 	db := conn.(*gorm.DB)
 	txn := db.Begin().Exec("USE staff")
 
-	err := txn.Model(s).Where("id = ?", *sid).First(s).Error
+	err := txn.Model(s).Where("id = ?", sid).First(s).Error
 	if err != nil {
 		goto finish
 	}
@@ -79,7 +79,7 @@ func (sp *serviceProvider) AddRole(conn orm.Connection, sid *int32, rid *int16) 
 		goto finish
 	}
 
-	err = txn.Model(r).Where("id = ?", *rid).First(r).Error
+	err = txn.Model(r).Where("id = ?", rid).First(r).Error
 	if err != nil {
 		goto finish
 	}
@@ -104,19 +104,19 @@ finish:
 }
 
 // RemoveRole remove role from staff.
-func (sp *serviceProvider) RemoveRole(conn orm.Connection, sid *int32, rid *int16) error {
+func (sp *serviceProvider) RemoveRole(conn orm.Connection, sid int32, rid int16) error {
 	s := &Staff{}
 	r := &Role{}
 	relation := &Relation{}
 	condition := &Relation{
-		StaffId: *sid,
-		RoleId:  *rid,
+		StaffId: sid,
+		RoleId:  rid,
 	}
 
 	db := conn.(*gorm.DB)
 	txn := db.Begin().Exec("USE staff")
 
-	err := txn.Model(s).Where("id = ?", *sid).First(s).Error
+	err := txn.Model(s).Where("id = ?", sid).First(s).Error
 	if err != nil {
 		goto finish
 	}
@@ -126,7 +126,7 @@ func (sp *serviceProvider) RemoveRole(conn orm.Connection, sid *int32, rid *int1
 		goto finish
 	}
 
-	err = txn.Model(r).Where("id = ?", *rid).First(r).Error
+	err = txn.Model(r).Where("id = ?", rid).First(r).Error
 	if err != nil {
 		goto finish
 	}
@@ -146,7 +146,7 @@ finish:
 }
 
 // AssociatedRoleList list all the roles of the specified staff.
-func (sp *serviceProvider) AssociatedRoleList(conn orm.Connection, sid *int32) ([]Relation, error) {
+func (sp *serviceProvider) AssociatedRoleList(conn orm.Connection, sid int32) ([]Relation, error) {
 	s := &Staff{}
 	relation := &Relation{}
 	result := []Relation{}
@@ -154,7 +154,7 @@ func (sp *serviceProvider) AssociatedRoleList(conn orm.Connection, sid *int32) (
 	db := conn.(*gorm.DB)
 	txn := db.Begin().Exec("USE staff")
 
-	err := txn.Model(s).Where("id = ?", *sid).First(s).Error
+	err := txn.Model(s).Where("id = ?", sid).First(s).Error
 	if err != nil {
 		goto finish
 	}
@@ -164,7 +164,7 @@ func (sp *serviceProvider) AssociatedRoleList(conn orm.Connection, sid *int32) (
 		goto finish
 	}
 
-	err = txn.Model(relation).Where("staffid = ?", *sid).Find(&result).Error
+	err = txn.Model(relation).Where("staffid = ?", sid).Find(&result).Error
 
 finish:
 	if err == nil {

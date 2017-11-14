@@ -120,12 +120,12 @@ func (sp *serviceProvider) Create(conn orm.Connection, name, pwd, realname, mobi
 }
 
 // Modify modify staff information.
-func (sp *serviceProvider) Modify(conn orm.Connection, uid *int32, name, mobile, email *string) error {
+func (sp *serviceProvider) Modify(conn orm.Connection, uid int32, name, mobile, email *string) error {
 	staff := &Staff{}
 
 	db := conn.(*gorm.DB).Exec("USE staff")
 
-	return db.Model(staff).Where("id = ?", *uid).Updates(map[string]interface{}{
+	return db.Model(staff).Where("id = ?", uid).Updates(map[string]interface{}{
 		"name":   *name,
 		"mobile": *mobile,
 		"email":  *email,
@@ -133,11 +133,11 @@ func (sp *serviceProvider) Modify(conn orm.Connection, uid *int32, name, mobile,
 }
 
 // ModifyPwd modify staff password.
-func (sp *serviceProvider) ModifyPwd(conn orm.Connection, uid *int32, oldpwd, newpwd *string) error {
+func (sp *serviceProvider) ModifyPwd(conn orm.Connection, uid int32, oldpwd, newpwd *string) error {
 	staff := &Staff{}
 
 	db := conn.(*gorm.DB).Exec("USE staff")
-	err := db.Where("id = ?", *uid).Find(staff).Error
+	err := db.Where("id = ?", uid).Find(staff).Error
 
 	if err != nil {
 		return err
@@ -152,34 +152,34 @@ func (sp *serviceProvider) ModifyPwd(conn orm.Connection, uid *int32, oldpwd, ne
 		return err
 	}
 
-	return db.Model(staff).Where("id = ?", *uid).Update("pwd", string(salt)).Error
+	return db.Model(staff).Where("id = ?", uid).Update("pwd", string(salt)).Error
 }
 
 // ModifyMobile modify staff mobile.
-func (sp *serviceProvider) ModifyMobile(conn orm.Connection, uid *int32, mobile *string) error {
+func (sp *serviceProvider) ModifyMobile(conn orm.Connection, uid int32, mobile *string) error {
 	staff := &Staff{}
 
 	db := conn.(*gorm.DB).Exec("USE staff")
 
-	return db.Model(staff).Where("id = ?", *uid).Update("mobile", *mobile).Error
+	return db.Model(staff).Where("id = ?", uid).Update("mobile", *mobile).Error
 }
 
 // ModifyActive modify staff status.
-func (sp *serviceProvider) ModifyActive(conn orm.Connection, uid *int32, active *bool) error {
+func (sp *serviceProvider) ModifyActive(conn orm.Connection, uid int32, active bool) error {
 	staff := &Staff{}
 
 	db := conn.(*gorm.DB).Exec("USE staff")
 
-	return db.Model(staff).Where("id = ?", *uid).Update("active", *active).Error
+	return db.Model(staff).Where("id = ?", uid).Update("active", active).Error
 }
 
 // Dismiss modify staff active to false and dismiss to true.
-func (sp *serviceProvider) Dismiss(conn orm.Connection, uid *int32) error {
+func (sp *serviceProvider) Dismiss(conn orm.Connection, uid int32) error {
 	staff := &Staff{}
 
 	db := conn.(*gorm.DB).Exec("USE staff")
 
-	return db.Model(staff).Where("id = ?", *uid).Updates(map[string]interface{}{
+	return db.Model(staff).Where("id = ?", uid).Updates(map[string]interface{}{
 		"active":    false,
 		"resigned":  true,
 		"resign_at": time.Now(),
@@ -187,11 +187,11 @@ func (sp *serviceProvider) Dismiss(conn orm.Connection, uid *int32) error {
 }
 
 //IsActive return staff.Active and nil if query success
-func (sp *serviceProvider) IsActive(conn orm.Connection, uid *int32) (bool, error) {
+func (sp *serviceProvider) IsActive(conn orm.Connection, uid int32) (bool, error) {
 	staff := &Staff{}
 
 	db := conn.(*gorm.DB).Exec("USE staff")
-	err := db.Model(staff).Where("id = ?", *uid).First(staff).Error
+	err := db.Model(staff).Where("id = ?", uid).First(staff).Error
 
 	return staff.Active, err
 }
@@ -211,11 +211,11 @@ func (sp *serviceProvider) List(conn orm.Connection) ([]Staff, error) {
 }
 
 // GetByID get one staff detail information.
-func (sp *serviceProvider) GetByID(conn orm.Connection, uid *int32) (*Staff, error) {
+func (sp *serviceProvider) GetByID(conn orm.Connection, uid int32) (*Staff, error) {
 	staff := &Staff{}
 
 	db := conn.(*gorm.DB).Exec("USE staff")
-	err := db.Model(staff).Where("id = ? AND resigned = false", *uid).First(staff).Error
+	err := db.Model(staff).Where("id = ? AND resigned = false", uid).First(staff).Error
 
 	if err != nil {
 		return nil, err
