@@ -107,19 +107,19 @@ type (
 
 	// addRoleReq - The request struct that add role to staff.
 	addRoleReq struct {
-		StaffId int32 `json:"staffid" validate:"required,numeric"`
-		RoleId  int16 `json:"roleid" validate:"required,numeric"`
+		StaffId int32 `json:"staffid" validate:"required"`
+		RoleId  int16 `json:"roleid" validate:"required"`
 	}
 
 	// removeRoleReq - The request struct that remove role from staff.
 	removeRoleReq struct {
-		StaffId int32 `json:"staffid" validate:"required,numeric"`
-		RoleId  int16 `json:"roleid" validate:"required,numeric"`
+		StaffId int32 `json:"staffid" validate:"required"`
+		RoleId  int16 `json:"roleid" validate:"required"`
 	}
 
 	// roleListReq - The request struct that list all the roles of the specified staff.
 	roleListReq struct {
-		StaffId int32 `json:"staffid" validate:"required,numeric"`
+		StaffId int32 `json:"staffid" validate:"required"`
 	}
 )
 
