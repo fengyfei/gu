@@ -74,7 +74,7 @@ func InitRouter(server *echo.Echo, token string) {
 	server.POST("/api/v1/role/detail", role.Info, core.MustLoginIn, core.IsActiveMiddleWare)
 
 	// Permission
-	server.POST("/api/v1/permission/create", permission.Create)
+	server.POST("/api/v1/permission/create", permission.Create, core.MustLoginIn, core.IsActiveMiddleWare)
 	server.POST("/api/v1/permission/remove", permission.Remove, core.MustLoginIn, core.IsActiveMiddleWare)
 	server.POST("/api/v1/permission/list", permission.List, core.MustLoginIn, core.IsActiveMiddleWare)
 }
