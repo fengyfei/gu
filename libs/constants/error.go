@@ -38,4 +38,10 @@ const (
 
 	// ErrMongoDB - MongoDB operations error.
 	ErrMongoDB = 600
+
+	// ErrMysql - Mysql operations error.
+	ErrMysql = 700
+
+	// ErrWechatAuth - Wechat Auth error.
+	ErrWechatAuth = 800
 )
