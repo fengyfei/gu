@@ -1,0 +1,9 @@
+FROM golang:1.9.2-alpine3.6
+
+WORKDIR /go/src
+COPY applications github.com/fengyfei/gu/applications
+COPY libs github.com/fengyfei/gu/libs
+COPY models github.com/fengyfei/gu/models
+COPY vendor github.com/fengyfei/gu/vendor
+
+RUN go build -o admin /go/src/github.com/fengyfei/gu/applications/echo/admin/*.go
