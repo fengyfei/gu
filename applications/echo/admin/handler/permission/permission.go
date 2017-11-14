@@ -44,13 +44,13 @@ type (
 	// createReq - The request struct that create permission information.
 	createReq struct {
 		URL    *string `json:"url" validate:"required,url"`
-		RoleId *int16  `json:"roleid" validate:"required,numeric"`
+		RoleId int16  `json:"roleid" validate:"required,numeric"`
 	}
 
 	// removeReq - The request struct that remove permission information.
 	removeReq struct {
 		URL    *string `json:"url" validate:"required,url"`
-		RoleId *int16  `json:"roleid" validate:"required,numeric"`
+		RoleId int16  `json:"roleid" validate:"required,numeric"`
 	}
 
 	// listReq - The request struct that get a list of permission for specified URL.

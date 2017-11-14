@@ -55,20 +55,20 @@ func (Permission) TableName() string {
 }
 
 // AddPermission create an associated record of the specified URL and role.
-func (sp *serviceProvider) AddURLPermission(conn orm.Connection, url *string, rid *int16) error {
+func (sp *serviceProvider) AddURLPermission(conn orm.Connection, url *string, rid int16) error {
 	now := time.Now()
 	r := &Role{}
 	permission := &Permission{}
 	value := &Permission{
 		URL:     *url,
-		RoleId:  *rid,
+		RoleId:  rid,
 		Created: &now,
 	}
 
 	db := conn.(*gorm.DB)
 	txn := db.Begin().Exec("USE staff")
 
-	err := txn.Model(r).Where("id = ?", *rid).First(r).Error
+	err := txn.Model(r).Where("id = ?", rid).First(r).Error
 	if err != nil {
 		goto finish
 	}
@@ -93,18 +93,18 @@ finish:
 }
 
 // RemovePermission remove the associated records of the specified URL and role.
-func (sp *serviceProvider) RemoveURLPermission(conn orm.Connection, url *string, rid *int16) error {
+func (sp *serviceProvider) RemoveURLPermission(conn orm.Connection, url *string, rid int16) error {
 	r := &Role{}
 	permission := &Permission{}
 	condition := &Permission{
 		URL:    *url,
-		RoleId: *rid,
+		RoleId: rid,
 	}
 
 	db := conn.(*gorm.DB)
 	txn := db.Begin().Exec("USE staff")
 
-	err := txn.Model(r).Where("id = ?", *rid).First(r).Error
+	err := txn.Model(r).Where("id = ?", rid).First(r).Error
 	if err != nil {
 		goto finish
 	}
