@@ -44,8 +44,8 @@ const (
 
 // Staff role relation table.
 type Relation struct {
-	StaffId int32 `json:"staffid" gorm:"primary_key"`
-	RoleId  int16 `json:"roleid" gorm:"primary_key"`
+	StaffId int32 `json:"staffid" gorm:"primary_key" sql:"type:INT NOT NULL DEFAULT 0"`
+	RoleId  int16 `json:"roleid" gorm:"primary_key" sql:"type:SMALLINT NOT NULL DEFAULT 0"`
 	Created *time.Time
 }
 
