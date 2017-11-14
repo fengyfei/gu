@@ -33,10 +33,13 @@ import (
 	"fmt"
 	"github.com/astaxie/beego"
 	"github.com/fengyfei/gu/applications/beego/shop/mysql"
+	"github.com/jinzhu/gorm"
+	"github.com/fengyfei/gu/models/shop/user"
 )
 
 func init() {
 	initMysql()
+	initTable()
 }
 
 func initMysql() {
@@ -49,4 +52,15 @@ func initMysql() {
 	dataSource := fmt.Sprintf(user + ":" + pass + "@" + "tcp(" + url + ":" + port + ")/" + sqlName + "?charset=utf8&parseTime=True&loc=Local")
 
 	mysql.InitPool(dataSource)
+}
+
+// initTable create the MySQL table. All MySQL tables need to be created here.
+func initTable() {
+	conn, err := mysql.Pool.Get()
+	if err != nil {
+		panic(err)
+	}
+	defer mysql.Pool.Release(conn)
+
+	conn.(*gorm.DB).Set("gorm:table_options", "ENGINE=InnoDB").CreateTable(&user.User{})
 }
