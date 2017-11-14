@@ -44,17 +44,17 @@ const (
 )
 
 type Staff struct {
-	Id        int32  `json:"id" gorm:"primary_key;auto_increment"`
-	Name      string `json:"name" gorm:"type:varchar(30);not null;unique"`
-	Pwd       string `json:"pwd" gorm:"type:varchar(128);not null"`
-	RealName  string `json:"realname" gorm:"type:varchar(256);not null;unique"`
-	Mobile    string `json:"mobile" gorm:"unique"`
-	Email     string `json:"email" gorm:"type:varchar(80);unique"`
-	CreatedAt *time.Time
-	ResignAt  *time.Time
-	Male      bool `json:"male"`
-	Active    bool `json:"active"`
-	Resigned  bool `json:"resigned"`
+	Id        int32      `gorm:"primary_key;auto_increment"`
+	Name      string     `gorm:"type:varchar(30);not null;unique"`
+	Pwd       string     `gorm:"type:varchar(128);not null"`
+	RealName  string     `gorm:"column:realname;type:varchar(256);not null;unique"`
+	Mobile    string     `gorm:"unique"`
+	Email     string     `gorm:"type:varchar(80);unique"`
+	CreatedAt *time.Time `gorm:"column:createdat"`
+	ResignAt  *time.Time `gorm:"column:resignat"`
+	Male      bool
+	Active    bool
+	Resigned  bool
 }
 
 // TableName returns table name in database.
@@ -180,9 +180,9 @@ func (sp *serviceProvider) Dismiss(conn orm.Connection, uid int32) error {
 	db := conn.(*gorm.DB).Exec("USE staff")
 
 	return db.Model(staff).Where("id = ?", uid).Updates(map[string]interface{}{
-		"active":    false,
-		"resigned":  true,
-		"resign_at": time.Now(),
+		"active":   false,
+		"resigned": true,
+		"resignat": time.Now(),
 	}).Error
 }
 
