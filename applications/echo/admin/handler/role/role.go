@@ -50,20 +50,20 @@ type (
 
 	// modifyReq - The request struct that modify role information.
 	modifyReq struct {
-		Id    int16  `json:"id" validate:"required,numeric"`
+		Id    int16   `json:"id" validate:"required"`
 		Name  *string `json:"name" validate:"required,alphanum,min=6,max=30"`
 		Intro *string `json:"intro" validate:"required,alphanum,min=6,max=140"`
 	}
 
 	// modifyActiveReq - The request struct that modify role status.
 	modifyActiveReq struct {
-		Id     int16 `json:"id" validate:"required,numeric"`
-		Active bool  `json:"active"  validate:"required"`
+		Id     int16 `json:"id" validate:"required"`
+		Active *bool  `json:"active" validate:"required"`
 	}
 
 	// infoReq - The request struct for get detail of specified role.
 	infoReq struct {
-		Id int16 `json:"id" validate:"required,numeric"`
+		Id int16 `json:"id" validate:"required"`
 	}
 
 	// infoResp - The detail information for role.
@@ -157,7 +157,7 @@ func ModifyActive(c echo.Context) error {
 	}
 	defer mysql.Pool.Release(conn)
 
-	if err = staff.Service.ModifyRoleActive(conn, req.Id, req.Active); err != nil {
+	if err = staff.Service.ModifyRoleActive(conn, req.Id, *req.Active); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 

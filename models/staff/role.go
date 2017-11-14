@@ -44,7 +44,7 @@ const (
 type Role struct {
 	Id      int16  `json:"id" gorm:"primary_key;auto_increment"`
 	Name    string `json:"name" gorm:"type:varchar(30);not null;unique"`
-	Intro   string `json:"intro" gorm:"type:varchar(256)"`
+	Intro   string `json:"intro" gorm:"type:varchar(255)"`
 	Active  bool   `json:"active"`
 	Created *time.Time
 }
@@ -77,10 +77,10 @@ func (sp *serviceProvider) ModifyRole(conn orm.Connection, id int16, name, intro
 
 	db := conn.(*gorm.DB).Exec("USE staff")
 
-	return db.Model(role).Where("id = ?", id).Update(map[string]interface{}{
+	return db.Model(role).Where("id = ?", id).Updates(map[string]interface{}{
 		"name":  *name,
 		"intro": *intro,
-	}).Error
+	}).Limit(1).Error
 }
 
 // ModifyRoleActive modify role status.
@@ -89,9 +89,7 @@ func (sp *serviceProvider) ModifyRoleActive(conn orm.Connection, id int16, activ
 
 	db := conn.(*gorm.DB).Exec("USE staff")
 
-	return db.Model(role).Where("id = ?", id).Update(map[string]interface{}{
-		"active": active,
-	}).Error
+	return db.Model(role).Where("id = ?", id).Update("active", active).Limit(1).Error
 }
 
 // RoleList list all on the active role.
