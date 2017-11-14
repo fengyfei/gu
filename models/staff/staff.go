@@ -129,7 +129,7 @@ func (sp *serviceProvider) Modify(conn orm.Connection, uid int32, name, mobile, 
 		"name":   *name,
 		"mobile": *mobile,
 		"email":  *email,
-	}).Error
+	}).Limit(1).Error
 }
 
 // ModifyPwd modify staff password.
@@ -152,7 +152,7 @@ func (sp *serviceProvider) ModifyPwd(conn orm.Connection, uid int32, oldpwd, new
 		return err
 	}
 
-	return db.Model(staff).Where("id = ?", uid).Update("pwd", string(salt)).Error
+	return db.Model(staff).Where("id = ?", uid).Update("pwd", string(salt)).Limit(1).Error
 }
 
 // ModifyMobile modify staff mobile.
@@ -161,7 +161,7 @@ func (sp *serviceProvider) ModifyMobile(conn orm.Connection, uid int32, mobile *
 
 	db := conn.(*gorm.DB).Exec("USE staff")
 
-	return db.Model(staff).Where("id = ?", uid).Update("mobile", *mobile).Error
+	return db.Model(staff).Where("id = ?", uid).Update("mobile", *mobile).Limit(1).Error
 }
 
 // ModifyActive modify staff status.
@@ -170,7 +170,7 @@ func (sp *serviceProvider) ModifyActive(conn orm.Connection, uid int32, active b
 
 	db := conn.(*gorm.DB).Exec("USE staff")
 
-	return db.Model(staff).Where("id = ?", uid).Update("active", active).Error
+	return db.Model(staff).Where("id = ?", uid).Update("active", active).Limit(1).Error
 }
 
 // Dismiss modify staff active to false and dismiss to true.
