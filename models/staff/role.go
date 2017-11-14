@@ -72,25 +72,25 @@ func (sp *serviceProvider) CreateRole(conn orm.Connection, name, intro *string) 
 }
 
 // ModifyRole modify role information.
-func (sp *serviceProvider) ModifyRole(conn orm.Connection, id *int16, name, intro *string) error {
+func (sp *serviceProvider) ModifyRole(conn orm.Connection, id int16, name, intro *string) error {
 	role := &Role{}
 
 	db := conn.(*gorm.DB).Exec("USE staff")
 
-	return db.Model(role).Where("id = ?", *id).Update(map[string]interface{}{
+	return db.Model(role).Where("id = ?", id).Update(map[string]interface{}{
 		"name":  *name,
 		"intro": *intro,
 	}).Error
 }
 
 // ModifyRoleActive modify role status.
-func (sp *serviceProvider) ModifyRoleActive(conn orm.Connection, id *int16, active *bool) error {
+func (sp *serviceProvider) ModifyRoleActive(conn orm.Connection, id int16, active bool) error {
 	role := &Role{}
 
 	db := conn.(*gorm.DB).Exec("USE staff")
 
-	return db.Model(role).Where("id = ?", *id).Update(map[string]interface{}{
-		"active": *active,
+	return db.Model(role).Where("id = ?", id).Update(map[string]interface{}{
+		"active": active,
 	}).Error
 }
 
@@ -110,11 +110,11 @@ func (sp *serviceProvider) RoleList(conn orm.Connection) ([]Role, error) {
 }
 
 // GetRoleByID get one role detail information.
-func (sp *serviceProvider) GetRoleByID(conn orm.Connection, id *int16) (*Role, error) {
+func (sp *serviceProvider) GetRoleByID(conn orm.Connection, id int16) (*Role, error) {
 	role := &Role{}
 
 	db := conn.(*gorm.DB).Exec("USE staff")
-	err := db.Model(role).Where("id = ? AND active = true", *id).First(role).Error
+	err := db.Model(role).Where("id = ? AND active = true", id).First(role).Error
 
 	if err != nil {
 		return nil, err

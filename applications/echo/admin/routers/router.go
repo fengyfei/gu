@@ -67,7 +67,7 @@ func InitRouter(server *echo.Echo, token string) {
 	server.POST("/api/v1/staff/relation/list", staff.RoleList, core.MustLoginIn, core.IsActiveMiddleWare)
 
 	// Role
-	server.POST("/api/v1/role/create", role.Create)
+	server.POST("/api/v1/role/create", role.Create, core.MustLoginIn, core.IsActiveMiddleWare)
 	server.POST("/api/v1/role/modify/info", role.Modify, core.MustLoginIn, core.IsActiveMiddleWare)
 	server.POST("/api/v1/role/modify/active", role.ModifyActive, core.MustLoginIn, core.IsActiveMiddleWare)
 	server.GET("/api/v1/role/detail/list", role.InfoList, core.MustLoginIn, core.IsActiveMiddleWare)
