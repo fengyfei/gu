@@ -79,13 +79,19 @@ type (
 
 	// modifyActiveReq - The request struct that modify staff status.
 	modifyActiveReq struct {
-		Active bool `json:"active"  validate:"required"`
+		Id     int32 `json:"id" validate:"required"`
+		Active bool  `json:"active"`
 	}
 
 	// overviewResp - Overview of a staff.
 	overviewResp struct {
 		Id       int32
 		RealName string
+	}
+
+	// infoReq - The request struct that get one staff detail information.
+	infoReq struct {
+		Id int32 `json:"id" validate:"required"`
 	}
 
 	// infoResp - The more detail of one particular staff.
@@ -291,8 +297,7 @@ func ModifyActive(c echo.Context) error {
 	}
 	defer mysql.Pool.Release(conn)
 
-	uid := core.UserID(c)
-	if err = staff.Service.ModifyActive(conn, uid, req.Active); err != nil {
+	if err = staff.Service.ModifyActive(conn, req.Id, req.Active); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
@@ -386,14 +391,27 @@ func InfoList(c echo.Context) error {
 
 // Info - Get detail information for specified staff.
 func Info(c echo.Context) error {
+	var (
+		err  error
+		req  infoReq
+		resp infoResp
+	)
+
+	if err = c.Bind(&req); err != nil {
+		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+	}
+
+	if err = c.Validate(&req); err != nil {
+		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+	}
+
 	conn, err := mysql.Pool.Get()
 	if err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 	defer mysql.Pool.Release(conn)
 
-	uid := core.UserID(c)
-	info, err := staff.Service.GetByID(conn, uid)
+	info, err := staff.Service.GetByID(conn, req.Id)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return core.NewErrorWithMsg(http.StatusNotFound, err.Error())
@@ -402,7 +420,17 @@ func Info(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, *info)
+	resp = infoResp{
+		Id:        info.Id,
+		Name:      info.Name,
+		RealName:  info.RealName,
+		Mobile:    info.Mobile,
+		Email:     info.Email,
+		Male:      info.Male,
+		CreatedAt: *info.CreatedAt,
+	}
+
+	return c.JSON(http.StatusOK, resp)
 }
 
 // AddRole - Add a role to staff.
