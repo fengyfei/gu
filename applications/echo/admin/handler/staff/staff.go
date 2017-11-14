@@ -79,7 +79,7 @@ type (
 
 	// modifyActiveReq - The request struct that modify staff status.
 	modifyActiveReq struct {
-		Active *bool `json:"active"  validate:"required"`
+		Active bool `json:"active"  validate:"required"`
 	}
 
 	// overviewResp - Overview of a staff.
@@ -101,19 +101,19 @@ type (
 
 	// addRoleReq - The request struct that add role to staff.
 	addRoleReq struct {
-		StaffId *int32 `json:"staffid" validate:"required,numeric"`
-		RoleId  *int16 `json:"roleid" validate:"required,numeric"`
+		StaffId int32 `json:"staffid" validate:"required,numeric"`
+		RoleId  int16 `json:"roleid" validate:"required,numeric"`
 	}
 
 	// removeRoleReq - The request struct that remove role from staff.
 	removeRoleReq struct {
-		StaffId *int32 `json:"staffid" validate:"required,numeric"`
-		RoleId  *int16 `json:"roleid" validate:"required,numeric"`
+		StaffId int32 `json:"staffid" validate:"required,numeric"`
+		RoleId  int16 `json:"roleid" validate:"required,numeric"`
 	}
 
 	// roleListReq - The request struct that list all the roles of the specified staff.
 	roleListReq struct {
-		StaffId *int32 `json:"staffid" validate:"required,numeric"`
+		StaffId int32 `json:"staffid" validate:"required,numeric"`
 	}
 )
 
@@ -205,7 +205,7 @@ func Modify(c echo.Context) error {
 	defer mysql.Pool.Release(conn)
 
 	uid := core.UserID(c)
-	if err = staff.Service.Modify(conn, &uid, req.Name, req.Mobile, req.Email); err != nil {
+	if err = staff.Service.Modify(conn, uid, req.Name, req.Mobile, req.Email); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
@@ -234,7 +234,7 @@ func ModifyPwd(c echo.Context) error {
 	defer mysql.Pool.Release(conn)
 
 	uid := core.UserID(c)
-	if err = staff.Service.ModifyPwd(conn, &uid, req.OldPwd, req.NewPwd); err != nil {
+	if err = staff.Service.ModifyPwd(conn, uid, req.OldPwd, req.NewPwd); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
@@ -263,7 +263,7 @@ func ModifyMobile(c echo.Context) error {
 	defer mysql.Pool.Release(conn)
 
 	uid := core.UserID(c)
-	if err = staff.Service.ModifyMobile(conn, &uid, req.Mobile); err != nil {
+	if err = staff.Service.ModifyMobile(conn, uid, req.Mobile); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
@@ -292,7 +292,7 @@ func ModifyActive(c echo.Context) error {
 	defer mysql.Pool.Release(conn)
 
 	uid := core.UserID(c)
-	if err = staff.Service.ModifyActive(conn, &uid, req.Active); err != nil {
+	if err = staff.Service.ModifyActive(conn, uid, req.Active); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
@@ -310,7 +310,7 @@ func Dismiss(c echo.Context) error {
 	defer mysql.Pool.Release(conn)
 
 	uid := core.UserID(c)
-	if err = staff.Service.Dismiss(conn, &uid); err != nil {
+	if err = staff.Service.Dismiss(conn, uid); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
@@ -393,7 +393,7 @@ func Info(c echo.Context) error {
 	defer mysql.Pool.Release(conn)
 
 	uid := core.UserID(c)
-	info, err := staff.Service.GetByID(conn, &uid)
+	info, err := staff.Service.GetByID(conn, uid)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return core.NewErrorWithMsg(http.StatusNotFound, err.Error())

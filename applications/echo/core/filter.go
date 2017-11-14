@@ -60,7 +60,7 @@ func IsActiveMiddleWare(next echo.HandlerFunc) echo.HandlerFunc {
 		defer mysql.Pool.Release(conn)
 
 		uid := UserID(c)
-		ok, err := staff.Service.IsActive(conn, &uid)
+		ok, err := staff.Service.IsActive(conn, uid)
 
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, err.Error())
