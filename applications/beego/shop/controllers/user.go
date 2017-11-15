@@ -5,8 +5,6 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/fengyfei/gu/applications/beego/shop/mysql"
 	"github.com/fengyfei/gu/models/shop/user"
-	_ "github.com/fengyfei/gu/libs/constants"
-	_ "github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/libs/constants"
 	"fmt"
 	"net/http"
@@ -18,7 +16,6 @@ var (
 	SECRET = ""
 )
 
-// Operations about Users
 type (
 	UserController struct {
 		beego.Controller
@@ -34,23 +31,17 @@ type (
 	}
 
 	wechatLoginData struct {
-		errmsg string
+		errmsg  string
 		unionid string
 	}
 )
 
-// @Title CreateUser
-// @Description create users
-// @Param	body		body 	models.User	true		"body for user content"
-// @Success 200 {int} models.User.Id
-// @Failure 403 body is empty
-// @router /addwechatuser [post]
 func (u *UserController) WechatLogin() {
 	var
 	(
 		wechatUser WechatLoginReq
 		err        error
-		uid        string
+		userName   string
 		url        string
 		wechatData wechatLogin
 		wechatRes  *http.Response
@@ -84,13 +75,14 @@ func (u *UserController) WechatLogin() {
 		goto finish
 	}
 
-	uid, err = user.Service.WechatLogin(conn, &wechatData.data.unionid)
+	userName, err = user.Service.WechatLogin(conn, &wechatData.data.unionid)
 	if err != nil {
 		u.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
 		goto finish
 	}
-	u.Data["json"] = map[string]string{"uid": uid}
+	u.Data["json"] = map[string]string{"userName": userName}
 
 finish:
 	u.ServeJSON(true)
 }
+
