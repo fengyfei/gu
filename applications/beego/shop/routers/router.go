@@ -15,5 +15,6 @@ import (
 
 func init() {
 	beego.Router("/shop/user/wechatlogin", &controllers.UserController{}, "post:WechatLogin")
-
+	beego.Router("/shop/user/register", &controllers.UserController{}, "post:PhoneRegister")
+	beego.Router("/shop/user/login", &controllers.UserController{}, "post:PhoneLogin")
 }
