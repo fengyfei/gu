@@ -44,15 +44,15 @@ import (
 type (
 	// createReq - The request struct that create role information.
 	createReq struct {
-		Name  *string `json:"name" validate:"required,alphanum,min=6,max=30"`
-		Intro *string `json:"intro" validate:"required,alphanum,min=6,max=140"`
+		Name  *string `json:"name" validate:"required,alphanumunicode,min=2,max=20"`
+		Intro *string `json:"intro" validate:"required,alphanumunicode,min=2,max=140"`
 	}
 
 	// modifyReq - The request struct that modify role information.
 	modifyReq struct {
 		Id    int16   `json:"id" validate:"required"`
-		Name  *string `json:"name" validate:"required,alphanum,min=6,max=30"`
-		Intro *string `json:"intro" validate:"required,alphanum,min=6,max=140"`
+		Name  *string `json:"name" validate:"required,alphanumunicode,min=2,max=20"`
+		Intro *string `json:"intro" validate:"required,alphanumunicode,min=2,max=140"`
 	}
 
 	// modifyActiveReq - The request struct that modify role status.
