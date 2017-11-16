@@ -63,11 +63,11 @@ func (sp *serviceProvider) AddCategory(conn orm.Connection, name *string, desc *
 }
 
 // get all parent classes
-func (sp *serviceProvider) GetCategory(conn orm.Connection) ([]Category, error) {
+func (sp *serviceProvider) GetCategory(conn orm.Connection, pid uint) ([]Category, error) {
   var list []Category
 
   db := conn.(*gorm.DB).Exec("USE shop")
-  res := db.Table("categories").Where("parent_id = ?", 0).Scan(&list)
+  res := db.Table("categories").Where("parent_id = ?", pid).Scan(&list)
 
   return list, res.Error
 }
