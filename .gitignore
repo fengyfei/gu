@@ -3,3 +3,5 @@
 .idea
 
 *.log
+applications/beego/shop/shop
+applications/beego/shop/routers/commentsRouter_controllers.go

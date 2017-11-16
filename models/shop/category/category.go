@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd.
+ * Copyright (c) 2017 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,47 +24,48 @@
 
 /*
  * Revision History:
- *     Initial: 2017/11/03        ShiChao
+ *     Initial: 2017/11/13        Wang RiYu
  */
 
-package main
+package category
 
 import (
-  "fmt"
-  "github.com/astaxie/beego"
-  "github.com/fengyfei/gu/applications/beego/shop/mysql"
+  "time"
+  "github.com/fengyfei/gu/libs/orm"
   "github.com/jinzhu/gorm"
-  "github.com/fengyfei/gu/models/shop/user"
-  "github.com/fengyfei/gu/models/shop/category"
 )
 
-func init() {
-  initMysql()
-  initTable()
+type serviceProvider struct{}
+
+var (
+  Service *serviceProvider
+)
+
+type Category struct {
+  ID        uint      `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
+  Name      string    `gorm:"type:varchar(50);not null" json:"name"`
+  Desc      string    `gorm:"type:varchar(100);not null" json:"desc"`
+  ParentID  uint      `gorm:"not null" json:"parentId"`
+  CreatedAt time.Time `json:"createdTime"`
 }
 
-func initMysql() {
-  user := beego.AppConfig.String("mysqluser")
-  pass := beego.AppConfig.String("mysqlpass")
-  url := beego.AppConfig.String("mysqlurl")
-  port := beego.AppConfig.String("mysqlport")
-  sqlName := beego.AppConfig.String("mysqlname")
+func (sp *serviceProvider) AddCategory(conn orm.Connection, name *string, desc *string, parentID *uint) error {
+  category := &Category{}
+  category.Name = *name
+  category.Desc = *desc
+  category.ParentID = *parentID
 
-  dataSource := fmt.Sprintf(user + ":" + pass + "@" + "tcp(" + url + ":" + port + ")/" + sqlName + "?charset=utf8&parseTime=True&loc=Local")
+  db := conn.(*gorm.DB).Exec("USE shop")
+  err := db.Model(&Category{}).Create(category).Error
 
-  mysql.InitPool(dataSource)
+  return err
 }
 
-// initTable create the MySQL table. All MySQL tables need to be created here.
-func initTable() {
-  conn, err := mysql.Pool.Get()
-  if err != nil {
-    panic(err)
-  }
-  defer mysql.Pool.Release(conn)
+func (sp *serviceProvider) GetCategory(conn orm.Connection) ([]Category, error) {
+  var list []Category
 
-  conn.(*gorm.DB).Set("gorm:table_options", "ENGINE=InnoDB").Set("gorm:table_options", "CHARSET=utf8").CreateTable(
-    &user.User{},
-    &category.Category{},
-  )
+  db := conn.(*gorm.DB).Exec("USE shop")
+  res := db.Table("categories").Where("parent_id = ?", 0).Scan(&list)
+
+  return list, res.Error
 }
