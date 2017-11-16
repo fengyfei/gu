@@ -36,6 +36,7 @@ import (
   "github.com/fengyfei/gu/libs/logger"
   "github.com/fengyfei/gu/applications/beego/shop/mysql"
   "github.com/fengyfei/gu/models/shop/category"
+  _ "github.com/jinzhu/gorm"
 )
 
 type (
@@ -44,9 +45,13 @@ type (
   }
 
   categoryAddReq struct {
-    Name     string `gorm:"type:varchar(50);not null"`
-    Desc     string `gorm:"type:varchar(100);not null"`
-    ParentID uint   `gorm:"not null"`
+    Name     string `gorm:"type:varchar(50);not null"  json:"name"`
+    Desc     string `gorm:"type:varchar(100);not null" json:"desc"`
+    ParentID uint   `gorm:"not null"                   json:"parentId"`
+  }
+
+  subCategoryReq struct {
+    PID uint `gorm:"not null" json:"pid"`
   }
 )
 
@@ -84,19 +89,61 @@ finish:
 }
 
 // get all parent categories
-func (this *CategoryController) GetCategories() {
+func (this *CategoryController) GetMainCategories() {
+  var (
+    pid uint = 0
+    err error
+    res []category.Category
+  )
+
   conn, err := mysql.Pool.Get()
   defer mysql.Pool.Release(conn)
-
   if err != nil {
-    logger.Error(err)
-  } else {
-    list, err := category.Service.GetCategory(conn)
-    if err != nil {
-      logger.Error(err)
-    }
-    this.Data["json"] = list
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+    goto finish
   }
 
+  res, err = category.Service.GetCategory(conn, pid)
+  if err != nil {
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+    goto finish
+  }
+  this.Data["json"] = res
+
+finish:
+  this.ServeJSON(true)
+}
+
+// get categories of the specified pid
+func (this *CategoryController) GetSubCategories() {
+  var (
+    err    error
+    pidReq subCategoryReq
+    res    []category.Category
+  )
+
+  conn, err := mysql.Pool.Get()
+  defer mysql.Pool.Release(conn)
+  if err != nil {
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+    goto finish
+  }
+
+  err = json.Unmarshal(this.Ctx.Input.RequestBody, &pidReq)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+    goto finish
+  }
+
+  res, err = category.Service.GetCategory(conn, pidReq.PID)
+  if err != nil {
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+    goto finish
+  }
+  this.Data["json"] = res
+
+finish:
   this.ServeJSON(true)
 }
