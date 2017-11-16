@@ -19,4 +19,5 @@ func init() {
 	beego.Router("/shop/user/login", &controllers.UserController{}, "post:PhoneLogin")
 	beego.Router("/shop/category/get", &controllers.CategoryController{}, "get:GetCategories")
 	beego.Router("/shop/category/add", &controllers.CategoryController{}, "post:AddCategory")
+	beego.Router("/shop/user/changepass", &controllers.UserController{}, "post:ChangePassword")
 }

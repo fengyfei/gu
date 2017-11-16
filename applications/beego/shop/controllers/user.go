@@ -11,6 +11,8 @@ import (
 	"io/ioutil"
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/applications/beego/shop/util"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/fengyfei/gu/libs/orm"
 )
 
 var (
@@ -47,6 +49,11 @@ type (
 		Phone    string `json:"phone" validate:"required,alphanum,len=11"`
 		Password string `json:"password" validate:"required,min=6,max=30"`
 	}
+
+	changePassReq struct {
+		OldPass string `json:"oldPass" validate:"required,min=6,max=30"`
+		NewPass string `json:"newPass" validate:"required,min=6,max=30"`
+	}
 )
 
 func (u *UserController) WechatLogin() {
@@ -59,7 +66,6 @@ func (u *UserController) WechatLogin() {
 		wechatData wechatLogin
 		wechatRes  *http.Response
 		con        []byte
-		key        string
 		token      string
 	)
 	json.Unmarshal(u.Ctx.Input.RequestBody, &wechatUser)
@@ -90,20 +96,20 @@ func (u *UserController) WechatLogin() {
 		goto finish
 	}
 
-	userName, err = user.Service.WechatLogin(conn, &wechatData.data.unionid)
+	userName, err = user.Service.WechatLogin(conn, &wechatUser.UserName, &wechatData.data.unionid)
 	if err != nil {
 		u.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
 		goto finish
 	}
 
-	key, token, err = util.NewToken(userName)
+	token, err = util.NewToken(userName)
 	if err != nil {
 		logger.Error(err)
 		u.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
 
 		goto finish
 	}
-	u.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed, key: token}
+	u.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed, constants.RespKeyToken: token}
 
 finish:
 	u.ServeJSON(true)
@@ -155,7 +161,6 @@ func (this *UserController) PhoneLogin() {
 	var (
 		loginReq phoneLoginReq
 		err      error
-		key      string
 		token    string
 		uid      string
 	)
@@ -189,16 +194,61 @@ func (this *UserController) PhoneLogin() {
 		goto finish
 	}
 
-	key, token, err = util.NewToken(uid)
+	token, err = util.NewToken(uid)
 	if err != nil {
 		logger.Error(err)
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
 
 		goto finish
 	}
-	this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed, key: token}
+	this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed, constants.RespKeyToken: token}
 
 finish:
 	this.ServeJSON(true)
+}
 
+func (this *UserController) ChangePassword() {
+	var (
+		req      changePassReq
+		claims   jwt.MapClaims
+		ok       bool
+		username string
+		conn     orm.Connection
+	)
+	token, err := this.ParseToken()
+	if err != nil {
+		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
+		goto finish
+	}
+
+	claims, ok = token.Claims.(jwt.MapClaims)
+	if !ok {
+		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed, constants.RespKeyToken: username}
+
+	}
+	username = claims["username"].(string)
+
+	conn, err = mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		goto finish
+	}
+
+	err = json.Unmarshal(this.Ctx.Input.RequestBody, &req)
+	if err != nil {
+		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		goto finish
+	}
+
+	err = user.Service.ChangePassword(conn, &username, &req.OldPass, &req.NewPass)
+	if err != nil {
+		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		goto finish
+	}
+
+	this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+
+finish:
+	this.ServeJSON(true)
 }

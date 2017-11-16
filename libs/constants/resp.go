@@ -35,4 +35,7 @@ const (
 
 	// RespKeyData - json key 'data'
 	RespKeyData = "data"
+
+	// RespKeyToken - json key 'token'
+	RespKeyToken = "token"
 )
