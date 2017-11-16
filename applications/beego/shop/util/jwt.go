@@ -30,32 +30,21 @@
 package util
 
 import (
-"time"
-
-jwtgo "github.com/dgrijalva/jwt-go"
+	"time"
+	jwt "github.com/dgrijalva/jwt-go"
 )
 
-const (
-	tokenExpireInHour = 48
+func NewToken(username string) (string, error) {
+	claims := make(jwt.MapClaims)
+	claims["username"] = username
+	if username == "admin" {
+		claims["admin"] = "true"
+	} else {
+		claims["admin"] = "false"
+	}
+	claims["exp"] = time.Now().Add(time.Hour * 480).Unix() //20天有效期，过期需要重新登录获取token
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	ClaimUID    = "uid"
-	ClaimExpire = "exp"
-
-	respTokenKey = "token"
-)
-
-var (
-	TokenHMACKey string
-)
-
-// NewToken generates a JWT token.
-func NewToken(uid string) (string, string, error) {
-	token := jwtgo.New(jwtgo.SigningMethodHS256)
-
-	claims := token.Claims.(jwtgo.MapClaims)
-	claims[ClaimUID] = uid
-	claims[ClaimExpire] = time.Now().Add(time.Hour * tokenExpireInHour).Unix()
-
-	t, err := token.SignedString([]byte(TokenHMACKey))
-	return respTokenKey, t, err
+	// 使用自定义字符串加密 and get the complete encoded token as a string
+	return token.SignedString([]byte("mykey"))
 }

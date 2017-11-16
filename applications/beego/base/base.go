@@ -32,6 +32,14 @@ package base
 import (
 	"github.com/astaxie/beego"
 	"gopkg.in/go-playground/validator.v9"
+	"github.com/dgrijalva/jwt-go"
+	"strings"
+	"errors"
+)
+
+var(
+	errInputData = errors.New("input error")
+	errExpired = errors.New("expired")
 )
 
 // Controller wraps general functionality.
@@ -44,4 +52,46 @@ func (base Controller) Validate(val interface{}) error {
 	validator := validator.New()
 
 	return validator.Struct(val)
+}
+
+func (c *Controller) ParseToken() (t *jwt.Token, e error) {
+	authString := c.Ctx.Input.Header("Authorization")
+	//beego.Debug("AuthString:", authString)
+
+	kv := strings.Split(authString, " ")
+	if len(kv) != 2 || kv[0] != "Bearer" {
+		beego.Error("AuthString invalid:", authString)
+		return nil, errInputData
+	}
+	tokenString := kv[1]
+
+	// Parse token
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return []byte("mykey"), nil
+	})
+	if err != nil {
+		beego.Error("Parse token:", err)
+		if ve, ok := err.(*jwt.ValidationError); ok {
+			if ve.Errors&jwt.ValidationErrorMalformed != 0 {
+				// That‘s not even a token
+				return nil, errInputData
+			} else if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
+				// Token is either expired or not active yet
+				return nil, errExpired
+			} else {
+				// Couldn‘t handle this token
+				return nil, errInputData
+			}
+		} else {
+			// Couldn‘t handle this token
+			return nil, errInputData
+		}
+	}
+	if !token.Valid {
+		beego.Error("Token invalid:", tokenString)
+		return nil, errInputData
+	}
+	beego.Debug("Token:", token)
+
+	return token, nil
 }
