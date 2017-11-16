@@ -43,7 +43,7 @@ const (
 
 type Role struct {
 	Id      int16  `gorm:"primary_key;auto_increment"`
-	Name    string `gorm:"type:varchar(30);not null;unique"`
+	Name    string `gorm:"type:varchar(30);unique"`
 	Intro   string `gorm:"type:varchar(255)"`
 	Active  bool
 	Created *time.Time
