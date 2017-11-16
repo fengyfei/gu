@@ -36,7 +36,6 @@ import (
   "github.com/fengyfei/gu/libs/logger"
   "github.com/fengyfei/gu/applications/beego/shop/mysql"
   "github.com/fengyfei/gu/models/shop/category"
-  "fmt"
 )
 
 type (
@@ -51,6 +50,7 @@ type (
   }
 )
 
+// add new category
 func (this *CategoryController) AddCategory() {
   var (
     err    error
@@ -83,6 +83,7 @@ finish:
   this.ServeJSON(true)
 }
 
+// get all parent categories
 func (this *CategoryController) GetCategories() {
   conn, err := mysql.Pool.Get()
   defer mysql.Pool.Release(conn)

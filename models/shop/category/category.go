@@ -43,12 +43,13 @@ var (
 
 type Category struct {
   ID        uint      `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
-  Name      string    `gorm:"type:varchar(50);not null" json:"name"`
+  Name      string    `gorm:"type:varchar(50);not null"  json:"name"`
   Desc      string    `gorm:"type:varchar(100);not null" json:"desc"`
   ParentID  uint      `gorm:"not null" json:"parentId"`
   CreatedAt time.Time `json:"createdTime"`
 }
 
+// add new category - parentID = 0 -> main class, != 0 -> sub class
 func (sp *serviceProvider) AddCategory(conn orm.Connection, name *string, desc *string, parentID *uint) error {
   category := &Category{}
   category.Name = *name
@@ -61,6 +62,7 @@ func (sp *serviceProvider) AddCategory(conn orm.Connection, name *string, desc *
   return err
 }
 
+// get all parent classes
 func (sp *serviceProvider) GetCategory(conn orm.Connection) ([]Category, error) {
   var list []Category
 
