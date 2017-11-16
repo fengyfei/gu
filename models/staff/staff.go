@@ -45,9 +45,9 @@ const (
 
 type Staff struct {
 	Id        int32      `gorm:"primary_key;auto_increment"`
-	Name      string     `gorm:"type:varchar(30);not null;unique"`
-	Pwd       string     `gorm:"type:varchar(128);not null"`
-	RealName  string     `gorm:"column:realname;type:varchar(256);not null;unique"`
+	Name      string     `gorm:"type:varchar(30);unique"`
+	Pwd       string     `gorm:"type:varchar(127);not null;default ''"`
+	RealName  string     `gorm:"column:realname;type:varchar(255);not null;default ''"`
 	Mobile    string     `gorm:"unique"`
 	Email     string     `gorm:"type:varchar(80);unique"`
 	CreatedAt *time.Time `gorm:"column:createdat"`
