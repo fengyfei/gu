@@ -17,8 +17,9 @@ func init() {
   beego.Router("/shop/user/wechatlogin", &controllers.UserController{}, "post:WechatLogin")
   beego.Router("/shop/user/register", &controllers.UserController{}, "post:PhoneRegister")
   beego.Router("/shop/user/login", &controllers.UserController{}, "post:PhoneLogin")
+  beego.Router("/shop/user/changepass", &controllers.UserController{}, "post:ChangePassword")
+
   beego.Router("/shop/category/getmainclass", &controllers.CategoryController{}, "get:GetMainCategories")
   beego.Router("/shop/category/getsubclass", &controllers.CategoryController{}, "post:GetSubCategories")
   beego.Router("/shop/category/add", &controllers.CategoryController{}, "post:AddCategory")
-  beego.Router("/shop/user/changepass", &controllers.UserController{}, "post:ChangePassword")
 }

@@ -24,15 +24,15 @@
 
 /*
  * Revision History:
- *     Initial: 2017/11/13        Wang RiYu
+ *     Initial: 2017/11/16        Wang RiYu
  */
 
-package category
+package ware
 
 import (
   "time"
-  "github.com/fengyfei/gu/libs/orm"
-  "github.com/jinzhu/gorm"
+  _ "github.com/fengyfei/gu/libs/orm"
+  _ "github.com/jinzhu/gorm"
 )
 
 type serviceProvider struct{}
@@ -41,33 +41,18 @@ var (
   Service *serviceProvider
 )
 
-type Category struct {
-  ID        uint      `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
-  Name      string    `gorm:"type:varchar(50);not null"  json:"name"`
-  Desc      string    `gorm:"type:varchar(100);not null" json:"desc"`
-  ParentID  uint      `gorm:"not null" json:"parentId"`
-  CreatedAt time.Time `json:"createdTime"`
-}
-
-// add new category - parentID = 0 -> main class, != 0 -> sub class
-func (sp *serviceProvider) AddCategory(conn orm.Connection, name *string, desc *string, parentID *uint) error {
-  category := &Category{}
-  category.Name = *name
-  category.Desc = *desc
-  category.ParentID = *parentID
-
-  db := conn.(*gorm.DB).Exec("USE shop")
-  err := db.Model(&Category{}).Create(category).Error
-
-  return err
-}
-
-// get categories by pid
-func (sp *serviceProvider) GetCategory(conn orm.Connection, pid uint) ([]Category, error) {
-  var list []Category
-
-  db := conn.(*gorm.DB).Exec("USE shop")
-  res := db.Table("categories").Where("parent_id = ?", pid).Scan(&list)
-
-  return list, res.Error
+type Ware struct {
+  ID         uint      `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
+  Name       string    `gorm:"type:varchar(50);not null"  json:"name"`
+  Desc       string    `gorm:"type:varchar(100);not null" json:"desc"`
+  CategoryID uint      `gorm:"not null" json:"categoryId"`
+  TotalSale  uint      `gorm:"not null" json:"totalSale"`
+  Price      float32   `gorm:"not null" json:"price"`
+  SalePrice  float32   `gorm:"not null" json:"salePrice"`
+  Status     int       `gorm:"not null" json:"status"`
+  Size       string    `gorm:"type:varchar(20)"   json:"size"`
+  Color      string    `gorm:"type:varchar(20)"   json:"color"`
+  Image      string    `gorm:"type:varchar(1000)" json:"image"`
+  Inventory  uint      `json:"inventory"`
+  Created    time.Time `json:"createdTime"`
 }
