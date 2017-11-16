@@ -36,6 +36,9 @@ const (
 	// ErrInvalidParam - Invalid Parameter
 	ErrInvalidParam = 1
 
+	// ErrToken - Invalid Token
+	ErrToken = 200
+
 	// ErrMongoDB - MongoDB operations error.
 	ErrMongoDB = 600
 

@@ -15,6 +15,7 @@ var (
 	typeWechat = "wechat"
 	typePhone = "phone"
 	errLoginFailed = errors.New("invalid username or password.")
+	errPassword = errors.New("invalid password.")
 )
 
 type User struct {
@@ -27,11 +28,12 @@ type User struct {
 	CreatedAt *time.Time
 }
 
-func (this *serviceProvider) WechatLogin(conn orm.Connection, unionId *string) (string, error) {
+func (this *serviceProvider) WechatLogin(conn orm.Connection, nickName, unionId *string) (string, error) {
 
 	user := &User{}
 	res := &User{}
 	user.UserName = *unionId
+	user.NickName = *nickName
 	user.Type = typeWechat
 
 	db := conn.(*gorm.DB).Exec("USE user")
@@ -81,4 +83,25 @@ func (this *serviceProvider) PhoneLogin(conn orm.Connection, phone, password *st
 	}
 
 	return user.UserName, err
+}
+
+func (this *serviceProvider) ChangePassword(conn orm.Connection, phone, oldPass, newPass *string) error{
+	db := conn.(*gorm.DB).Exec("USE shop")
+	user := &User{}
+
+	err := db.Where("user_name = ?", *phone).First(&user).Error
+	if err == gorm.ErrRecordNotFound {
+		return err
+	}
+
+	if !security.SaltHashCompare([]byte(user.Pass), oldPass) {
+		return errPassword
+	}
+
+	salt, err := security.SaltHashGenerate(newPass)
+	if err != nil {
+		return err
+	}
+	user.Pass = string(salt)
+	return db.Save(&user).Error
 }
