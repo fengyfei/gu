@@ -36,6 +36,7 @@ import (
   "github.com/jinzhu/gorm"
   "github.com/fengyfei/gu/models/shop/user"
   "github.com/fengyfei/gu/models/shop/category"
+  "github.com/fengyfei/gu/models/shop/ware"
 )
 
 func init() {
@@ -66,5 +67,6 @@ func initTable() {
   conn.(*gorm.DB).Set("gorm:table_options", "ENGINE=InnoDB").Set("gorm:table_options", "CHARSET=utf8").CreateTable(
     &user.User{},
     &category.Category{},
+    &ware.Ware{},
   )
 }
