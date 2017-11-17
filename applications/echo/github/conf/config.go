@@ -37,7 +37,6 @@ import (
 type githubServerConfig struct {
 	Address   string
 	IsDebug   bool
-	TokenKey  string
 	MongoURL  string
 	CorsHosts []string
 }
@@ -58,7 +57,6 @@ func ReadConfiguration() {
 	Configuration = &githubServerConfig{
 		Address:   viper.GetString("server.address"),
 		IsDebug:   viper.GetBool("server.debug"),
-		TokenKey:  viper.GetString("middleware.jwt.tokenkey"),
 		MongoURL:  viper.GetString("mongo.url"),
 		CorsHosts: viper.GetStringSlice("middleware.cors.hosts"),
 	}
