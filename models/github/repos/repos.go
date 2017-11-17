@@ -117,7 +117,7 @@ func (sp *serviceProvider) ActiveList() ([]Repos, error) {
 func (sp *serviceProvider) GetByID(id *string) (Repos, error) {
 	var (
 		err   error
-		repos []Repos
+		repos Repos
 	)
 
 	conn := session.Connect()
