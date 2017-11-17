@@ -24,21 +24,26 @@
 
 /*
  * Revision History:
- *     Initial: 2017/10/28        Feng Yifei
+ *     Initial: 2017/11/17        Jia Chenhui
  */
 
-package constants
+package routers
 
-const (
-	// RespKeyStatus - json key 'status'
-	RespKeyStatus = "status"
+import (
+	"github.com/labstack/echo"
 
-	// RespKeyData - json key 'data'
-	RespKeyData = "data"
-
-	// RespKeyToken - json key 'token'
-	RespKeyToken = "token"
-
-	// RespKeyID - json key 'ID'
-	RespKeyID = "ID"
+	"github.com/fengyfei/gu/applications/echo/github/handler/repos"
 )
+
+func InitRouter(server *echo.Echo) {
+	if server == nil {
+		panic("[InitRouter]: server couldn't be nil")
+	}
+
+	// Repos
+	server.POST("/api/v1/repos/create", repos.Create)
+	server.POST("/api/v1/repos/modify/active", repos.ModifyActive)
+	server.GET("/api/v1/repos/list", repos.List)
+	server.GET("/api/v1/repos/activelist", repos.ActiveList)
+	server.POST("/api/v1/repos/info", repos.Info)
+}

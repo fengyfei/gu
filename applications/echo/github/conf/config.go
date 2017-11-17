@@ -35,10 +35,11 @@ import (
 
 // staffServerConfig represents the server config struct.
 type githubServerConfig struct {
-	Address  string
-	IsDebug  bool
-	TokenKey string
-	MongoURL string
+	Address   string
+	IsDebug   bool
+	TokenKey  string
+	MongoURL  string
+	CorsHosts []string
 }
 
 var (
@@ -47,7 +48,7 @@ var (
 
 // ReadConfiguration read config file.
 func ReadConfiguration() {
-	viper.AddConfigPath("./")
+	viper.AddConfigPath("./conf/")
 	viper.SetConfigName("config")
 
 	if err := viper.ReadInConfig(); err != nil {
@@ -55,9 +56,10 @@ func ReadConfiguration() {
 	}
 
 	Configuration = &githubServerConfig{
-		Address:  viper.GetString("server.address"),
-		IsDebug:  viper.GetBool("server.debug"),
-		TokenKey: viper.GetString("middleware.jwt.tokenkey"),
-		MongoURL: viper.GetString("mongo.url"),
+		Address:   viper.GetString("server.address"),
+		IsDebug:   viper.GetBool("server.debug"),
+		TokenKey:  viper.GetString("middleware.jwt.tokenkey"),
+		MongoURL:  viper.GetString("mongo.url"),
+		CorsHosts: viper.GetStringSlice("middleware.cors.hosts"),
 	}
 }

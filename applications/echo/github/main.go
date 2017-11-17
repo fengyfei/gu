@@ -24,21 +24,11 @@
 
 /*
  * Revision History:
- *     Initial: 2017/10/28        Feng Yifei
+ *     Initial: 2017/11/17        Jia Chenhui
  */
 
-package constants
+package main
 
-const (
-	// RespKeyStatus - json key 'status'
-	RespKeyStatus = "status"
-
-	// RespKeyData - json key 'data'
-	RespKeyData = "data"
-
-	// RespKeyToken - json key 'token'
-	RespKeyToken = "token"
-
-	// RespKeyID - json key 'ID'
-	RespKeyID = "ID"
-)
+func main() {
+	startEchoServer()
+}
