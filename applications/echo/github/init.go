@@ -24,21 +24,52 @@
 
 /*
  * Revision History:
- *     Initial: 2017/10/28        Feng Yifei
+ *     Initial: 2017/11/17        Jia Chenhui
  */
 
-package constants
+package main
 
-const (
-	// RespKeyStatus - json key 'status'
-	RespKeyStatus = "status"
+import (
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
+	"github.com/labstack/gommon/log"
 
-	// RespKeyData - json key 'data'
-	RespKeyData = "data"
-
-	// RespKeyToken - json key 'token'
-	RespKeyToken = "token"
-
-	// RespKeyID - json key 'ID'
-	RespKeyID = "ID"
+	"github.com/fengyfei/gu/applications/echo/core"
+	"github.com/fengyfei/gu/applications/echo/github/conf"
+	"github.com/fengyfei/gu/applications/echo/github/routers"
 )
+
+var (
+	server *echo.Echo
+)
+
+func init() {
+	conf.ReadConfiguration()
+}
+
+// startEchoServer starts a HTTP server.
+func startEchoServer() {
+	server = echo.New()
+
+	server.Use(middleware.Recover())
+	server.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: conf.Configuration.CorsHosts,
+		AllowMethods: []string{echo.GET, echo.POST},
+	}))
+	server.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Format: "${time_rfc3339_nano} ${uri} ${method} ${status} ${remote_ip} ${latency_human} ${bytes_in} ${bytes_out}\n",
+	}))
+
+	server.HTTPErrorHandler = core.EchoRestfulErrorHandler
+	server.Validator = core.NewEchoValidator()
+
+	if conf.Configuration.IsDebug {
+		log.SetLevel(log.DEBUG)
+	} else {
+		log.SetLevel(log.INFO)
+	}
+
+	routers.InitRouter(server)
+
+	server.Start(conf.Configuration.Address)
+}
