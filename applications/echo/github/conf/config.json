@@ -1,0 +1,14 @@
+{
+  "server": {
+    "address": ":21001",
+    "debug": true
+  },
+  "middleware": {
+    "jwt": {
+      "tokenkey": "PXL0we7gqrgskjnPwiXXwVeXY4pFGvcnq4zImdN1L4"
+    }
+  },
+  "mongo": {
+    "url": "mongodb://127.0.0.1:27017"
+  }
+}
