@@ -81,7 +81,6 @@ type Repos struct {
 	Intro   string        `bson:"Intro"`
 	Active  bool          `bson:"Active"`
 	Created time.Time     `bson:"Created"`
-	Updated time.Time     `bson:"Updated"`
 }
 
 // List get all the repos.
@@ -140,7 +139,6 @@ func (sp *serviceProvider) Create(avatar, name, link, image, intro *string) (str
 		Intro:   *intro,
 		Active:  true,
 		Created: time.Now(),
-		Updated: time.Now(),
 	}
 
 	conn := session.Connect()
