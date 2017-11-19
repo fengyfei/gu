@@ -47,8 +47,8 @@ type (
 		Avatar *string `json:"avatar" validate:"required,url"`
 		Name   *string `json:"name" validate:"required,alphanum,min=1,max=30"`
 		Link   *string `json:"link" validate:"required,url"`
-		Image  *string `json:"image" validate:"required,url"`
-		Intro  *string `json:"intro" validate:"required,alphanumunicode,min=1,max=140"`
+		Image  *string `json:"image"`
+		Intro  *string `json:"intro"`
 	}
 
 	// modifyActiveReq - The request struct that modify repos status.
@@ -211,6 +211,7 @@ func Info(c echo.Context) error {
 		Image:   info.Image,
 		Intro:   info.Intro,
 		Created: info.Created,
+		Active:  info.Active,
 	}
 
 	return c.JSON(http.StatusOK, resp)
