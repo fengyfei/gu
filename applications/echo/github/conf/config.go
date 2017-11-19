@@ -45,6 +45,10 @@ var (
 	Configuration *githubServerConfig
 )
 
+func init() {
+	ReadConfiguration()
+}
+
 // ReadConfiguration read config file.
 func ReadConfiguration() {
 	viper.AddConfigPath("./conf/")

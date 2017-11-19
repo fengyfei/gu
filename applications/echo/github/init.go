@@ -43,10 +43,6 @@ var (
 	server *echo.Echo
 )
 
-func init() {
-	conf.ReadConfiguration()
-}
-
 // startEchoServer starts a HTTP server.
 func startEchoServer() {
 	server = echo.New()
