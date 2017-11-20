@@ -71,7 +71,7 @@ type (
 	modifyPwdReq struct {
 		OldPwd  *string `json:"oldpwd" validate:"required,printascii,excludesall=@-,min=6,max=30"`
 		NewPwd  *string `json:"newpwd" validate:"required,printascii,excludesall=@-,min=6,max=30"`
-		Confirm *string `json:"newpwd" validate:"required,printascii,excludesall=@-,min=6,max=30"`
+		Confirm *string `json:"confirm" validate:"required,printascii,excludesall=@-,min=6,max=30"`
 	}
 
 	// modifyMobileReq - The request struct that modify staff mobile.
