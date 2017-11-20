@@ -30,6 +30,7 @@
 package core
 
 import (
+	"errors"
 	"net/http"
 
 	jwtgo "github.com/dgrijalva/jwt-go"
@@ -39,7 +40,8 @@ import (
 	"github.com/fengyfei/gu/models/staff"
 )
 
-func MustLoginIn(next echo.HandlerFunc) echo.HandlerFunc {
+// IsLogin check if the user is logged in.
+func IsLogin(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		user := c.Get("user").(*jwtgo.Token)
 		claims := user.Claims.(jwtgo.MapClaims)
@@ -51,7 +53,8 @@ func MustLoginIn(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-func IsActiveMiddleWare(next echo.HandlerFunc) echo.HandlerFunc {
+// IsActive check whether the user is active.
+func IsActive(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		conn, err := mysql.Pool.Get()
 		if err != nil {
@@ -71,5 +74,42 @@ func IsActiveMiddleWare(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		return c.JSON(http.StatusConflict, err.Error())
+	}
+}
+
+// IsPermissionMatch check whether the user permissions match the URL permissions.
+func IsPermissionMatch(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		conn, err := mysql.Pool.Get()
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, err.Error())
+		}
+		defer mysql.Pool.Release(conn)
+
+		uid := UserID(c)
+		userRoles, err := staff.Service.AssociatedRoleList(conn, uid)
+
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, err.Error())
+		}
+
+		url := c.Request().Host + c.Request().RequestURI
+		urlRoles, err := staff.Service.URLPermissionList(conn, &url)
+
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, err.Error())
+		}
+
+		for _, urlR := range urlRoles {
+			for _, userR := range userRoles {
+				if userR.RoleId == urlR.RoleId {
+					return next(c)
+				}
+			}
+		}
+
+		err = errors.New("user permissions and url permissions do not match")
+
+		return c.JSON(http.StatusForbidden, err.Error())
 	}
 }
