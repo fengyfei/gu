@@ -30,6 +30,7 @@
 package staff
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -68,8 +69,9 @@ type (
 
 	// modifyPwdReq - The request struct that modify staff password.
 	modifyPwdReq struct {
-		OldPwd *string `json:"oldpwd" validate:"required,printascii,excludesall=@-,min=6,max=30"`
-		NewPwd *string `json:"newpwd" validate:"required,printascii,excludesall=@-,min=6,max=30"`
+		OldPwd  *string `json:"oldpwd" validate:"required,printascii,excludesall=@-,min=6,max=30"`
+		NewPwd  *string `json:"newpwd" validate:"required,printascii,excludesall=@-,min=6,max=30"`
+		Confirm *string `json:"newpwd" validate:"required,printascii,excludesall=@-,min=6,max=30"`
 	}
 
 	// modifyMobileReq - The request struct that modify staff mobile.
@@ -230,6 +232,11 @@ func ModifyPwd(c echo.Context) error {
 	}
 
 	if err = c.Validate(&req); err != nil {
+		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+	}
+
+	if *req.NewPwd != *req.Confirm {
+		err = errors.New("entered passwords differ")
 		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
 	}
 
