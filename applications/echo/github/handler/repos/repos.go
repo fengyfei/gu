@@ -53,13 +53,13 @@ type (
 
 	// modifyActiveReq - The request struct that modify repos status.
 	modifyActiveReq struct {
-		ID     string `json:"id" validate:"required,alphanumunicode,len=24"`
+		ID     string `json:"id" validate:"required,alphanum,len=24"`
 		Active bool   `json:"active"`
 	}
 
 	// infoReq - The request struct that get one repos detail information.
 	infoReq struct {
-		ID string `json:"id" validate:"required,alphanumunicode,len=24"`
+		ID string `json:"id" validate:"required,alphanum,len=24"`
 	}
 
 	// infoResp - The more detail of repos.
