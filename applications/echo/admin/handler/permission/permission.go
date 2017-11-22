@@ -44,13 +44,13 @@ type (
 	// createReq - The request struct that create permission information.
 	createReq struct {
 		URL    *string `json:"url" validate:"required,url"`
-		RoleId int16  `json:"roleid" validate:"required"`
+		RoleId int16   `json:"roleid" validate:"required"`
 	}
 
 	// removeReq - The request struct that remove permission information.
 	removeReq struct {
 		URL    *string `json:"url" validate:"required,url"`
-		RoleId int16  `json:"roleid" validate:"required"`
+		RoleId int16   `json:"roleid" validate:"required"`
 	}
 
 	// listReq - The request struct that get a list of permission for specified URL.
@@ -141,7 +141,7 @@ func List(c echo.Context) error {
 	}
 	defer mysql.Pool.Release(conn)
 
-	resp, err := staff.Service.URLPermissionList(conn, req.URL)
+	resp, err := staff.Service.URLPermissions(conn, req.URL)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return core.NewErrorWithMsg(http.StatusNotFound, err.Error())

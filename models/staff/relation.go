@@ -145,11 +145,12 @@ finish:
 	return err
 }
 
-// AssociatedRoleList list all the roles of the specified staff.
-func (sp *serviceProvider) AssociatedRoleList(conn orm.Connection, sid int32) ([]Relation, error) {
+// AssociatedRoles list all the roles of the specified staff.
+func (sp *serviceProvider) AssociatedRoles(conn orm.Connection, sid int32) (map[int16]bool, error) {
 	s := &Staff{}
 	relation := &Relation{}
-	result := []Relation{}
+	rlist := []Relation{}
+	result := make(map[int16]bool)
 
 	db := conn.(*gorm.DB)
 	txn := db.Begin().Exec("USE staff")
@@ -164,7 +165,7 @@ func (sp *serviceProvider) AssociatedRoleList(conn orm.Connection, sid int32) ([
 		goto finish
 	}
 
-	err = txn.Model(relation).Where("staffid = ?", sid).Find(&result).Error
+	err = txn.Model(relation).Where("staffid = ?", sid).Find(&rlist).Error
 
 finish:
 	if err == nil {
@@ -173,6 +174,10 @@ finish:
 
 	if err != nil {
 		txn.Rollback()
+	}
+
+	for _, r := range rlist {
+		result[r.RoleId] = true
 	}
 
 	return result, err

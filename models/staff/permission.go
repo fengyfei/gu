@@ -128,16 +128,21 @@ finish:
 	return err
 }
 
-// PermissionList lists all the roles of the specified URL.
-func (sp *serviceProvider) URLPermissionList(conn orm.Connection, url *string) ([]Permission, error) {
+// URLPermissions lists all the roles of the specified URL.
+func (sp *serviceProvider) URLPermissions(conn orm.Connection, url *string) (map[int16]bool, error) {
 	permission := &Permission{}
-	result := []Permission{}
+	plist := []Permission{}
+	result := make(map[int16]bool)
 
 	db := conn.(*gorm.DB).Exec("USE staff")
-	err := db.Model(permission).Where("url = ?", *url).Find(&result).Error
+	err := db.Model(permission).Where("url = ?", *url).Find(&plist).Error
 
 	if err != nil {
-		return result, err
+		return nil, err
+	}
+
+	for _, p := range plist {
+		result[p.RoleId] = true
 	}
 
 	return result, nil

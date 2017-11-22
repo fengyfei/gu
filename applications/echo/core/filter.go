@@ -87,24 +87,27 @@ func IsPermissionMatch(next echo.HandlerFunc) echo.HandlerFunc {
 		defer mysql.Pool.Release(conn)
 
 		uid := UserID(c)
-		userRoles, err := staff.Service.AssociatedRoleList(conn, uid)
+		userRoles, err := staff.Service.AssociatedRoles(conn, uid)
 
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, err.Error())
 		}
 
-		url := c.Request().Host + c.Request().RequestURI
-		urlRoles, err := staff.Service.URLPermissionList(conn, &url)
+		scheme := "http://"
+		if c.Request().TLS != nil {
+			scheme = "https://"
+		}
+
+		url := scheme + c.Request().Host + c.Request().RequestURI
+		urlRoles, err := staff.Service.URLPermissions(conn, &url)
 
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, err.Error())
 		}
 
-		for _, urlR := range urlRoles {
-			for _, userR := range userRoles {
-				if userR.RoleId == urlR.RoleId {
-					return next(c)
-				}
+		for urlR := range urlRoles {
+			if userRoles[urlR] {
+				return next(c)
 			}
 		}
 
