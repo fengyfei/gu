@@ -32,6 +32,7 @@ package routers
 import (
 	"github.com/labstack/echo"
 
+	"github.com/fengyfei/gu/applications/echo/github/handler/article"
 	"github.com/fengyfei/gu/applications/echo/github/handler/repos"
 )
 
@@ -46,4 +47,11 @@ func InitRouter(server *echo.Echo) {
 	server.GET("/api/v1/repos/list", repos.List)
 	server.GET("/api/v1/repos/activelist", repos.ActiveList)
 	server.POST("/api/v1/repos/info", repos.Info)
+
+	// Article
+	server.POST("/api/v1/article/create", article.Create)
+	server.POST("/api/v1/article/modify/active", article.ModifyActive)
+	server.GET("/api/v1/article/list", article.List)
+	server.GET("/api/v1/article/activelist", article.ActiveList)
+	server.POST("/api/v1/article/info", article.Info)
 }
