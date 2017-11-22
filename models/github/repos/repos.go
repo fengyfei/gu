@@ -73,7 +73,7 @@ func init() {
 
 // Repos represents the GitHub repository information.
 type Repos struct {
-	ID      bson.ObjectId `bson:"_id,omitempty" json:"id"`
+	ID      bson.ObjectId `bson:"_id,omitempty"`
 	Avatar  string        `bson:"Avatar"`
 	Name    string        `bson:"Name"`
 	Link    string        `bson:"Link"`
@@ -113,7 +113,7 @@ func (sp *serviceProvider) ActiveList() ([]Repos, error) {
 	return list, err
 }
 
-// GetByID get article based on repos id.
+// GetByID get repos based on repos id.
 func (sp *serviceProvider) GetByID(id *string) (Repos, error) {
 	var (
 		err   error
