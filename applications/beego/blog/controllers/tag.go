@@ -45,7 +45,7 @@ type Tag struct {
 
 // tagInfoReq - the request struct that get tag information by id.
 type tagInfoReq struct {
-	TagID string `json:"tagid" validate:"required,alphanumunicode,len=24"`
+	TagID string `json:"tagid" validate:"required,alphanum,len=24"`
 }
 
 // createTagReq - the request struct that create tag information.
@@ -55,7 +55,7 @@ type createTagReq struct {
 
 // modifyTagReq - the request struct that modify the tag information.
 type modifyTagReq struct {
-	TagID  string `json:"tagid" validate:"required,alphanumunicode,len=24"`
+	TagID  string `json:"tagid" validate:"required,alphanum,len=24"`
 	Tag    string `json:"tag" validate:"required,alphaunicode,min=2,max=6"`
 	Active *bool  `json:"active" validate:"required"`
 }
