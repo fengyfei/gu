@@ -517,7 +517,7 @@ func RoleList(c echo.Context) error {
 	}
 	defer mysql.Pool.Release(conn)
 
-	resp, err := staff.Service.AssociatedRoleList(conn, req.StaffId)
+	resp, err := staff.Service.AssociatedRoles(conn, req.StaffId)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return core.NewErrorWithMsg(http.StatusNotFound, err.Error())
