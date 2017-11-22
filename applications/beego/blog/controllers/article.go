@@ -46,7 +46,7 @@ type Article struct {
 // createArticleReq - the request struct that get article information by id.
 type createArticleReq struct {
 	Author   string   `json:"author"`
-	Title    string   `json:"title" validate:"required,alphaunicode,min=5,max=20"`
+	Title    string   `json:"title" validate:"required,alphanumunicode,min=5,max=20"`
 	Content  string   `json:"content" validate:"required,min=50"`
 	Abstract string   `json:"abstract" validate:"required,min=10"`
 	Tags     []string `json:"tag" validate:"required,dive,alphaunicode,min=2,max=6"`
@@ -60,12 +60,12 @@ type getByTagReq struct {
 
 // getByIdReq - the request struct that get article information by id.
 type getByIdReq struct {
-	ID string `json:"id" validate:"required,alphanumunicode,len=24"`
+	ID string `json:"id" validate:"required,alphanum,len=24"`
 }
 
 // modifyArticleReq - the request struct that modify article information by id.
 type modifyArticleReq struct {
-	ArticleID string `json:"id" validate:"required,alphanumunicode,len=24"`
+	ArticleID string `json:"id" validate:"required,alphanum,len=24"`
 	Title     string `json:"title" validate:"required,alphaunicode,min=6"`
 	Content   string `json:"content" validate:"required,min=50"`
 	Abstract  string `json:"abstract" validate:"required,min=10"`
