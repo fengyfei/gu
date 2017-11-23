@@ -31,8 +31,8 @@ package ware
 
 import (
   "time"
-  _ "github.com/fengyfei/gu/libs/orm"
-  _ "github.com/jinzhu/gorm"
+  "github.com/fengyfei/gu/libs/orm"
+  "github.com/jinzhu/gorm"
 )
 
 type serviceProvider struct{}
@@ -42,17 +42,56 @@ var (
 )
 
 type Ware struct {
-  ID         uint      `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
-  Name       string    `gorm:"type:varchar(50);not null"  json:"name"`
-  Desc       string    `gorm:"type:varchar(100);not null" json:"desc"`
-  CategoryID uint      `gorm:"not null" json:"categoryId"`
-  TotalSale  uint      `gorm:"not null" json:"totalSale"`
-  Price      float32   `gorm:"not null" json:"price"`
-  SalePrice  float32   `gorm:"not null" json:"salePrice"`
-  Status     int       `gorm:"not null" json:"status"`
-  Size       string    `gorm:"type:varchar(20)"   json:"size"`
-  Color      string    `gorm:"type:varchar(20)"   json:"color"`
-  Image      string    `gorm:"type:varchar(1000)" json:"image"`
-  Inventory  uint      `json:"inventory"`
-  Created    time.Time `json:"createdTime"`
+  ID         uint    `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
+  Name       string  `gorm:"type:varchar(50);not null"  json:"name"`
+  Desc       string  `gorm:"type:varchar(100);not null" json:"desc"`
+  Type       string  `gorm:"type:varchar(50);not null"  json:"type"`
+  CategoryID uint    `gorm:"not null"  json:"categoryId"`
+  Status     int     `gorm:"default:1" json:"status"`
+  TotalSale  uint    `gorm:"not null"  json:"total"`
+  Price      float32 `gorm:"not null;type:float" json:"price"`
+  SalePrice  float32 `gorm:"not null;type:float" json:"salePrice"`
+  Size       string  `gorm:"type:varchar(20)"    json:"size"`
+  Color      string  `gorm:"type:varchar(20)"    json:"color"`
+  Avatar     string  `gorm:"type:varchar(1000)"  json:"avatar"`
+  Image      string  `gorm:"type:varchar(1000)"  json:"image"`
+  Inventory  uint    `gorm:"not null"            json:"inventory"`
+  Created    time.Time
+}
+
+// add ware
+func (sp *serviceProvider) CreateWare(conn orm.Connection, wareReq Ware) error {
+  ware := &Ware{}
+  ware.Name = wareReq.Name
+  ware.Desc = wareReq.Desc
+  ware.Type = wareReq.Type
+  ware.CategoryID = wareReq.CategoryID
+  ware.Price = wareReq.Price
+  ware.SalePrice = wareReq.SalePrice
+  ware.Avatar = wareReq.Avatar
+  ware.Image = wareReq.Image
+  ware.Inventory = wareReq.Inventory
+  ware.Created = time.Now()
+
+  db := conn.(*gorm.DB).Exec("USE shop")
+  err := db.Model(&Ware{}).Create(ware).Error
+
+  return err
+}
+
+// cid in arg is not nil ? get wares of category : get all wares from database
+func (sp *serviceProvider) GetWareList(conn orm.Connection, arg ...uint) ([]Ware, error) {
+  var (
+    res  *gorm.DB
+    list []Ware
+  )
+
+  db := conn.(*gorm.DB).Exec("USE shop")
+  if len(arg) == 0 {
+    res = db.Table("wares").Scan(&list)
+  } else {
+    res = db.Table("wares").Where("category_id = ?", arg[0]).Scan(&list)
+  }
+
+  return list, res.Error
 }

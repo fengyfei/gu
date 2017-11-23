@@ -1,10 +1,32 @@
-// @APIVersion 1.0.0
-// @Title beego Test API
-// @Description beego has a very cool tools to autogenerate documents for your API
-// @Contact astaxie@gmail.com
-// @TermsOfServiceUrl http://beego.me/
-// @License Apache 2.0
-// @LicenseUrl http://www.apache.org/licenses/LICENSE-2.0.html
+/*
+ * MIT License
+ *
+ * Copyright (c) 2017 SmartestEE Co., Ltd.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+/*
+ * Revision History:
+ *     Initial: 2017/11/03        ShiChao
+ */
+
 package routers
 
 import (
@@ -22,4 +44,8 @@ func init() {
   beego.Router("/shop/category/getmainclass", &controllers.CategoryController{}, "get:GetMainCategories")
   beego.Router("/shop/category/getsubclass", &controllers.CategoryController{}, "post:GetSubCategories")
   beego.Router("/shop/category/add", &controllers.CategoryController{}, "post:AddCategory")
+
+  beego.Router("/shop/ware/create", &controllers.WareController{}, "post:CreateWare")
+  beego.Router("/shop/ware/getall", &controllers.WareController{}, "get:GetWareList")
+  beego.Router("/shop/ware/getbycid", &controllers.WareController{}, "post:GetWareByCategory")
 }

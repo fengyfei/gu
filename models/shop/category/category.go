@@ -46,6 +46,7 @@ type Category struct {
   Name      string    `gorm:"type:varchar(50);not null"  json:"name"`
   Desc      string    `gorm:"type:varchar(100);not null" json:"desc"`
   ParentID  uint      `gorm:"not null" json:"parentId"`
+  Status    int       `gorm:"not null;default:1" json:"status"`
   CreatedAt time.Time `json:"createdTime"`
 }
 
