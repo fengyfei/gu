@@ -74,12 +74,24 @@ func initTable() {
 	}
 	defer mysql.Pool.Release(conn)
 
-	conn.(*gorm.DB).Set("gorm:table_options", "ENGINE=InnoDB").CreateTable(
-		&staff.Staff{},
-		&staff.Role{},
-		&staff.Relation{},
-		&staff.Permission{},
-	)
+	db := conn.(*gorm.DB).Set("gorm:table_options", "ENGINE=InnoDB")
+
+	switch {
+	case !db.HasTable(&staff.Staff{}):
+		db.CreateTable(&staff.Staff{})
+		fallthrough
+	case !db.HasTable(&staff.Role{}):
+		db.CreateTable(&staff.Role{})
+		fallthrough
+	case !db.HasTable(&staff.Relation{}):
+		db.CreateTable(&staff.Relation{})
+		fallthrough
+	case !db.HasTable(&staff.Permission{}):
+		db.CreateTable(&staff.Permission{})
+		fallthrough
+	default:
+		fmt.Println("[MySQL] All tables have been created.")
+	}
 }
 
 // startEchoServer starts an HTTP server.
