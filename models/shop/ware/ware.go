@@ -47,10 +47,10 @@ type Ware struct {
   Desc       string  `gorm:"type:varchar(100);not null" json:"desc"`
   Type       string  `gorm:"type:varchar(50);not null"  json:"type"`
   CategoryID uint    `gorm:"not null"  json:"categoryId"`
-  Status     int     `gorm:"default:1" json:"status"`
+  Status     int8    `gorm:"default:1" json:"status"` // 0, hide or delete;1, common wares;2, promotion
   TotalSale  uint    `gorm:"not null"  json:"total"`
   Price      float32 `gorm:"not null;type:float" json:"price"`
-  SalePrice  float32 `gorm:"not null;type:float" json:"salePrice"`
+  SalePrice  float32 `gorm:"not null;type:float" json:"salePrice"` // promotion price
   Size       string  `gorm:"type:varchar(20)"    json:"size"`
   Color      string  `gorm:"type:varchar(20)"    json:"color"`
   Avatar     string  `gorm:"type:varchar(1000)"  json:"avatar"`
@@ -90,8 +90,18 @@ func (sp *serviceProvider) GetWareList(conn orm.Connection, arg ...uint) ([]Ware
   if len(arg) == 0 {
     res = db.Table("wares").Scan(&list)
   } else {
-    res = db.Table("wares").Where("category_id = ?", arg[0]).Scan(&list)
+    res = db.Table("wares").Where("status > ? AND category_id = ?", 0, arg[0]).Scan(&list)
   }
+
+  return list, res.Error
+}
+
+// get promotion wares (status = 2)
+func (sp *serviceProvider) GetPromotionList(conn orm.Connection) ([]Ware, error) {
+  var list []Ware
+
+  db := conn.(*gorm.DB).Exec("USE shop")
+  res := db.Table("wares").Where("status = ?", 2).Scan(&list)
 
   return list, res.Error
 }

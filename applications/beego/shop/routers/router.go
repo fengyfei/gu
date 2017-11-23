@@ -52,4 +52,5 @@ func init() {
 	beego.Router("/shop/ware/create", &controllers.WareController{}, "post:CreateWare")
 	beego.Router("/shop/ware/getall", &controllers.WareController{}, "get:GetWareList")
 	beego.Router("/shop/ware/getbycid", &controllers.WareController{}, "post:GetWareByCategory")
+	beego.Router("/shop/ware/getpromotion", &controllers.WareController{}, "get:GetPromotion")
 }

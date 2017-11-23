@@ -151,3 +151,32 @@ func (this *WareController) GetWareByCategory() {
 finish:
   this.ServeJSON(true)
 }
+
+// get promotion wares
+func (this *WareController) GetPromotion() {
+  var (
+    err error
+    res []ware.Ware
+  )
+
+  conn, err := mysql.Pool.Get()
+  defer mysql.Pool.Release(conn)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+    goto finish
+  }
+
+  res, err = ware.Service.GetPromotionList(conn)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+    goto finish
+  }
+  this.Data["json"] = res
+
+finish:
+  this.ServeJSON(true)
+}
