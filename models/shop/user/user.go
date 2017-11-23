@@ -11,11 +11,11 @@ import (
 type serviceProvider struct{}
 
 var (
-	Service *serviceProvider
-	typeWechat = "wechat"
-	typePhone = "phone"
+	Service        *serviceProvider
+	typeWechat     = "wechat"
+	typePhone      = "phone"
 	errLoginFailed = errors.New("invalid username or password.")
-	errPassword = errors.New("invalid password.")
+	errPassword    = errors.New("invalid password.")
 )
 
 type User struct {
@@ -24,7 +24,7 @@ type User struct {
 	NickName  string `gorm:"type:varchar(30)"`
 	Phone     string `gorm:"unique"`
 	Type      string `gorm:"type:varchar(30)"`
-	Pass 	  string `gorm:"type:varchar(128)"`
+	Pass      string `gorm:"type:varchar(128)"`
 	CreatedAt *time.Time
 }
 
@@ -47,7 +47,7 @@ func (this *serviceProvider) WechatLogin(conn orm.Connection, nickName, unionId 
 }
 
 // register by phoneNumber
-func (this *serviceProvider) PhoneRegister(conn orm.Connection, phone, password, nickName *string) error{
+func (this *serviceProvider) PhoneRegister(conn orm.Connection, phone, password, nickName *string) error {
 	salt, err := security.SaltHashGenerate(password)
 	if err != nil {
 		return err
@@ -85,7 +85,7 @@ func (this *serviceProvider) PhoneLogin(conn orm.Connection, phone, password *st
 	return user.UserName, err
 }
 
-func (this *serviceProvider) ChangePassword(conn orm.Connection, phone, oldPass, newPass *string) error{
+func (this *serviceProvider) ChangePassword(conn orm.Connection, phone, oldPass, newPass *string) error {
 	db := conn.(*gorm.DB).Exec("USE shop")
 	user := &User{}
 

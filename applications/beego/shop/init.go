@@ -65,23 +65,25 @@ func initTable() {
   }
   defer mysql.Pool.Release(conn)
 
+  db := conn.(*gorm.DB).Set("gorm:table_options", "ENGINE=InnoDB").Set("gorm:table_options", "CHARSET=utf8")
+
   if !conn.(*gorm.DB).HasTable("users") {
-    conn.(*gorm.DB).Set("gorm:table_options", "ENGINE=InnoDB").Set("gorm:table_options", "CHARSET=utf8").CreateTable(
+    db.CreateTable(
       &user.User{},
     )
   }
   if !conn.(*gorm.DB).HasTable("categories") {
-    conn.(*gorm.DB).Set("gorm:table_options", "ENGINE=InnoDB").Set("gorm:table_options", "CHARSET=utf8").CreateTable(
+    db.CreateTable(
       &category.Category{},
     )
   }
   if !conn.(*gorm.DB).HasTable("wares") {
-    conn.(*gorm.DB).Set("gorm:table_options", "ENGINE=InnoDB").Set("gorm:table_options", "CHARSET=utf8").CreateTable(
+    db.CreateTable(
       &ware.Ware{},
     )
   }
   if !conn.(*gorm.DB).HasTable("addresses") {
-    conn.(*gorm.DB).Set("gorm:table_options", "ENGINE=InnoDB").Set("gorm:table_options", "CHARSET=utf8").CreateTable(
+    db.CreateTable(
       &address.Address{},
     )
   }

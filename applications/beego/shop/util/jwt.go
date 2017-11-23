@@ -42,9 +42,8 @@ func NewToken(username string) (string, error) {
 	} else {
 		claims["admin"] = "false"
 	}
-	claims["exp"] = time.Now().Add(time.Hour * 480).Unix() //20天有效期，过期需要重新登录获取token
+	claims["exp"] = time.Now().Add(time.Hour * 480).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	// 使用自定义字符串加密 and get the complete encoded token as a string
 	return token.SignedString([]byte("mykey"))
 }
