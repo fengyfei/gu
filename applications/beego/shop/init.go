@@ -37,6 +37,7 @@ import (
   "github.com/fengyfei/gu/models/shop/user"
   "github.com/fengyfei/gu/models/shop/category"
   "github.com/fengyfei/gu/models/shop/ware"
+  "github.com/fengyfei/gu/models/shop/address"
 )
 
 func init() {
@@ -64,9 +65,25 @@ func initTable() {
   }
   defer mysql.Pool.Release(conn)
 
-  conn.(*gorm.DB).Set("gorm:table_options", "ENGINE=InnoDB").Set("gorm:table_options", "CHARSET=utf8").CreateTable(
-    &user.User{},
-    &category.Category{},
-    &ware.Ware{},
-  )
+  if !conn.(*gorm.DB).HasTable("users") {
+    conn.(*gorm.DB).Set("gorm:table_options", "ENGINE=InnoDB").Set("gorm:table_options", "CHARSET=utf8").CreateTable(
+      &user.User{},
+    )
+  }
+  if !conn.(*gorm.DB).HasTable("categories") {
+    conn.(*gorm.DB).Set("gorm:table_options", "ENGINE=InnoDB").Set("gorm:table_options", "CHARSET=utf8").CreateTable(
+      &category.Category{},
+    )
+  }
+  if !conn.(*gorm.DB).HasTable("wares") {
+    conn.(*gorm.DB).Set("gorm:table_options", "ENGINE=InnoDB").Set("gorm:table_options", "CHARSET=utf8").CreateTable(
+      &ware.Ware{},
+    )
+  }
+  if !conn.(*gorm.DB).HasTable("addresses") {
+    conn.(*gorm.DB).Set("gorm:table_options", "ENGINE=InnoDB").Set("gorm:table_options", "CHARSET=utf8").CreateTable(
+      &address.Address{},
+    )
+  }
+
 }
