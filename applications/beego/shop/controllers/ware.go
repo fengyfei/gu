@@ -24,7 +24,7 @@
 
 /*
  * Revision History:
- *     Initial: 2017/11/07        Wang RiYu
+ *     Initial: 2017/11/23        Wang RiYu
  */
 
 package controllers
@@ -35,31 +35,24 @@ import (
   "github.com/fengyfei/gu/libs/constants"
   "github.com/fengyfei/gu/libs/logger"
   "github.com/fengyfei/gu/applications/beego/shop/mysql"
-  "github.com/fengyfei/gu/models/shop/category"
-  _ "github.com/jinzhu/gorm"
+  "github.com/fengyfei/gu/models/shop/ware"
 )
 
 type (
-  CategoryController struct {
+  WareController struct {
     base.Controller
   }
 
-  categoryAddReq struct {
-    Name     string `json:"name"`
-    Desc     string `json:"desc"`
-    ParentID uint   `json:"parentId"`
-  }
-
-  subCategoryReq struct {
-    PID uint `json:"pid"`
+  categoryReq struct {
+    CID uint `json:"cid"`
   }
 )
 
-// add new category
-func (this *CategoryController) AddCategory() {
+// add new ware
+func (this *WareController) CreateWare() {
   var (
     err    error
-    addReq categoryAddReq
+    addReq ware.Ware
   )
 
   conn, err := mysql.Pool.Get()
@@ -79,7 +72,7 @@ func (this *CategoryController) AddCategory() {
     goto finish
   }
 
-  err = category.Service.AddCategory(conn, &addReq.Name, &addReq.Desc, &addReq.ParentID)
+  err = ware.Service.CreateWare(conn, addReq)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -92,12 +85,11 @@ finish:
   this.ServeJSON(true)
 }
 
-// get all parent categories
-func (this *CategoryController) GetMainCategories() {
+// get all wares
+func (this *WareController) GetWareList() {
   var (
-    pid uint = 0
     err error
-    res []category.Category
+    res []ware.Ware
   )
 
   conn, err := mysql.Pool.Get()
@@ -109,7 +101,7 @@ func (this *CategoryController) GetMainCategories() {
     goto finish
   }
 
-  res, err = category.Service.GetCategory(conn, pid)
+  res, err = ware.Service.GetWareList(conn)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -122,12 +114,12 @@ finish:
   this.ServeJSON(true)
 }
 
-// get categories of the specified pid
-func (this *CategoryController) GetSubCategories() {
+// get ware by categoryID
+func (this *WareController) GetWareByCategory() {
   var (
     err    error
-    pidReq subCategoryReq
-    res    []category.Category
+    cidReq categoryReq
+    res    []ware.Ware
   )
 
   conn, err := mysql.Pool.Get()
@@ -139,7 +131,7 @@ func (this *CategoryController) GetSubCategories() {
     goto finish
   }
 
-  err = json.Unmarshal(this.Ctx.Input.RequestBody, &pidReq)
+  err = json.Unmarshal(this.Ctx.Input.RequestBody, &cidReq)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
@@ -147,7 +139,7 @@ func (this *CategoryController) GetSubCategories() {
     goto finish
   }
 
-  res, err = category.Service.GetCategory(conn, pidReq.PID)
+  res, err = ware.Service.GetWareList(conn, cidReq.CID)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
