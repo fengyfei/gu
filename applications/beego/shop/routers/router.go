@@ -30,22 +30,26 @@
 package routers
 
 import (
-  "github.com/fengyfei/gu/applications/beego/shop/controllers"
+	"github.com/fengyfei/gu/applications/beego/shop/controllers"
 
-  "github.com/astaxie/beego"
+	"github.com/astaxie/beego"
 )
 
 func init() {
-  beego.Router("/shop/user/wechatlogin", &controllers.UserController{}, "post:WechatLogin")
-  beego.Router("/shop/user/register", &controllers.UserController{}, "post:PhoneRegister")
-  beego.Router("/shop/user/login", &controllers.UserController{}, "post:PhoneLogin")
-  beego.Router("/shop/user/changepass", &controllers.UserController{}, "post:ChangePassword")
+	beego.Router("/shop/user/wechatlogin", &controllers.UserController{}, "post:WechatLogin")
+	beego.Router("/shop/user/register", &controllers.UserController{}, "post:PhoneRegister")
+	beego.Router("/shop/user/login", &controllers.UserController{}, "post:PhoneLogin")
+	beego.Router("/shop/user/changepass", &controllers.UserController{}, "post:ChangePassword")
 
-  beego.Router("/shop/category/getmainclass", &controllers.CategoryController{}, "get:GetMainCategories")
-  beego.Router("/shop/category/getsubclass", &controllers.CategoryController{}, "post:GetSubCategories")
-  beego.Router("/shop/category/add", &controllers.CategoryController{}, "post:AddCategory")
+	beego.Router("/shop/address/add", &controllers.AddressController{}, "post:AddAddress")
+	beego.Router("/shop/address/setdefault", &controllers.AddressController{}, "post:SetDefault")
+	beego.Router("/shop/address/modify", &controllers.AddressController{}, "post:Modify")
 
-  beego.Router("/shop/ware/create", &controllers.WareController{}, "post:CreateWare")
-  beego.Router("/shop/ware/getall", &controllers.WareController{}, "get:GetWareList")
-  beego.Router("/shop/ware/getbycid", &controllers.WareController{}, "post:GetWareByCategory")
+	beego.Router("/shop/category/getmainclass", &controllers.CategoryController{}, "get:GetMainCategories")
+	beego.Router("/shop/category/getsubclass", &controllers.CategoryController{}, "post:GetSubCategories")
+	beego.Router("/shop/category/add", &controllers.CategoryController{}, "post:AddCategory")
+
+	beego.Router("/shop/ware/create", &controllers.WareController{}, "post:CreateWare")
+	beego.Router("/shop/ware/getall", &controllers.WareController{}, "get:GetWareList")
+	beego.Router("/shop/ware/getbycid", &controllers.WareController{}, "post:GetWareByCategory")
 }

@@ -147,6 +147,7 @@ func (this *UserController) PhoneRegister() {
 
 	err = user.Service.PhoneRegister(conn, &registerReq.Phone, &registerReq.Password, &registerReq.NickName)
 	if err != nil {
+		logger.Error(err)
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
 		goto finish
 	}
@@ -243,6 +244,7 @@ func (this *UserController) ChangePassword() {
 
 	err = user.Service.ChangePassword(conn, &username, &req.OldPass, &req.NewPass)
 	if err != nil {
+		logger.Error(err)
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
 		goto finish
 	}
