@@ -44,11 +44,12 @@ import (
 type (
 	// createReq - The request struct that create repos information.
 	createReq struct {
-		Avatar *string `json:"avatar" validate:"required,url"`
-		Name   *string `json:"name" validate:"required,alphanum,min=1,max=30"`
-		Link   *string `json:"link" validate:"required,url"`
-		Image  *string `json:"image"`
-		Intro  *string `json:"intro"`
+		Avatar *string   `json:"avatar" validate:"required,url"`
+		Name   *string   `json:"name" validate:"required,alphanum,min=1,max=30"`
+		Link   *string   `json:"link" validate:"required,url"`
+		Image  *string   `json:"image"`
+		Intro  *string   `json:"intro"`
+		Lang   *[]string `json:"lang"`
 	}
 
 	// modifyActiveReq - The request struct that modify repos status.
@@ -69,6 +70,7 @@ type (
 		Link    string
 		Image   string
 		Intro   string
+		Lang    []string
 		Created time.Time
 		Active  bool
 	}
@@ -89,7 +91,7 @@ func Create(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
 	}
 
-	id, err := repos.Service.Create(req.Avatar, req.Name, req.Link, req.Image, req.Intro)
+	id, err := repos.Service.Create(req.Avatar, req.Name, req.Link, req.Image, req.Intro, req.Lang)
 	if err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
@@ -139,6 +141,7 @@ func List(c echo.Context) error {
 			Link:    r.Link,
 			Image:   r.Image,
 			Intro:   r.Intro,
+			Lang:    r.Lang,
 			Created: r.Created,
 			Active:  r.Active,
 		}
@@ -169,6 +172,7 @@ func ActiveList(c echo.Context) error {
 			Link:    r.Link,
 			Image:   r.Image,
 			Intro:   r.Intro,
+			Lang:    r.Lang,
 			Created: r.Created,
 			Active:  r.Active,
 		}
@@ -210,6 +214,7 @@ func Info(c echo.Context) error {
 		Link:    info.Link,
 		Image:   info.Image,
 		Intro:   info.Intro,
+		Lang:    info.Lang,
 		Created: info.Created,
 		Active:  info.Active,
 	}
