@@ -68,7 +68,7 @@ func (sp *serviceProvider) GetCategory(conn orm.Connection, pid uint) ([]Categor
   var list []Category
 
   db := conn.(*gorm.DB).Exec("USE shop")
-  res := db.Table("categories").Where("parent_id = ?", pid).Scan(&list)
+  res := db.Table("categories").Where("status > ? AND parent_id = ?", 0, pid).Scan(&list)
 
   return list, res.Error
 }
