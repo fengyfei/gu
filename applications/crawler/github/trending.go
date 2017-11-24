@@ -30,8 +30,6 @@
 package github
 
 import (
-	"encoding/json"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -45,6 +43,14 @@ type Trending struct {
 	Abstract string
 	Stars    int
 	Today    int
+}
+
+var (
+	TrendingList []*Trending
+)
+
+func init() {
+	TrendingList = make([]*Trending, 0)
 }
 
 type trendingCrawler struct {
@@ -97,12 +103,7 @@ func (c *trendingCrawler) parseContent(_ int, s *goquery.Selection) {
 		Today:    today,
 	}
 
-	jsonData, err := json.MarshalIndent(info, "", "  ")
-	if err != nil {
-		fmt.Print(err)
-	}
-
-	fmt.Println(string(jsonData))
+	TrendingList = append(TrendingList, info)
 }
 
 func star2Int(star string) int {
