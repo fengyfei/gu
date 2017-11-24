@@ -30,12 +30,22 @@
 package github
 
 import (
+	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/asciimoo/colly"
 	"github.com/fengyfei/gu/libs/crawler"
 )
+
+type Trending struct {
+	Title    string
+	Abstract string
+	Stars    int
+	Today    int
+}
 
 type trendingCrawler struct {
 	collector *colly.Collector
@@ -66,12 +76,58 @@ func (c *trendingCrawler) parse(e *colly.HTMLElement) {
 }
 
 func (c *trendingCrawler) parseContent(_ int, s *goquery.Selection) {
-	fmt.Print(s.Children().Eq(0).Find("a").Attr("href"))
-	fmt.Print("\t")
-	fmt.Print(s.Children().Eq(2).Find("p").Text())
-	fmt.Print("\t")
-	fmt.Print(s.Children().Eq(3).Children().Eq(1).Text())
-	fmt.Print("\t")
-	fmt.Print(s.Children().Eq(3).Find("span.float-sm-right").Text())
-	fmt.Println()
+	rawTitle, _ := s.Children().Eq(0).Find("a").Attr("href")
+	title := strings.Split(rawTitle, "/")[2]
+
+	rawAbstract := s.Children().Eq(2).Find("p").Text()
+	abstract := strings.TrimSpace(rawAbstract)
+
+	rawStars := s.Children().Eq(3).Children().Eq(1).Text()
+	trimStar := strings.TrimSpace(rawStars)
+	stars := star2Int(trimStar)
+
+	rawToday := s.Children().Eq(3).Find("span.float-sm-right").Text()
+	trimToday := strings.TrimSpace(rawToday)
+	today := today2Int(trimToday)
+
+	info := &Trending{
+		Title:    title,
+		Abstract: abstract,
+		Stars:    stars,
+		Today:    today,
+	}
+
+	jsonData, err := json.MarshalIndent(info, "", "  ")
+	if err != nil {
+		fmt.Print(err)
+	}
+
+	fmt.Println(string(jsonData))
+}
+
+func star2Int(star string) int {
+	var str string
+
+	count := strings.Count(star, ",")
+
+	switch count {
+	case 0:
+		str = star
+	case 1:
+		list := strings.Split(star, ",")
+		str = list[0] + list[1]
+	case 2:
+		list := strings.Split(star, ",")
+		str = list[0] + list[1] + list[2]
+	}
+
+	i, _ := strconv.ParseInt(str, 10, 0)
+	return int(i)
+}
+
+func today2Int(today string) int {
+	list := strings.Split(today, " ")
+	str := list[0]
+	i, _ := strconv.ParseInt(str, 10, 0)
+	return int(i)
 }
