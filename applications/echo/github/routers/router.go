@@ -34,6 +34,7 @@ import (
 
 	"github.com/fengyfei/gu/applications/echo/github/handler/article"
 	"github.com/fengyfei/gu/applications/echo/github/handler/repos"
+	"github.com/fengyfei/gu/applications/echo/github/handler/trending"
 )
 
 func InitRouter(server *echo.Echo) {
@@ -47,6 +48,9 @@ func InitRouter(server *echo.Echo) {
 	server.GET("/api/v1/repos/list", repos.List)
 	server.GET("/api/v1/repos/activelist", repos.ActiveList)
 	server.POST("/api/v1/repos/info", repos.Info)
+
+	// Trending
+	server.POST("/api/v1/trending/lang", trending.LangInfo)
 
 	// Article
 	server.POST("/api/v1/article/create", article.Create)
