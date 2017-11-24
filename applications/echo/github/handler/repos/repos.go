@@ -45,7 +45,7 @@ type (
 	// createReq - The request struct that create repos information.
 	createReq struct {
 		Avatar *string   `json:"avatar" validate:"required,url"`
-		Name   *string   `json:"name" validate:"required,alphanum,min=1,max=30"`
+		Name   *string   `json:"name" validate:"required,alphanum"`
 		Link   *string   `json:"link" validate:"required,url"`
 		Image  *string   `json:"image"`
 		Intro  *string   `json:"intro"`
