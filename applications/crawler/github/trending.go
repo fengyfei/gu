@@ -48,27 +48,9 @@ type Trending struct {
 	Today    int
 }
 
-// Pipe used to transfer data from crawler to echo server.
-type Pipe struct {
-	DataCh chan *Trending
-	Done   chan struct{}
-}
-
 var (
-	DataPipe *Pipe = newPipe()
+	DataPipe chan *Trending = make(chan *Trending)
 )
-
-func newPipe() *Pipe {
-	return &Pipe{
-		DataCh: make(chan *Trending),
-		Done:   make(chan struct{}),
-	}
-}
-
-// Close close the pipe.
-func (p *Pipe) Close() {
-	close(p.Done)
-}
 
 type trendingCrawler struct {
 	collector *colly.Collector
@@ -122,11 +104,8 @@ func (c *trendingCrawler) parseContent(_ int, s *goquery.Selection) {
 		Today:    today,
 	}
 
-	if info != nil {
-		DataPipe.DataCh <- info
-	} else {
-		DataPipe.Close()
-	}
+	DataPipe <- info
+
 }
 
 func star2Int(star string) int {

@@ -74,11 +74,11 @@ func LangInfo(c echo.Context) error {
 	var (
 		err        error
 		req        langReq
+		resp       []infoResp
 		t          trending.Trending
 		tStore     *trending.Trending
 		tStoreList []*trending.Trending
 		info       infoResp
-		resp       []infoResp
 		tInfo      *github.Trending
 	)
 
@@ -119,12 +119,9 @@ func LangInfo(c echo.Context) error {
 
 crawler:
 	go func() {
-	loop:
 		for {
 			select {
-			case <-github.DataPipe.Done:
-				break loop
-			case tInfo = <-github.DataPipe.DataCh:
+			case tInfo = <-github.DataPipe:
 				info = infoResp{
 					Title:    tInfo.Title,
 					Abstract: tInfo.Abstract,
