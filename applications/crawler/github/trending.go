@@ -32,25 +32,42 @@ package github
 import (
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/asciimoo/colly"
 	"github.com/fengyfei/gu/libs/crawler"
 )
 
+// Trending used to store the acquired data.
 type Trending struct {
 	Title    string
 	Abstract string
+	Lang     string
 	Stars    int
 	Today    int
 }
 
+// Pipe used to transfer data from crawler to echo server.
+type Pipe struct {
+	DataCh chan *Trending
+	Done   chan struct{}
+}
+
 var (
-	TrendingList []*Trending
+	DataPipe *Pipe = newPipe()
 )
 
-func init() {
-	TrendingList = make([]*Trending, 0)
+func newPipe() *Pipe {
+	return &Pipe{
+		DataCh: make(chan *Trending),
+		Done:   make(chan struct{}),
+	}
+}
+
+// Close close the pipe.
+func (p *Pipe) Close() {
+	close(p.Done)
 }
 
 type trendingCrawler struct {
@@ -96,14 +113,20 @@ func (c *trendingCrawler) parseContent(_ int, s *goquery.Selection) {
 	trimToday := strings.TrimSpace(rawToday)
 	today := today2Int(trimToday)
 
+	date := time.Now().Format("20060102")
 	info := &Trending{
 		Title:    title,
 		Abstract: abstract,
+		Lang:     date + *c.topic,
 		Stars:    stars,
 		Today:    today,
 	}
 
-	TrendingList = append(TrendingList, info)
+	if info != nil {
+		DataPipe.DataCh <- info
+	} else {
+		DataPipe.Close()
+	}
 }
 
 func star2Int(star string) int {
