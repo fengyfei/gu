@@ -61,7 +61,7 @@ func (u *UserController) WechatLogin() {
 	(
 		wechatUser WechatLoginReq
 		err        error
-		userName   string
+		userId     int32
 		url        string
 		wechatData wechatLogin
 		wechatRes  *http.Response
@@ -96,13 +96,13 @@ func (u *UserController) WechatLogin() {
 		goto finish
 	}
 
-	userName, err = user.Service.WechatLogin(conn, &wechatUser.UserName, &wechatData.data.unionid)
+	userId, err = user.Service.WechatLogin(conn, &wechatUser.UserName, &wechatData.data.unionid)
 	if err != nil {
 		u.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
 		goto finish
 	}
 
-	token, err = util.NewToken(userName)
+	token, err = util.NewToken(userId)
 	if err != nil {
 		logger.Error(err)
 		u.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
@@ -163,7 +163,7 @@ func (this *UserController) PhoneLogin() {
 		loginReq phoneLoginReq
 		err      error
 		token    string
-		uid      string
+		uid      int32
 	)
 
 	conn, err := mysql.Pool.Get()
@@ -210,11 +210,11 @@ finish:
 
 func (this *UserController) ChangePassword() {
 	var (
-		req      changePassReq
-		claims   jwt.MapClaims
-		ok       bool
-		username string
-		conn     orm.Connection
+		req    changePassReq
+		claims jwt.MapClaims
+		ok     bool
+		userId int32
+		conn   orm.Connection
 	)
 	token, err := this.ParseToken()
 	if err != nil {
@@ -224,10 +224,9 @@ func (this *UserController) ChangePassword() {
 
 	claims, ok = token.Claims.(jwt.MapClaims)
 	if !ok {
-		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed, constants.RespKeyToken: username}
-
+		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
 	}
-	username = claims["username"].(string)
+	userId = int32(claims["userid"].(float64)) //strange, maybe it is conversed int32 to float64 when parsing the token
 
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
@@ -242,7 +241,7 @@ func (this *UserController) ChangePassword() {
 		goto finish
 	}
 
-	err = user.Service.ChangePassword(conn, &username, &req.OldPass, &req.NewPass)
+	err = user.Service.ChangePassword(conn, userId, &req.OldPass, &req.NewPass)
 	if err != nil {
 		logger.Error(err)
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}

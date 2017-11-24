@@ -34,14 +34,9 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
-func NewToken(username string) (string, error) {
+func NewToken(userId int32) (string, error) {
 	claims := make(jwt.MapClaims)
-	claims["username"] = username
-	if username == "admin" {
-		claims["admin"] = "true"
-	} else {
-		claims["admin"] = "false"
-	}
+	claims["userid"] = userId
 	claims["exp"] = time.Now().Add(time.Hour * 480).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
