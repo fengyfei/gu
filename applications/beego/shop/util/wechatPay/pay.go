@@ -1,8 +1,8 @@
 package wechatPay
 
 import (
-	"gopkg.in/chanxuehong/wechat.v2/mch/core"
-	"gopkg.in/chanxuehong/wechat.v2/mch/pay"
+	"github.com/chanxuehong/wechat.v2/mch/core"
+	"github.com/chanxuehong/wechat.v2/mch/pay"
 	"time"
 	"math/rand"
 	"bytes"

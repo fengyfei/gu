@@ -41,4 +41,7 @@ const (
 
 	// RespKeyID - json key 'ID'
 	RespKeyID = "ID"
+
+	// RespPaySign - json key 'paySign'
+	RespPaySign = "paySign"
 )
