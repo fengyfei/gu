@@ -39,12 +39,16 @@ const (
 	// ErrToken - Invalid Token
 	ErrToken = 200
 
+	// ErrWechatAuth - Wechat Auth error.
+	ErrWechatAuth = 300
+
+	// ErrWechatPay - Wechat Pay error
+	ErrWechatPay = 301
+
 	// ErrMongoDB - MongoDB operations error.
 	ErrMongoDB = 600
 
 	// ErrMysql - Mysql operations error.
 	ErrMysql = 700
 
-	// ErrWechatAuth - Wechat Auth error.
-	ErrWechatAuth = 800
 )
