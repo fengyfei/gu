@@ -86,17 +86,17 @@ type Trending struct {
 }
 
 // CreateList insert multiple trending records.
-func (sp *serviceProvider) CreateList(list []*Trending) error {
+func (sp *serviceProvider) CreateList(docs []*Trending) error {
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	for _, t := range list {
+	for _, d := range docs {
 		info := Trending{
-			Title:    t.Title,
-			Abstract: t.Abstract,
-			Lang:     t.Lang,
-			Stars:    t.Stars,
-			Today:    t.Today,
+			Title:    d.Title,
+			Abstract: d.Abstract,
+			Lang:     d.Lang,
+			Stars:    d.Stars,
+			Today:    d.Today,
 		}
 
 		err := conn.Insert(&info)
