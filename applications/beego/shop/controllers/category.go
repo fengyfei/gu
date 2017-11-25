@@ -87,6 +87,7 @@ func (this *CategoryController) AddCategory() {
     goto finish
   }
   this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+  logger.Info("create category", addReq.Name, "success")
 
 finish:
   this.ServeJSON(true)

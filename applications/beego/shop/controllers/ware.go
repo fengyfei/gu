@@ -72,6 +72,14 @@ func (this *WareController) CreateWare() {
     goto finish
   }
 
+  err = this.Validate(&addReq)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+    goto finish
+  }
+
   err = ware.Service.CreateWare(conn, addReq)
   if err != nil {
     logger.Error(err)
@@ -80,6 +88,7 @@ func (this *WareController) CreateWare() {
     goto finish
   }
   this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+  logger.Info("create ware", addReq.Name, "success")
 
 finish:
   this.ServeJSON(true)
@@ -176,6 +185,96 @@ func (this *WareController) GetPromotion() {
     goto finish
   }
   this.Data["json"] = res
+
+finish:
+  this.ServeJSON(true)
+}
+
+// update ware info
+func (this *WareController) UpdateWithID() {
+  var (
+    err error
+    req ware.UpdateReq
+  )
+
+  conn, err := mysql.Pool.Get()
+  defer mysql.Pool.Release(conn)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+    goto finish
+  }
+
+  err = json.Unmarshal(this.Ctx.Input.RequestBody, &req)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+    goto finish
+  }
+
+  err = this.Validate(&req)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+    goto finish
+  }
+
+  err = ware.Service.UpdateWare(conn, req)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+    goto finish
+  }
+  this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+
+finish:
+  this.ServeJSON(true)
+}
+
+// modify price
+func (this *WareController) ModifyPrice() {
+  var (
+    err error
+    req ware.ModifyPriceReq
+  )
+
+  conn, err := mysql.Pool.Get()
+  defer mysql.Pool.Release(conn)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+    goto finish
+  }
+
+  err = json.Unmarshal(this.Ctx.Input.RequestBody, &req)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+    goto finish
+  }
+
+  err = this.Validate(&req)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+    goto finish
+  }
+
+  err = ware.Service.ModifyPrice(conn, req)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+    goto finish
+  }
+  this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
 
 finish:
   this.ServeJSON(true)
