@@ -161,7 +161,7 @@ func (sp *serviceProvider) ModifyPrice(conn orm.Connection, req ModifyPriceReq) 
 }
 
 // get ware by id
-func (sp *serviceProvider) GetByID(conn orm.Connection, id int32) (*Ware, error){
+func (sp *serviceProvider) GetByID(conn orm.Connection, id uint) (*Ware, error) {
   db := conn.(*gorm.DB).Exec("USE shop")
   ware := &Ware{}
   err := db.Where("id = ?", id).First(&ware).Error
