@@ -41,23 +41,43 @@ var (
   Service *serviceProvider
 )
 
-type Ware struct {
-  ID         uint    `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
-  Name       string  `gorm:"type:varchar(50);not null"  json:"name"`
-  Desc       string  `gorm:"type:varchar(100);not null" json:"desc"`
-  Type       string  `gorm:"type:varchar(50);not null"  json:"type"`
-  CategoryID uint    `gorm:"not null"  json:"categoryId"`
-  Status     int8    `gorm:"default:1" json:"status"` // 0, hide or delete;1, common wares;2, promotion
-  TotalSale  uint    `gorm:"not null"  json:"total"`
-  Price      float32 `gorm:"not null;type:float" json:"price"`
-  SalePrice  float32 `gorm:"not null;type:float" json:"salePrice"` // promotion price
-  Size       string  `gorm:"type:varchar(20)"    json:"size"`
-  Color      string  `gorm:"type:varchar(20)"    json:"color"`
-  Avatar     string  `gorm:"type:varchar(1000)"  json:"avatar"`
-  Image      string  `gorm:"type:varchar(1000)"  json:"image"`
-  Inventory  uint    `gorm:"not null"            json:"inventory"`
-  Created    time.Time
-}
+type (
+  Ware struct {
+    ID         uint    `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
+    Name       string  `gorm:"type:varchar(50);not null"  json:"name" validate:"required"`
+    Desc       string  `gorm:"type:varchar(100);not null" json:"desc"`
+    Type       string  `gorm:"type:varchar(50);not null"  json:"type"`
+    CategoryID uint    `gorm:"not null" json:"categoryId"`
+    TotalSale  uint    `gorm:"not null" json:"total"`
+    Inventory  uint    `gorm:"not null" json:"inventory"`
+    Status     int8    `gorm:"type:TINYINT;default:1" json:"status"` // -1, hide or delete;1, common wares;2, promotion
+    Price      float32 `gorm:"not null;type:float" json:"price"`
+    SalePrice  float32 `gorm:"not null;type:float" json:"salePrice"` // promotion price
+    Size       string  `gorm:"type:varchar(20)"    json:"size"`
+    Color      string  `gorm:"type:varchar(20)"    json:"color"`
+    Avatar     string  `gorm:"type:varchar(1000)"  json:"avatar"`
+    Image      string  `gorm:"type:varchar(1000)"  json:"image"`
+    Created    time.Time
+  }
+
+  UpdateReq struct {
+    ID         uint   `json:"id" validate:"required"`
+    Desc       string `json:"desc"`
+    CategoryID uint   `json:"categoryId"`
+    TotalSale  uint   `json:"total"`
+    Size       string `json:"size"`
+    Color      string `json:"color"`
+    Avatar     string `json:"avatar"`
+    Image      string `json:"image"`
+    Inventory  uint   `json:"inventory"`
+  }
+
+  ModifyPriceReq struct {
+    ID        uint    `json:"id" validate:"required"`
+    Price     float32 `json:"price"`
+    SalePrice float32 `json:"salePrice"`
+  }
+)
 
 // add ware
 func (sp *serviceProvider) CreateWare(conn orm.Connection, wareReq Ware) error {
@@ -104,4 +124,27 @@ func (sp *serviceProvider) GetPromotionList(conn orm.Connection) ([]Ware, error)
   res := db.Table("wares").Where("status = ?", 2).Scan(&list)
 
   return list, res.Error
+}
+
+// update ware info
+func (sp *serviceProvider) UpdateWare(conn orm.Connection, req UpdateReq) error {
+  var res *gorm.DB
+
+  db := conn.(*gorm.DB).Exec("USE shop")
+  res = db.Table("wares").Where("id = ?", req.ID).Updates(req)
+
+  return res.Error
+}
+
+// modify ware price
+func (sp *serviceProvider) ModifyPrice(conn orm.Connection, req ModifyPriceReq) error {
+  var res *gorm.DB
+
+  db := conn.(*gorm.DB).Exec("USE shop")
+  res = db.Table("wares").Where("id = ?", req.ID).Updates(map[string]interface{}{
+    "price":      req.Price,
+    "sale_price": req.SalePrice,
+  })
+
+  return res.Error
 }
