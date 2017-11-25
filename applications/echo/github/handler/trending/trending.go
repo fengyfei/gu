@@ -42,23 +42,12 @@ import (
 )
 
 type (
-	createReq struct {
-		Title    *string `json:"title" validate:"required,alphanum"`
-		Abstract *string `json:"abstract"`
-		Lang     *string `json:"lang" validate:"required,alphanum"`
-		Stars    int     `json:"stars" validate:"required"`
-		Today    int     `json:"today" validate:"required"`
-	}
-
-	// infoReq - The request struct that get one repos detail information.
-	infoReq struct {
-		ID string `json:"id" validate:"required,alphanum,len=24"`
-	}
-
+	// langReq - The request struct that get the trending of the day of a language.
 	langReq struct {
 		Lang *string `json:"lang" validate:"required,alphanum"`
 	}
 
+	// infoResp - The response struct that represents the trending of the day of a language.
 	infoResp struct {
 		Title    string
 		Abstract string
@@ -143,7 +132,7 @@ crawler:
 		}
 	}()
 
-	if err = langCrawler(*req.Lang); err != nil {
+	if err = startLangCrawler(*req.Lang); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
@@ -155,13 +144,8 @@ finish:
 	return c.JSON(http.StatusOK, resp)
 }
 
-func langCrawler(tag string) error {
+func startLangCrawler(tag string) error {
 	c := github.NewTrendingCrawler(tag)
 
-	err := crawler.StartCrawler(c)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return crawler.StartCrawler(c)
 }
