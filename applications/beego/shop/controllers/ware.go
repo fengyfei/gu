@@ -46,6 +46,10 @@ type (
   categoryReq struct {
     CID uint `json:"cid"`
   }
+
+  homeReq struct {
+    LastID int `json:"lastId"`
+  }
 )
 
 // add new ware
@@ -230,6 +234,7 @@ func (this *WareController) UpdateWithID() {
     goto finish
   }
   this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+  logger.Info("update ware info of", req.ID)
 
 finish:
   this.ServeJSON(true)
@@ -275,6 +280,53 @@ func (this *WareController) ModifyPrice() {
     goto finish
   }
   this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+  logger.Info("modify price of", req.ID)
+
+finish:
+  this.ServeJSON(true)
+}
+
+// get homepage list with last wareID
+func (this *WareController) HomePageList() {
+  var (
+    err error
+    idReq homeReq
+    res []ware.BriefInfo
+  )
+
+  conn, err := mysql.Pool.Get()
+  defer mysql.Pool.Release(conn)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+    goto finish
+  }
+
+  err = json.Unmarshal(this.Ctx.Input.RequestBody, &idReq)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+    goto finish
+  }
+
+  err = this.Validate(&idReq)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+    goto finish
+  }
+
+  res, err = ware.Service.HomePageList(conn, idReq.LastID)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+    goto finish
+  }
+  this.Data["json"] = res
 
 finish:
   this.ServeJSON(true)

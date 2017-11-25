@@ -60,6 +60,17 @@ type (
     Created    time.Time
   }
 
+  BriefInfo struct {
+    ID        uint    `json:"id"`
+    Name      string  `json:"name"`
+    TotalSale uint    `json:"total"`
+    Inventory uint    `json:"inventory"`
+    Status    int8    `json:"status"`
+    Price     float32 `json:"price"`
+    SalePrice float32 `json:"salePrice"`
+    Avatar    string  `json:"avatar"`
+  }
+
   UpdateReq struct {
     ID         uint   `json:"id" validate:"required"`
     Desc       string `json:"desc"`
@@ -149,12 +160,36 @@ func (sp *serviceProvider) ModifyPrice(conn orm.Connection, req ModifyPriceReq) 
   return res.Error
 }
 
-
+// get ware by id
 func (sp *serviceProvider) GetByID(conn orm.Connection, id int32) (*Ware, error){
   db := conn.(*gorm.DB).Exec("USE shop")
   ware := &Ware{}
-
   err := db.Where("id = ?", id).First(&ware).Error
 
   return ware, err
+}
+
+// get homepage ware list, 10 wares per time
+func (sp *serviceProvider) HomePageList(conn orm.Connection, id int) ([]BriefInfo, error) {
+  var (
+    count  uint
+    list   []BriefInfo
+    res    *gorm.DB
+    fields = []string{"id", "name", "status", "price", "sale_price", "total_sale", "inventory", "avatar"}
+  )
+
+  db := conn.(*gorm.DB).Exec("USE shop")
+  db.Table("wares").Where("status > ?", 0).Count(&count)
+
+  if id == 0 || count <= 10 {
+    if count <= 10 {
+      res = db.Table("wares").Select(fields).Where("status > ?", 0).Scan(&list)
+    } else {
+      res = db.Table("wares").Select(fields).Order("id desc").Where("status > ?", 0).Limit(10).Scan(&list)
+    }
+  } else {
+    res = db.Table("wares").Select(fields).Order("id desc").Where("status > ? AND id < ?", 0, id).Limit(10).Scan(&list)
+  }
+
+  return list, res.Error
 }
