@@ -222,7 +222,7 @@ func (this *WareController) UpdateWithID() {
     goto finish
   }
 
-  err = this.Validate(&req)
+  err = this.Validate(req)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
@@ -268,7 +268,7 @@ func (this *WareController) ModifyPrice() {
     goto finish
   }
 
-  err = this.Validate(&req)
+  err = this.Validate(req)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
@@ -315,7 +315,7 @@ func (this *WareController) HomePageList() {
     goto finish
   }
 
-  err = this.Validate(&idReq)
+  err = this.Validate(idReq)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
@@ -361,7 +361,7 @@ func (this *WareController) GetDetail() {
     goto finish
   }
 
-  err = this.Validate(&req)
+  err = this.Validate(req)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
@@ -377,6 +377,44 @@ func (this *WareController) GetDetail() {
     goto finish
   }
   this.Data["json"] = res
+
+finish:
+  this.ServeJSON(true)
+}
+
+// change status of wares
+func (this *WareController) ChangeStatus() {
+  var (
+    err error
+    changeReq []ware.ChangeStatusReq
+  )
+
+  conn, err := mysql.Pool.Get()
+  defer mysql.Pool.Release(conn)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+    goto finish
+  }
+
+  err = json.Unmarshal(this.Ctx.Input.RequestBody, &changeReq)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+    goto finish
+  }
+
+  err = ware.Service.ChangeStatus(conn, changeReq)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+    goto finish
+  }
+  this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+  logger.Info("change ware status success")
 
 finish:
   this.ServeJSON(true)

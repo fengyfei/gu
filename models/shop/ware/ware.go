@@ -88,6 +88,11 @@ type (
     Price     float32 `json:"price"`
     SalePrice float32 `json:"salePrice"`
   }
+
+  ChangeStatusReq struct {
+    ID     uint `json:"id" validate:"required"`
+    Status int8 `json:"status"`
+  }
 )
 
 // add ware
@@ -192,4 +197,30 @@ func (sp *serviceProvider) HomePageList(conn orm.Connection, id int) ([]BriefInf
   }
 
   return list, res.Error
+}
+
+// change status
+func (sp *serviceProvider) ChangeStatus(conn orm.Connection, reqList []ChangeStatusReq) error {
+  var finalErr error
+
+  db := conn.(*gorm.DB).Exec("USE shop")
+
+  tx := db.Begin()
+  defer func() {
+    if finalErr != nil {
+      tx.Rollback()
+    } else {
+      tx.Commit()
+    }
+  }()
+
+  for i := range reqList {
+    err := db.Table("wares").Where("id = ?", reqList[i].ID).Update("status", reqList[i].Status).Error
+    if err != nil {
+      finalErr = err
+      break
+    }
+  }
+
+  return finalErr
 }

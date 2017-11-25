@@ -57,4 +57,5 @@ func init() {
 	beego.Router("/shop/ware/modifyprice", &controllers.WareController{}, "post:ModifyPrice")
 	beego.Router("/shop/ware/homelist", &controllers.WareController{}, "post:HomePageList")
 	beego.Router("/shop/ware/getdetail", &controllers.WareController{}, "post:GetDetail")
+	beego.Router("/shop/ware/changestatus", &controllers.WareController{}, "post:ChangeStatus")
 }
