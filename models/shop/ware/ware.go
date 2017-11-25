@@ -148,3 +148,13 @@ func (sp *serviceProvider) ModifyPrice(conn orm.Connection, req ModifyPriceReq) 
 
   return res.Error
 }
+
+
+func (sp *serviceProvider) GetByID(conn orm.Connection, id int32) (*Ware, error){
+  db := conn.(*gorm.DB).Exec("USE shop")
+  ware := &Ware{}
+
+  err := db.Where("id = ?", id).First(&ware).Error
+
+  return ware, err
+}
