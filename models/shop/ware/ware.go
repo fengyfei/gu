@@ -48,7 +48,7 @@ type (
     Desc       string  `gorm:"type:varchar(100);not null" json:"desc"`
     Type       string  `gorm:"type:varchar(50);not null"  json:"type"`
     CategoryID uint    `gorm:"not null" json:"categoryId"`
-    TotalSale  uint    `gorm:"not null" json:"total"`
+    TotalSale  uint    `gorm:"not null" json:"totalSale"`
     Inventory  uint    `gorm:"not null" json:"inventory"`
     Status     int8    `gorm:"type:TINYINT;default:1" json:"status"` // -1, hide or delete;1, common wares;2, promotion
     Price      float32 `gorm:"not null;type:float" json:"price"`
@@ -63,7 +63,7 @@ type (
   BriefInfo struct {
     ID        uint    `json:"id"`
     Name      string  `json:"name"`
-    TotalSale uint    `json:"total"`
+    TotalSale uint    `json:"totalSale"`
     Inventory uint    `json:"inventory"`
     Status    int8    `json:"status"`
     Price     float32 `json:"price"`
@@ -75,7 +75,7 @@ type (
     ID         uint   `json:"id" validate:"required"`
     Desc       string `json:"desc"`
     CategoryID uint   `json:"categoryId"`
-    TotalSale  uint   `json:"total"`
+    TotalSale  uint   `json:"totalSale"`
     Size       string `json:"size"`
     Color      string `json:"color"`
     Avatar     string `json:"avatar"`
@@ -195,6 +195,20 @@ func (sp *serviceProvider) HomePageList(conn orm.Connection, id int) ([]BriefInf
   } else {
     res = db.Table("wares").Select(fields).Order("id desc").Where("status > ? AND id < ?", 0, id).Limit(10).Scan(&list)
   }
+
+  return list, res.Error
+}
+
+// RecommendList
+func (sp *serviceProvider) GetRecommendList(conn orm.Connection, id uint) ([]BriefInfo, error) {
+  var (
+    list []BriefInfo
+    res *gorm.DB
+    fields = []string{"id", "name", "status", "price", "sale_price", "total_sale", "inventory", "avatar"}
+  )
+
+  db := conn.(*gorm.DB).Exec("USE shop")
+  res = db.Table("wares").Select(fields).Order("total_sale desc").Where("status > ?", 0).Limit(10).Scan(&list)
 
   return list, res.Error
 }
