@@ -40,13 +40,14 @@ import (
 	"io/ioutil"
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/applications/beego/shop/util"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/fengyfei/gu/libs/orm"
 )
 
 var (
-	APPID  = ""
-	SECRET = ""
+	APPID     = ""
+	SECRET    = ""
+	typeUser  = false
+	typeAdmin = true
 )
 
 type (
@@ -131,7 +132,7 @@ func (u *UserController) WechatLogin() {
 		goto finish
 	}
 
-	token, err = util.NewToken(userId)
+	token, err = util.NewToken(userId, typeUser)
 	if err != nil {
 		logger.Error(err)
 		u.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
@@ -224,7 +225,7 @@ func (this *UserController) PhoneLogin() {
 		goto finish
 	}
 
-	token, err = util.NewToken(uid)
+	token, err = util.NewToken(uid, typeUser)
 	if err != nil {
 		logger.Error(err)
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
@@ -240,12 +241,10 @@ finish:
 func (this *UserController) ChangePassword() {
 	var (
 		req    changePassReq
-		claims jwt.MapClaims
-		ok     bool
 		userId int32
 		conn   orm.Connection
 	)
-	token, err := this.ParseToken()
+	/*token, err := this.ParseToken()
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
 		goto finish
@@ -256,6 +255,11 @@ func (this *UserController) ChangePassword() {
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
 	}
 	userId = int32(claims["userid"].(float64)) //strange, maybe it is conversed int32 to float64 when parsing the token
+*/
+	userId, _, err := this.ParseToken()
+	if err != nil {
+		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
+	}
 
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
