@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd.
+ * Copyright (c) 2017 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,37 +24,45 @@
 
 /*
  * Revision History:
- *     Initial: 2017/10/28        Feng Yifei
+ *     Initial: 2017/11/26        Wang RiYu
  */
 
-package constants
+package util
 
-const (
-	// ErrSucceed - Succeed
-	ErrSucceed = 0
-
-	// ErrInvalidParam - Invalid Parameter
-	ErrInvalidParam = 1
-
-	// ErrPicture - operation failed
-	ErrSavePicture = 15
-
-	// ErrPermission - Permission Denied
-	ErrPermission = 100
-
-	// ErrToken - Invalid Token
-	ErrToken = 200
-
-	// ErrWechatAuth - Wechat Auth error.
-	ErrWechatAuth = 300
-
-	// ErrWechatPay - Wechat Pay error
-	ErrWechatPay = 301
-
-	// ErrMongoDB - MongoDB operations error.
-	ErrMongoDB = 600
-
-	// ErrMysql - Mysql operations error.
-	ErrMysql = 700
-
+import (
+  "encoding/base64"
+  "github.com/fengyfei/gu/libs/logger"
+  "strings"
+  "strconv"
+  "time"
+  "io/ioutil"
 )
+
+func GetNameByTime(path string, suffix string) string {
+  files, _ := ioutil.ReadDir(path)
+  timeStamp := time.Now().Unix()
+
+  return strconv.FormatInt(timeStamp, 10) + strconv.Itoa(len(files)) + "." + suffix
+}
+
+func SavePicture(base64Str string, pathPrefix string) (string, error) {
+  slice := strings.Split(base64Str, ",")
+  suffix := string([]byte(slice[0])[11:len(slice[0]) - 7]) // picture format suffix
+
+  byteData, err := base64.StdEncoding.DecodeString(slice[1])
+  if err != nil {
+    logger.Error(err)
+
+    return "", err
+  }
+
+  path := "./img/" + pathPrefix
+  fileName := GetNameByTime(path, suffix)
+
+  err = ioutil.WriteFile(path + fileName, byteData, 0777)
+  if err != nil {
+    logger.Error(err)
+  }
+
+  return path + fileName, err
+}

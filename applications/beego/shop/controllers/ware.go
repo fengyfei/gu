@@ -36,6 +36,9 @@ import (
   "github.com/fengyfei/gu/libs/logger"
   "github.com/fengyfei/gu/applications/beego/shop/mysql"
   "github.com/fengyfei/gu/models/shop/ware"
+  "github.com/fengyfei/gu/libs/orm"
+  _ "errors"
+  "github.com/fengyfei/gu/applications/beego/shop/util"
 )
 
 type (
@@ -65,9 +68,24 @@ func (this *WareController) CreateWare() {
   var (
     err    error
     addReq ware.Ware
+    conn orm.Connection
   )
 
-  conn, err := mysql.Pool.Get()
+  //_, isAdmin, err := this.ParseToken()
+  //if !isAdmin {
+  //  logger.Error(errors.New("no admin permission"))
+  //  this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}
+  //
+  //  goto finish
+  //}
+  //if err != nil {
+  //  logger.Error(err)
+  //  this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
+  //
+  //  goto finish
+  //}
+
+  conn, err = mysql.Pool.Get()
   defer mysql.Pool.Release(conn)
   if err != nil {
     logger.Error(err)
@@ -88,6 +106,21 @@ func (this *WareController) CreateWare() {
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+    goto finish
+  }
+
+  addReq.Avatar, err = util.SavePicture(addReq.Avatar, "ware/")
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSavePicture}
+
+    goto finish
+  }
+  addReq.Image, err = util.SavePicture(addReq.Image, "ware/")
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSavePicture}
 
     goto finish
   }

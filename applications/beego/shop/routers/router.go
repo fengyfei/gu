@@ -45,18 +45,21 @@ func init() {
 	beego.Router("/shop/address/setdefault", &controllers.AddressController{}, "post:SetDefault")
 	beego.Router("/shop/address/modify", &controllers.AddressController{}, "post:Modify")
 
+	beego.Router("/shop/api/category/add", &controllers.CategoryController{}, "post:AddCategory")
 	beego.Router("/shop/category/getmainclass", &controllers.CategoryController{}, "get:GetMainCategories")
 	beego.Router("/shop/category/getsubclass", &controllers.CategoryController{}, "post:GetSubCategories")
-	beego.Router("/shop/category/add", &controllers.CategoryController{}, "post:AddCategory")
 
-	beego.Router("/shop/ware/create", &controllers.WareController{}, "post:CreateWare")
-	beego.Router("/shop/ware/getall", &controllers.WareController{}, "get:GetWareList")
+	// ware api for admin
+	beego.Router("/shop/api/ware/create", &controllers.WareController{}, "post:CreateWare")
+	beego.Router("/shop/api/ware/getall", &controllers.WareController{}, "get:GetWareList")
+	beego.Router("/shop/api/ware/updateinfo", &controllers.WareController{}, "post:UpdateWithID")
+	beego.Router("/shop/api/ware/modifyprice", &controllers.WareController{}, "post:ModifyPrice")
+	beego.Router("/shop/api/ware/changestatus", &controllers.WareController{}, "post:ChangeStatus")
+
+	// ware api for user
 	beego.Router("/shop/ware/getbycid", &controllers.WareController{}, "post:GetWareByCategory")
 	beego.Router("/shop/ware/getpromotion", &controllers.WareController{}, "get:GetPromotion")
-	beego.Router("/shop/ware/updateinfo", &controllers.WareController{}, "post:UpdateWithID")
-	beego.Router("/shop/ware/modifyprice", &controllers.WareController{}, "post:ModifyPrice")
 	beego.Router("/shop/ware/homelist", &controllers.WareController{}, "post:HomePageList")
 	beego.Router("/shop/ware/recommend", &controllers.WareController{}, "post:RecommendList")
 	beego.Router("/shop/ware/getdetail", &controllers.WareController{}, "post:GetDetail")
-	beego.Router("/shop/ware/changestatus", &controllers.WareController{}, "post:ChangeStatus")
 }
