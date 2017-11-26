@@ -47,15 +47,21 @@ type (
 	createReq struct {
 		Orders []Order.OrderItem `json:"orders" validate:"required"`
 	}
+
+	changeStateReq struct {
+		ID     int32 `json:"id"`
+		Status int32 `json:"status"`
+	}
+
 )
 
 func (this *OrderController) CreateOrder() {
 	var (
-		req    createReq
-		err    error
-		IP     string
-		userId int32
-		conn   orm.Connection
+		req     createReq
+		err     error
+		IP      string
+		userId  int32
+		conn    orm.Connection
 		signStr string
 	)
 
@@ -105,4 +111,72 @@ finish:
 
 func (this *OrderController) ChangeOrderState() {
 
+	var (
+		req    changeStateReq
+		conn   orm.Connection
+	)
+
+	_, isAdmin, err := this.ParseToken()
+	if err != nil {
+		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
+	}
+	if !isAdmin {
+		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}
+	}
+
+	conn, err = mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		goto finish
+	}
+
+	err = json.Unmarshal(this.Ctx.Input.RequestBody, &req)
+	if err != nil {
+		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		goto finish
+	}
+
+	err = Order.Service.ChangeState(conn, req.ID, req.Status)
+	if err != nil {
+		logger.Error(err)
+		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		goto finish
+	}
+
+	this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+
+finish:
+	this.ServeJSON(true)
+}
+
+func (this *OrderController) GetUserOrder() {
+	var (
+		conn   orm.Connection
+		orders *[]Order.Order
+	)
+
+	userId, _, err := this.ParseToken()
+	if err != nil {
+		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
+	}
+
+	conn, err = mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		goto finish
+	}
+
+	orders, err = Order.Service.GetUserOrder(conn, userId)
+	if err != nil {
+		logger.Error(err)
+		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		goto finish
+	}
+
+	this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed, constants.RespKeyData: orders}
+
+finish:
+	this.ServeJSON(true)
 }

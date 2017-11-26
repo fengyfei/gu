@@ -243,18 +243,7 @@ func (this *UserController) ChangePassword() {
 		userId int32
 		conn   orm.Connection
 	)
-	/*token, err := this.ParseToken()
-	if err != nil {
-		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
-		goto finish
-	}
 
-	claims, ok = token.Claims.(jwt.MapClaims)
-	if !ok {
-		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
-	}
-	userId = int32(claims["userid"].(float64)) //strange, maybe it is conversed int32 to float64 when parsing the token
-*/
 	userId, _, err := this.ParseToken()
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
