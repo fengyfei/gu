@@ -35,13 +35,12 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"strings"
 	"errors"
-	"github.com/fengyfei/gu/libs/constants"
 )
 
-var(
+var (
 	errInputData = errors.New("input error")
-	errExpired = errors.New("expired")
-	errToken = errors.New("token error")
+	errExpired   = errors.New("expired")
+	errToken     = errors.New("token error")
 )
 
 // Controller wraps general functionality.
@@ -98,7 +97,7 @@ func (c *Controller) parseToken() (t *jwt.Token, e error) {
 	return token, nil
 }
 
-func (this *Controller) ParseToken() (int32, bool, error){
+func (this *Controller) ParseToken() (int32, bool, error) {
 	token, err := this.parseToken()
 	if err != nil {
 		return 0, false, err
