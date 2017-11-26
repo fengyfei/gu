@@ -27,7 +27,7 @@
  *     Initial: 2017/11/20        ShiChao
  */
 
- package controllers
+package controllers
 
 import (
 	"encoding/json"
@@ -35,7 +35,6 @@ import (
 	"github.com/fengyfei/gu/applications/beego/shop/mysql"
 	"github.com/fengyfei/gu/models/shop/address"
 	"github.com/fengyfei/gu/libs/constants"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/fengyfei/gu/libs/orm"
 	"github.com/fengyfei/gu/libs/logger"
 )
@@ -63,25 +62,16 @@ type (
 
 func (this *AddressController) AddAddress() {
 	var (
-		err      error
-		req      addReq
-		conn     orm.Connection
-		claims   jwt.MapClaims
-		userName string
-		ok       bool
+		err  error
+		req  addReq
+		conn orm.Connection
 	)
 
-	token, err := this.ParseToken()
+	userId, _, err := this.ParseToken()
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
 		goto finish
 	}
-
-	claims, ok = token.Claims.(jwt.MapClaims)
-	if !ok {
-		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
-	}
-	userName = claims["username"].(string)
 
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
@@ -96,7 +86,7 @@ func (this *AddressController) AddAddress() {
 		goto finish
 	}
 
-	err = address.Service.Add(conn, userName, req.Address, req.IsDefault)
+	err = address.Service.Add(conn, userId, req.Address, req.IsDefault)
 	if err != nil {
 		logger.Error(err)
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -110,25 +100,16 @@ finish:
 
 func (this *AddressController) SetDefault() {
 	var (
-		err      error
-		req      setDefaultReq
-		conn     orm.Connection
-		claims   jwt.MapClaims
-		userName string
-		ok       bool
+		err  error
+		req  setDefaultReq
+		conn orm.Connection
 	)
 
-	token, err := this.ParseToken()
+	userId, _, err := this.ParseToken()
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
 		goto finish
 	}
-
-	claims, ok = token.Claims.(jwt.MapClaims)
-	if !ok {
-		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
-	}
-	userName = claims["username"].(string)
 
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
@@ -143,7 +124,7 @@ func (this *AddressController) SetDefault() {
 		goto finish
 	}
 
-	err = address.Service.SetDefault(conn, userName, req.Id)
+	err = address.Service.SetDefault(conn, userId, req.Id)
 	if err != nil {
 		logger.Error(err)
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -162,7 +143,7 @@ func (this *AddressController) Modify() {
 		conn orm.Connection
 	)
 
-	_, err = this.ParseToken()
+	_, _, err = this.ParseToken()
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
 		goto finish

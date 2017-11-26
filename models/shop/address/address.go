@@ -42,19 +42,19 @@ var (
 )
 
 type Address struct {
-	ID        int    `gorm:"primary_key;auto_increment"`
-	UserName  string `gorm:"not null;type:varchar(128)"`
+	ID        int32    `gorm:"primary_key;auto_increment"`
+	UserId    int32
 	Address   string `gorm:"type:varchar(128)"`
 	IsDefault bool
 }
 
-func (this *serviceProvider) Add(conn orm.Connection, userName, address string, isDefault bool) error {
+func (this *serviceProvider) Add(conn orm.Connection, userId int32, address string, isDefault bool) error {
 	var (
 		err error
 	)
 	addr := &Address{}
 	addr.Address = address
-	addr.UserName = userName
+	addr.UserId = userId
 	addr.IsDefault = isDefault
 
 	db := conn.(*gorm.DB).Exec("USE shop")
@@ -64,7 +64,7 @@ func (this *serviceProvider) Add(conn orm.Connection, userName, address string, 
 	}
 
 	another := &Address{}
-	err = db.Find(&another, "user_name = ? AND is_default = ?", userName, true).Error
+	err = db.Find(&another, "user_id = ? AND is_default = ?", userId, true).Error
 	if err == gorm.ErrRecordNotFound {
 		return db.Model(&Address{}).Create(addr).Error
 	}
@@ -77,7 +77,7 @@ func (this *serviceProvider) Add(conn orm.Connection, userName, address string, 
 	return db.Model(&Address{}).Create(addr).Error
 }
 
-func (this *serviceProvider) SetDefault(conn orm.Connection, userName string, id int) error {
+func (this *serviceProvider) SetDefault(conn orm.Connection, userId int32, id int) error {
 	var (
 		err     error
 		addr    Address
@@ -98,7 +98,7 @@ func (this *serviceProvider) SetDefault(conn orm.Connection, userName string, id
 		return err
 	}
 
-	err = db.Find(&another, "user_name = ? AND id <> ? AND is_default = true", userName, id).Error
+	err = db.Find(&another, "user_id = ? AND id <> ? AND is_default = true", userId, id).Error
 	if err == gorm.ErrRecordNotFound {
 		return nil
 	}

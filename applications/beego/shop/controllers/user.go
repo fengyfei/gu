@@ -47,7 +47,6 @@ var (
 	APPID     = ""
 	SECRET    = ""
 	typeUser  = false
-	typeAdmin = true
 )
 
 type (
