@@ -38,6 +38,8 @@ import (
   "github.com/fengyfei/gu/models/shop/category"
   "github.com/fengyfei/gu/models/shop/ware"
   "github.com/fengyfei/gu/models/shop/address"
+  "github.com/fengyfei/gu/models/shop/order"
+  "github.com/fengyfei/gu/models/shop/admin"
 )
 
 func init() {
@@ -85,6 +87,16 @@ func initTable() {
   if !conn.(*gorm.DB).HasTable("addresses") {
     db.CreateTable(
       &address.Address{},
+    )
+  }
+  if !conn.(*gorm.DB).HasTable("orders") {
+    db.CreateTable(
+      &order.Order{},
+    )
+  }
+  if !conn.(*gorm.DB).HasTable("admins") {
+    db.CreateTable(
+      &admin.Admin{},
     )
   }
 
