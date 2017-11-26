@@ -31,6 +31,7 @@ package trending
 
 import (
 	"net/http"
+	"sync"
 
 	"github.com/labstack/echo"
 	"gopkg.in/mgo.v2"
@@ -69,6 +70,7 @@ func LangInfo(c echo.Context) error {
 		tStoreList []*trending.Trending
 		info       infoResp
 		tInfo      *github.Trending
+		wg         *sync.WaitGroup = &sync.WaitGroup{}
 	)
 
 	if err = c.Bind(&req); err != nil {
@@ -108,33 +110,40 @@ func LangInfo(c echo.Context) error {
 
 crawler:
 	go func() {
-		for {
-			select {
-			case tInfo = <-github.DataPipe:
-				info = infoResp{
-					Title:    tInfo.Title,
-					Abstract: tInfo.Abstract,
-					Lang:     tInfo.Lang,
-					Stars:    tInfo.Stars,
-					Today:    tInfo.Today,
-				}
-				resp = append(resp, info)
+		for i := 0; i < 25; i++ {
+			go func() {
+				wg.Add(1)
+				select {
+				case tInfo = <-github.DataPipe:
+					info = infoResp{
+						Title:    tInfo.Title,
+						Abstract: tInfo.Abstract,
+						Lang:     tInfo.Lang,
+						Stars:    tInfo.Stars,
+						Today:    tInfo.Today,
+					}
+					resp = append(resp, info)
 
-				tStore = &trending.Trending{
-					Title:    tInfo.Title,
-					Abstract: tInfo.Abstract,
-					Lang:     tInfo.Lang,
-					Stars:    tInfo.Stars,
-					Today:    tInfo.Today,
+					tStore = &trending.Trending{
+						Title:    tInfo.Title,
+						Abstract: tInfo.Abstract,
+						Lang:     tInfo.Lang,
+						Stars:    tInfo.Stars,
+						Today:    tInfo.Today,
+					}
+					tStoreList = append(tStoreList, tStore)
 				}
-				tStoreList = append(tStoreList, tStore)
-			}
+				wg.Done()
+				return
+			}()
 		}
 	}()
 
 	if err = startLangCrawler(*req.Lang); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
+
+	wg.Wait()
 
 	if err = trending.Service.CreateList(tStoreList); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
