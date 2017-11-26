@@ -54,6 +54,10 @@ type (
   detailReq struct {
     ID uint `json:"id" validate:"required"`
   }
+
+  recommendReq struct {
+    UserID uint `json:"id" validate:"required"`
+  }
 )
 
 // add new ware
@@ -324,6 +328,52 @@ func (this *WareController) HomePageList() {
   }
 
   res, err = ware.Service.HomePageList(conn, idReq.LastID)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+    goto finish
+  }
+  this.Data["json"] = res
+
+finish:
+  this.ServeJSON(true)
+}
+
+// get recommend list
+func (this *WareController) RecommendList() {
+  var (
+    err error
+    idReq recommendReq
+    res []ware.BriefInfo
+  )
+
+  conn, err := mysql.Pool.Get()
+  defer mysql.Pool.Release(conn)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+    goto finish
+  }
+
+  err = json.Unmarshal(this.Ctx.Input.RequestBody, &idReq)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+    goto finish
+  }
+
+  err = this.Validate(idReq)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+    goto finish
+  }
+
+  res, err = ware.Service.GetRecommendList(conn, idReq.UserID)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
