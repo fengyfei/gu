@@ -121,3 +121,15 @@ func (this *serviceProvider) ChangeState(conn orm.Connection, ID, status int32) 
 	db := conn.(*gorm.DB).Exec("USE shop")
 	return db.Model(&Order{}).Where("id = ?", ID).Update("status", status).Error
 }
+
+func (this *serviceProvider) GetUserOrder(conn orm.Connection, userId int32) (*[]Order, error){
+	var(
+		orders []Order
+	)
+	db := conn.(*gorm.DB).Exec("USE shop")
+	err := db.Where("user_id = ?", userId).Find(&orders).Error
+	if err != nil {
+		return nil, err
+	}
+	return &orders, nil
+}

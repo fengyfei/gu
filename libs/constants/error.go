@@ -36,6 +36,9 @@ const (
 	// ErrInvalidParam - Invalid Parameter
 	ErrInvalidParam = 1
 
+	// ErrPermission - Permission Denied
+	ErrPermission = 100
+
 	// ErrToken - Invalid Token
 	ErrToken = 200
 
