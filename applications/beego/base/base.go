@@ -35,11 +35,13 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"strings"
 	"errors"
+	"github.com/fengyfei/gu/libs/constants"
 )
 
 var(
 	errInputData = errors.New("input error")
 	errExpired = errors.New("expired")
+	errToken = errors.New("token error")
 )
 
 // Controller wraps general functionality.
@@ -54,7 +56,7 @@ func (base Controller) Validate(val interface{}) error {
 	return validator.Struct(val)
 }
 
-func (c *Controller) ParseToken() (t *jwt.Token, e error) {
+func (c *Controller) parseToken() (t *jwt.Token, e error) {
 	authString := c.Ctx.Input.Header("Authorization")
 	//beego.Debug("AuthString:", authString)
 
@@ -94,4 +96,18 @@ func (c *Controller) ParseToken() (t *jwt.Token, e error) {
 	beego.Debug("Token:", token)
 
 	return token, nil
+}
+
+func (this *Controller) ParseToken() (int32, bool, error){
+	token, err := this.parseToken()
+	if err != nil {
+		return 0, false, err
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return 0, false, errToken
+	}
+
+	return int32(claims["userid"].(float64)), bool(claims["admin"].(bool)), nil
 }
