@@ -46,13 +46,13 @@ import (
 type (
 	// loginReq - The request struct that login.
 	loginReq struct {
-		Name *string `json:"name" validate:"required,alphanum,min=6,max=30"`
+		Name *string `json:"name" validate:"required,alphanum,min=2,max=30"`
 		Pwd  *string `json:"pwd" validate:"required,printascii,excludesall=@-,min=6,max=30"`
 	}
 
 	// createReq - The request struct that create staff information.
 	createReq struct {
-		Name     *string `json:"name" validate:"required,alphanum,min=6,max=30"`
+		Name     *string `json:"name" validate:"required,alphanum,min=2,max=30"`
 		Pwd      *string `json:"pwd" validate:"required,printascii,excludesall=@-,min=6,max=30"`
 		RealName *string `josn:"realname" validate:"required,alphanumunicode,min=2,max=20"`
 		Mobile   *string `json:"mobile" validate:"required,numeric,len=11"`
@@ -62,7 +62,7 @@ type (
 
 	// modifyReq - The request struct that modify staff information.
 	modifyReq struct {
-		Name   *string `json:"name" validate:"required,alphanum,min=6,max=30"`
+		Name   *string `json:"name" validate:"required,alphanum,min=2,max=30"`
 		Mobile *string `json:"mobile" validate:"required,numeric,len=11"`
 		Email  *string `json:"email" validate:"required,email"`
 	}
