@@ -51,7 +51,7 @@ func InitRouter(server *echo.Echo, token string) {
 
 	// Staff
 	server.POST("/api/v1/staff/login", staff.Login)
-	server.POST("/api/v1/staff/create", staff.Create)
+	server.POST("/api/v1/staff/create", staff.Create, core.IsLogin, core.IsActive, core.IsPermissionMatch)
 	server.POST("/api/v1/staff/modify/info", staff.Modify, core.IsLogin, core.IsActive, core.IsPermissionMatch)
 	server.POST("/api/v1/staff/modify/pwd", staff.ModifyPwd, core.IsLogin, core.IsActive, core.IsPermissionMatch)
 	server.POST("/api/v1/staff/modify/mobile", staff.ModifyMobile, core.IsLogin, core.IsActive, core.IsPermissionMatch)
