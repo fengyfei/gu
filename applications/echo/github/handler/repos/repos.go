@@ -46,7 +46,6 @@ type (
 	createReq struct {
 		Avatar *string   `json:"avatar" validate:"required,url"`
 		Name   *string   `json:"name" validate:"required,alphanum"`
-		Link   *string   `json:"link" validate:"required,url"`
 		Image  *string   `json:"image"`
 		Intro  *string   `json:"intro"`
 		Lang   *[]string `json:"lang"`
@@ -67,7 +66,6 @@ type (
 	infoResp struct {
 		Avatar  string    `json:"avatar"`
 		Name    string    `json:"name"`
-		Link    string    `json:"link"`
 		Image   string    `json:"image"`
 		Intro   string    `json:"intro"`
 		Lang    []string  `json:"lang"`
@@ -84,16 +82,16 @@ func Create(c echo.Context) error {
 	)
 
 	if err = c.Bind(&req); err != nil {
-		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
 	}
 
 	if err = c.Validate(&req); err != nil {
-		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
 	}
 
-	id, err := repos.Service.Create(req.Avatar, req.Name, req.Link, req.Image, req.Intro, req.Lang)
+	id, err := repos.Service.Create(req.Avatar, req.Name, req.Image, req.Intro, req.Lang)
 	if err != nil {
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+		return core.NewErrorWithMsg(constants.ErrMongoDB, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
@@ -110,15 +108,15 @@ func ModifyActive(c echo.Context) error {
 	)
 
 	if err = c.Bind(&req); err != nil {
-		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
 	}
 
 	if err = c.Validate(&req); err != nil {
-		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
 	}
 
 	if err = repos.Service.ModifyActive(&req.ID, req.Active); err != nil {
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+		return core.NewErrorWithMsg(constants.ErrMongoDB, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
@@ -133,17 +131,16 @@ func List(c echo.Context) error {
 	rlist, err := repos.Service.List()
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return core.NewErrorWithMsg(http.StatusNotFound, err.Error())
+			return core.NewErrorWithMsg(constants.ErrMongoDB, err.Error())
 		}
 
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+		return core.NewErrorWithMsg(constants.ErrMongoDB, err.Error())
 	}
 
 	for _, r := range rlist {
 		info := infoResp{
 			Avatar:  r.Avatar,
 			Name:    r.Name,
-			Link:    r.Link,
 			Image:   r.Image,
 			Intro:   r.Intro,
 			Lang:    r.Lang,
@@ -167,17 +164,16 @@ func ActiveList(c echo.Context) error {
 	rlist, err := repos.Service.ActiveList()
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return core.NewErrorWithMsg(http.StatusNotFound, err.Error())
+			return core.NewErrorWithMsg(constants.ErrMongoDB, err.Error())
 		}
 
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+		return core.NewErrorWithMsg(constants.ErrMongoDB, err.Error())
 	}
 
 	for _, r := range rlist {
 		info := infoResp{
 			Avatar:  r.Avatar,
 			Name:    r.Name,
-			Link:    r.Link,
 			Image:   r.Image,
 			Intro:   r.Intro,
 			Lang:    r.Lang,
@@ -203,26 +199,25 @@ func Info(c echo.Context) error {
 	)
 
 	if err = c.Bind(&req); err != nil {
-		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
 	}
 
 	if err = c.Validate(&req); err != nil {
-		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
 	}
 
 	info, err := repos.Service.GetByID(&req.ID)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return core.NewErrorWithMsg(http.StatusNotFound, err.Error())
+			return core.NewErrorWithMsg(constants.ErrMongoDB, err.Error())
 		}
 
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+		return core.NewErrorWithMsg(constants.ErrMongoDB, err.Error())
 	}
 
 	resp = infoResp{
 		Avatar:  info.Avatar,
 		Name:    info.Name,
-		Link:    info.Link,
 		Image:   info.Image,
 		Intro:   info.Intro,
 		Lang:    info.Lang,

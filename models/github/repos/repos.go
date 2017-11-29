@@ -76,7 +76,6 @@ type Repos struct {
 	ID      bson.ObjectId `bson:"_id,omitempty"`
 	Avatar  string        `bson:"Avatar"`
 	Name    string        `bson:"Name"`
-	Link    string        `bson:"Link"`
 	Image   string        `bson:"Image"`
 	Intro   string        `bson:"Intro"`
 	Lang    []string      `bson:"Lang"`
@@ -130,12 +129,11 @@ func (sp *serviceProvider) GetByID(id *string) (Repos, error) {
 }
 
 // Create create repos information.
-func (sp *serviceProvider) Create(avatar, name, link, image, intro *string, lang *[]string) (string, error) {
+func (sp *serviceProvider) Create(avatar, name, image, intro *string, lang *[]string) (string, error) {
 	repos := Repos{
 		ID:      bson.NewObjectId(),
 		Avatar:  *avatar,
 		Name:    *name,
-		Link:    *link,
 		Image:   *image,
 		Intro:   *intro,
 		Lang:    *lang,
