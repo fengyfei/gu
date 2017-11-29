@@ -86,12 +86,6 @@ type (
 		Active bool  `json:"active"`
 	}
 
-	// overviewResp - Overview of a staff.
-	overviewResp struct {
-		Id       int32
-		RealName string
-	}
-
 	// infoReq - The request struct that get one staff detail information.
 	infoReq struct {
 		Id int32 `json:"id" validate:"required"`
@@ -333,39 +327,8 @@ func Dismiss(c echo.Context) error {
 	return c.JSON(http.StatusOK, nil)
 }
 
-// ContactList - Get a list of on-the-job staff.
-func OverviewList(c echo.Context) error {
-	var resp []overviewResp
-
-	conn, err := mysql.Pool.Get()
-	if err != nil {
-		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
-	}
-	defer mysql.Pool.Release(conn)
-
-	slist, err := staff.Service.List(conn)
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
-		}
-
-		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
-	}
-
-	for _, s := range slist {
-		info := overviewResp{
-			Id:       s.Id,
-			RealName: s.RealName,
-		}
-
-		resp = append(resp, info)
-	}
-
-	return c.JSON(http.StatusOK, resp)
-}
-
-// InfoList - Get a list of on-the-job staff details.
-func InfoList(c echo.Context) error {
+// List - Get a list of on-the-job staff details.
+func List(c echo.Context) error {
 	var resp []infoResp
 
 	conn, err := mysql.Pool.Get()
