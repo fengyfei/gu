@@ -113,14 +113,14 @@ func (this *WareController) CreateWare() {
   addReq.Avatar, err = util.SavePicture(addReq.Avatar, "ware/")
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSavePicture}
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInternalServerError}
 
     goto finish
   }
   addReq.Image, err = util.SavePicture(addReq.Image, "ware/")
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSavePicture}
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInternalServerError}
 
     goto finish
   }
