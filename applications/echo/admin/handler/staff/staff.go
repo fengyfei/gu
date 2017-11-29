@@ -86,6 +86,11 @@ type (
 		Active bool  `json:"active"`
 	}
 
+	// dismissReq - The request struct that dismiss a staff.
+	dismissReq struct {
+		Id int32 `json:"id" validate:"required"`
+	}
+
 	// infoReq - The request struct that get one staff detail information.
 	infoReq struct {
 		Id int32 `json:"id" validate:"required"`
@@ -311,7 +316,18 @@ func ModifyActive(c echo.Context) error {
 
 // Dismiss - Staff dismission.
 func Dismiss(c echo.Context) error {
-	var err error
+	var (
+		err error
+		req dismissReq
+	)
+
+	if err = c.Bind(&req); err != nil {
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
+	}
+
+	if err = c.Validate(&req); err != nil {
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
+	}
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
@@ -319,8 +335,7 @@ func Dismiss(c echo.Context) error {
 	}
 	defer mysql.Pool.Release(conn)
 
-	uid := core.UserID(c)
-	if err = staff.Service.Dismiss(conn, uid); err != nil {
+	if err = staff.Service.Dismiss(conn, req.Id); err != nil {
 		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
 	}
 
