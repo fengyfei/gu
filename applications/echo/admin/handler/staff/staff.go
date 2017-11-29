@@ -98,13 +98,13 @@ type (
 
 	// infoResp - The more detail of one particular staff.
 	infoResp struct {
-		Id        int32
-		Name      string
-		RealName  string
-		Mobile    string
-		Email     string
-		Male      bool
-		CreatedAt time.Time
+		Id        int32     `json:"id"`
+		Name      string    `json:"name"`
+		RealName  string    `json:"realname"`
+		Mobile    string    `json:"mobile"`
+		Email     string    `json:"email"`
+		Male      bool      `json:"male"`
+		CreatedAt time.Time `json:"createdat"`
 	}
 
 	// addRoleReq - The request struct that add role to staff.
@@ -375,7 +375,10 @@ func List(c echo.Context) error {
 		resp = append(resp, info)
 	}
 
-	return c.JSON(http.StatusOK, resp)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+		constants.RespKeyData:   resp,
+	})
 }
 
 // Info - Get detail information for specified staff.
@@ -419,7 +422,10 @@ func Info(c echo.Context) error {
 		CreatedAt: *info.CreatedAt,
 	}
 
-	return c.JSON(http.StatusOK, resp)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+		constants.RespKeyData:   resp,
+	})
 }
 
 // AddRole - Add a role to staff.
@@ -508,5 +514,8 @@ func RoleList(c echo.Context) error {
 		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, resp)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+		constants.RespKeyData:   resp,
+	})
 }
