@@ -37,6 +37,7 @@ import (
 
 	"github.com/fengyfei/gu/applications/echo/admin/mysql"
 	"github.com/fengyfei/gu/applications/echo/core"
+	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/models/staff"
 )
 
@@ -56,6 +57,11 @@ type (
 	// listReq - The request struct that get a list of permission for specified URL.
 	listReq struct {
 		URL *string `json:"url" validate:"required,url"`
+	}
+
+	// infoResp - The response struct that represents role information of URL.
+	infoResp struct {
+		RoleId int16 `json:"roleid"`
 	}
 )
 
@@ -123,8 +129,10 @@ func Remove(c echo.Context) error {
 // List - Get a list of permission for specified URL.
 func List(c echo.Context) error {
 	var (
-		err error
-		req listReq
+		err   error
+		req   listReq
+		role  infoResp
+		roles []infoResp
 	)
 
 	if err = c.Bind(&req); err != nil {
@@ -150,5 +158,15 @@ func List(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, resp)
+	for roleId := range resp {
+		role = infoResp{
+			RoleId: roleId,
+		}
+		roles = append(roles, role)
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+		constants.RespKeyData:   roles,
+	})
 }
