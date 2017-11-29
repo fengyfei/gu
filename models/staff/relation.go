@@ -182,3 +182,54 @@ finish:
 
 	return result, err
 }
+
+func CreateAdminRelation(conn orm.Connection) error {
+	sid := int32(1)
+	rid := int16(1)
+	now := time.Now()
+
+	s := &Staff{}
+	r := &Role{}
+	relation := &Relation{}
+	value := &Relation{
+		StaffId: sid,
+		RoleId:  rid,
+		Created: &now,
+	}
+
+	db := conn.(*gorm.DB)
+	txn := db.Begin().Exec("USE staff")
+
+	err := txn.Model(s).Where("id = ?", sid).First(s).Error
+	if err != nil {
+		goto finish
+	}
+
+	if !s.Active || s.Resigned {
+		err = errors.New("the staff is not activated")
+		goto finish
+	}
+
+	err = txn.Model(r).Where("id = ?", rid).First(r).Error
+	if err != nil {
+		goto finish
+	}
+
+	if !r.Active {
+		err = errors.New("the role is not activated")
+		goto finish
+	}
+
+	err = txn.Model(relation).Create(value).Error
+
+finish:
+	if err == nil {
+		err = txn.Commit().Error
+	}
+
+	if err != nil {
+		txn.Rollback()
+	}
+
+	return err
+}
