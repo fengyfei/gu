@@ -38,6 +38,7 @@ import (
 
 	"github.com/fengyfei/gu/applications/echo/admin/mysql"
 	"github.com/fengyfei/gu/applications/echo/core"
+	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/models/staff"
 )
 
@@ -68,10 +69,10 @@ type (
 
 	// infoResp - The detail information for role.
 	infoResp struct {
-		Id      int16
-		Name    string
-		Intro   string
-		Created time.Time
+		Id      int16     `json:"id"`
+		Name    string    `json:"name"`
+		Intro   string    `json:"intro"`
+		Created time.Time `json:"created"`
 	}
 )
 
@@ -194,7 +195,10 @@ func InfoList(c echo.Context) error {
 		resp = append(resp, info)
 	}
 
-	return c.JSON(http.StatusOK, resp)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+		constants.RespKeyData:   resp,
+	})
 }
 
 // Info - Get detail information for specified role.
@@ -227,5 +231,8 @@ func Info(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, *info)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+		constants.RespKeyData:   *info,
+	})
 }
