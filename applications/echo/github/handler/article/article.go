@@ -78,16 +78,16 @@ func Create(c echo.Context) error {
 	)
 
 	if err = c.Bind(&req); err != nil {
-		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
 	}
 
 	if err = c.Validate(&req); err != nil {
-		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
 	}
 
 	id, err := article.Service.Create(req.Title, req.URL, req.Source)
 	if err != nil {
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+		return core.NewErrorWithMsg(constants.ErrMongoDB, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
@@ -104,15 +104,15 @@ func ModifyActive(c echo.Context) error {
 	)
 
 	if err = c.Bind(&req); err != nil {
-		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
 	}
 
 	if err = c.Validate(&req); err != nil {
-		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
 	}
 
 	if err = article.Service.ModifyActive(&req.ID, req.Active); err != nil {
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+		return core.NewErrorWithMsg(constants.ErrMongoDB, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
@@ -127,10 +127,10 @@ func List(c echo.Context) error {
 	alist, err := article.Service.List()
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return core.NewErrorWithMsg(http.StatusNotFound, err.Error())
+			return core.NewErrorWithMsg(constants.ErrMongoDB, err.Error())
 		}
 
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+		return core.NewErrorWithMsg(constants.ErrMongoDB, err.Error())
 	}
 
 	for _, a := range alist {
@@ -158,10 +158,10 @@ func ActiveList(c echo.Context) error {
 	alist, err := article.Service.ActiveList()
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return core.NewErrorWithMsg(http.StatusNotFound, err.Error())
+			return core.NewErrorWithMsg(constants.ErrMongoDB, err.Error())
 		}
 
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+		return core.NewErrorWithMsg(constants.ErrMongoDB, err.Error())
 	}
 
 	for _, a := range alist {
@@ -191,20 +191,20 @@ func Info(c echo.Context) error {
 	)
 
 	if err = c.Bind(&req); err != nil {
-		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
 	}
 
 	if err = c.Validate(&req); err != nil {
-		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
 	}
 
 	info, err := article.Service.GetByID(&req.ID)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return core.NewErrorWithMsg(http.StatusNotFound, err.Error())
+			return core.NewErrorWithMsg(constants.ErrMongoDB, err.Error())
 		}
 
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+		return core.NewErrorWithMsg(constants.ErrMongoDB, err.Error())
 	}
 
 	resp = infoResp{
