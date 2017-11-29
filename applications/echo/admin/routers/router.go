@@ -47,7 +47,6 @@ func InitRouter(server *echo.Echo, token string) {
 
 	// JWT middleware does not affect these route.
 	core.URLMap["/api/v1/staff/login"] = struct{}{}
-	core.URLMap["/api/v1/staff/create"] = struct{}{}
 
 	// Staff
 	server.POST("/api/v1/staff/login", staff.Login)
