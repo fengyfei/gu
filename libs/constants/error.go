@@ -36,9 +36,6 @@ const (
 	// ErrInvalidParam - Invalid Parameter
 	ErrInvalidParam = 1
 
-	// ErrPicture - operation failed
-	ErrSavePicture = 15
-
 	// ErrPermission - Permission Denied
 	ErrPermission = 100
 
