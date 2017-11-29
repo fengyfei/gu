@@ -121,7 +121,9 @@ func ModifyActive(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, nil)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+	})
 }
 
 // List - Get all the repos.
