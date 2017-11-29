@@ -223,3 +223,35 @@ func (sp *serviceProvider) GetByID(conn orm.Connection, uid int32) (*Staff, erro
 
 	return staff, nil
 }
+
+func CreateAdminStaff(conn orm.Connection) error {
+	name := "admin"
+	pwd := "111111"
+	realname := "admin"
+	mobile := "13812345678"
+	email := "admin@smartestee.com"
+	male := true
+
+	salt, err := security.SaltHashGenerate(&pwd)
+	if err != nil {
+		return err
+	}
+
+	now := time.Now()
+
+	staff := &Staff{}
+	value := &Staff{
+		Name:      name,
+		Pwd:       string(salt),
+		RealName:  realname,
+		Mobile:    mobile,
+		Email:     email,
+		CreatedAt: &now,
+		Male:      male,
+		Active:    true,
+	}
+
+	db := conn.(*gorm.DB).Exec("USE staff")
+
+	return db.Model(staff).Create(value).Error
+}

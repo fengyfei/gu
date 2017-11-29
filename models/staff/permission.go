@@ -147,3 +147,43 @@ func (sp *serviceProvider) URLPermissions(conn orm.Connection, url *string) (map
 
 	return result, nil
 }
+
+func CreateAdminPermission(conn orm.Connection) error {
+	url := "http://127.0.0.1:21000/api/v1/staff/create"
+	rid := int16(1)
+	now := time.Now()
+
+	r := &Role{}
+	permission := &Permission{}
+	value := &Permission{
+		URL:     url,
+		RoleId:  rid,
+		Created: &now,
+	}
+
+	db := conn.(*gorm.DB)
+	txn := db.Begin().Exec("USE staff")
+
+	err := txn.Model(r).Where("id = ?", rid).First(r).Error
+	if err != nil {
+		goto finish
+	}
+
+	if !r.Active {
+		err = errors.New("the role is not activated")
+		goto finish
+	}
+
+	err = txn.Model(permission).Create(value).Error
+
+finish:
+	if err == nil {
+		err = txn.Commit().Error
+	}
+
+	if err != nil {
+		txn.Rollback()
+	}
+
+	return err
+}
