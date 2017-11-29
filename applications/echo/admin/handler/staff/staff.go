@@ -40,6 +40,7 @@ import (
 
 	"github.com/fengyfei/gu/applications/echo/admin/mysql"
 	"github.com/fengyfei/gu/applications/echo/core"
+	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/models/staff"
 )
 
@@ -133,32 +134,35 @@ func Login(c echo.Context) error {
 	)
 
 	if err = c.Bind(&req); err != nil {
-		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
 	}
 
 	if err = c.Validate(req); err != nil {
-		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
 	}
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
 	}
 	defer mysql.Pool.Release(conn)
 
 	uid, err := staff.Service.Login(conn, req.Name, req.Pwd)
 	if err != nil {
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
 	}
 
-	key, token, err := core.NewToken(uid)
+	_, token, err := core.NewToken(uid)
 	if err != nil {
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
 	}
 
 	fmt.Println("token:", token)
 
-	return c.JSON(http.StatusOK, map[string]interface{}{key: token})
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+		constants.RespKeyToken:  token,
+	})
 
 }
 
@@ -179,7 +183,7 @@ func Create(c echo.Context) error {
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+		return core.NewErrorWithMsg(constants.ErrInternalServerError, err.Error())
 	}
 	defer mysql.Pool.Release(conn)
 
@@ -321,6 +325,7 @@ func Dismiss(c echo.Context) error {
 	}
 	defer mysql.Pool.Release(conn)
 
+	// TODO:
 	uid := core.UserID(c)
 	if err = staff.Service.Dismiss(conn, uid); err != nil {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())

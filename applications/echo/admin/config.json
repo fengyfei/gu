@@ -6,6 +6,9 @@
   "middleware": {
     "jwt": {
       "tokenkey": "PXL0we7gqrgskjnPwiXXwVeXY4pFGvcnq4zImdN1L4"
+    },
+    "cors": {
+      "hosts": ["*"]
     }
   },
   "mysql": {
