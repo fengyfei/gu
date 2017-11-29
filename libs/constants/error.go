@@ -48,13 +48,15 @@ const (
 	// ErrWechatAuth - Wechat Auth error.
 	ErrWechatAuth = 300
 
-	// ErrWechatPay - Wechat Pay error
+	// ErrWechatPay - Wechat Pay error.
 	ErrWechatPay = 301
+
+	// ErrInternalServerError - Internal error.
+	ErrInternalServerError = 500
 
 	// ErrMongoDB - MongoDB operations error.
 	ErrMongoDB = 600
 
 	// ErrMysql - Mysql operations error.
 	ErrMysql = 700
-
 )

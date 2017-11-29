@@ -66,7 +66,7 @@ func IsActive(next echo.HandlerFunc) echo.HandlerFunc {
 		ok, err := staff.Service.IsActive(conn, uid)
 
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, err.Error())
+			return c.JSON(http.StatusPaymentRequired, err.Error())
 		}
 
 		if ok {

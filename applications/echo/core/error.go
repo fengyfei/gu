@@ -61,7 +61,7 @@ func EchoRestfulErrorHandler(err error, c echo.Context) {
 				c.Logger().Error(err)
 			}
 		} else {
-			err := c.JSON(code, NewErrorWithMsg(code, msg))
+			err := c.JSON(http.StatusOK, NewErrorWithMsg(code, msg))
 
 			if err != nil {
 				c.Logger().Error(err)
