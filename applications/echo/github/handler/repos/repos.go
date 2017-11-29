@@ -65,14 +65,14 @@ type (
 
 	// infoResp - The more detail of repos.
 	infoResp struct {
-		Avatar  string
-		Name    string
-		Link    string
-		Image   string
-		Intro   string
-		Lang    []string
-		Created time.Time
-		Active  bool
+		Avatar  string    `json:"avatar"`
+		Name    string    `json:"name"`
+		Link    string    `json:"link"`
+		Image   string    `json:"image"`
+		Intro   string    `json:"intro"`
+		Lang    []string  `json:"lang"`
+		Created time.Time `json:"created"`
+		Active  bool      `json:"active"`
 	}
 )
 
@@ -96,7 +96,10 @@ func Create(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{constants.RespKeyID: id})
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+		constants.RespKeyID:     id,
+	})
 }
 
 // ModifyActive - Modify repos status.
@@ -149,7 +152,10 @@ func List(c echo.Context) error {
 		resp = append(resp, info)
 	}
 
-	return c.JSON(http.StatusOK, resp)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+		constants.RespKeyData:   resp,
+	})
 }
 
 // ActiveList - Get all the active repos.
@@ -180,7 +186,10 @@ func ActiveList(c echo.Context) error {
 		resp = append(resp, info)
 	}
 
-	return c.JSON(http.StatusOK, resp)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+		constants.RespKeyData:   resp,
+	})
 }
 
 // Info - Get detail information for specified repos.
@@ -219,5 +228,8 @@ func Info(c echo.Context) error {
 		Active:  info.Active,
 	}
 
-	return c.JSON(http.StatusOK, resp)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+		constants.RespKeyData:   resp,
+	})
 }

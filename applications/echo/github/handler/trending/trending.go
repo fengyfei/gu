@@ -38,6 +38,7 @@ import (
 
 	"github.com/fengyfei/gu/applications/crawler/github"
 	"github.com/fengyfei/gu/applications/echo/core"
+	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/crawler"
 	"github.com/fengyfei/gu/models/github/trending"
 )
@@ -50,11 +51,11 @@ type (
 
 	// infoResp - The response struct that represents the trending of the day of a language.
 	infoResp struct {
-		Title    string
-		Abstract string
-		Lang     string
-		Stars    int
-		Today    int
+		Title    string `json:"title"`
+		Abstract string `json:"abstract"`
+		Lang     string `json:"lang"`
+		Stars    int    `json:"stars"`
+		Today    int    `json:"today"`
 	}
 )
 
@@ -150,7 +151,10 @@ crawler:
 	}
 
 finish:
-	return c.JSON(http.StatusOK, resp)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+		constants.RespKeyData:   resp,
+	})
 }
 
 func startLangCrawler(tag string) error {

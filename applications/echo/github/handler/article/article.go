@@ -62,11 +62,11 @@ type (
 
 	// infoResp - The more detail of article.
 	infoResp struct {
-		Title   string
-		URL     string
-		Source  string
-		Active  bool
-		Created time.Time
+		Title   string    `json:"title"`
+		URL     string    `json:"url"`
+		Source  string    `json:"source"`
+		Active  bool      `json:"active"`
+		Created time.Time `json:"created"`
 	}
 )
 
@@ -90,7 +90,10 @@ func Create(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{constants.RespKeyID: id})
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+		constants.RespKeyID:     id,
+	})
 }
 
 // ModifyActive - Modify article status.
@@ -140,7 +143,10 @@ func List(c echo.Context) error {
 		resp = append(resp, info)
 	}
 
-	return c.JSON(http.StatusOK, resp)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+		constants.RespKeyData:   resp,
+	})
 }
 
 // ActiveList - Get all the active articles.
@@ -168,7 +174,10 @@ func ActiveList(c echo.Context) error {
 		resp = append(resp, info)
 	}
 
-	return c.JSON(http.StatusOK, resp)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+		constants.RespKeyData:   resp,
+	})
 }
 
 // Info - Get detail information for specified article.
@@ -204,5 +213,8 @@ func Info(c echo.Context) error {
 		Active:  info.Active,
 	}
 
-	return c.JSON(http.StatusOK, resp)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+		constants.RespKeyData:   resp,
+	})
 }
