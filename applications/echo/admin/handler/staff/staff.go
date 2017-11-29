@@ -191,7 +191,9 @@ func Create(c echo.Context) error {
 		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, nil)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+	})
 }
 
 // Modify - Modify staff information.
@@ -220,7 +222,9 @@ func Modify(c echo.Context) error {
 		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, nil)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+	})
 }
 
 // ModifyPwd - Modify staff password.
@@ -254,7 +258,9 @@ func ModifyPwd(c echo.Context) error {
 		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, nil)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+	})
 }
 
 // ModifyMobile - Modify staff mobile.
@@ -283,7 +289,9 @@ func ModifyMobile(c echo.Context) error {
 		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, nil)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+	})
 }
 
 // ModifyActive - Modify staff status.
@@ -311,7 +319,9 @@ func ModifyActive(c echo.Context) error {
 		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, nil)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+	})
 }
 
 // Dismiss - Staff dismission.
@@ -339,7 +349,9 @@ func Dismiss(c echo.Context) error {
 		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, nil)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+	})
 }
 
 // List - Get a list of on-the-job staff details.
@@ -453,7 +465,9 @@ func AddRole(c echo.Context) error {
 		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, nil)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+	})
 }
 
 // RemoveRole - Remove role from staff.
@@ -481,7 +495,9 @@ func RemoveRole(c echo.Context) error {
 		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, nil)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+	})
 }
 
 // RoleList - List all the roles of the specified staff.

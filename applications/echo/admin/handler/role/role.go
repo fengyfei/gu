@@ -102,7 +102,9 @@ func Create(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, nil)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+	})
 }
 
 // Modify - Modify role information.
@@ -134,7 +136,9 @@ func Modify(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, nil)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+	})
 }
 
 // ModifyActive - Modify role status.
@@ -162,7 +166,9 @@ func ModifyActive(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, nil)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+	})
 }
 
 // InfoList - Get a list of active role details.

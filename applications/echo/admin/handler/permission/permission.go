@@ -91,7 +91,9 @@ func Create(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, nil)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+	})
 }
 
 // Remove - Remove permission information.
@@ -123,7 +125,9 @@ func Remove(c echo.Context) error {
 		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, nil)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		constants.RespKeyStatus: constants.ErrSucceed,
+	})
 }
 
 // List - Get a list of permission for specified URL.
