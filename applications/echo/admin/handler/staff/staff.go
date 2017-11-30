@@ -361,7 +361,7 @@ func Dismiss(c echo.Context) error {
 
 // List - Get a list of on-the-job staff details.
 func List(c echo.Context) error {
-	var resp []infoResp
+	var resp []infoResp = make([]infoResp, 0)
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
