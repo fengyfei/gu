@@ -126,7 +126,7 @@ func ModifyActive(c echo.Context) error {
 
 // List - Get all the repos.
 func List(c echo.Context) error {
-	var resp []infoResp
+	var resp []infoResp = make([]infoResp, 0)
 
 	rlist, err := repos.Service.List()
 	if err != nil {
@@ -159,7 +159,7 @@ func List(c echo.Context) error {
 
 // ActiveList - Get all the active repos.
 func ActiveList(c echo.Context) error {
-	var resp []infoResp
+	var resp []infoResp = make([]infoResp, 0)
 
 	rlist, err := repos.Service.ActiveList()
 	if err != nil {
