@@ -53,9 +53,9 @@ type (
     Status     int8    `gorm:"type:TINYINT;default:1" json:"status"` // -1, hide or delete;1, common wares;2, promotion
     Price      float32 `gorm:"not null;type:float" json:"price"`
     SalePrice  float32 `gorm:"not null;type:float" json:"salePrice"` // promotion price
-    Avatar     string  `gorm:"type:varchar(1000)"  json:"avatar"`
-    Image      string  `gorm:"type:varchar(1000)"  json:"image"`
-    //Introduce  string  `gorm:"type:varchar(1000)"  json:"introduce"`
+    Avatar     string  `gorm:"type:varchar(100)"  json:"avatar"`
+    Image      string  `gorm:"type:varchar(100)"  json:"image"`
+    Introduce  string  `gorm:"type:varchar(100)"  json:"introduce"`
     Created    time.Time
   }
 
@@ -79,6 +79,7 @@ type (
     Color      string `json:"color"`
     Avatar     string `json:"avatar"`
     Image      string `json:"image"`
+    Introduce  string `json:"introduce"`
     Inventory  uint   `json:"inventory"`
   }
 
@@ -105,6 +106,7 @@ func (sp *serviceProvider) CreateWare(conn orm.Connection, wareReq Ware) error {
   ware.SalePrice = wareReq.SalePrice
   ware.Avatar = wareReq.Avatar
   ware.Image = wareReq.Image
+  ware.Introduce = wareReq.Introduce
   ware.Inventory = wareReq.Inventory
   ware.Created = time.Now()
 

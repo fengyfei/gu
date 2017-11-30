@@ -36,13 +36,30 @@ import (
   "strconv"
   "time"
   "io/ioutil"
+  "os"
 )
 
-func GetNameByTime(path string, suffix string) string {
+func getNameByTime(path string, suffix string) string {
   files, _ := ioutil.ReadDir(path)
   timeStamp := time.Now().Unix()
 
   return strconv.FormatInt(timeStamp, 10) + strconv.Itoa(len(files)) + "." + suffix
+}
+
+func checkDir(path string) error {
+  _, err := os.Stat(path)
+
+  if err != nil {
+    if os.IsNotExist(err) {
+      err = os.MkdirAll(path, 0777)
+
+      if err != nil {
+        return err
+      }
+    }
+  }
+
+  return err
 }
 
 func SavePicture(base64Str string, pathPrefix string) (string, error) {
@@ -57,7 +74,14 @@ func SavePicture(base64Str string, pathPrefix string) (string, error) {
   }
 
   path := "./img/" + pathPrefix
-  fileName := GetNameByTime(path, suffix)
+  fileName := getNameByTime(path, suffix)
+
+  err = checkDir(path)
+  if err != nil {
+    logger.Error(err)
+
+    return "", err
+  }
 
   err = ioutil.WriteFile(path + fileName, byteData, 0777)
   if err != nil {
