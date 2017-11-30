@@ -122,7 +122,7 @@ func ModifyActive(c echo.Context) error {
 
 // List - Get all the articles.
 func List(c echo.Context) error {
-	var resp []infoResp
+	var resp []infoResp = make([]infoResp, 0)
 
 	alist, err := article.Service.List()
 	if err != nil {
@@ -153,7 +153,7 @@ func List(c echo.Context) error {
 
 // ActiveList - Get all the active articles.
 func ActiveList(c echo.Context) error {
-	var resp []infoResp
+	var resp []infoResp = make([]infoResp, 0)
 
 	alist, err := article.Service.ActiveList()
 	if err != nil {
