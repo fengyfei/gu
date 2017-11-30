@@ -124,6 +124,13 @@ func (this *WareController) CreateWare() {
 
     goto finish
   }
+  addReq.Introduce, err = util.SavePicture(addReq.Introduce, "wareIntro/")
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInternalServerError}
+
+    goto finish
+  }
 
   err = ware.Service.CreateWare(conn, addReq)
   if err != nil {
