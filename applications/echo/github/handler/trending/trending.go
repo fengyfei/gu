@@ -65,7 +65,7 @@ func LangInfo(c echo.Context) error {
 	var (
 		err        error
 		req        langReq
-		resp       []infoResp
+		resp       []infoResp = make([]infoResp, 0)
 		t          trending.Trending
 		tStore     *trending.Trending
 		tStoreList []*trending.Trending
