@@ -242,6 +242,11 @@ func ModifyPwd(c echo.Context) error {
 		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
 	}
 
+	if *req.NewPwd == *req.OldPwd {
+		err = errors.New("new and old passwords can't be the same")
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
+	}
+
 	if *req.NewPwd != *req.Confirm {
 		err = errors.New("entered passwords differ")
 		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
