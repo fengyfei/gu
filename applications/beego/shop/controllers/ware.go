@@ -37,8 +37,8 @@ import (
   "github.com/fengyfei/gu/applications/beego/shop/mysql"
   "github.com/fengyfei/gu/models/shop/ware"
   "github.com/fengyfei/gu/libs/orm"
-  _ "errors"
   "github.com/fengyfei/gu/applications/beego/shop/util"
+  "errors"
 )
 
 type (
@@ -135,6 +135,9 @@ func (this *WareController) CreateWare() {
   err = ware.Service.CreateWare(conn, addReq)
   if err != nil {
     logger.Error(err)
+    if util.DeletePicture(addReq.Avatar) && util.DeletePicture(addReq.Image) && util.DeletePicture(addReq.Introduce) {
+      logger.Error(errors.New("create ware failed and delete it's pictures go wrong, please delete picture manually "))
+    }
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
 
     goto finish

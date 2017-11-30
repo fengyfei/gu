@@ -37,7 +37,10 @@ import (
   "time"
   "io/ioutil"
   "os"
+  "errors"
 )
+
+var picturePath = "./img/"
 
 func getNameByTime(path string, suffix string) string {
   files, _ := ioutil.ReadDir(path)
@@ -73,7 +76,7 @@ func SavePicture(base64Str string, pathPrefix string) (string, error) {
     return "", err
   }
 
-  path := "./img/" + pathPrefix
+  path := picturePath + pathPrefix
   fileName := getNameByTime(path, suffix)
 
   err = checkDir(path)
@@ -89,4 +92,21 @@ func SavePicture(base64Str string, pathPrefix string) (string, error) {
   }
 
   return path + fileName, err
+}
+
+func DeletePicture(path string) bool {
+  _, err := os.Stat(path)
+
+  if err == nil || os.IsExist(err) {
+    err = os.Remove(path)
+    if err != nil {
+      logger.Error(errors.New(path + " delete failed"))
+
+      return false
+    }
+
+    return true
+  }
+
+  return os.IsNotExist(err)
 }
