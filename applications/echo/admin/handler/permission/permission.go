@@ -136,7 +136,7 @@ func List(c echo.Context) error {
 		err   error
 		req   listReq
 		role  infoResp
-		roles []infoResp
+		roles []infoResp = make([]infoResp, 0)
 	)
 
 	if err = c.Bind(&req); err != nil {
