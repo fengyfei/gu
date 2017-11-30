@@ -72,6 +72,7 @@ type (
 		Id      int16     `json:"id"`
 		Name    string    `json:"name"`
 		Intro   string    `json:"intro"`
+		Active  bool      `json:"active"`
 		Created time.Time `json:"created"`
 	}
 )
@@ -171,8 +172,8 @@ func ModifyActive(c echo.Context) error {
 	})
 }
 
-// InfoList - Get a list of active role details.
-func InfoList(c echo.Context) error {
+// List - Get a list of active role details.
+func List(c echo.Context) error {
 	var resp []infoResp = make([]infoResp, 0)
 
 	conn, err := mysql.Pool.Get()
@@ -195,6 +196,7 @@ func InfoList(c echo.Context) error {
 			Id:      r.Id,
 			Name:    r.Name,
 			Intro:   r.Intro,
+			Active:  r.Active,
 			Created: *r.Created,
 		}
 
