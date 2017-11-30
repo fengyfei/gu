@@ -138,8 +138,8 @@ func List(c echo.Context) error {
 			Title:   a.Title,
 			URL:     a.URL,
 			Source:  a.Source,
-			Created: a.Created,
 			Active:  a.Active,
+			Created: a.Created,
 		}
 
 		resp = append(resp, info)
@@ -169,8 +169,8 @@ func ActiveList(c echo.Context) error {
 			Title:   a.Title,
 			URL:     a.URL,
 			Source:  a.Source,
-			Created: a.Created,
 			Active:  a.Active,
+			Created: a.Created,
 		}
 
 		resp = append(resp, info)
@@ -211,8 +211,8 @@ func Info(c echo.Context) error {
 		Title:   info.Title,
 		URL:     info.URL,
 		Source:  info.Source,
-		Created: info.Created,
 		Active:  info.Active,
+		Created: info.Created,
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
