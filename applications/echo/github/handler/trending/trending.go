@@ -119,7 +119,7 @@ crawler:
 					info = infoResp{
 						Title:    tInfo.Title,
 						Abstract: tInfo.Abstract,
-						Lang:     tInfo.Lang,
+						Lang:     *req.Lang,
 						Stars:    tInfo.Stars,
 						Today:    tInfo.Today,
 					}
