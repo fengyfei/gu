@@ -62,4 +62,10 @@ func init() {
 	beego.Router("/shop/ware/homelist", &controllers.WareController{}, "post:HomePageList")
 	beego.Router("/shop/ware/recommend", &controllers.WareController{}, "post:RecommendList")
 	beego.Router("/shop/ware/getdetail", &controllers.WareController{}, "post:GetDetail")
+
+	// cart api
+	beego.Router("/shop/cart/add", &controllers.CartController{}, "post:Add")
+	beego.Router("/shop/cart/remove", &controllers.CartController{}, "post:remove")
+	beego.Router("/shop/cart/get", &controllers.CartController{}, "get:GetByUser")
+
 }
