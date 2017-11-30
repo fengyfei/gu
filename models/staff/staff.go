@@ -81,7 +81,7 @@ func (sp *serviceProvider) Login(conn orm.Connection, name, pwd *string) (int32,
 	staff := &Staff{}
 
 	db := conn.(*gorm.DB).Exec("USE staff")
-	err := db.Model(staff).Where("name = ?", *name).First(staff).Error
+	err := db.Model(staff).Where("name = ? AND active = true", *name).First(staff).Error
 	if err != nil {
 		return 0, err
 	}
