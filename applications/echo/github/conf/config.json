@@ -5,7 +5,7 @@
   },
   "middleware": {
     "cors": {
-      "hosts": []
+      "hosts": ["*"]
     }
   },
   "mongo": {
