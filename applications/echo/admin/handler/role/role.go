@@ -45,15 +45,15 @@ import (
 type (
 	// createReq - The request struct that create role information.
 	createReq struct {
-		Name  *string `json:"name" validate:"required,alphanumunicode,min=2,max=20"`
-		Intro *string `json:"intro" validate:"required,alphanumunicode,min=2,max=140"`
+		Name  *string `json:"name" validate:"required,alpha,min=4,max=64"`
+		Intro *string `json:"intro" validate:"required,alphanumunicode,min=4,max=256"`
 	}
 
 	// modifyReq - The request struct that modify role information.
 	modifyReq struct {
 		Id    int16   `json:"id" validate:"required"`
-		Name  *string `json:"name" validate:"required,alphanumunicode,min=2,max=20"`
-		Intro *string `json:"intro" validate:"required,alphanumunicode,min=2,max=140"`
+		Name  *string `json:"name" validate:"required,alpha,min=4,max=64"`
+		Intro *string `json:"intro" validate:"required,alphanumunicode,min=4,max=256"`
 	}
 
 	// modifyActiveReq - The request struct that modify role status.
@@ -173,7 +173,7 @@ func ModifyActive(c echo.Context) error {
 
 // InfoList - Get a list of active role details.
 func InfoList(c echo.Context) error {
-	var resp []infoResp
+	var resp []infoResp = make([]infoResp, 0)
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
