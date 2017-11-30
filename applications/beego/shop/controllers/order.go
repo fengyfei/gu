@@ -45,14 +45,14 @@ type (
 	}
 
 	createReq struct {
-		Orders []Order.OrderItem `json:"orders" validate:"required"`
+		Orders     []Order.OrderItem `json:"orders" validate:"required"`
+		ReceiveWay int8              `json:"receiveWay"`
 	}
 
 	changeStateReq struct {
 		ID     int32 `json:"id"`
 		Status int32 `json:"status"`
 	}
-
 )
 
 func (this *OrderController) CreateOrder() {
@@ -96,7 +96,7 @@ func (this *OrderController) CreateOrder() {
 		goto finish
 	}
 
-	signStr, err = Order.Service.OrderByWechat(conn, userId, IP, &req.Orders)
+	signStr, err = Order.Service.OrderByWechat(conn, userId, IP, req.ReceiveWay, &req.Orders)
 	if err != nil {
 		logger.Error(err)
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrWechatPay}
@@ -112,8 +112,8 @@ finish:
 func (this *OrderController) ChangeOrderState() {
 
 	var (
-		req    changeStateReq
-		conn   orm.Connection
+		req  changeStateReq
+		conn orm.Connection
 	)
 
 	_, isAdmin, err := this.ParseToken()

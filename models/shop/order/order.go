@@ -43,19 +43,19 @@ var (
 	Service         *serviceProvider
 	defaultParentId int32 = 0x0
 	unPay           int32 = 0x0
-	paid            int32 = 0x1
 )
 
 type Order struct {
-	ID        int32 `gorm:"primary_key;auto_increment"`
-	BillID    string
-	UserID    int32
-	ParentID  int32
-	Status    int32
-	WareId    int32
-	Count     int32
-	Price     float64
-	CreatedAt *time.Time
+	ID         int32 `gorm:"primary_key;auto_increment"`
+	BillID     string
+	UserID     int32
+	ParentID   int32
+	Status     int32
+	WareId     int32
+	Count      int32
+	Price      float64
+	ReceiveWay int8
+	CreatedAt  *time.Time
 }
 
 type OrderItem struct {
@@ -64,7 +64,7 @@ type OrderItem struct {
 	Price  float64 `json:"price" validate:"required"`
 }
 
-func (this *serviceProvider) OrderByWechat(conn orm.Connection, userId int32, IP string, orders *[]OrderItem) (string, error) {
+func (this *serviceProvider) OrderByWechat(conn orm.Connection, userId int32, IP string, receiveWay int8, orders *[]OrderItem) (string, error) {
 	var (
 		parentOrder Order
 		err         error
@@ -75,6 +75,7 @@ func (this *serviceProvider) OrderByWechat(conn orm.Connection, userId int32, IP
 	childOrders = *orders
 	parentOrder.BillID = wechatPay.GenerateBillID()
 	parentOrder.UserID = userId
+	parentOrder.ReceiveWay = receiveWay
 	parentOrder.ParentID = defaultParentId
 	parentOrder.Status = unPay
 
@@ -122,8 +123,8 @@ func (this *serviceProvider) ChangeState(conn orm.Connection, ID, status int32) 
 	return db.Model(&Order{}).Where("id = ?", ID).Update("status", status).Error
 }
 
-func (this *serviceProvider) GetUserOrder(conn orm.Connection, userId int32) (*[]Order, error){
-	var(
+func (this *serviceProvider) GetUserOrder(conn orm.Connection, userId int32) (*[]Order, error) {
+	var (
 		orders []Order
 	)
 	db := conn.(*gorm.DB).Exec("USE shop")
