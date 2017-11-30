@@ -44,7 +44,7 @@ import (
 type (
 	// createReq - The request struct that create article information.
 	createReq struct {
-		Title  *string `json:"title" validate:"required,alphanumunicode,min=1,max=30"`
+		Title  *string `json:"title" validate:"required,min=1,max=256"`
 		URL    *string `json:"url" validate:"required,url"`
 		Source *string `json:"source"`
 	}
