@@ -61,6 +61,8 @@ func initMysql() {
 	port := configuration.mysqlPort
 	sqlName := configuration.mysqlDb
 
+	// You need to create a database manually.
+	// SQL: CREATE DATABASE staff CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 	dataSource := fmt.Sprintf(user + ":" + pass + "@" + "tcp(" + url + port + ")/" + sqlName + "?charset=utf8&parseTime=True&loc=Local")
 
 	mysql.InitPool(dataSource)
