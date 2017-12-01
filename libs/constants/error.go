@@ -33,23 +33,24 @@ const (
 	// ErrSucceed - Succeed
 	ErrSucceed = 0
 
-	// ErrInvalidParam - Invalid Parameter
-	ErrInvalidParam = 1
-
 	// ErrPermission - Permission Denied
-	ErrPermission = 100
+	ErrPermission = 401
 
 	// ErrToken - Invalid Token
-	ErrToken = 200
+	ErrToken = 420
 
-	// ErrWechatAuth - Wechat Auth error.
-	ErrWechatAuth = 300
-
-	// ErrWechatPay - Wechat Pay error.
-	ErrWechatPay = 301
+	// ErrInvalidParam - Invalid Parameter
+	ErrInvalidParam = 421
 
 	// ErrInternalServerError - Internal error.
 	ErrInternalServerError = 500
+
+	// ErrWechatPay - Wechat Pay error.
+	ErrWechatPay = 520
+
+	// ErrWechatAuth - Wechat Auth error.
+	ErrWechatAuth = 521
+
 
 	// ErrMongoDB - MongoDB operations error.
 	ErrMongoDB = 600
