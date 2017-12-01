@@ -30,9 +30,9 @@
 package routers
 
 import (
-	"github.com/fengyfei/gu/applications/beego/shop/controllers"
-
 	"github.com/astaxie/beego"
+	"github.com/fengyfei/gu/applications/beego/shop/controllers"
+	"github.com/fengyfei/gu/applications/beego/shop/util"
 )
 
 func init() {
@@ -41,9 +41,9 @@ func init() {
 	beego.Router("/shop/user/login", &controllers.UserController{}, "post:PhoneLogin")
 	beego.Router("/shop/user/changepass", &controllers.UserController{}, "post:ChangePassword")
 
-	beego.Router("/shop/address/add", &controllers.AddressController{}, "post:AddAddress")
-	beego.Router("/shop/address/setdefault", &controllers.AddressController{}, "post:SetDefault")
-	beego.Router("/shop/address/modify", &controllers.AddressController{}, "post:Modify")
+	beego.Router("/shop/user/address/add", &controllers.AddressController{}, "post:AddAddress")
+	beego.Router("/shop/user/address/setdefault", &controllers.AddressController{}, "post:SetDefault")
+	beego.Router("/shop/user/address/modify", &controllers.AddressController{}, "post:Modify")
 
 	beego.Router("/shop/api/category/add", &controllers.CategoryController{}, "post:AddCategory")
 	beego.Router("/shop/category/getmainclass", &controllers.CategoryController{}, "get:GetMainCategories")
@@ -65,11 +65,14 @@ func init() {
 
 	// cart api
 	beego.Router("/shop/cart/add", &controllers.CartController{}, "post:Add")
-	beego.Router("/shop/cart/remove", &controllers.CartController{}, "post:remove")
+	beego.Router("/shop/cart/remove", &controllers.CartController{}, "post:Remove")
 	beego.Router("/shop/cart/get", &controllers.CartController{}, "get:GetByUser")
 
 	// collection api for user
 	beego.Router("/shop/collection/get", &controllers.CollectionController{}, "get:GetByUserID")
 	beego.Router("/shop/collection/add", &controllers.CollectionController{}, "post:Add")
 	beego.Router("/shop/collection/remove", &controllers.CollectionController{}, "post:Remove")
+
+	beego.InsertFilter("/shop/user/changepass", beego.BeforeExec, util.Jwt)
+
 }

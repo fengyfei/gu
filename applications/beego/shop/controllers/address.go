@@ -67,11 +67,7 @@ func (this *AddressController) AddAddress() {
 		conn orm.Connection
 	)
 
-	userId, _, err := this.ParseToken()
-	if err != nil {
-		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
-		goto finish
-	}
+	userId := this.Ctx.Request.Context().Value("userId").(int32)
 
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
@@ -105,11 +101,7 @@ func (this *AddressController) SetDefault() {
 		conn orm.Connection
 	)
 
-	userId, _, err := this.ParseToken()
-	if err != nil {
-		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
-		goto finish
-	}
+	userId := this.Ctx.Request.Context().Value("userId").(int32)
 
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
@@ -142,12 +134,6 @@ func (this *AddressController) Modify() {
 		req  modifyReq
 		conn orm.Connection
 	)
-
-	_, _, err = this.ParseToken()
-	if err != nil {
-		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
-		goto finish
-	}
 
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)

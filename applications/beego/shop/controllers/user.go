@@ -44,9 +44,9 @@ import (
 )
 
 var (
-	APPID     = ""
-	SECRET    = ""
-	typeUser  = false
+	APPID    = ""
+	SECRET   = ""
+	typeUser = false
 )
 
 type (
@@ -203,6 +203,7 @@ func (this *UserController) PhoneLogin() {
 	}
 
 	err = json.Unmarshal(this.Ctx.Input.RequestBody, &loginReq)
+	fmt.Println(loginReq)
 	if err != nil {
 		logger.Error(err)
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
@@ -242,9 +243,11 @@ func (this *UserController) ChangePassword() {
 		req    changePassReq
 		userId int32
 		conn   orm.Connection
+		err    error
 	)
 
-	userId, _, err := this.ParseToken()
+	userId = this.Ctx.Request.Context().Value("userId").(int32)
+	fmt.Println(userId)
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
 	}
