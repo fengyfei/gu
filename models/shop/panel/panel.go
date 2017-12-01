@@ -35,10 +35,6 @@ import (
   "github.com/jinzhu/gorm"
 )
 
-const type1 int8 = 1 // promotion && flash sale
-const type2 int8 = 2 // recommends && advertising
-const type3 int8 = 3 // second-hand && other things
-
 type serviceProvider struct{}
 
 var (
@@ -50,10 +46,10 @@ type (
     ID       uint   `gorm:"primary_key;AUTO_INCREMENT"`
     Title    string `gorm:"type:varchar(50)"`
     Desc     string `gorm:"type:varchar(100)"`
-    Type     int8   `gorm:"type:TINYINT;not null"`
+    Type     int8   `gorm:"type:TINYINT;not null"` // 1 promotion && flash sale;2 recommends && advertising;3 second-hand && other things
     Status   int8   `gorm:"type:TINYINT;default:1"`
     Sequence int    `gorm:"unique_index;not null"`
-    Related  string `gorm:"type:varchar(100)"` // wares id
+    Updated  time.Time
     Created  time.Time
   }
 
@@ -66,11 +62,16 @@ type (
   }
 
   PanelReq struct {
-    Title    string `json:"title"`
-    Desc     string `json:"desc"`
-    Type     int8   `json:"type" validate:"required, eq=1|eq=2|eq=3"`
-    Related  string `json:"related"`
-    Sequence int    `json:"sequence"`
+    Title    string    `json:"title" validate:"required"`
+    Desc     string    `json:"desc"`
+    Type     int8      `json:"type" validate:"eq=1|eq=2|eq=3"`
+    Sequence int       `json:"sequence"`
+    Updated  time.Time `json:"updated"`
+  }
+
+  PromotionReq struct {
+    Belong uint `json:"belong" validate:"required"`
+    Content string `json:"content" validate:"required"`
   }
 )
 
@@ -81,11 +82,24 @@ func (sp *serviceProvider) CreatePanel(conn orm.Connection, panelReq PanelReq) e
   panel.Desc = panelReq.Desc
   panel.Type = panelReq.Type
   panel.Sequence = panelReq.Sequence
-  panel.Related = panelReq.Related
+  panel.Updated = time.Now()
   panel.Created = time.Now()
 
   db := conn.(*gorm.DB).Exec("USE shop")
   err := db.Model(&Panel{}).Create(panel).Error
+
+  return err
+}
+
+// add promotion list
+func (sp *serviceProvider) AddPromotionList(conn orm.Connection, promotionReq PromotionReq) error {
+  promotion := &Detail{}
+  promotion.Belong = promotionReq.Belong
+  promotion.Content = promotionReq.Content
+  promotion.Created = time.Now()
+
+  db := conn.(*gorm.DB).Exec("USE shop")
+  err := db.Model(&Detail{}).Create(promotion).Error
 
   return err
 }

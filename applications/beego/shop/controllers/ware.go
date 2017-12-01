@@ -71,19 +71,7 @@ func (this *WareController) CreateWare() {
     conn orm.Connection
   )
 
-  //_, isAdmin, err := this.ParseToken()
-  //if !isAdmin {
-  //  logger.Error(errors.New("no admin permission"))
-  //  this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}
-  //
-  //  goto finish
-  //}
-  //if err != nil {
-  //  logger.Error(err)
-  //  this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
-  //
-  //  goto finish
-  //}
+
 
   conn, err = mysql.Pool.Get()
   defer mysql.Pool.Release(conn)
