@@ -102,7 +102,7 @@ func (this *WareController) CreateWare() {
     goto finish
   }
 
-  err = this.Validate(&addReq)
+  err = this.Validate(addReq)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}

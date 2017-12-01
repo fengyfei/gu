@@ -41,6 +41,7 @@ import (
   "github.com/fengyfei/gu/models/shop/order"
   "github.com/fengyfei/gu/models/shop/admin"
   "github.com/fengyfei/gu/models/shop/cart"
+  "github.com/fengyfei/gu/models/shop/panel"
 )
 
 func init() {
@@ -100,10 +101,19 @@ func initTable() {
       &admin.Admin{},
     )
   }
-  if !conn.(*gorm.DB).HasTable("Carts") {
+  if !conn.(*gorm.DB).HasTable("cart_items") {
     db.CreateTable(
       &cart.CartItem{},
     )
   }
-
+  if !conn.(*gorm.DB).HasTable("panels") {
+    db.CreateTable(
+      &panel.Panel{},
+    )
+  }
+  if !conn.(*gorm.DB).HasTable("details") {
+    db.CreateTable(
+      &panel.Detail{},
+    )
+  }
 }

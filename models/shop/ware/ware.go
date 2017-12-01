@@ -46,7 +46,6 @@ type (
     ID         uint    `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
     Name       string  `gorm:"type:varchar(50);not null"  json:"name" validate:"required"`
     Desc       string  `gorm:"type:varchar(100);not null" json:"desc"`
-    Type       string  `gorm:"type:varchar(50);not null"  json:"type"`
     CategoryID uint    `gorm:"not null" json:"categoryId"`
     TotalSale  uint    `gorm:"not null" json:"totalSale"`
     Inventory  uint    `gorm:"not null" json:"inventory"`
@@ -100,7 +99,6 @@ func (sp *serviceProvider) CreateWare(conn orm.Connection, wareReq Ware) error {
   ware := &Ware{}
   ware.Name = wareReq.Name
   ware.Desc = wareReq.Desc
-  ware.Type = wareReq.Type
   ware.CategoryID = wareReq.CategoryID
   ware.Price = wareReq.Price
   ware.SalePrice = wareReq.SalePrice
