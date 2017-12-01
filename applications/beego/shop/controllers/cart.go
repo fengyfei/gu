@@ -54,7 +54,7 @@ type (
 	}
 )
 
-func (this *OrderController) Add() {
+func (this *CartController) Add() {
 	var (
 		req    addCartReq
 		err    error
@@ -62,11 +62,7 @@ func (this *OrderController) Add() {
 		conn   orm.Connection
 	)
 
-	userId, _, err = this.ParseToken()
-	if err != nil {
-		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
-		goto finish
-	}
+	userId = this.Ctx.Request.Context().Value("userId").(int32)
 
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
@@ -104,7 +100,7 @@ finish:
 	this.ServeJSON(true)
 }
 
-func (this *OrderController) GetByUser() {
+func (this *CartController) GetByUser() {
 	var (
 		items  []Cart.CartItem
 		err    error
@@ -112,11 +108,7 @@ func (this *OrderController) GetByUser() {
 		conn   orm.Connection
 	)
 
-	userId, _, err = this.ParseToken()
-	if err != nil {
-		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
-		goto finish
-	}
+	userId = this.Ctx.Request.Context().Value("userId").(int32)
 
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
@@ -138,18 +130,12 @@ finish:
 	this.ServeJSON(true)
 }
 
-func (this *OrderController) Remove() {
+func (this *CartController) Remove() {
 	var (
 		req    removeCartReq
 		err    error
 		conn   orm.Connection
 	)
-
-	_, _, err = this.ParseToken()
-	if err != nil {
-		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
-		goto finish
-	}
 
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)

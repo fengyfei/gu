@@ -114,14 +114,12 @@ func (this *UserController) ChangeAdminPassword() {
 	var (
 		req  adminChangePassReq
 		conn orm.Connection
+		err  error
 	)
-	adminId, isAdmin, err := this.ParseToken()
-	if err != nil {
-		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
-		goto finish
-	}
+	adminId := this.Ctx.Request.Context().Value("userId").(int32)
+	isAdmin := this.Ctx.Request.Context().Value("isAdmin").(bool)
 	if !isAdmin {
-		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
+		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}
 		goto finish
 	}
 

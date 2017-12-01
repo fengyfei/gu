@@ -65,11 +65,7 @@ func (this *OrderController) CreateOrder() {
 		signStr string
 	)
 
-	userId, _, err = this.ParseToken()
-	if err != nil {
-		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
-		goto finish
-	}
+	userId = this.Ctx.Request.Context().Value("userId").(int32)
 
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
@@ -114,12 +110,10 @@ func (this *OrderController) ChangeOrderState() {
 	var (
 		req  changeStateReq
 		conn orm.Connection
+		err  error
 	)
 
-	_, isAdmin, err := this.ParseToken()
-	if err != nil {
-		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
-	}
+	isAdmin := this.Ctx.Request.Context().Value("isAdmin").(bool)
 	if !isAdmin {
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}
 	}
@@ -154,12 +148,10 @@ func (this *OrderController) GetUserOrder() {
 	var (
 		conn   orm.Connection
 		orders *[]Order.Order
+		err    error
 	)
 
-	userId, _, err := this.ParseToken()
-	if err != nil {
-		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
-	}
+	userId := this.Ctx.Request.Context().Value("userId").(int32)
 
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)

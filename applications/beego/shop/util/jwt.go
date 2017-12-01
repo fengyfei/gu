@@ -31,7 +31,24 @@ package util
 
 import (
 	"time"
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/astaxie/beego"
+
+	"github.com/astaxie/beego/context"
+	"strings"
+	"errors"
+	libctx "context"
+	"fmt"
+	"github.com/fengyfei/gu/libs/constants"
+)
+
+var (
+	errInputData   = errors.New("input error")
+	errExpired     = errors.New("expired")
+	errToken       = errors.New("token error")
+	wechatLoginUrl = "/shop/user/wechatlogin"
+	registerUrl    = "/shop/user/register"
+	loginUrl       = "/shop/user/login"
 )
 
 func NewToken(userId int32, isAdmin bool) (string, error) {
@@ -42,4 +59,57 @@ func NewToken(userId int32, isAdmin bool) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	return token.SignedString([]byte("mykey"))
+}
+
+func Jwt(ctx *context.Context) {
+	var (
+		err         error
+		token       *jwt.Token
+		tokenString string
+		claims      jwt.MapClaims
+		ok          bool
+		c           libctx.Context
+		cc          libctx.Context
+	)
+
+	fmt.Println("urlll: ", ctx.Request.URL)
+	url := ctx.Request.URL.String()
+	if url == wechatLoginUrl || url == loginUrl || url == registerUrl {
+		return
+	}
+
+	authString := ctx.Input.Header("Authorization")
+	//beego.Debug("AuthString:", authString)
+
+	kv := strings.Split(authString, " ")
+	if len(kv) != 2 || kv[0] != "Bearer" {
+		beego.Error("AuthString invalid:", authString)
+		goto errFinish
+	}
+	tokenString = kv[1]
+
+	// Parse token
+	token, err = jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return []byte("mykey"), nil
+	})
+	if err != nil {
+		goto errFinish
+	}
+	if !token.Valid {
+		beego.Error("Token invalid:", tokenString)
+		goto errFinish
+	}
+
+	claims, ok = token.Claims.(jwt.MapClaims)
+	if !ok {
+		goto errFinish
+	}
+
+	c = libctx.WithValue(libctx.Background(), "userId", int32(claims["userid"].(float64)))
+	cc = libctx.WithValue(c, "isAdmin", bool(claims["admin"].(bool)))
+	ctx.Request = ctx.Request.WithContext(cc)
+	return
+
+errFinish:
+	ctx.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}, false, false)
 }
