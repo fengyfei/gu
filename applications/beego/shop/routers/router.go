@@ -68,4 +68,8 @@ func init() {
 	beego.Router("/shop/cart/remove", &controllers.CartController{}, "post:remove")
 	beego.Router("/shop/cart/get", &controllers.CartController{}, "get:GetByUser")
 
+	// collection api for user
+	beego.Router("/shop/collection/get", &controllers.CollectionController{}, "get:GetByUserID")
+	beego.Router("/shop/collection/add", &controllers.CollectionController{}, "post:Add")
+	beego.Router("/shop/collection/remove", &controllers.CollectionController{}, "post:Remove")
 }
