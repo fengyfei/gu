@@ -64,7 +64,7 @@ func (cc *CollectionController) GetByUserID() {
 		conn   orm.Connection
 	)
 
-	userID, _, err = cc.ParseToken()
+	userID = cc.Ctx.Request.Context().Value("userId").(int32)
 	if err != nil {
 		logger.Error(err)
 
@@ -110,7 +110,7 @@ func (cc *CollectionController) Add() {
 		conn   orm.Connection
 	)
 
-	userID, _, err = cc.ParseToken()
+	userID = cc.Ctx.Request.Context().Value("userId").(int32)
 	if err != nil {
 		logger.Error(err)
 
