@@ -73,6 +73,8 @@ func init() {
 	beego.Router("/shop/collection/add", &controllers.CollectionController{}, "post:Add")
 	beego.Router("/shop/collection/remove", &controllers.CollectionController{}, "post:Remove")
 
-	beego.InsertFilter("/shop/user/changepass", beego.BeforeExec, util.Jwt)
+	// panel api for admin
+	beego.Router("/shop/api/panel/create", &controllers.PanelController{}, "post:AddPanel")
 
+	beego.InsertFilter("/shop/user/changepass", beego.BeforeExec, util.Jwt)
 }

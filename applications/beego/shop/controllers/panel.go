@@ -46,7 +46,7 @@ type (
 )
 
 // add promotion panel
-func (this *PanelController) AddPromotion() {
+func (this *PanelController) AddPanel() {
   var (
     err error
     addReq panel.PanelReq
@@ -87,6 +87,84 @@ func (this *PanelController) AddPromotion() {
   }
   this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
   logger.Info("create panel", addReq.Title, "success")
+
+finish:
+  this.ServeJSON(true)
+}
+
+// add promotion list
+func (this *PanelController) AddPromotion() {
+  var (
+    err error
+    addReq panel.PromotionReq
+    conn orm.Connection
+  )
+
+  conn, err = mysql.Pool.Get()
+  defer mysql.Pool.Release(conn)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+    goto finish
+  }
+
+  err = json.Unmarshal(this.Ctx.Input.RequestBody, &addReq)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+    goto finish
+  }
+
+  err = this.Validate(addReq)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+    goto finish
+  }
+
+  err = panel.Service.AddPromotionList(conn, addReq)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+    goto finish
+  }
+  this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+  logger.Info("add promotion list success")
+
+finish:
+  this.ServeJSON(true)
+}
+
+// add recommend
+func (this *PanelController) AddRecommend() {
+  var (
+    err error
+    addReq panel.PromotionReq
+    conn orm.Connection
+  )
+
+  conn, err = mysql.Pool.Get()
+  defer mysql.Pool.Release(conn)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+    goto finish
+  }
+
+  err = json.Unmarshal(this.Ctx.Input.RequestBody, &addReq)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+    goto finish
+  }
+
+
 
 finish:
   this.ServeJSON(true)
