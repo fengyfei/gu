@@ -42,12 +42,12 @@ var (
 )
 
 type Category struct {
-  ID        uint      `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
-  Name      string    `gorm:"type:varchar(50);not null"  json:"name"`
-  Desc      string    `gorm:"type:varchar(100);not null" json:"desc"`
-  ParentID  uint      `gorm:"not null" json:"parentId"`
-  Status    int       `gorm:"not null;default:1" json:"status"`
-  CreatedAt time.Time `json:"createdTime"`
+  ID        uint   `gorm:"primary_key;AUTO_INCREMENT"`
+  Name      string `gorm:"type:varchar(50);not null"`
+  Desc      string `gorm:"type:varchar(100);not null"`
+  ParentID  uint   `gorm:"not null"`
+  Status    int    `gorm:"not null;default:1"`
+  CreatedAt time.Time
 }
 
 // add new category - parentID = 0 -> main class, != 0 -> sub class

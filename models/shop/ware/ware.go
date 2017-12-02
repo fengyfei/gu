@@ -52,10 +52,10 @@ type (
     Status     int8    `gorm:"type:TINYINT;default:1" json:"status"` // -1, hide or delete;1, common wares;2, promotion
     Price      float32 `gorm:"not null;type:float" json:"price"`
     SalePrice  float32 `gorm:"not null;type:float" json:"salePrice"` // promotion price
-    Avatar     string  `gorm:"type:varchar(100)"  json:"avatar"`
-    Image      string  `gorm:"type:varchar(100)"  json:"image"`
-    Introduce  string  `gorm:"type:varchar(100)"  json:"introduce"`
-    Created    time.Time
+    Avatar     string  `gorm:"type:varchar(100)"   json:"avatar"`
+    Image      string  `gorm:"type:varchar(100)"   json:"image"`
+    Introduce  string  `gorm:"type:varchar(100)"   json:"introduce"`
+    CreatedAt  time.Time
   }
 
   BriefInfo struct {
@@ -106,7 +106,6 @@ func (sp *serviceProvider) CreateWare(conn orm.Connection, wareReq Ware) error {
   ware.Image = wareReq.Image
   ware.Introduce = wareReq.Introduce
   ware.Inventory = wareReq.Inventory
-  ware.Created = time.Now()
 
   db := conn.(*gorm.DB).Exec("USE shop")
   err := db.Model(&Ware{}).Create(ware).Error
@@ -201,8 +200,8 @@ func (sp *serviceProvider) HomePageList(conn orm.Connection, id int) ([]BriefInf
 // RecommendList
 func (sp *serviceProvider) GetRecommendList(conn orm.Connection, id uint) ([]BriefInfo, error) {
   var (
-    list []BriefInfo
-    res *gorm.DB
+    list   []BriefInfo
+    res    *gorm.DB
     fields = []string{"id", "name", "status", "price", "sale_price", "total_sale", "inventory", "avatar"}
   )
 

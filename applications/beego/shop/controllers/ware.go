@@ -71,8 +71,6 @@ func (this *WareController) CreateWare() {
     conn orm.Connection
   )
 
-
-
   conn, err = mysql.Pool.Get()
   defer mysql.Pool.Release(conn)
   if err != nil {
