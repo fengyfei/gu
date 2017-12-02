@@ -36,7 +36,6 @@ import (
   "github.com/fengyfei/gu/libs/logger"
   "github.com/fengyfei/gu/applications/beego/shop/mysql"
   "github.com/fengyfei/gu/models/shop/category"
-  _ "github.com/jinzhu/gorm"
 )
 
 type (

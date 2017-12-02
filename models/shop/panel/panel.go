@@ -43,14 +43,14 @@ var (
 
 type (
   Panel struct {
-    ID        uint   `gorm:"primary_key;AUTO_INCREMENT"`
-    Title     string `gorm:"type:varchar(50)"`
-    Desc      string `gorm:"type:varchar(100)"`
-    Type      int8   `gorm:"type:TINYINT;not null"` // 1 promotion && flash sale;2 recommends && advertising;3 second-hand && other things
-    Status    int8   `gorm:"type:TINYINT;default:1"`
-    Sequence  int    `gorm:"unique_index;not null"`
-    UpdatedAt time.Time
-    CreatedAt time.Time
+    ID        uint      `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
+    Title     string    `gorm:"type:varchar(50)" json:"title"`
+    Desc      string    `gorm:"type:varchar(100)" json:"desc"`
+    Type      int8      `gorm:"type:TINYINT;not null" json:"type"` // 1 promotion && flash sale;2 recommends && advertising;3 second-hand && other things
+    Status    int8      `gorm:"type:TINYINT;default:1" json:"status"`
+    Sequence  int       `gorm:"unique_index;not null" json:"sequence"`
+    UpdatedAt time.Time `json:"updatedAt"`
+    CreatedAt time.Time `json:"createdAt"`
   }
 
   Detail struct {
@@ -62,10 +62,10 @@ type (
   }
 
   PanelReq struct {
-    Title    string    `json:"title" validate:"required"`
-    Desc     string    `json:"desc"`
-    Type     int8      `json:"type" validate:"eq=1|eq=2|eq=3"`
-    Sequence int       `json:"sequence"`
+    Title    string `json:"title" validate:"required"`
+    Desc     string `json:"desc"`
+    Type     int8   `json:"type" validate:"eq=1|eq=2|eq=3"`
+    Sequence int    `json:"sequence"`
   }
 
   PromotionReq struct {
@@ -74,7 +74,7 @@ type (
   }
 
   RecommendReq struct {
-    Belong uint `json:"belong" validate:"required"`
+    Belong  uint   `json:"belong" validate:"required"`
     Picture string `json:"picture" validate:"required"`
     Content string `json:"content"`
   }
@@ -117,4 +117,14 @@ func (sp *serviceProvider) AddRecommend(conn orm.Connection, recommendReq Recomm
   err := db.Model(&Detail{}).Create(recommend).Error
 
   return err
+}
+
+// get panels
+func (sp *serviceProvider) GetPanels(conn orm.Connection) ([]Panel, error) {
+  var list []Panel
+
+  db := conn.(*gorm.DB).Exec("USE shop")
+  res := db.Table("panels").Where("status > ?", 0).Scan(&list)
+
+  return list, res.Error
 }
