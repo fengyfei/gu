@@ -121,8 +121,8 @@ func (this *WareController) CreateWare() {
   err = ware.Service.CreateWare(conn, addReq)
   if err != nil {
     logger.Error(err)
-    if util.DeletePicture(addReq.Avatar) && util.DeletePicture(addReq.Image) && util.DeletePicture(addReq.Introduce) {
-      logger.Error(errors.New("create ware failed and delete it's pictures go wrong, please delete picture manually "))
+    if !util.DeletePicture(addReq.Avatar) || !util.DeletePicture(addReq.Image) || !util.DeletePicture(addReq.Introduce) {
+      logger.Error(errors.New("create ware failed and delete it's pictures go wrong, please delete picture manually"))
     }
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
 
