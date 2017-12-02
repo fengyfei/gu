@@ -143,7 +143,7 @@ finish:
 func (this *PanelController) AddRecommend() {
   var (
     err error
-    addReq panel.PromotionReq
+    addReq panel.RecommendReq
     conn orm.Connection
   )
 
@@ -164,8 +164,32 @@ func (this *PanelController) AddRecommend() {
     goto finish
   }
 
+  err = this.Validate(addReq)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
 
+    goto finish
+  }
+
+  err = panel.Service.AddRecommend(conn, addReq)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+    goto finish
+  }
+  this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+  logger.Info("add recommend of panel success")
 
 finish:
   this.ServeJSON(true)
+}
+
+// TODO: add second-hand
+func (this *PanelController) AddSecondHand() {}
+
+// get panel page
+func (this *PanelController) GetPage() {
+
 }

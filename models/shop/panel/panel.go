@@ -72,6 +72,12 @@ type (
     Belong  uint   `json:"belong" validate:"required"`
     Content string `json:"content" validate:"required"`
   }
+
+  RecommendReq struct {
+    Belong uint `json:"belong" validate:"required"`
+    Picture string `json:"picture" validate:"required"`
+    Content string `json:"content"`
+  }
 )
 
 // add panel
@@ -96,6 +102,19 @@ func (sp *serviceProvider) AddPromotionList(conn orm.Connection, promotionReq Pr
 
   db := conn.(*gorm.DB).Exec("USE shop")
   err := db.Model(&Detail{}).Create(promotion).Error
+
+  return err
+}
+
+// add recommend
+func (sp *serviceProvider) AddRecommend(conn orm.Connection, recommendReq RecommendReq) error {
+  recommend := &Detail{}
+  recommend.Belong = recommendReq.Belong
+  recommend.Picture = recommendReq.Picture
+  recommend.Content = recommendReq.Content
+
+  db := conn.(*gorm.DB).Exec("USE shop")
+  err := db.Model(&Detail{}).Create(recommend).Error
 
   return err
 }
