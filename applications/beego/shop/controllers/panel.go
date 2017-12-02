@@ -37,6 +37,9 @@ import (
   "github.com/fengyfei/gu/libs/orm"
   "github.com/fengyfei/gu/libs/constants"
   "encoding/json"
+  "fmt"
+  "errors"
+  "github.com/fengyfei/gu/applications/beego/shop/util"
 )
 
 type (
@@ -172,9 +175,20 @@ func (this *PanelController) AddRecommend() {
     goto finish
   }
 
+  addReq.Picture, err = util.SavePicture(addReq.Picture, "recommend/")
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInternalServerError}
+
+    goto finish
+  }
+
   err = panel.Service.AddRecommend(conn, addReq)
   if err != nil {
     logger.Error(err)
+    if !util.DeletePicture(addReq.Picture) {
+      logger.Error(errors.New("add recommend failed and delete it's pictures go wrong, please delete picture manually"))
+    }
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
 
     goto finish
@@ -190,6 +204,31 @@ finish:
 func (this *PanelController) AddSecondHand() {}
 
 // get panel page
-func (this *PanelController) GetPage() {
+func (this *PanelController) GetPanelPage() {
+  var (
+    err error
+    res []panel.Panel
+  )
 
+  conn, err := mysql.Pool.Get()
+  defer mysql.Pool.Release(conn)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+    goto finish
+  }
+
+  res, err = panel.Service.GetPanels(conn)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+    goto finish
+  }
+  this.Data["json"] = res
+  fmt.Printf("%+v\n", res)
+
+finish:
+  this.ServeJSON(true)
 }

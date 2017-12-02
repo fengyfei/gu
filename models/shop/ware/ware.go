@@ -43,19 +43,19 @@ var (
 
 type (
   Ware struct {
-    ID         uint    `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
-    Name       string  `gorm:"type:varchar(50);not null"  json:"name" validate:"required"`
-    Desc       string  `gorm:"type:varchar(100);not null" json:"desc"`
-    CategoryID uint    `gorm:"not null" json:"categoryId"`
-    TotalSale  uint    `gorm:"not null" json:"totalSale"`
-    Inventory  uint    `gorm:"not null" json:"inventory"`
-    Status     int8    `gorm:"type:TINYINT;default:1" json:"status"` // -1, hide or delete;1, common wares;2, promotion
-    Price      float32 `gorm:"not null;type:float" json:"price"`
-    SalePrice  float32 `gorm:"not null;type:float" json:"salePrice"` // promotion price
-    Avatar     string  `gorm:"type:varchar(100)"   json:"avatar"`
-    Image      string  `gorm:"type:varchar(100)"   json:"image"`
-    Introduce  string  `gorm:"type:varchar(100)"   json:"introduce"`
-    CreatedAt  time.Time
+    ID         uint      `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
+    Name       string    `gorm:"type:varchar(50);not null"  json:"name" validate:"required"`
+    Desc       string    `gorm:"type:varchar(100);not null" json:"desc"`
+    CategoryID uint      `gorm:"not null" json:"categoryId"`
+    TotalSale  uint      `gorm:"not null" json:"totalSale"`
+    Inventory  uint      `gorm:"not null" json:"inventory"`
+    Status     int8      `gorm:"type:TINYINT;default:1" json:"status"` // -1, hide or delete;1, common wares;2, promotion
+    Price      float32   `gorm:"not null;type:float" json:"price"`
+    SalePrice  float32   `gorm:"not null;type:float" json:"salePrice"` // promotion price
+    Avatar     string    `gorm:"type:varchar(100)"   json:"avatar"`
+    Image      string    `gorm:"type:varchar(100)"   json:"image"`
+    Introduce  string    `gorm:"type:varchar(100)"   json:"introduce"`
+    CreatedAt  time.Time `json:"createdAt"`
   }
 
   BriefInfo struct {

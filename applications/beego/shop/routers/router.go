@@ -79,6 +79,11 @@ func init() {
 
 	// panel api for admin
 	beego.Router("/shop/api/panel/create", &controllers.PanelController{}, "post:AddPanel")
+	beego.Router("/shop/api/panel/addpromotion", &controllers.PanelController{}, "post:AddPromotion")
+	beego.Router("/shop/api/panel/addrecommend", &controllers.PanelController{}, "post:AddRecommend")
+
+	// panel api for user
+	beego.Router("/shop/panel/getpage", &controllers.PanelController{}, "get:GetPanelPage")
 
 	beego.InsertFilter("/*", beego.BeforeExec, util.Jwt)
 }
