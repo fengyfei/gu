@@ -36,16 +36,12 @@ import (
 
 	"github.com/astaxie/beego/context"
 	"strings"
-	"errors"
 	libctx "context"
-	"fmt"
 	"github.com/fengyfei/gu/libs/constants"
 )
 
 var (
-	errInputData   = errors.New("input error")
-	errExpired     = errors.New("expired")
-	errToken       = errors.New("token error")
+	tokenKey = "techcat_shop"
 	wechatLoginUrl = "/shop/user/wechatlogin"
 	registerUrl    = "/shop/user/register"
 	loginUrl       = "/shop/user/login"
@@ -58,7 +54,7 @@ func NewToken(userId int32, isAdmin bool) (string, error) {
 	claims["exp"] = time.Now().Add(time.Hour * 480).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return token.SignedString([]byte("mykey"))
+	return token.SignedString([]byte(tokenKey))
 }
 
 func Jwt(ctx *context.Context) {
@@ -72,7 +68,6 @@ func Jwt(ctx *context.Context) {
 		cc          libctx.Context
 	)
 
-	fmt.Println("urlll: ", ctx.Request.URL)
 	url := ctx.Request.URL.String()
 	if url == wechatLoginUrl || url == loginUrl || url == registerUrl {
 		return
@@ -90,7 +85,7 @@ func Jwt(ctx *context.Context) {
 
 	// Parse token
 	token, err = jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return []byte("mykey"), nil
+		return []byte(tokenKey), nil
 	})
 	if err != nil {
 		goto errFinish
