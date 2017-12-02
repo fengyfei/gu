@@ -50,14 +50,24 @@ type CartItem struct {
 }
 
 func (this *serviceProvider) Add(conn orm.Connection, userId, wareId, count int32) error {
-	now := time.Now()
+	db := conn.(*gorm.DB).Exec("USE shop")
+
 	item := &CartItem{}
-	item.CreatedAt = &now
 	item.UserId = userId
 	item.WareId = wareId
-	item.Count = count
+	err := db.First(&item).Error
+	if err == nil {
+		item.Count += count
+		return db.Save(&item).Error
+	}
 
-	db := conn.(*gorm.DB).Exec("USE shop")
+	if err == gorm.ErrRecordNotFound {
+		now := time.Now()
+		item.CreatedAt = &now
+		item.Count = count
+	} else {
+		return err
+	}
 
 	return db.Model(&CartItem{}).Create(&item).Error
 }
@@ -79,8 +89,8 @@ func (this *serviceProvider) RemoveById(conn orm.Connection, id int32) error {
 	return db.Delete(&item).Error
 }
 
-func (this *serviceProvider) RemoveWhenOrder(tx *gorm.DB, userId int32, wareIdList[]int32) error{
-	for i := 0; i < len(wareIdList); i++{
+func (this *serviceProvider) RemoveWhenOrder(tx *gorm.DB, userId int32, wareIdList []int32) error {
+	for i := 0; i < len(wareIdList); i++ {
 		item := &CartItem{}
 		item.ID = wareIdList[i]
 		err := tx.Delete(&item).Error
