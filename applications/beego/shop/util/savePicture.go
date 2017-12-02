@@ -94,7 +94,7 @@ func SavePicture(base64Str string, pathPrefix string) (string, error) {
   return path + fileName, err
 }
 
-func DeletePicture(path string) bool {
+func DeletePicture(path string) bool { // true -> delete success; false -> delete failed
   _, err := os.Stat(path)
 
   if err == nil || os.IsExist(err) {
