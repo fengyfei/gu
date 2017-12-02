@@ -51,7 +51,7 @@ func init() {
 
 	// ware api for admin
 	beego.Router("/shop/api/ware/create", &controllers.WareController{}, "post:CreateWare")
-	beego.Router("/shop/api/ware/getall", &controllers.WareController{}, "get:GetWareList")
+	beego.Router("/shop/api/ware/getall", &controllers.WareController{}, "get:GetAllWare")
 	beego.Router("/shop/api/ware/updateinfo", &controllers.WareController{}, "post:UpdateWithID")
 	beego.Router("/shop/api/ware/modifyprice", &controllers.WareController{}, "post:ModifyPrice")
 	beego.Router("/shop/api/ware/changestatus", &controllers.WareController{}, "post:ChangeStatus")

@@ -113,26 +113,35 @@ func (sp *serviceProvider) CreateWare(conn orm.Connection, wareReq Ware) error {
   return err
 }
 
-// cid in arg is not nil ? get wares of category : get all wares from database
-func (sp *serviceProvider) GetWareList(conn orm.Connection, arg ...uint) ([]Ware, error) {
+// get all wares
+func (sp *serviceProvider) GetAllWare(conn orm.Connection) ([]Ware, error) {
   var (
     res  *gorm.DB
     list []Ware
   )
 
   db := conn.(*gorm.DB).Exec("USE shop")
-  if len(arg) == 0 {
-    res = db.Table("wares").Scan(&list)
-  } else {
-    res = db.Table("wares").Where("status > ? AND category_id = ?", 0, arg[0]).Scan(&list)
-  }
+  res = db.Table("wares").Scan(&list)
+
+  return list, res.Error
+}
+
+// get wares by categoryID
+func (sp *serviceProvider) GetByCID(conn orm.Connection, cid uint) ([]BriefInfo, error) {
+  var (
+    res  *gorm.DB
+    list []BriefInfo
+  )
+
+  db := conn.(*gorm.DB).Exec("USE shop")
+  res = db.Table("wares").Where("status > ? AND category_id = ", 0, cid).Scan(&list)
 
   return list, res.Error
 }
 
 // get promotion wares (status = 2)
-func (sp *serviceProvider) GetPromotionList(conn orm.Connection) ([]Ware, error) {
-  var list []Ware
+func (sp *serviceProvider) GetPromotionList(conn orm.Connection) ([]BriefInfo, error) {
+  var list []BriefInfo
 
   db := conn.(*gorm.DB).Exec("USE shop")
   res := db.Table("wares").Where("status = ?", 2).Scan(&list)
