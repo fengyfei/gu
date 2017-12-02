@@ -71,7 +71,7 @@ func (this *serviceProvider) GetByUserID(conn orm.Connection, userId int32) ([]C
 	return items, err
 }
 
-func (this *serviceProvider) RemoveById(conn orm.Connection, id int32) error{
+func (this *serviceProvider) RemoveById(conn orm.Connection, id int32) error {
 	db := conn.(*gorm.DB).Exec("USE shop")
 	item := &CartItem{}
 	item.ID = id
@@ -79,3 +79,14 @@ func (this *serviceProvider) RemoveById(conn orm.Connection, id int32) error{
 	return db.Delete(&item).Error
 }
 
+func (this *serviceProvider) RemoveWhenOrder(tx *gorm.DB, userId int32, wareIdList[]int32) error{
+	for i := 0; i < len(wareIdList); i++{
+		item := &CartItem{}
+		item.ID = wareIdList[i]
+		err := tx.Delete(&item).Error
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}

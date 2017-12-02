@@ -92,7 +92,7 @@ func (this *OrderController) CreateOrder() {
 		goto finish
 	}
 
-	signStr, err = Order.Service.OrderByWechat(conn, userId, IP, req.ReceiveWay, &req.Orders)
+	signStr, err = Order.Service.OrderByWechat(conn, userId, IP, req.ReceiveWay, req.Orders)
 	if err != nil {
 		logger.Error(err)
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrWechatPay}

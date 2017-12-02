@@ -68,6 +68,10 @@ func init() {
 	beego.Router("/shop/cart/remove", &controllers.CartController{}, "post:Remove")
 	beego.Router("/shop/cart/get", &controllers.CartController{}, "get:GetByUser")
 
+	// order api for user
+	beego.Router("/shop/order/add", &controllers.OrderController{}, "post:CreateOrder")
+
+
 	// collection api for user
 	beego.Router("/shop/collection/get", &controllers.CollectionController{}, "get:GetByUserID")
 	beego.Router("/shop/collection/add", &controllers.CollectionController{}, "post:Add")
@@ -76,5 +80,5 @@ func init() {
 	// panel api for admin
 	beego.Router("/shop/api/panel/create", &controllers.PanelController{}, "post:AddPanel")
 
-	beego.InsertFilter("/shop/user/changepass", beego.BeforeExec, util.Jwt)
+	beego.InsertFilter("/*", beego.BeforeExec, util.Jwt)
 }

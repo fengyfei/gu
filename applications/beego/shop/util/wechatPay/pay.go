@@ -38,6 +38,7 @@ import (
 	"crypto/md5"
 	"io"
 	"fmt"
+	"strconv"
 )
 
 var (
@@ -113,9 +114,11 @@ func RandomString(randLength int) (result string) {
 
 func GenerateBillID() string{
 	str := "shop"
-	now := string(time.Now().Nanosecond())
+	now := strconv.Itoa(time.Now().Nanosecond())
 	str += now
-	str += string(10000 + increasementId)
+	str += strconv.Itoa(10000 + increasementId)
+	increasementId++
+	fmt.Println(str, now, increasementId)
 
 	return str
 }
