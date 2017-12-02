@@ -132,9 +132,9 @@ finish:
 
 func (this *CartController) Remove() {
 	var (
-		req    removeCartReq
-		err    error
-		conn   orm.Connection
+		req  removeCartReq
+		err  error
+		conn orm.Connection
 	)
 
 	conn, err = mysql.Pool.Get()

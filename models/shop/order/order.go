@@ -34,7 +34,9 @@ import (
 	"github.com/fengyfei/gu/libs/orm"
 	"github.com/jinzhu/gorm"
 	"github.com/fengyfei/gu/applications/beego/shop/util/wechatPay"
-	User "github.com/fengyfei/gu/models/shop/user"
+	//User "github.com/fengyfei/gu/models/shop/user"
+	Cart "github.com/fengyfei/gu/models/shop/cart"
+	"fmt"
 )
 
 type serviceProvider struct{}
@@ -64,16 +66,21 @@ type OrderItem struct {
 	Price  float64 `json:"price" validate:"required"`
 }
 
-func (this *serviceProvider) OrderByWechat(conn orm.Connection, userId int32, IP string, receiveWay int8, orders *[]OrderItem) (string, error) {
+func (this *serviceProvider) OrderByWechat(conn orm.Connection, userId int32, IP string, receiveWay int8, orders []OrderItem) (string, error) {
 	var (
 		parentOrder Order
 		err         error
 		totalPrice  float64
 		childOrders []OrderItem
+		wareIdList  = make([]int32, len(orders))
+		/*user        *User.User
+		totalFee    int64
+		paySign     string*/
 	)
 
-	childOrders = *orders
+	childOrders = orders
 	parentOrder.BillID = wechatPay.GenerateBillID()
+	fmt.Println(parentOrder.BillID)
 	parentOrder.UserID = userId
 	parentOrder.ReceiveWay = receiveWay
 	parentOrder.ParentID = defaultParentId
@@ -84,10 +91,11 @@ func (this *serviceProvider) OrderByWechat(conn orm.Connection, userId int32, IP
 
 	err = tx.Create(&parentOrder).Error
 	if err != nil {
-		return "", err
+		goto errFinish
 	}
 
 	for i := 0; i < len(childOrders); i++ {
+		wareIdList[i] = childOrders[i].WareId
 		child := &Order{}
 		curOrder := childOrders[i]
 		child.Price = curOrder.Price * float64(curOrder.Count)
@@ -98,24 +106,33 @@ func (this *serviceProvider) OrderByWechat(conn orm.Connection, userId int32, IP
 		totalPrice += child.Price
 		err = tx.Create(&child).Error
 		if err != nil {
-			tx.Rollback()
-			return "", err
+			goto errFinish
 		}
 	}
 
-	user, err := User.Service.GetUserByID(conn, userId)
+	err = Cart.Service.RemoveWhenOrder(tx, userId, wareIdList)
 	if err != nil {
-		return "", err
+		goto errFinish
 	}
 
-	total_fee := int64(totalPrice * 100)
-
-	str, err := wechatPay.OnPay(user.UserName, "desc", parentOrder.BillID, IP, total_fee)
+	/*user, err = User.Service.GetUserByID(conn, userId)
 	if err != nil {
-		return "", err
+		goto errFinish
 	}
 
-	return str, nil
+	totalFee = int64(totalPrice * 100)
+	paySign, err = wechatPay.OnPay(user.UserName, "desc", parentOrder.BillID, IP, totalFee)
+	if err != nil {
+		goto errFinish
+	}
+
+	return paySign, nil*/
+	tx.Commit()
+	return "", nil
+
+errFinish:
+	tx.Rollback()
+	return "", err
 }
 
 func (this *serviceProvider) ChangeState(conn orm.Connection, ID, status int32) error {
