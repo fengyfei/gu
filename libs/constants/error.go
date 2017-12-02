@@ -42,6 +42,9 @@ const (
 	// ErrInvalidParam - Invalid Parameter
 	ErrInvalidParam = 421
 
+	// ErrAccount - No This User or Password Error
+	ErrAccount = 422
+
 	// ErrInternalServerError - Internal error.
 	ErrInternalServerError = 500
 

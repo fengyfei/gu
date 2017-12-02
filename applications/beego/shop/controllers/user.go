@@ -221,7 +221,7 @@ func (this *UserController) PhoneLogin() {
 
 	uid, err = user.Service.PhoneLogin(conn, &loginReq.Phone, &loginReq.Password)
 	if err != nil {
-		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrAccount}
 		goto finish
 	}
 
@@ -247,10 +247,6 @@ func (this *UserController) ChangePassword() {
 	)
 
 	userId = this.Ctx.Request.Context().Value("userId").(int32)
-	fmt.Println(userId)
-	if err != nil {
-		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}
-	}
 
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
