@@ -136,7 +136,7 @@ finish:
 }
 
 // get all wares
-func (this *WareController) GetWareList() {
+func (this *WareController) GetAllWare() {
   var (
     err error
     res []ware.Ware
@@ -151,7 +151,7 @@ func (this *WareController) GetWareList() {
     goto finish
   }
 
-  res, err = ware.Service.GetWareList(conn)
+  res, err = ware.Service.GetAllWare(conn)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -169,7 +169,7 @@ func (this *WareController) GetWareByCategory() {
   var (
     err    error
     cidReq categoryReq
-    res    []ware.Ware
+    res    []ware.BriefInfo
   )
 
   conn, err := mysql.Pool.Get()
@@ -189,7 +189,7 @@ func (this *WareController) GetWareByCategory() {
     goto finish
   }
 
-  res, err = ware.Service.GetWareList(conn, cidReq.CID)
+  res, err = ware.Service.GetByCID(conn, cidReq.CID)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -206,7 +206,7 @@ finish:
 func (this *WareController) GetPromotion() {
   var (
     err error
-    res []ware.Ware
+    res []ware.BriefInfo
   )
 
   conn, err := mysql.Pool.Get()
