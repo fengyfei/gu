@@ -201,7 +201,7 @@ func (sp *serviceProvider) List(conn orm.Connection) ([]Staff, error) {
 	list := []Staff{}
 
 	db := conn.(*gorm.DB).Exec("USE staff")
-	err := db.Model(list).Where("resigned = false AND active = true").Find(&list).Error
+	err := db.Model(list).Where("resigned = false").Find(&list).Error
 
 	if err != nil {
 		return list, err
