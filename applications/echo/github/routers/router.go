@@ -43,19 +43,19 @@ func InitRouter(server *echo.Echo) {
 	}
 
 	// Repos
-	server.POST("/api/v1/repos/create", repos.Create)
-	server.POST("/api/v1/repos/modify/active", repos.ModifyActive)
-	server.GET("/api/v1/repos/list", repos.List)
-	server.GET("/api/v1/repos/activelist", repos.ActiveList)
-	server.POST("/api/v1/repos/info", repos.Info)
+	server.POST("/api/v1/techcats/repos/create", repos.Create)
+	server.POST("/api/v1/techcats/repos/modify/active", repos.ModifyActive)
+	server.GET("/api/v1/techcats/repos/list", repos.List)
+	server.GET("/api/v1/techcats/repos/activelist", repos.ActiveList)
+	server.POST("/api/v1/techcats/repos/info", repos.Info)
 
 	// Trending
-	server.POST("/api/v1/trending/lang", trending.LangInfo)
+	server.POST("/api/v1/techcats/trending/lang", trending.LangInfo)
 
 	// Article
-	server.POST("/api/v1/article/create", article.Create)
-	server.POST("/api/v1/article/modify/active", article.ModifyActive)
-	server.GET("/api/v1/article/list", article.List)
-	server.GET("/api/v1/article/activelist", article.ActiveList)
-	server.POST("/api/v1/article/info", article.Info)
+	server.POST("/api/v1/techcats/article/create", article.Create)
+	server.POST("/api/v1/techcats/article/modify/active", article.ModifyActive)
+	server.GET("/api/v1/techcats/article/list", article.List)
+	server.GET("/api/v1/techcats/article/activelist", article.ActiveList)
+	server.POST("/api/v1/techcats/article/info", article.Info)
 }
