@@ -51,7 +51,7 @@ type User struct {
 	ID        int32  `gorm:"primary_key;auto_increment"`
 	UserName  string `gorm:"unique;type:varchar(128)"`
 	NickName  string `gorm:"type:varchar(30)"`
-	Phone     string `gorm:"unique"`
+	Phone     string `gorm:"unique;default:null"`
 	Type      string `gorm:"type:varchar(30)"`
 	Pass      string `gorm:"type:varchar(128)"`
 	CreatedAt *time.Time
@@ -144,7 +144,7 @@ func (this *serviceProvider) ChangePassword(conn orm.Connection, id int32, oldPa
 	return db.Save(&user).Error
 }
 
-func (this *serviceProvider) GetUserByID(conn orm.Connection, ID int32) (*User, error){
+func (this *serviceProvider) GetUserByID(conn orm.Connection, ID int32) (*User, error) {
 	db := conn.(*gorm.DB).Exec("USE shop")
 	user := &User{}
 
