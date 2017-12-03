@@ -56,8 +56,8 @@ type (
 		Intro *string `json:"intro" validate:"required,alphanumunicode,min=4,max=256"`
 	}
 
-	// modifyActiveReq - The request struct that modify role status.
-	modifyActiveReq struct {
+	// activateReq - The request struct that modify role status.
+	activateReq struct {
 		Id     int16 `json:"id" validate:"required"`
 		Active bool  `json:"active"`
 	}
@@ -146,7 +146,7 @@ func Modify(c echo.Context) error {
 func ModifyActive(c echo.Context) error {
 	var (
 		err error
-		req modifyActiveReq
+		req activateReq
 	)
 
 	if err = c.Bind(&req); err != nil {

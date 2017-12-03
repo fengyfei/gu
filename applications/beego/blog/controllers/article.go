@@ -63,8 +63,8 @@ type getByIdReq struct {
 	ID string `json:"id" validate:"required,alphanum,len=24"`
 }
 
-// modifyArticleReq - the request struct that modify article information by id.
-type modifyArticleReq struct {
+// activateReq - the request struct that modify article information by id.
+type activateReq struct {
 	ArticleID string `json:"id" validate:"required,alphanum,len=24"`
 	Title     string `json:"title" validate:"required,alphaunicode,min=6"`
 	Content   string `json:"content" validate:"required,min=50"`
@@ -215,7 +215,7 @@ finish:
 // Modify modify article
 func (ac *Article) Modify() {
 	var (
-		articleToModify modifyArticleReq
+		articleToModify activateReq
 		err             error
 	)
 

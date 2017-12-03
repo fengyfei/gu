@@ -85,8 +85,8 @@ type (
 		Mobile *string `json:"mobile" validate:"required,numeric,len=11"`
 	}
 
-	// modifyActiveReq - The request struct that modify staff status.
-	modifyActiveReq struct {
+	// activateReq - The request struct that modify staff status.
+	activateReq struct {
 		Id     int32 `json:"id" validate:"required"`
 		Active bool  `json:"active"`
 	}
@@ -306,7 +306,7 @@ func ModifyMobile(c echo.Context) error {
 func ModifyActive(c echo.Context) error {
 	var (
 		err error
-		req modifyActiveReq
+		req activateReq
 	)
 
 	if err = c.Bind(&req); err != nil {
