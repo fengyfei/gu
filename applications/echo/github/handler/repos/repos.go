@@ -51,8 +51,8 @@ type (
 		Lang   *[]string `json:"lang"`
 	}
 
-	// modifyActiveReq - The request struct that modify repos status.
-	modifyActiveReq struct {
+	// activateReq - The request struct that modify repos status.
+	activateReq struct {
 		ID     string `json:"id" validate:"required,alphanum,len=24"`
 		Active bool   `json:"active"`
 	}
@@ -104,7 +104,7 @@ func Create(c echo.Context) error {
 func ModifyActive(c echo.Context) error {
 	var (
 		err error
-		req modifyActiveReq
+		req activateReq
 	)
 
 	if err = c.Bind(&req); err != nil {

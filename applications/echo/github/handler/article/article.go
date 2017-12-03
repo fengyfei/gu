@@ -49,8 +49,8 @@ type (
 		Source *string `json:"source"`
 	}
 
-	// modifyActiveReq - The request struct that modify article status.
-	modifyActiveReq struct {
+	// activateReq - The request struct that modify article status.
+	activateReq struct {
 		ID     string `json:"id" validate:"required,alphanum,len=24"`
 		Active bool   `json:"active"`
 	}
@@ -100,7 +100,7 @@ func Create(c echo.Context) error {
 func ModifyActive(c echo.Context) error {
 	var (
 		err error
-		req modifyActiveReq
+		req activateReq
 	)
 
 	if err = c.Bind(&req); err != nil {
