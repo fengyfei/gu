@@ -37,11 +37,13 @@ import (
 	"github.com/labstack/echo"
 
 	"github.com/fengyfei/gu/applications/echo/admin/mysql"
+	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/models/staff"
 )
 
 var (
 	errPermissionNotMatch = errors.New("user permissions and url permissions do not match")
+	errNoRole             = errors.New("this user or url has no role")
 )
 
 // IsLogin check if the user is logged in.
@@ -62,7 +64,7 @@ func IsActive(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		conn, err := mysql.Pool.Get()
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, err.Error())
+			return NewErrorWithMsg(constants.ErrMysql, err.Error())
 		}
 		defer mysql.Pool.Release(conn)
 
@@ -70,7 +72,7 @@ func IsActive(next echo.HandlerFunc) echo.HandlerFunc {
 		ok, err := staff.Service.IsActive(conn, uid)
 
 		if err != nil {
-			return c.JSON(http.StatusPaymentRequired, err.Error())
+			return NewErrorWithMsg(constants.ErrMysql, err.Error())
 		}
 
 		if ok {
@@ -86,27 +88,43 @@ func IsPermissionMatch(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		conn, err := mysql.Pool.Get()
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, err.Error())
+			return NewErrorWithMsg(constants.ErrMysql, err.Error())
 		}
 		defer mysql.Pool.Release(conn)
+
+		plist, err := staff.Service.Permissions(conn)
+		if err != nil {
+			return NewErrorWithMsg(constants.ErrMysql, err.Error())
+		}
+
+		// If there is no permission record, pass the validation.
+		if len(plist) == 0 {
+			return next(c)
+		}
 
 		uid := UserID(c)
 		userRoles, err := staff.Service.AssociatedRoles(conn, uid)
 
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, err.Error())
+			return NewErrorWithMsg(constants.ErrMysql, err.Error())
 		}
 
-		scheme := "http://"
-		if c.Request().TLS != nil {
-			scheme = "https://"
+		// If the user does not have a role, return the error directly.
+		if len(userRoles) == 0 {
+			err = errNoRole
+			return NewErrorWithMsg(constants.ErrPermission, err.Error())
 		}
 
-		url := scheme + c.Request().Host + c.Request().RequestURI
+		url := c.Request().RequestURI
 		urlRoles, err := staff.Service.URLPermissions(conn, &url)
 
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, err.Error())
+			return NewErrorWithMsg(constants.ErrMysql, err.Error())
+		}
+
+		if len(urlRoles) == 0 {
+			err = errNoRole
+			return NewErrorWithMsg(constants.ErrPermission, err.Error())
 		}
 
 		for urlR := range urlRoles {
