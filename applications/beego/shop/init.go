@@ -30,90 +30,84 @@
 package main
 
 import (
-  "fmt"
-  "github.com/astaxie/beego"
-  "github.com/fengyfei/gu/applications/beego/shop/mysql"
-  "github.com/jinzhu/gorm"
-  "github.com/fengyfei/gu/models/shop/user"
-  "github.com/fengyfei/gu/models/shop/category"
-  "github.com/fengyfei/gu/models/shop/ware"
-  "github.com/fengyfei/gu/models/shop/address"
-  "github.com/fengyfei/gu/models/shop/order"
-  "github.com/fengyfei/gu/models/shop/admin"
-  "github.com/fengyfei/gu/models/shop/cart"
-  "github.com/fengyfei/gu/models/shop/panel"
+	"fmt"
+	"github.com/astaxie/beego"
+	"github.com/fengyfei/gu/applications/beego/shop/mysql"
+	"github.com/jinzhu/gorm"
+	"github.com/fengyfei/gu/models/shop/user"
+	"github.com/fengyfei/gu/models/shop/category"
+	"github.com/fengyfei/gu/models/shop/ware"
+	"github.com/fengyfei/gu/models/shop/address"
+	"github.com/fengyfei/gu/models/shop/order"
+	"github.com/fengyfei/gu/models/shop/cart"
+	"github.com/fengyfei/gu/models/shop/panel"
 )
 
 func init() {
-  initMysql()
-  initTable()
+	initMysql()
+	initTable()
 }
 
 func initMysql() {
-  user := beego.AppConfig.String("mysqluser")
-  pass := beego.AppConfig.String("mysqlpass")
-  url := beego.AppConfig.String("mysqlurl")
-  port := beego.AppConfig.String("mysqlport")
-  sqlName := beego.AppConfig.String("mysqlname")
+	user := beego.AppConfig.String("mysqluser")
+	pass := beego.AppConfig.String("mysqlpass")
+	url := beego.AppConfig.String("mysqlurl")
+	port := beego.AppConfig.String("mysqlport")
+	sqlName := beego.AppConfig.String("mysqlname")
 
-  dataSource := fmt.Sprintf(user + ":" + pass + "@" + "tcp(" + url + ":" + port + ")/" + sqlName + "?charset=utf8&parseTime=True&loc=Local")
+	dataSource := fmt.Sprintf(user + ":" + pass + "@" + "tcp(" + url + ":" + port + ")/" + sqlName + "?charset=utf8&parseTime=True&loc=Local")
 
-  mysql.InitPool(dataSource)
+	mysql.InitPool(dataSource)
 }
 
 // initTable create the MySQL table. All MySQL tables need to be created here.
 func initTable() {
-  conn, err := mysql.Pool.Get()
-  if err != nil {
-    panic(err)
-  }
-  defer mysql.Pool.Release(conn)
+	conn, err := mysql.Pool.Get()
+	if err != nil {
+		panic(err)
+	}
+	defer mysql.Pool.Release(conn)
 
-  db := conn.(*gorm.DB).Set("gorm:table_options", "ENGINE=InnoDB").Set("gorm:table_options", "CHARSET=utf8")
+	db := conn.(*gorm.DB).Set("gorm:table_options", "ENGINE=InnoDB").Set("gorm:table_options", "CHARSET=utf8")
 
-  if !conn.(*gorm.DB).HasTable("users") {
-    db.CreateTable(
-      &user.User{},
-    )
-  }
-  if !conn.(*gorm.DB).HasTable("categories") {
-    db.CreateTable(
-      &category.Category{},
-    )
-  }
-  if !conn.(*gorm.DB).HasTable("wares") {
-    db.CreateTable(
-      &ware.Ware{},
-    )
-  }
-  if !conn.(*gorm.DB).HasTable("addresses") {
-    db.CreateTable(
-      &address.Address{},
-    )
-  }
-  if !conn.(*gorm.DB).HasTable("orders") {
-    db.CreateTable(
-      &order.Order{},
-    )
-  }
-  if !conn.(*gorm.DB).HasTable("admins") {
-    db.CreateTable(
-      &admin.Admin{},
-    )
-  }
-  if !conn.(*gorm.DB).HasTable("cart_items") {
-    db.CreateTable(
-      &cart.CartItem{},
-    )
-  }
-  if !conn.(*gorm.DB).HasTable("panels") {
-    db.CreateTable(
-      &panel.Panel{},
-    )
-  }
-  if !conn.(*gorm.DB).HasTable("details") {
-    db.CreateTable(
-      &panel.Detail{},
-    )
-  }
+	if !conn.(*gorm.DB).HasTable("users") {
+		db.CreateTable(
+			&user.User{},
+		)
+	}
+	if !conn.(*gorm.DB).HasTable("categories") {
+		db.CreateTable(
+			&category.Category{},
+		)
+	}
+	if !conn.(*gorm.DB).HasTable("wares") {
+		db.CreateTable(
+			&ware.Ware{},
+		)
+	}
+	if !conn.(*gorm.DB).HasTable("addresses") {
+		db.CreateTable(
+			&address.Address{},
+		)
+	}
+	if !conn.(*gorm.DB).HasTable("orders") {
+		db.CreateTable(
+			&order.Order{},
+		)
+	}
+	if !conn.(*gorm.DB).HasTable("cart_items") {
+		db.CreateTable(
+			&cart.CartItem{},
+		)
+	}
+	if !conn.(*gorm.DB).HasTable("panels") {
+		db.CreateTable(
+			&panel.Panel{},
+		)
+	}
+	if !conn.(*gorm.DB).HasTable("details") {
+		db.CreateTable(
+			&panel.Detail{},
+		)
+	}
 }
