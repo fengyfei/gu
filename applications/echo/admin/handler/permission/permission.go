@@ -73,22 +73,21 @@ func Create(c echo.Context) error {
 	)
 
 	if err = c.Bind(&req); err != nil {
-		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
 	}
 
 	if err = c.Validate(&req); err != nil {
-		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
 	}
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
 	}
 	defer mysql.Pool.Release(conn)
 
-	err = staff.Service.AddURLPermission(conn, req.URL, req.RoleId)
-	if err != nil {
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+	if err = staff.Service.AddURLPermission(conn, req.URL, req.RoleId); err != nil {
+		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
@@ -104,25 +103,21 @@ func Remove(c echo.Context) error {
 	)
 
 	if err = c.Bind(&req); err != nil {
-		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
 	}
 
 	if err = c.Validate(&req); err != nil {
-		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
 	}
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
 	}
 	defer mysql.Pool.Release(conn)
 
-	if err != nil {
-		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
-	}
-
 	if err = staff.Service.RemoveURLPermission(conn, req.URL, req.RoleId); err != nil {
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
@@ -140,26 +135,26 @@ func List(c echo.Context) error {
 	)
 
 	if err = c.Bind(&req); err != nil {
-		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
 	}
 
 	if err = c.Validate(&req); err != nil {
-		return core.NewErrorWithMsg(http.StatusBadRequest, err.Error())
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
 	}
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
 	}
 	defer mysql.Pool.Release(conn)
 
 	resp, err := staff.Service.URLPermissions(conn, req.URL)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return core.NewErrorWithMsg(http.StatusNotFound, err.Error())
+			return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
 		}
 
-		return core.NewErrorWithMsg(http.StatusInternalServerError, err.Error())
+		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
 	}
 
 	for roleId := range resp {
