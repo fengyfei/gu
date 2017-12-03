@@ -92,13 +92,15 @@ func IsPermissionMatch(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 		defer mysql.Pool.Release(conn)
 
-		plist, err := staff.Service.Permissions(conn)
+		url := c.Request().RequestURI
+		urlRoles, err := staff.Service.URLPermissions(conn, &url)
+
 		if err != nil {
 			return NewErrorWithMsg(constants.ErrMysql, err.Error())
 		}
 
 		// If there is no permission record, pass the validation.
-		if len(plist) == 0 {
+		if len(urlRoles) == 0 {
 			return next(c)
 		}
 
@@ -112,19 +114,7 @@ func IsPermissionMatch(next echo.HandlerFunc) echo.HandlerFunc {
 		// If the user does not have a role, return the error directly.
 		if len(userRoles) == 0 {
 			err = errNoRole
-			return NewErrorWithMsg(constants.ErrPermission, err.Error())
-		}
-
-		url := c.Request().RequestURI
-		urlRoles, err := staff.Service.URLPermissions(conn, &url)
-
-		if err != nil {
-			return NewErrorWithMsg(constants.ErrMysql, err.Error())
-		}
-
-		if len(urlRoles) == 0 {
-			err = errNoRole
-			return NewErrorWithMsg(constants.ErrPermission, err.Error())
+			return NewErrorWithMsg(constants.ErrForbidden, err.Error())
 		}
 
 		for urlR := range urlRoles {
@@ -135,6 +125,8 @@ func IsPermissionMatch(next echo.HandlerFunc) echo.HandlerFunc {
 
 		err = errPermissionNotMatch
 
-		return c.JSON(http.StatusForbidden, err.Error())
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			constants.RespKeyStatus: constants.ErrForbidden,
+		})
 	}
 }

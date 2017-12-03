@@ -35,6 +35,7 @@ const (
 
 	// ErrPermission - Permission Denied
 	ErrPermission = 401
+	ErrForbidden  = 403
 
 	// ErrToken - Invalid Token
 	ErrToken = 420
@@ -53,7 +54,6 @@ const (
 
 	// ErrWechatAuth - Wechat Auth error.
 	ErrWechatAuth = 521
-
 
 	// ErrMongoDB - MongoDB operations error.
 	ErrMongoDB = 600
