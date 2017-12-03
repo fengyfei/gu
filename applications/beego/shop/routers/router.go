@@ -69,8 +69,11 @@ func init() {
 	beego.Router("/shop/cart/get", &controllers.CartController{}, "get:GetByUser")
 
 	// order api for user
-	beego.Router("/shop/order/add", &controllers.OrderController{}, "post:CreateOrder")
+	beego.Router("/shop/user/order/add", &controllers.OrderController{}, "post:CreateOrder")
+	beego.Router("/shop/user/order/get", &controllers.OrderController{}, "get:GetUserOrder")
 
+	// order api for admin
+	beego.Router("/shop/api/order/confirm", &controllers.OrderController{}, "post:ConfirmOrder")
 
 	// collection api for user
 	beego.Router("/shop/collection/get", &controllers.CollectionController{}, "get:GetByUserID")
