@@ -98,7 +98,7 @@ func (sp *serviceProvider) RoleList(conn orm.Connection) ([]Role, error) {
 	list := []Role{}
 
 	db := conn.(*gorm.DB).Exec("USE staff")
-	err := db.Model(r).Where("active = true").Find(&list).Error
+	err := db.Model(r).Find(&list).Error
 
 	if err != nil {
 		return list, err
