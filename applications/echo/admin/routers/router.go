@@ -46,34 +46,33 @@ func InitRouter(server *echo.Echo, token string) {
 	core.InitJWTWithToken(token)
 
 	// JWT middleware does not affect these route.
-	core.URLMap["/api/v1/staff/login"] = struct{}{}
+	core.URLMap["/api/v1/office/staff/login"] = struct{}{}
 
 	// Staff
-	server.POST("/api/v1/staff/login", staff.Login)
-	server.POST("/api/v1/staff/create", staff.Create, core.IsLogin, core.IsActive, core.IsPermissionMatch)
-	server.POST("/api/v1/staff/modify/info", staff.Modify, core.IsLogin, core.IsActive, core.IsPermissionMatch)
-	server.POST("/api/v1/staff/modify/pwd", staff.ModifyPwd, core.IsLogin, core.IsActive, core.IsPermissionMatch)
-	server.POST("/api/v1/staff/modify/mobile", staff.ModifyMobile, core.IsLogin, core.IsActive, core.IsPermissionMatch)
-	server.POST("/api/v1/staff/modify/active", staff.ModifyActive, core.IsLogin, core.IsPermissionMatch)
-	server.POST("/api/v1/staff/dismiss", staff.Dismiss, core.IsLogin, core.IsActive, core.IsPermissionMatch)
-	server.GET("/api/v1/staff/overview/list", staff.OverviewList, core.IsLogin, core.IsActive, core.IsPermissionMatch)
-	server.GET("/api/v1/staff/detail/list", staff.InfoList, core.IsLogin, core.IsActive, core.IsPermissionMatch)
-	server.POST("/api/v1/staff/detail", staff.Info, core.IsLogin, core.IsActive, core.IsPermissionMatch)
+	server.POST("/api/v1/office/staff/login", staff.Login)
+	server.POST("/api/v1/office/staff/create", staff.Create, core.IsLogin, core.IsActive, core.IsPermissionMatch)
+	server.POST("/api/v1/office/staff/modify/info", staff.Modify, core.IsLogin, core.IsActive)
+	server.POST("/api/v1/office/staff/modify/pwd", staff.ModifyPwd, core.IsLogin, core.IsActive)
+	server.POST("/api/v1/office/staff/modify/mobile", staff.ModifyMobile, core.IsLogin, core.IsActive)
+	server.POST("/api/v1/office/staff/modify/active", staff.ModifyActive, core.IsLogin, core.IsPermissionMatch)
+	server.POST("/api/v1/office/staff/dismiss", staff.Dismiss, core.IsLogin, core.IsActive, core.IsPermissionMatch)
+	server.GET("/api/v1/office/staff/list", staff.List, core.IsLogin, core.IsActive, core.IsPermissionMatch)
+	server.POST("/api/v1/office/staff/info", staff.Info, core.IsLogin, core.IsActive, core.IsPermissionMatch)
 
 	// Relation
-	server.POST("/api/v1/staff/relation/create", staff.AddRole, core.IsLogin, core.IsActive, core.IsPermissionMatch)
-	server.POST("/api/v1/staff/relation/remove", staff.RemoveRole, core.IsLogin, core.IsActive, core.IsPermissionMatch)
-	server.POST("/api/v1/staff/relation/list", staff.RoleList, core.IsLogin, core.IsActive, core.IsPermissionMatch)
+	server.POST("/api/v1/office/staff/relation/create", staff.AddRole, core.IsLogin, core.IsActive, core.IsPermissionMatch)
+	server.POST("/api/v1/office/staff/relation/remove", staff.RemoveRole, core.IsLogin, core.IsActive, core.IsPermissionMatch)
+	server.POST("/api/v1/office/staff/relation/list", staff.RoleList, core.IsLogin, core.IsActive, core.IsPermissionMatch)
 
 	// Role
-	server.POST("/api/v1/role/create", role.Create, core.IsLogin, core.IsActive, core.IsPermissionMatch)
-	server.POST("/api/v1/role/modify/info", role.Modify, core.IsLogin, core.IsActive, core.IsPermissionMatch)
-	server.POST("/api/v1/role/modify/active", role.ModifyActive, core.IsLogin, core.IsActive, core.IsPermissionMatch)
-	server.GET("/api/v1/role/detail/list", role.InfoList, core.IsLogin, core.IsActive, core.IsPermissionMatch)
-	server.POST("/api/v1/role/detail", role.Info, core.IsLogin, core.IsActive, core.IsPermissionMatch)
+	server.POST("/api/v1/office/role/create", role.Create, core.IsLogin, core.IsActive, core.IsPermissionMatch)
+	server.POST("/api/v1/office/role/modify/info", role.Modify, core.IsLogin, core.IsActive, core.IsPermissionMatch)
+	server.POST("/api/v1/office/role/modify/active", role.ModifyActive, core.IsLogin, core.IsActive, core.IsPermissionMatch)
+	server.GET("/api/v1/office/role/list", role.List, core.IsLogin, core.IsActive, core.IsPermissionMatch)
+	server.POST("/api/v1/office/role/detail", role.Info, core.IsLogin, core.IsActive, core.IsPermissionMatch)
 
 	// Permission
-	server.POST("/api/v1/permission/create", permission.Create, core.IsLogin, core.IsActive, core.IsPermissionMatch)
-	server.POST("/api/v1/permission/remove", permission.Remove, core.IsLogin, core.IsActive, core.IsPermissionMatch)
-	server.POST("/api/v1/permission/list", permission.List, core.IsLogin, core.IsActive, core.IsPermissionMatch)
+	server.POST("/api/v1/office/permission/create", permission.Create, core.IsLogin, core.IsActive, core.IsPermissionMatch)
+	server.POST("/api/v1/office/permission/remove", permission.Remove, core.IsLogin, core.IsActive, core.IsPermissionMatch)
+	server.POST("/api/v1/office/permission/list", permission.List, core.IsLogin, core.IsActive, core.IsPermissionMatch)
 }
