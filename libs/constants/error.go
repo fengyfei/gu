@@ -35,7 +35,7 @@ const (
 
 	// ErrPermission - Permission Denied
 	ErrPermission = 401
-	ErrForbidden  = 403
+	ErrForbidden  = 438
 
 	// ErrToken - Invalid Token
 	ErrToken = 420
