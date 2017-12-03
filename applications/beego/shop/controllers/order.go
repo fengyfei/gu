@@ -49,9 +49,8 @@ type (
 		ReceiveWay int8              `json:"receiveWay"`
 	}
 
-	changeStateReq struct {
+	confirmOrderReq struct {
 		ID     int32 `json:"id"`
-		Status int32 `json:"status"`
 	}
 )
 
@@ -105,10 +104,10 @@ finish:
 	this.ServeJSON(true)
 }
 
-func (this *OrderController) ChangeOrderState() {
+func (this *OrderController) ConfirmOrder() {
 
 	var (
-		req  changeStateReq
+		req  confirmOrderReq
 		conn orm.Connection
 		err  error
 	)
@@ -131,7 +130,7 @@ func (this *OrderController) ChangeOrderState() {
 		goto finish
 	}
 
-	err = Order.Service.ChangeState(conn, req.ID, req.Status)
+	err = Order.Service.ChangeStateByOne(conn, req.ID, Order.StatusConfirmed)
 	if err != nil {
 		logger.Error(err)
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}

@@ -45,6 +45,9 @@ var (
 	Service         *serviceProvider
 	defaultParentId int32 = 0x0
 	unPay           int32 = 0x0
+	StatusUnpay     int32 = 0x0
+	StatusPaid      int32 = 0x1
+	StatusConfirmed int32 = 0x2
 )
 
 type Order struct {
@@ -135,9 +138,27 @@ errFinish:
 	return "", err
 }
 
-func (this *serviceProvider) ChangeState(conn orm.Connection, ID, status int32) error {
+func (this *serviceProvider) ChangeStateByOne(conn orm.Connection, ID, status int32) error {
 	db := conn.(*gorm.DB).Exec("USE shop")
 	return db.Model(&Order{}).Where("id = ?", ID).Update("status", status).Error
+}
+
+func (this *serviceProvider) ChangeStateByGroup(conn orm.Connection, IdList []int32, status int32) error {
+	var err error
+	db := conn.(*gorm.DB).Exec("USE shop")
+	tx := db.Begin()
+	for _, id := range IdList {
+		err = tx.Model(&Order{}).Where("id = ?", id).Update("status", status).Error
+		if err != nil {
+			goto onErr
+		}
+	}
+
+	tx.Commit()
+	return nil
+onErr:
+	tx.Rollback()
+	return err
 }
 
 func (this *serviceProvider) GetUserOrder(conn orm.Connection, userId int32) (*[]Order, error) {
@@ -150,4 +171,27 @@ func (this *serviceProvider) GetUserOrder(conn orm.Connection, userId int32) (*[
 		return nil, err
 	}
 	return &orders, nil
+}
+
+func (this *serviceProvider) GetByStatus(conn orm.Connection, status int32) ([]Order, error) {
+	var (
+		orders []Order
+	)
+	db := conn.(*gorm.DB).Exec("USE shop")
+	err := db.Where("status = ?", status).Find(&orders).Error
+	return orders, err
+}
+
+func (this *serviceProvider) GetParents(conn orm.Connection) ([]Order, error) {
+	var parents []Order
+	db := conn.(*gorm.DB)
+	err := db.Where("parent_id = 0").Find(&parents).Error
+	return parents, err
+}
+
+func (this *serviceProvider) GetByParentId(conn orm.Connection, parentId int32) ([]Order, error) {
+	var parents []Order
+	db := conn.(*gorm.DB)
+	err := db.Where("parent_id = ", parentId).Find(&parents).Error
+	return parents, err
 }
