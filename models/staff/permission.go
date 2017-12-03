@@ -147,6 +147,21 @@ func (sp *serviceProvider) URLPermissions(conn orm.Connection, url *string) (map
 	return result, nil
 }
 
+// Permissions lists all the roles.
+func (sp *serviceProvider) Permissions(conn orm.Connection) ([]Permission, error) {
+	permission := &Permission{}
+	plist := []Permission{}
+
+	db := conn.(*gorm.DB).Exec("USE staff")
+	err := db.Model(permission).Find(&plist).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return plist, nil
+}
+
 func CreateAdminPermission(conn orm.Connection) error {
 	url := "http://127.0.0.1:21000/api/v1/staff/create"
 	rid := int16(1)
