@@ -30,7 +30,6 @@
 package staff
 
 import (
-	"errors"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -74,7 +73,7 @@ func (sp *serviceProvider) AddURLPermission(conn orm.Connection, url *string, ri
 	}
 
 	if !r.Active {
-		err = errors.New("the role is not activated")
+		err = errRoleInactive
 		goto finish
 	}
 
@@ -110,7 +109,7 @@ func (sp *serviceProvider) RemoveURLPermission(conn orm.Connection, url *string,
 	}
 
 	if !r.Active {
-		err = errors.New("the role is not activated")
+		err = errRoleInactive
 		goto finish
 	}
 
@@ -170,7 +169,7 @@ func CreateAdminPermission(conn orm.Connection) error {
 	}
 
 	if !r.Active {
-		err = errors.New("the role is not activated")
+		err = errRoleInactive
 		goto finish
 	}
 

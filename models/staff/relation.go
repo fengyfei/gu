@@ -42,6 +42,11 @@ const (
 	relationName = "relation"
 )
 
+var (
+	errStaffInactive = errors.New("the staff is not activated")
+	errRoleInactive  = errors.New("the role is not activated")
+)
+
 // Staff role relation table.
 type Relation struct {
 	StaffId int32 `gorm:"column:staffid;primary_key" sql:"type:int(11) not null default 0"`
@@ -75,7 +80,7 @@ func (sp *serviceProvider) AddRole(conn orm.Connection, sid int32, rid int16) er
 	}
 
 	if !s.Active || s.Resigned {
-		err = errors.New("the staff is not activated")
+		err = errStaffInactive
 		goto finish
 	}
 
@@ -85,7 +90,7 @@ func (sp *serviceProvider) AddRole(conn orm.Connection, sid int32, rid int16) er
 	}
 
 	if !r.Active {
-		err = errors.New("the role is not activated")
+		err = errRoleInactive
 		goto finish
 	}
 
@@ -122,7 +127,7 @@ func (sp *serviceProvider) RemoveRole(conn orm.Connection, sid int32, rid int16)
 	}
 
 	if !s.Active || s.Resigned {
-		err = errors.New("the staff is not activated")
+		err = errStaffInactive
 		goto finish
 	}
 
@@ -161,7 +166,7 @@ func (sp *serviceProvider) AssociatedRoles(conn orm.Connection, sid int32) (map[
 	}
 
 	if !s.Active || s.Resigned {
-		err = errors.New("the staff is not activated")
+		err = errStaffInactive
 		goto finish
 	}
 
@@ -206,7 +211,7 @@ func CreateAdminRelation(conn orm.Connection) error {
 	}
 
 	if !s.Active || s.Resigned {
-		err = errors.New("the staff is not activated")
+		err = errStaffInactive
 		goto finish
 	}
 
@@ -216,7 +221,7 @@ func CreateAdminRelation(conn orm.Connection) error {
 	}
 
 	if !r.Active {
-		err = errors.New("the role is not activated")
+		err = errRoleInactive
 		goto finish
 	}
 

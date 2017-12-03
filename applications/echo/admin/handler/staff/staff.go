@@ -44,6 +44,11 @@ import (
 	"github.com/fengyfei/gu/models/staff"
 )
 
+var (
+	errPwdRepeat   = errors.New("the new password can't be the same as the old password")
+	errPwdDisagree = errors.New("the new password and confirming password disagree")
+)
+
 type (
 	// loginReq - The request struct that login.
 	loginReq struct {
@@ -243,13 +248,11 @@ func ModifyPwd(c echo.Context) error {
 	}
 
 	if *req.NewPwd == *req.OldPwd {
-		err = errors.New("new and old passwords can't be the same")
-		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, errPwdRepeat.Error())
 	}
 
 	if *req.NewPwd != *req.Confirm {
-		err = errors.New("entered passwords differ")
-		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
+		return core.NewErrorWithMsg(constants.ErrInvalidParam, errPwdDisagree.Error())
 	}
 
 	conn, err := mysql.Pool.Get()

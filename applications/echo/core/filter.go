@@ -40,6 +40,10 @@ import (
 	"github.com/fengyfei/gu/models/staff"
 )
 
+var (
+	errPermissionNotMatch = errors.New("user permissions and url permissions do not match")
+)
+
 // IsLogin check if the user is logged in.
 func IsLogin(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -111,7 +115,7 @@ func IsPermissionMatch(next echo.HandlerFunc) echo.HandlerFunc {
 			}
 		}
 
-		err = errors.New("user permissions and url permissions do not match")
+		err = errPermissionNotMatch
 
 		return c.JSON(http.StatusForbidden, err.Error())
 	}
