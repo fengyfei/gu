@@ -44,24 +44,20 @@ import (
 type (
 	// createReq - The request struct that create permission information.
 	createReq struct {
-		URL    *string `json:"url" validate:"required,url"`
+		URL    *string `json:"url" validate:"required,printascii,contains=/"`
 		RoleId int16   `json:"roleid" validate:"required"`
 	}
 
 	// removeReq - The request struct that remove permission information.
 	removeReq struct {
-		URL    *string `json:"url" validate:"required,url"`
+		URL    *string `json:"url" validate:"required,printascii,contains=/"`
 		RoleId int16   `json:"roleid" validate:"required"`
-	}
-
-	// listReq - The request struct that get a list of permission for specified URL.
-	listReq struct {
-		URL *string `json:"url" validate:"required,url"`
 	}
 
 	// infoResp - The response struct that represents role information of URL.
 	infoResp struct {
-		RoleId int16 `json:"roleid"`
+		URL    string `json:"url"`
+		RoleId int16  `json:"roleid"`
 	}
 )
 
@@ -128,19 +124,10 @@ func Remove(c echo.Context) error {
 // List - Get a list of permission for specified URL.
 func List(c echo.Context) error {
 	var (
-		err   error
-		req   listReq
-		role  infoResp
-		roles []infoResp = make([]infoResp, 0)
+		err        error
+		permission infoResp
+		resp       []infoResp = make([]infoResp, 0)
 	)
-
-	if err = c.Bind(&req); err != nil {
-		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
-	}
-
-	if err = c.Validate(&req); err != nil {
-		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
-	}
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
@@ -148,7 +135,7 @@ func List(c echo.Context) error {
 	}
 	defer mysql.Pool.Release(conn)
 
-	resp, err := staff.Service.URLPermissions(conn, req.URL)
+	plist, err := staff.Service.Permissions(conn)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
@@ -157,15 +144,17 @@ func List(c echo.Context) error {
 		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
 	}
 
-	for roleId := range resp {
-		role = infoResp{
-			RoleId: roleId,
+	for _, p := range plist {
+		permission = infoResp{
+			URL:    p.URL,
+			RoleId: p.RoleId,
 		}
-		roles = append(roles, role)
+
+		resp = append(resp, permission)
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		constants.RespKeyStatus: constants.ErrSucceed,
-		constants.RespKeyData:   roles,
+		constants.RespKeyData:   resp,
 	})
 }
