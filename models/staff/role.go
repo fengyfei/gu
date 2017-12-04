@@ -120,21 +120,3 @@ func (sp *serviceProvider) GetRoleByID(conn orm.Connection, id int16) (*Role, er
 
 	return role, nil
 }
-
-func CreateAdminRole(conn orm.Connection) error {
-	name := "admin"
-	intro := "admin"
-	now := time.Now()
-
-	role := &Role{}
-	value := &Role{
-		Name:    name,
-		Intro:   intro,
-		Active:  true,
-		Created: &now,
-	}
-
-	db := conn.(*gorm.DB).Exec("USE staff")
-
-	return db.Model(role).Create(value).Error
-}
