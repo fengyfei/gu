@@ -176,13 +176,14 @@ func (sp *serviceProvider) ModifyActive(conn orm.Connection, uid int32, active b
 // Dismiss modify staff active to false and dismiss to true.
 func (sp *serviceProvider) Dismiss(conn orm.Connection, uid int32) error {
 	staff := &Staff{}
+	now := time.Now()
 
 	db := conn.(*gorm.DB).Exec("USE staff")
 
 	return db.Model(staff).Where("id = ?", uid).Updates(map[string]interface{}{
 		"active":   false,
 		"resigned": true,
-		"resignat": time.Now(),
+		"resignat": &now,
 	}).Error
 }
 
