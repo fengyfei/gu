@@ -128,6 +128,13 @@ type (
 	roleListReq struct {
 		StaffId int32 `json:"staffid" validate:"required"`
 	}
+
+	// roleListResp - The response struct that list all the roles of the specifide staff.
+	roleListResp struct {
+		StaffId int32     `json:"staffid"`
+		RoleId  int16     `json:"roleid"`
+		Created time.Time `json:"created"`
+	}
 )
 
 // Login - Staff login.
@@ -511,8 +518,10 @@ func RemoveRole(c echo.Context) error {
 // RoleList - List all the roles of the specified staff.
 func RoleList(c echo.Context) error {
 	var (
-		err error
-		req roleListReq
+		err      error
+		req      roleListReq
+		relation roleListResp
+		resp     []roleListResp = make([]roleListResp, 0)
 	)
 
 	if err = c.Bind(&req); err != nil {
@@ -529,13 +538,23 @@ func RoleList(c echo.Context) error {
 	}
 	defer mysql.Pool.Release(conn)
 
-	resp, err := staff.Service.AssociatedRoles(conn, req.StaffId)
+	rlist, err := staff.Service.AssociatedRoleList(conn, req.StaffId)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
 		}
 
 		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
+	}
+
+	for _, r := range rlist {
+		relation = roleListResp{
+			StaffId: r.StaffId,
+			RoleId:  r.RoleId,
+			Created: *r.Created,
+		}
+
+		resp = append(resp, relation)
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{

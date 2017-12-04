@@ -105,7 +105,7 @@ func IsPermissionMatch(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		uid := UserID(c)
-		userRoles, err := staff.Service.AssociatedRoles(conn, uid)
+		userRoles, err := staff.Service.AssociatedRoleMap(conn, uid)
 
 		if err != nil {
 			return NewErrorWithMsg(constants.ErrMysql, err.Error())
