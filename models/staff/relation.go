@@ -150,8 +150,8 @@ finish:
 	return err
 }
 
-// AssociatedRoles list all the roles of the specified staff.
-func (sp *serviceProvider) AssociatedRoles(conn orm.Connection, sid int32) (map[int16]bool, error) {
+// AssociatedRoleMap list all the roles of the specified staff and the return form is map.
+func (sp *serviceProvider) AssociatedRoleMap(conn orm.Connection, sid int32) (map[int16]bool, error) {
 	s := &Staff{}
 	relation := &Relation{}
 	rlist := []Relation{}
@@ -186,6 +186,39 @@ finish:
 	}
 
 	return result, err
+}
+
+// AssociatedRoleList list all the roles of the specified staff and the return form is slice.
+func (sp *serviceProvider) AssociatedRoleList(conn orm.Connection, sid int32) ([]Relation, error) {
+	s := &Staff{}
+	relation := &Relation{}
+	rlist := []Relation{}
+
+	db := conn.(*gorm.DB)
+	txn := db.Begin().Exec("USE staff")
+
+	err := txn.Model(s).Where("id = ?", sid).First(s).Error
+	if err != nil {
+		goto finish
+	}
+
+	if !s.Active || s.Resigned {
+		err = errStaffInactive
+		goto finish
+	}
+
+	err = txn.Model(relation).Where("staffid = ?", sid).Find(&rlist).Error
+
+finish:
+	if err == nil {
+		err = txn.Commit().Error
+	}
+
+	if err != nil {
+		txn.Rollback()
+	}
+
+	return rlist, err
 }
 
 func CreateAdminRelation(conn orm.Connection) error {
