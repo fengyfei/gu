@@ -65,8 +65,8 @@ func (Staff) TableName() string {
 type serviceProvider struct{}
 
 var (
-	errLoginFailed = errors.New("invalid username or password.")
-	errPwdNotMatch = errors.New("old password not match.")
+	errLoginFailed = errors.New("invalid username or password")
+	errPwdNotMatch = errors.New("old password not match")
 
 	// Service handles operations on model Staff.
 	Service *serviceProvider
@@ -83,7 +83,7 @@ func (sp *serviceProvider) Login(conn orm.Connection, name, pwd *string) (int32,
 	db := conn.(*gorm.DB).Exec("USE staff")
 	err := db.Model(staff).Where("name = ? AND active = true", *name).First(staff).Error
 	if err != nil {
-		return 0, err
+		return 0, errLoginFailed
 	}
 
 	if !security.SaltHashCompare([]byte(staff.Pwd), pwd) {
