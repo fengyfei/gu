@@ -109,6 +109,7 @@ type (
 		Mobile    string    `json:"mobile"`
 		Email     string    `json:"email"`
 		Male      bool      `json:"male"`
+		Resigned  bool      `json:"resigned"`
 		CreatedAt time.Time `json:"createdat"`
 	}
 
@@ -396,6 +397,7 @@ func List(c echo.Context) error {
 			Mobile:    s.Mobile,
 			Email:     s.Email,
 			Male:      s.Male,
+			Resigned:  s.Resigned,
 			CreatedAt: *s.CreatedAt,
 		}
 
