@@ -85,15 +85,12 @@ func initTable() {
 		fallthrough
 	case !db.HasTable(&staff.Role{}):
 		db.CreateTable(&staff.Role{})
-		staff.CreateAdminRole(conn)
 		fallthrough
 	case !db.HasTable(&staff.Relation{}):
 		db.CreateTable(&staff.Relation{})
-		staff.CreateAdminRelation(conn)
 		fallthrough
 	case !db.HasTable(&staff.Permission{}):
 		db.CreateTable(&staff.Permission{})
-		staff.CreateAdminPermission(conn)
 		fallthrough
 	default:
 		fmt.Println("[MySQL] All tables have been created.")
