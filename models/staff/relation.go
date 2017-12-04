@@ -152,15 +152,18 @@ finish:
 
 // AssociatedRoleMap list all the roles of the specified staff and the return form is map.
 func (sp *serviceProvider) AssociatedRoleMap(conn orm.Connection, sid int32) (map[int16]bool, error) {
-	s := &Staff{}
-	relation := &Relation{}
-	rlist := []Relation{}
-	result := make(map[int16]bool)
+	var (
+		err      error
+		selector string
+		s                       = &Staff{}
+		rlist    []Relation     = make([]Relation, 0)
+		result   map[int16]bool = make(map[int16]bool)
+	)
 
 	db := conn.(*gorm.DB)
 	txn := db.Begin().Exec("USE staff")
 
-	err := txn.Model(s).Where("id = ?", sid).First(s).Error
+	err = txn.Model(s).Where("id = ?", sid).First(s).Error
 	if err != nil {
 		goto finish
 	}
@@ -170,7 +173,8 @@ func (sp *serviceProvider) AssociatedRoleMap(conn orm.Connection, sid int32) (ma
 		goto finish
 	}
 
-	err = txn.Model(relation).Where("staffid = ?", sid).Find(&rlist).Error
+	selector = "SELECT relation.staffid, relation.roleid FROM relation, role WHERE relation.staffid = ? AND role.active = true AND relation.roleid = role.id LOCK IN SHARE MODE"
+	err = txn.Raw(selector, sid).Scan(&rlist).Error
 
 finish:
 	if err == nil {

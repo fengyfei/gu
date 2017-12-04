@@ -129,13 +129,13 @@ finish:
 
 // URLPermissions lists all the roles of the specified URL.
 func (sp *serviceProvider) URLPermissions(conn orm.Connection, url *string) (map[int16]bool, error) {
-	permission := &Permission{}
 	plist := []Permission{}
 	result := make(map[int16]bool)
 
 	db := conn.(*gorm.DB).Exec("USE staff")
-	err := db.Model(permission).Where("url = ?", *url).Find(&plist).Error
+	selector := "SELECT permission.url, permission.roleid FROM permission, role WHERE permission.url = ? AND role.active = true AND permission.roleid = role.id LOCK IN SHARE MODE"
 
+	err := db.Raw(selector, *url).Scan(&plist).Error
 	if err != nil {
 		return nil, err
 	}
