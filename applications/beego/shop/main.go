@@ -31,8 +31,11 @@ package main
 
 import (
 	_ "github.com/fengyfei/gu/applications/beego/shop/routers"
-
+	"github.com/fengyfei/gu/applications/beego/shop/mysql"
 	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/toolbox"
+	"github.com/fengyfei/gu/libs/logger"
+	"github.com/fengyfei/gu/models/shop/order"
 )
 
 func main() {
@@ -40,5 +43,25 @@ func main() {
 		beego.BConfig.WebConfig.DirectoryIndex = true
 		beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
 	}
+	initTask()
 	beego.Run()
+	defer toolbox.StopTask()
+}
+
+func initTask() {
+	clearOrder := toolbox.NewTask("clearOrder", "0/10 * * * * *  ", func() error {
+		conn, err := mysql.Pool.Get()
+		defer mysql.Pool.Release(conn)
+		if err != nil {
+			return err
+		}
+		return order.Service.ClearUnpaidOrder(conn)
+		return nil
+	})
+	err := clearOrder.Run()
+	if err != nil {
+		logger.Error(err)
+	}
+	toolbox.AddTask("clearOrder", clearOrder)
+	toolbox.StartTask()
 }

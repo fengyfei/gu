@@ -50,6 +50,8 @@ var (
 	StatusConfirmed int32 = 0x2
 )
 
+const AMonth = 30 * 24 * 60 * 60 * 1e9
+
 type Order struct {
 	ID         int32 `gorm:"primary_key;auto_increment"`
 	BillID     string
@@ -194,4 +196,18 @@ func (this *serviceProvider) GetByParentId(conn orm.Connection, parentId int32) 
 	db := conn.(*gorm.DB)
 	err := db.Where("parent_id = ", parentId).Find(&parents).Error
 	return parents, err
+}
+
+func (this *serviceProvider) ClearUnpaidOrder(conn orm.Connection) error {
+	db := conn.(*gorm.DB)
+	tx := db.Begin()
+	aMonthAgo := time.Now().Add(-AMonth)
+
+	err := tx.Where("status = ? && created_at < ?", StatusUnpay, aMonthAgo).Delete(&Order{}).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	tx.Commit()
+	return nil
 }
