@@ -37,6 +37,7 @@ import (
 	"github.com/labstack/echo/middleware"
 	"github.com/labstack/gommon/log"
 
+	"github.com/fengyfei/gu/applications/echo/admin/auth"
 	"github.com/fengyfei/gu/applications/echo/admin/mysql"
 	"github.com/fengyfei/gu/applications/echo/admin/routers"
 	"github.com/fengyfei/gu/applications/echo/core"
@@ -51,6 +52,7 @@ func init() {
 	readConfiguration()
 	initMysql()
 	initTable()
+	auth.InitRPC()
 }
 
 // initMysql  initializes the MySQL connection.
@@ -121,6 +123,7 @@ func startEchoServer() {
 	}
 
 	routers.InitRouter(server, configuration.tokenKey)
+	go auth.RPCClients.Ping("AuthRPC.Ping")
 
 	server.Start(configuration.address)
 }

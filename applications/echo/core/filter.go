@@ -30,20 +30,16 @@
 package core
 
 import (
-	"errors"
 	"net/http"
 
 	jwtgo "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 
+	"github.com/fengyfei/gu/applications/echo/admin/auth"
 	"github.com/fengyfei/gu/applications/echo/admin/mysql"
 	"github.com/fengyfei/gu/libs/constants"
+	"github.com/fengyfei/gu/libs/permission"
 	"github.com/fengyfei/gu/models/staff"
-)
-
-var (
-	errPermissionNotMatch = errors.New("user permissions and url permissions do not match")
-	errNoRole             = errors.New("this user or url has no role")
 )
 
 // IsLogin check if the user is logged in.
@@ -85,45 +81,29 @@ func IsActive(next echo.HandlerFunc) echo.HandlerFunc {
 
 // IsPermissionMatch check whether the user permissions match the URL permissions.
 func IsPermissionMatch(next echo.HandlerFunc) echo.HandlerFunc {
+	var (
+		args permission.Args
+		ok   bool
+	)
+
 	return func(c echo.Context) error {
-		conn, err := mysql.Pool.Get()
-		if err != nil {
-			return NewErrorWithMsg(constants.ErrMysql, err.Error())
-		}
-		defer mysql.Pool.Release(conn)
-
 		url := c.Request().RequestURI
-		urlRoles, err := staff.Service.URLPermissions(conn, &url)
+		uid := UserID(c)
 
-		if err != nil {
-			return NewErrorWithMsg(constants.ErrMysql, err.Error())
+		args = permission.Args{
+			URL: url,
+			UId: uid,
 		}
 
-		// If there is no permission record, pass the validation.
-		if len(urlRoles) == 0 {
+		rpcClient, err := auth.RPCClients.Get(auth.RPCAddr)
+		if err != nil || rpcClient == nil {
+			return NewErrorWithMsg(constants.ErrPermission, err.Error())
+		}
+
+		err = rpcClient.Call("AuthRPC.Verify", &args, &ok)
+		if err == nil || ok {
 			return next(c)
 		}
-
-		uid := UserID(c)
-		userRoles, err := staff.Service.AssociatedRoleMap(conn, uid)
-
-		if err != nil {
-			return NewErrorWithMsg(constants.ErrMysql, err.Error())
-		}
-
-		// If the user does not have a role, return the error directly.
-		if len(userRoles) == 0 {
-			err = errNoRole
-			return NewErrorWithMsg(constants.ErrForbidden, err.Error())
-		}
-
-		for urlR := range urlRoles {
-			if userRoles[urlR] {
-				return next(c)
-			}
-		}
-
-		err = errPermissionNotMatch
 
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			constants.RespKeyStatus: constants.ErrForbidden,
