@@ -32,7 +32,6 @@ package server
 import (
 	"errors"
 
-	"github.com/fengyfei/gu/applications/auth/config"
 	"github.com/fengyfei/gu/libs/orm/mysql"
 	"github.com/fengyfei/gu/libs/permission"
 	"github.com/fengyfei/gu/libs/rpc"
@@ -44,9 +43,6 @@ const (
 )
 
 var (
-	// Address represents the address of the RPC server.
-	Address = config.Conf.Address
-
 	errPermissionNotMatch = errors.New("user permissions and url permissions do not match")
 	errNoRole             = errors.New("this user or url has no role")
 )

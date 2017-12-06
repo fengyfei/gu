@@ -33,7 +33,13 @@ import (
 	"net"
 	"net/rpc"
 
+	"github.com/fengyfei/gu/applications/auth/config"
 	"github.com/fengyfei/gu/libs/logger"
+)
+
+var (
+	// address represents the address of the RPC server.
+	address = config.Conf.Address
 )
 
 func InitServer(db string) {
@@ -44,14 +50,14 @@ func InitServer(db string) {
 }
 
 func rpcListen() {
-	l, err := net.Listen("tcp", Address)
+	l, err := net.Listen("tcp", address)
 	if err != nil {
 		logger.Error(err)
 		panic(err)
 	}
 
 	defer func() {
-		logger.Info("listen rpc: \"%s\" close", Address)
+		logger.Info("listen rpc: \"%s\" close", address)
 		if err := l.Close(); err != nil {
 			logger.Error(err)
 		}

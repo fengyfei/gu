@@ -46,6 +46,6 @@ func run() {
 	dataSource := fmt.Sprintf(user + ":" + pass + "@" + "tcp(" + url + port + ")/" + sqlName + "?charset=utf8&parseTime=True&loc=Local")
 	go server.InitServer(dataSource)
 
-	fmt.Println("RPC server started on:", server.Address)
+	fmt.Println("RPC server started on:", config.Conf.Address)
 	select {}
 }
