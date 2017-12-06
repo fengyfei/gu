@@ -51,7 +51,7 @@ func init() {
 
 // ReadConfiguration read config file.
 func ReadConfiguration() {
-	viper.AddConfigPath("./conf/")
+	viper.AddConfigPath("./")
 	viper.SetConfigName("config")
 
 	if err := viper.ReadInConfig(); err != nil {
