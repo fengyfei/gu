@@ -78,8 +78,12 @@ func (conn *Connection) GetUniqueOne(q interface{}, doc interface{}) error {
 }
 
 // GetMany get multiple records based on a condition
-func (conn *Connection) GetMany(q interface{}, doc interface{}) error {
-	return conn.collection.Find(q).All(doc)
+func (conn *Connection) GetMany(q interface{}, doc interface{}, fields ...string) error {
+	if len(fields) == 0 {
+		return conn.collection.Find(q).All(doc)
+	}
+
+	return conn.collection.Find(q).Sort(fields...).All(doc)
 }
 
 // Insert add new documents to a collection.
