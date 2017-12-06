@@ -44,11 +44,11 @@ import (
 type (
 	// createReq - The request struct that create repos information.
 	createReq struct {
-		Avatar *string   `json:"avatar" validate:"required,url"`
-		Name   *string   `json:"name" validate:"required,printascii,excludesall=;0x2C"`
-		Image  *string   `json:"image"`
-		Intro  *string   `json:"intro"`
-		Lang   *[]string `json:"lang"`
+		Avatar *string  `json:"avatar" validate:"required,url"`
+		Name   *string  `json:"name" validate:"required,printascii,excludesall=;0x2C"`
+		Image  *string  `json:"image"`
+		Intro  *string  `json:"intro"`
+		Lang   []string `json:"lang"`
 	}
 
 	// activateReq - The request struct that modify repos status.
@@ -77,8 +77,9 @@ type (
 // Create - Create repos information.
 func Create(c echo.Context) error {
 	var (
-		err error
-		req createReq
+		err      error
+		req      createReq
+		emptyStr = new(string)
 	)
 
 	if err = c.Bind(&req); err != nil {
@@ -87,6 +88,15 @@ func Create(c echo.Context) error {
 
 	if err = c.Validate(&req); err != nil {
 		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
+	}
+
+	switch {
+	case req.Image == nil:
+		req.Image = emptyStr
+	case req.Intro == nil:
+		req.Intro = emptyStr
+	case req.Lang == nil:
+		req.Lang = make([]string, 0)
 	}
 
 	id, err := repos.Service.Create(req.Avatar, req.Name, req.Image, req.Intro, req.Lang)

@@ -73,8 +73,9 @@ type (
 // Create - Create article information.
 func Create(c echo.Context) error {
 	var (
-		err error
-		req createReq
+		err      error
+		req      createReq
+		emptyStr = new(string)
 	)
 
 	if err = c.Bind(&req); err != nil {
@@ -83,6 +84,10 @@ func Create(c echo.Context) error {
 
 	if err = c.Validate(&req); err != nil {
 		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
+	}
+
+	if req.Source == nil {
+		req.Source = emptyStr
 	}
 
 	id, err := article.Service.Create(req.Title, req.URL, req.Source)
