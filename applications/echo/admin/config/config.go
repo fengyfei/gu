@@ -24,28 +24,61 @@
 
 /*
  * Revision History:
- *     Initial: 2017/12/05        Jia Chenhui
+ *     Initial: 2017/11/01        Jia Chenhui
  */
 
-package mysql
+package config
 
 import (
-	"github.com/fengyfei/gu/libs/orm/mysql"
+	"github.com/spf13/viper"
 )
 
-const (
-	poolSize = 20
-)
+// staffServerConfig represents the server config struct.
+type staffServerConfig struct {
+	Address   string
+	RPCAddr   string
+	IsDebug   bool
+	CorsHosts []string
+	TokenKey  string
+	MongoURL  string
+	MysqlHost string
+	MysqlPort string
+	MysqlUser string
+	MysqlPass string
+	MysqlDb   string
+	MysqlSize int
+}
 
 var (
-	Pool *mysql.Pool
+	Conf *staffServerConfig
 )
 
-// InitPool initialize the connection pool.
-func InitPool(db string) {
-	Pool = mysql.NewPool(db, poolSize)
+func init() {
+	Conf = load()
+}
 
-	if Pool == nil {
-		panic("MySQL DB connection error.")
+// load read config file.
+func load() *staffServerConfig {
+	viper.AddConfigPath("./")
+	viper.SetConfigName("config")
+
+	if err := viper.ReadInConfig(); err != nil {
+		panic(err)
 	}
+
+	c := &staffServerConfig{
+		Address:   viper.GetString("server.address"),
+		RPCAddr:   viper.GetString("server.rpcaddr"),
+		IsDebug:   viper.GetBool("server.debug"),
+		CorsHosts: viper.GetStringSlice("middleware.cors.hosts"),
+		TokenKey:  viper.GetString("middleware.jwt.tokenkey"),
+		MysqlHost: viper.GetString("mysql.host"),
+		MysqlPort: viper.GetString("mysql.port"),
+		MysqlUser: viper.GetString("mysql.user"),
+		MysqlPass: viper.GetString("mysql.pass"),
+		MysqlDb:   viper.GetString("mysql.db"),
+		MysqlSize: viper.GetInt("mysql.size"),
+	}
+
+	return c
 }

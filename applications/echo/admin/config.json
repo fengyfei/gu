@@ -1,6 +1,7 @@
 {
   "server": {
     "address": ":21000",
+    "rpcaddr": ":21002",
     "debug": true
   },
   "middleware": {

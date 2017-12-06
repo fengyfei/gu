@@ -36,22 +36,22 @@ import (
 	"github.com/fengyfei/gu/libs/logger"
 )
 
-func InitServer() {
-	rpc.Register(new(AuthRPC))
+func InitServer(db string) {
+	rpc.Register(newAuthRPC(db))
 	rpc.HandleHTTP()
 
 	go rpcListen()
 }
 
 func rpcListen() {
-	l, err := net.Listen("tcp", RPCAddr)
+	l, err := net.Listen("tcp", Address)
 	if err != nil {
 		logger.Error(err)
 		panic(err)
 	}
 
 	defer func() {
-		logger.Info("listen rpc: \"%s\" close", RPCAddr)
+		logger.Info("listen rpc: \"%s\" close", Address)
 		if err := l.Close(); err != nil {
 			logger.Error(err)
 		}

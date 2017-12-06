@@ -33,8 +33,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-// RPCServerConfig represents the server config struct.
-type RPCServerConfig struct {
+// rpcServerConfig represents the server config struct.
+type rpcServerConfig struct {
 	Address   string
 	MysqlHost string
 	MysqlPort string
@@ -44,11 +44,15 @@ type RPCServerConfig struct {
 }
 
 var (
-	ServerConfig *RPCServerConfig = ReadConfiguration()
+	Conf *rpcServerConfig
 )
 
-// ReadConfiguration read config file.
-func ReadConfiguration() *RPCServerConfig {
+func init() {
+	Conf = load()
+}
+
+// load read config file.
+func load() *rpcServerConfig {
 	viper.AddConfigPath("./")
 	viper.SetConfigName("config")
 
@@ -56,7 +60,7 @@ func ReadConfiguration() *RPCServerConfig {
 		panic(err)
 	}
 
-	c := &RPCServerConfig{
+	c := &rpcServerConfig{
 		Address:   viper.GetString("server.address"),
 		MysqlHost: viper.GetString("mysql.host"),
 		MysqlPort: viper.GetString("mysql.port"),

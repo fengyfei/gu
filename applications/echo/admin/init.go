@@ -38,6 +38,7 @@ import (
 	"github.com/labstack/gommon/log"
 
 	"github.com/fengyfei/gu/applications/echo/admin/auth"
+	"github.com/fengyfei/gu/applications/echo/admin/config"
 	"github.com/fengyfei/gu/applications/echo/admin/mysql"
 	"github.com/fengyfei/gu/applications/echo/admin/routers"
 	"github.com/fengyfei/gu/applications/echo/core"
@@ -49,7 +50,6 @@ var (
 )
 
 func init() {
-	readConfiguration()
 	initMysql()
 	initTable()
 	auth.InitRPC()
@@ -57,11 +57,11 @@ func init() {
 
 // initMysql  initializes the MySQL connection.
 func initMysql() {
-	user := configuration.mysqlUser
-	pass := configuration.mysqlPass
-	url := configuration.mysqlHost
-	port := configuration.mysqlPort
-	sqlName := configuration.mysqlDb
+	user := config.Conf.MysqlUser
+	pass := config.Conf.MysqlPass
+	url := config.Conf.MysqlHost
+	port := config.Conf.MysqlPort
+	sqlName := config.Conf.MysqlDb
 
 	// You need to create a database manually.
 	// SQL: CREATE DATABASE staff CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -105,10 +105,10 @@ func startEchoServer() {
 
 	server.Use(middleware.Recover())
 	server.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: configuration.corsHosts,
+		AllowOrigins: config.Conf.CorsHosts,
 		AllowMethods: []string{echo.GET, echo.POST},
 	}))
-	server.Use(core.CustomJWT(configuration.tokenKey))
+	server.Use(core.CustomJWT(config.Conf.TokenKey))
 	server.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Format: "${time_rfc3339_nano} ${uri} ${method} ${status} ${remote_ip} ${latency_human} ${bytes_in} ${bytes_out}\n",
 	}))
@@ -116,14 +116,14 @@ func startEchoServer() {
 	server.HTTPErrorHandler = core.EchoRestfulErrorHandler
 	server.Validator = core.NewEchoValidator()
 
-	if configuration.isDebug {
+	if config.Conf.IsDebug {
 		log.SetLevel(log.DEBUG)
 	} else {
 		log.SetLevel(log.INFO)
 	}
 
-	routers.InitRouter(server, configuration.tokenKey)
+	routers.InitRouter(server, config.Conf.TokenKey)
 	go auth.RPCClients.Ping("AuthRPC.Ping")
 
-	server.Start(configuration.address)
+	server.Start(config.Conf.Address)
 }

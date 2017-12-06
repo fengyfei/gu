@@ -95,7 +95,7 @@ func IsPermissionMatch(next echo.HandlerFunc) echo.HandlerFunc {
 			UId: uid,
 		}
 
-		rpcClient, err := auth.RPCClients.Get(auth.RPCAddr)
+		rpcClient, err := auth.RPCClients.Get(auth.RPCAddress)
 		if err != nil || rpcClient == nil {
 			return NewErrorWithMsg(constants.ErrPermission, err.Error())
 		}

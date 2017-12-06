@@ -30,6 +30,7 @@
 package auth
 
 import (
+	"github.com/fengyfei/gu/applications/echo/admin/config"
 	"github.com/fengyfei/gu/libs/rpc"
 )
 
@@ -40,13 +41,13 @@ const (
 var (
 	// RPCClients represents multiple RPC clients.
 	RPCClients *rpc.Clients
-	RPCAddr    = ":21002"
+	RPCAddress = config.Conf.RPCAddr
 )
 
 func InitRPC() {
 	opt := rpc.Options{
 		Proto: "tcp",
-		Addr:  RPCAddr,
+		Addr:  RPCAddress,
 	}
 	opts := make([]rpc.Options, RPCNumber)
 

@@ -33,30 +33,19 @@ import (
 	"fmt"
 
 	"github.com/fengyfei/gu/applications/auth/config"
-	"github.com/fengyfei/gu/applications/auth/mysql"
 	"github.com/fengyfei/gu/applications/auth/server"
 )
 
-func init() {
-	initMysql()
-}
-
-// initMysql initializes the MySQL connection.
-func initMysql() {
-	user := config.ServerConfig.MysqlUser
-	pass := config.ServerConfig.MysqlPass
-	url := config.ServerConfig.MysqlHost
-	port := config.ServerConfig.MysqlPort
-	sqlName := config.ServerConfig.MysqlDb
+func run() {
+	user := config.Conf.MysqlUser
+	pass := config.Conf.MysqlPass
+	url := config.Conf.MysqlHost
+	port := config.Conf.MysqlPort
+	sqlName := config.Conf.MysqlDb
 
 	dataSource := fmt.Sprintf(user + ":" + pass + "@" + "tcp(" + url + port + ")/" + sqlName + "?charset=utf8&parseTime=True&loc=Local")
+	go server.InitServer(dataSource)
 
-	mysql.InitPool(dataSource)
-}
-
-func run() {
-	go server.InitServer()
-
-	fmt.Println("RPC server started on:", server.RPCAddr)
+	fmt.Println("RPC server started on:", server.Address)
 	select {}
 }

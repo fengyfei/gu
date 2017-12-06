@@ -33,21 +33,38 @@ import (
 	"errors"
 
 	"github.com/fengyfei/gu/applications/auth/config"
-	"github.com/fengyfei/gu/applications/auth/mysql"
+	"github.com/fengyfei/gu/libs/orm/mysql"
 	"github.com/fengyfei/gu/libs/permission"
 	"github.com/fengyfei/gu/libs/rpc"
 	"github.com/fengyfei/gu/models/staff"
 )
 
+const (
+	poolSize = 20
+)
+
 var (
-	// RPCAddr represents the address of the RPC server.
-	RPCAddr = config.ServerConfig.Address
+	// Address represents the address of the RPC server.
+	Address = config.Conf.Address
 
 	errPermissionNotMatch = errors.New("user permissions and url permissions do not match")
 	errNoRole             = errors.New("this user or url has no role")
 )
 
-type AuthRPC struct{}
+type AuthRPC struct {
+	pool *mysql.Pool
+}
+
+func newAuthRPC(db string) *AuthRPC {
+	ar := &AuthRPC{}
+	ar.pool = mysql.NewPool(db, poolSize)
+
+	if ar.pool == nil {
+		panic("MySQL DB connection error.")
+	}
+
+	return ar
+}
 
 // Ping is general rpc keepalive interface.
 func (ar *AuthRPC) Ping(req *rpc.ReqKeepAlive, resp *rpc.RespKeepAlive) error {
@@ -56,7 +73,7 @@ func (ar *AuthRPC) Ping(req *rpc.ReqKeepAlive, resp *rpc.RespKeepAlive) error {
 
 // Verify check whether the user permissions match the URL permissions.
 func (ar *AuthRPC) Verify(args permission.Args, reply *bool) error {
-	err := verify(&(args.URL), args.UId)
+	err := ar.verifier(&(args.URL), args.UId)
 	if err != nil {
 		*reply = false
 		return err
@@ -66,12 +83,12 @@ func (ar *AuthRPC) Verify(args permission.Args, reply *bool) error {
 	return nil
 }
 
-func verify(url *string, uid int32) error {
-	conn, err := mysql.Pool.Get()
+func (ar *AuthRPC) verifier(url *string, uid int32) error {
+	conn, err := ar.pool.Get()
 	if err != nil {
 		return err
 	}
-	defer mysql.Pool.Release(conn)
+	defer ar.pool.Release(conn)
 
 	urlRoles, err := staff.Service.URLPermissions(conn, url)
 	if err != nil {
