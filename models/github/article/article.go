@@ -91,7 +91,8 @@ func (sp *serviceProvider) List() ([]Article, error) {
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	err = conn.GetMany(nil, &list)
+	sort := "-Created"
+	err = conn.GetMany(nil, &list, sort)
 
 	return list, err
 }
@@ -106,7 +107,8 @@ func (sp *serviceProvider) ActiveList() ([]Article, error) {
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	err = conn.GetMany(bson.M{"Active": true}, &list)
+	sort := "-Created"
+	err = conn.GetMany(bson.M{"Active": true}, &list, sort)
 
 	return list, err
 }

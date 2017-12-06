@@ -93,7 +93,8 @@ func (sp *serviceProvider) List() ([]Repos, error) {
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	err = conn.GetMany(nil, &list)
+	sort := "-Created"
+	err = conn.GetMany(nil, &list, sort)
 
 	return list, err
 }
@@ -108,7 +109,8 @@ func (sp *serviceProvider) ActiveList() ([]Repos, error) {
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	err = conn.GetMany(bson.M{"Active": true}, &list)
+	sort := "-Created"
+	err = conn.GetMany(bson.M{"Active": true}, &list, sort)
 
 	return list, err
 }
@@ -129,14 +131,14 @@ func (sp *serviceProvider) GetByID(id *string) (Repos, error) {
 }
 
 // Create create repos information.
-func (sp *serviceProvider) Create(avatar, name, image, intro *string, lang *[]string) (string, error) {
+func (sp *serviceProvider) Create(avatar, name, image, intro *string, lang []string) (string, error) {
 	repos := Repos{
 		ID:      bson.NewObjectId(),
 		Avatar:  *avatar,
 		Name:    *name,
 		Image:   *image,
 		Intro:   *intro,
-		Lang:    *lang,
+		Lang:    lang,
 		Active:  true,
 		Created: time.Now(),
 	}
