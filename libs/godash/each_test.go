@@ -39,7 +39,7 @@ func TestEachArray(t *testing.T) {
 
 	Each(arr, func(i, n int) {
 		if n != arr[i] {
-			t.Error("Mistake")
+			t.Error("Each not working for array")
 		}
 	})
 }
@@ -55,7 +55,7 @@ func TestEachMap(t *testing.T) {
 
 	Each(data, func(k, v string) {
 		if v != data[k] {
-			t.Error("Mistake")
+			t.Error("Each not working for map")
 		}
 	})
 }

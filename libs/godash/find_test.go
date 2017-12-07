@@ -42,6 +42,6 @@ func TestFindArray(t *testing.T) {
 	})
 
 	if pos != 3 {
-		t.Error("Mistake")
+		t.Error("Find in array should return 3")
 	}
 }
