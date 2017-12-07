@@ -33,12 +33,13 @@ import (
   "github.com/fengyfei/gu/applications/beego/shop/mysql"
   "github.com/fengyfei/gu/applications/beego/base"
   "github.com/fengyfei/gu/models/shop/panel"
+  "github.com/fengyfei/gu/models/shop/ware"
   "github.com/fengyfei/gu/libs/logger"
   "github.com/fengyfei/gu/libs/orm"
   "github.com/fengyfei/gu/libs/constants"
   "encoding/json"
-  "fmt"
   "errors"
+  "strings"
   "github.com/fengyfei/gu/applications/beego/shop/util"
 )
 
@@ -207,7 +208,7 @@ func (this *PanelController) AddSecondHand() {}
 func (this *PanelController) GetPanelPage() {
   var (
     err error
-    res []panel.Panel
+    res []panel.PanelsPage
   )
 
   conn, err := mysql.Pool.Get()
@@ -226,8 +227,41 @@ func (this *PanelController) GetPanelPage() {
 
     goto finish
   }
+
+  for i := range res {
+    if res[i].Type == 1 {
+      detail, err := panel.Service.GetDetail(conn, res[i].ID)
+      if err != nil {
+        logger.Error(err)
+
+        res[i].Content = []interface{}{}
+      } else {
+        ids := strings.Split(detail.Content, "#")
+
+        wares, err := ware.Service.GetByIDs(conn, ids)
+        if err != nil {
+          logger.Error(err)
+
+          res[i].Content = []interface{}{}
+        } else {
+          for k := range wares {
+            res[i].Content = append(res[i].Content, wares[k])
+          }
+        }
+      }
+    }
+    if res[i].Type == 2 {
+      detail, err := panel.Service.GetDetail(conn, res[i].ID)
+      if err != nil {
+        logger.Error(err)
+
+        res[i].Content = []interface{}{}
+      } else {
+        res[i].Content = append(res[i].Content, detail.Picture)
+      }
+    }
+  }
   this.Data["json"] = res
-  fmt.Printf("%+v\n", res)
 
 finish:
   this.ServeJSON(true)

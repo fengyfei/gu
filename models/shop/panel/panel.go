@@ -53,12 +53,24 @@ type (
     CreatedAt time.Time `json:"createdAt"`
   }
 
+  PanelsPage struct {
+    ID        uint          `json:"id"`
+    Title     string        `json:"title"`
+    Desc      string        `json:"desc"`
+    Type      int8          `json:"type"`
+    Status    int8          `json:"status"`
+    Sequence  int           `json:"sequence"`
+    CreatedAt time.Time     `json:"createdAt"`
+    Content   []interface{} `json:"content"`
+  }
+
   Detail struct {
-    ID        uint   `gorm:"primary_key;AUTO_INCREMENT"`
-    Belong    uint   `gorm:"unique_index;not null"`
-    Picture   string `gorm:"type:varchar(100)"`
-    Content   string `gorm:"type:LONGTEXT"`
-    CreatedAt time.Time
+    ID        uint      `gorm:"primary_key;AUTO_INCREMENT"`
+    Belong    uint      `gorm:"unique_index;not null"`
+    Picture   string    `gorm:"type:varchar(100)"`
+    Content   string    `gorm:"type:LONGTEXT"`
+    UpdatedAt time.Time `json:"updatedAt"`
+    CreatedAt time.Time `json:"createdAt"`
   }
 
   PanelReq struct {
@@ -120,11 +132,21 @@ func (sp *serviceProvider) AddRecommend(conn orm.Connection, recommendReq Recomm
 }
 
 // get panels
-func (sp *serviceProvider) GetPanels(conn orm.Connection) ([]Panel, error) {
-  var list []Panel
+func (sp *serviceProvider) GetPanels(conn orm.Connection) ([]PanelsPage, error) {
+  var list []PanelsPage
 
   db := conn.(*gorm.DB).Exec("USE shop")
   res := db.Table("panels").Where("status > ?", 0).Scan(&list)
 
   return list, res.Error
+}
+
+// get detail of panel
+func (sp *serviceProvider) GetDetail(conn orm.Connection, id uint) (Detail, error) {
+  var detail Detail
+
+  db := conn.(*gorm.DB).Exec("USE shop")
+  res := db.Table("details").Where("belong = ?", id).First(&detail)
+
+  return detail, res.Error
 }

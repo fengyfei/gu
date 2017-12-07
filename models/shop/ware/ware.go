@@ -134,7 +134,7 @@ func (sp *serviceProvider) GetByCID(conn orm.Connection, cid uint) ([]BriefInfo,
   )
 
   db := conn.(*gorm.DB).Exec("USE shop")
-  res = db.Table("wares").Where("status > ? AND category_id = ", 0, cid).Scan(&list)
+  res = db.Table("wares").Where("status > ? AND category_id = ?", 0, cid).Scan(&list)
 
   return list, res.Error
 }
@@ -244,4 +244,17 @@ func (sp *serviceProvider) ChangeStatus(conn orm.Connection, reqList []ChangeSta
   }
 
   return finalErr
+}
+
+// get wares by id slice
+func (sp *serviceProvider) GetByIDs(conn orm.Connection, ids []string) ([]BriefInfo, error) {
+  var (
+    res  *gorm.DB
+    list []BriefInfo
+  )
+
+  db := conn.(*gorm.DB).Exec("USE shop")
+  res = db.Table("wares").Where("status > ? AND id in (?) ", 0, ids).Scan(&list)
+
+  return list, res.Error
 }
