@@ -43,6 +43,10 @@ import (
 	"github.com/fengyfei/gu/models/github/trending"
 )
 
+const (
+	pageSize = 25
+)
+
 type (
 	// langReq - The request struct that get the trending of the day of a language.
 	langReq struct {
@@ -111,7 +115,7 @@ func LangInfo(c echo.Context) error {
 
 crawler:
 	go func() {
-		for i := 0; i < 25; i++ {
+		for i := 0; i < pageSize; i++ {
 			go func() {
 				wg.Add(1)
 				select {
