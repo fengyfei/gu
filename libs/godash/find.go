@@ -33,61 +33,20 @@ import (
 	"reflect"
 )
 
-// Each iterates a map, slice or map and do iterator(key, value)
-func Each(collection, iterator interface{}) {
-	each(collection, iterator, nil)
-}
+// Find returns the fisrt position where matcher returns true.
+func Find(collection interface{}, matcher interface{}) interface{} {
+	var (
+		ok  bool
+		key interface{}
+	)
 
-func each(collection, handler interface{}, condition func(k, v, r reflect.Value) bool) {
-	if collection == nil || handler == nil {
-		return
-	}
-
-	size, iterator := keyValueIterator(collection)
-
-	if iterator == nil || size == 0 {
-		return
-	}
-
-	if condition == nil {
-		condition = func(_, _, _ reflect.Value) bool {
-			return false
+	each(collection, matcher, func(k, _, r reflect.Value) bool {
+		if ok = r.Bool(); ok {
+			key = k.Interface()
 		}
-	}
 
-	handlerValue := reflect.ValueOf(handler)
+		return ok
+	})
 
-	for i := 0; i < size; i++ {
-		k, v := iterator(i)
-
-		returnValue := handlerValue.Call([]reflect.Value{k, v})
-		if len(returnValue) > 0 {
-			if condition(k, v, returnValue[0]) {
-				break
-			}
-		}
-	}
-}
-
-func keyValueIterator(collection interface{}) (int, func(int) (reflect.Value, reflect.Value)) {
-	if collection == nil {
-		return 0, nil
-	}
-
-	value := reflect.ValueOf(collection)
-	switch value.Kind() {
-	case reflect.Array:
-	case reflect.Slice:
-		return value.Len(), func(i int) (reflect.Value, reflect.Value) {
-			return reflect.ValueOf(i), value.Index(i)
-		}
-	case reflect.Map:
-		keys := value.MapKeys()
-
-		return len(keys), func(i int) (reflect.Value, reflect.Value) {
-			return keys[i], value.MapIndex(keys[i])
-		}
-	}
-
-	return 0, nil
+	return key
 }
