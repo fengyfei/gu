@@ -101,7 +101,7 @@ func IsPermissionMatch(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		err = rpcClient.Call("AuthRPC.Verify", &args, &ok)
-		if err == nil || ok {
+		if err == nil && ok {
 			return next(c)
 		}
 

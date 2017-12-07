@@ -103,8 +103,7 @@ func (ar *AuthRPC) verifier(url *string, uid int32) error {
 
 	// If the user does not have a role, return the error directly.
 	if len(userRoles) == 0 {
-		err = errNoRole
-		return err
+		return errNoRole
 	}
 
 	for urlR := range urlRoles {
@@ -113,7 +112,5 @@ func (ar *AuthRPC) verifier(url *string, uid int32) error {
 		}
 	}
 
-	err = errPermissionNotMatch
-
-	return err
+	return errPermissionNotMatch
 }
