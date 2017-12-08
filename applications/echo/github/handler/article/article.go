@@ -55,13 +55,14 @@ type (
 		Active bool   `json:"active"`
 	}
 
-	// infoReq - The request struct that get one article detail information.
+	// infoReq - The request struct that get a list of articles detail information.
 	infoReq struct {
-		ID string `json:"id" validate:"required,alphanum,len=24"`
+		ID string `json:"id"`
 	}
 
 	// infoResp - The more detail of article.
 	infoResp struct {
+		ID      string    `json:"id"`
 		Title   string    `json:"title"`
 		URL     string    `json:"url"`
 		Source  string    `json:"source"`
@@ -140,6 +141,7 @@ func List(c echo.Context) error {
 
 	for _, a := range alist {
 		info := infoResp{
+			ID:      a.ID.Hex(),
 			Title:   a.Title,
 			URL:     a.URL,
 			Source:  a.Source,
@@ -171,6 +173,7 @@ func ActiveList(c echo.Context) error {
 
 	for _, a := range alist {
 		info := infoResp{
+			ID:      a.ID.Hex(),
 			Title:   a.Title,
 			URL:     a.URL,
 			Source:  a.Source,
@@ -192,7 +195,7 @@ func Info(c echo.Context) error {
 	var (
 		err  error
 		req  infoReq
-		resp infoResp
+		resp []infoResp = make([]infoResp, 0)
 	)
 
 	if err = c.Bind(&req); err != nil {
@@ -203,7 +206,7 @@ func Info(c echo.Context) error {
 		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
 	}
 
-	info, err := article.Service.GetByID(&req.ID)
+	alist, err := article.Service.GetByID(req.ID)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return core.NewErrorWithMsg(constants.ErrMongoDB, err.Error())
@@ -212,12 +215,17 @@ func Info(c echo.Context) error {
 		return core.NewErrorWithMsg(constants.ErrMongoDB, err.Error())
 	}
 
-	resp = infoResp{
-		Title:   info.Title,
-		URL:     info.URL,
-		Source:  info.Source,
-		Active:  info.Active,
-		Created: info.Created,
+	for _, a := range alist {
+		info := infoResp{
+			ID:      a.ID.Hex(),
+			Title:   a.Title,
+			URL:     a.URL,
+			Source:  a.Source,
+			Active:  a.Active,
+			Created: a.Created,
+		}
+
+		resp = append(resp, info)
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{

@@ -40,6 +40,10 @@ import (
 	"github.com/fengyfei/gu/models/github"
 )
 
+const (
+	listSize = 6
+)
+
 type serviceProvider struct{}
 
 var (
@@ -113,19 +117,27 @@ func (sp *serviceProvider) ActiveList() ([]Article, error) {
 	return list, err
 }
 
-// GetByID get article based on article id.
-func (sp *serviceProvider) GetByID(id *string) (Article, error) {
+// GetByID get a list of records that are greater than the specified ID.
+func (sp *serviceProvider) GetByID(id string) ([]Article, error) {
 	var (
-		err     error
-		article Article
+		err   error
+		list  []Article
+		query bson.M
+		sort  string = "-Created"
 	)
 
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	err = conn.GetByID(bson.ObjectIdHex(*id), &article)
+	if id == "" {
+		query = nil
+	} else {
+		query = bson.M{"_id": bson.M{"$gt": bson.ObjectIdHex(id)}}
+	}
 
-	return article, err
+	err = conn.GetLimitedRecords(query, listSize, &list, sort)
+
+	return list, err
 }
 
 // Create create article information.
