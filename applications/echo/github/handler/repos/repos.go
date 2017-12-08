@@ -57,7 +57,7 @@ type (
 		Active bool   `json:"active"`
 	}
 
-	// infoReq - The request struct that get ten repos detail information.
+	// infoReq - The request struct that get a list of repos detail information.
 	infoReq struct {
 		ID string `json:"id"`
 	}

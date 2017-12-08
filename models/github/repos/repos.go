@@ -119,7 +119,7 @@ func (sp *serviceProvider) ActiveList() ([]Repos, error) {
 	return list, err
 }
 
-// GetByID get ten records that are greater than the specified ID.
+// GetByID get a list of records that are greater than the specified ID.
 func (SP *serviceProvider) GetByID(id string) ([]Repos, error) {
 	var (
 		err   error
@@ -137,7 +137,7 @@ func (SP *serviceProvider) GetByID(id string) ([]Repos, error) {
 		query = bson.M{"_id": bson.M{"$gt": bson.ObjectIdHex(id)}}
 	}
 
-	err = conn.FindWithLimit(query, listSize, &list, sort)
+	err = conn.GetLimitedRecords(query, listSize, &list, sort)
 
 	return list, err
 }
