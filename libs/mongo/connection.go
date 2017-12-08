@@ -117,8 +117,9 @@ func (conn *Connection) IterAll(pipeline interface{}, i interface{}) error {
 	return conn.collection.Pipe(pipeline).All(i)
 }
 
-// FindWithLimit obtain records based on specified conditions.
-func (conn *Connection) FindWithLimit(q interface{}, n int, doc interface{}, fields ...string) error {
+// GetLimitedRecords obtain records based on specified conditions.
+// The results of the specified number of returns are sorted by the specified fields.
+func (conn *Connection) GetLimitedRecords(q interface{}, n int, doc interface{}, fields ...string) error {
 	if len(fields) == 0 {
 		return conn.collection.Find(q).Limit(n).All(doc)
 	}
