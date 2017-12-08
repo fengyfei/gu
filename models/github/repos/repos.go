@@ -40,6 +40,10 @@ import (
 	"github.com/fengyfei/gu/models/github"
 )
 
+const (
+	listSize = 10
+)
+
 type serviceProvider struct{}
 
 var (
@@ -115,19 +119,27 @@ func (sp *serviceProvider) ActiveList() ([]Repos, error) {
 	return list, err
 }
 
-// GetByID get repos based on repos id.
-func (sp *serviceProvider) GetByID(id *string) (Repos, error) {
+// GetByID get ten records that are greater than the specified ID.
+func (SP *serviceProvider) GetByID(id string) ([]Repos, error) {
 	var (
 		err   error
-		repos Repos
+		list  []Repos
+		query bson.M
+		sort  string = "-Created"
 	)
 
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	err = conn.GetByID(bson.ObjectIdHex(*id), &repos)
+	if id == "" {
+		query = nil
+	} else {
+		query = bson.M{"_id": bson.M{"$gt": bson.ObjectIdHex(id)}}
+	}
 
-	return repos, err
+	err = conn.FindWithLimit(query, listSize, &list, sort)
+
+	return list, err
 }
 
 // Create create repos information.

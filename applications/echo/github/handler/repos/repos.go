@@ -57,13 +57,14 @@ type (
 		Active bool   `json:"active"`
 	}
 
-	// infoReq - The request struct that get one repos detail information.
+	// infoReq - The request struct that get ten repos detail information.
 	infoReq struct {
-		ID string `json:"id" validate:"required,alphanum,len=24"`
+		ID string `json:"id"`
 	}
 
 	// infoResp - The more detail of repos.
 	infoResp struct {
+		ID      string    `json:"id"`
 		Avatar  string    `json:"avatar"`
 		Name    string    `json:"name"`
 		Image   string    `json:"image"`
@@ -149,6 +150,7 @@ func List(c echo.Context) error {
 
 	for _, r := range rlist {
 		info := infoResp{
+			ID:      r.ID.Hex(),
 			Avatar:  r.Avatar,
 			Name:    r.Name,
 			Image:   r.Image,
@@ -182,6 +184,7 @@ func ActiveList(c echo.Context) error {
 
 	for _, r := range rlist {
 		info := infoResp{
+			ID:      r.ID.Hex(),
 			Avatar:  r.Avatar,
 			Name:    r.Name,
 			Image:   r.Image,
@@ -200,12 +203,12 @@ func ActiveList(c echo.Context) error {
 	})
 }
 
-// Info - Get detail information for specified repos.
+// Info - Get ten records that are greater than the specified ID.
 func Info(c echo.Context) error {
 	var (
 		err  error
 		req  infoReq
-		resp infoResp
+		resp []infoResp = make([]infoResp, 0)
 	)
 
 	if err = c.Bind(&req); err != nil {
@@ -216,7 +219,7 @@ func Info(c echo.Context) error {
 		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
 	}
 
-	info, err := repos.Service.GetByID(&req.ID)
+	rlist, err := repos.Service.GetByID(req.ID)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return core.NewErrorWithMsg(constants.ErrMongoDB, err.Error())
@@ -225,14 +228,19 @@ func Info(c echo.Context) error {
 		return core.NewErrorWithMsg(constants.ErrMongoDB, err.Error())
 	}
 
-	resp = infoResp{
-		Avatar:  info.Avatar,
-		Name:    info.Name,
-		Image:   info.Image,
-		Intro:   info.Intro,
-		Lang:    info.Lang,
-		Created: info.Created,
-		Active:  info.Active,
+	for _, r := range rlist {
+		info := infoResp{
+			ID:      r.ID.Hex(),
+			Avatar:  r.Avatar,
+			Name:    r.Name,
+			Image:   r.Image,
+			Intro:   r.Intro,
+			Lang:    r.Lang,
+			Created: r.Created,
+			Active:  r.Active,
+		}
+
+		resp = append(resp, info)
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
