@@ -116,3 +116,12 @@ func (conn *Connection) Delete(query interface{}) error {
 func (conn *Connection) IterAll(pipeline interface{}, i interface{}) error {
 	return conn.collection.Pipe(pipeline).All(i)
 }
+
+// FindWithLimit obtain records based on specified conditions.
+func (conn *Connection) FindWithLimit(q interface{}, n int, doc interface{}, fields ...string) error {
+	if len(fields) == 0 {
+		return conn.collection.Find(q).Limit(n).All(doc)
+	}
+
+	return conn.collection.Find(q).Sort(fields...).Limit(n).All(doc)
+}
