@@ -117,34 +117,31 @@ func LangInfo(c echo.Context) error {
 
 crawler:
 	go func() {
+		wg.Add(25)
 		for i := 0; i < pageSize; i++ {
-			go func() {
-				wg.Add(1)
-				select {
-				case tInfo = <-github.DataPipe:
-					info = infoResp{
-						Title:    tInfo.Title,
-						Abstract: tInfo.Abstract,
-						Lang:     *req.Lang,
-						Date:     tInfo.Date,
-						Stars:    tInfo.Stars,
-						Today:    tInfo.Today,
-					}
-					resp = append(resp, info)
-
-					tStore = &trending.Trending{
-						Title:    tInfo.Title,
-						Abstract: tInfo.Abstract,
-						Lang:     tInfo.Lang,
-						Date:     tInfo.Date,
-						Stars:    tInfo.Stars,
-						Today:    tInfo.Today,
-					}
-					tStoreList = append(tStoreList, tStore)
+			select {
+			case tInfo = <-github.DataPipe:
+				info = infoResp{
+					Title:    tInfo.Title,
+					Abstract: tInfo.Abstract,
+					Lang:     *req.Lang,
+					Date:     tInfo.Date,
+					Stars:    tInfo.Stars,
+					Today:    tInfo.Today,
 				}
-				wg.Done()
-				return
-			}()
+				resp = append(resp, info)
+
+				tStore = &trending.Trending{
+					Title:    tInfo.Title,
+					Abstract: tInfo.Abstract,
+					Lang:     tInfo.Lang,
+					Date:     tInfo.Date,
+					Stars:    tInfo.Stars,
+					Today:    tInfo.Today,
+				}
+				tStoreList = append(tStoreList, tStore)
+			}
+			wg.Done()
 		}
 	}()
 
