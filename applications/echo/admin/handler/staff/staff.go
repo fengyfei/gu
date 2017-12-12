@@ -130,7 +130,7 @@ type (
 		StaffId int32 `json:"staffid" validate:"required"`
 	}
 
-	// roleListResp - The response struct that list all the roles of the specifide staff.
+	// roleListResp - The response struct that list all the roles of the specified staff.
 	roleListResp struct {
 		StaffId int32     `json:"staffid"`
 		RoleId  int16     `json:"roleid"`
@@ -340,7 +340,7 @@ func ModifyActive(c echo.Context) error {
 	})
 }
 
-// Dismiss - Staff dismission.
+// Dismiss - Dismissal of staff.
 func Dismiss(c echo.Context) error {
 	var (
 		err error
