@@ -36,10 +36,10 @@ import (
 	"github.com/labstack/echo"
 	"gopkg.in/mgo.v2"
 
-	"github.com/fengyfei/gu/applications/crawler/github"
 	"github.com/fengyfei/gu/applications/echo/core"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/crawler"
+	"github.com/fengyfei/gu/libs/crawler/github"
 	"github.com/fengyfei/gu/models/github/trending"
 )
 
