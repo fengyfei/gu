@@ -61,7 +61,7 @@ func init() {
 
 	s.SetMode(mgo.Monotonic, true)
 	s.DB(github.Database).C(cname).EnsureIndex(mgo.Index{
-		Key:        []string{"Title", "Lang", "Created"},
+		Key:        []string{"Title", "Lang", "Date"},
 		Unique:     true,
 		Background: true,
 		Sparse:     true,
