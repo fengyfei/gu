@@ -44,6 +44,7 @@ type Trending struct {
 	Title    string
 	Abstract string
 	Lang     string
+	Date     string
 	Stars    int
 	Today    int
 }
@@ -82,7 +83,7 @@ func (c *trendingCrawler) parse(e *colly.HTMLElement) {
 
 func (c *trendingCrawler) parseContent(_ int, s *goquery.Selection) {
 	rawTitle, _ := s.Children().Eq(0).Find("a").Attr("href")
-	title := strings.Split(rawTitle, "/")[2]
+	title := strings.TrimPrefix(rawTitle, "/")
 
 	rawAbstract := s.Children().Eq(2).Find("p").Text()
 	abstract := strings.TrimSpace(rawAbstract)
@@ -99,7 +100,8 @@ func (c *trendingCrawler) parseContent(_ int, s *goquery.Selection) {
 	info := &Trending{
 		Title:    title,
 		Abstract: abstract,
-		Lang:     date + *c.topic,
+		Lang:     *c.topic,
+		Date:     date,
 		Stars:    stars,
 		Today:    today,
 	}

@@ -61,12 +61,8 @@ func init() {
 
 	s.SetMode(mgo.Monotonic, true)
 	s.DB(github.Database).C(cname).EnsureIndex(mgo.Index{
-		Key:        []string{"Title"},
-		Background: true,
-		Sparse:     true,
-	})
-	s.DB(github.Database).C(cname).EnsureIndex(mgo.Index{
-		Key:        []string{"Lang"},
+		Key:        []string{"Title", "Lang", "Created"},
+		Unique:     true,
 		Background: true,
 		Sparse:     true,
 	})
@@ -80,7 +76,8 @@ type Trending struct {
 	ID       bson.ObjectId `bson:"_id,omitempty"`
 	Title    string        `bson:"Title"`
 	Abstract string        `bson:"Abstract"`
-	Lang     string        `bson:"Lang"` //  today in the "20060102" format + lang
+	Lang     string        `bson:"Lang"`
+	Date     string        `bson:"Date"`
 	Stars    int           `bson:"Stars"`
 	Today    int           `bson:"Today"` // the increments of stars today
 }
@@ -95,6 +92,7 @@ func (sp *serviceProvider) CreateList(docs []*Trending) error {
 			Title:    d.Title,
 			Abstract: d.Abstract,
 			Lang:     d.Lang,
+			Date:     d.Date,
 			Stars:    d.Stars,
 			Today:    d.Today,
 		}
@@ -113,15 +111,14 @@ func (sp *serviceProvider) GetByLang(lang *string) ([]Trending, error) {
 	var (
 		err    error
 		result []Trending
+		sort   string = "-Today"
+		date   string = time.Now().Format("20060102")
 	)
 
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	date := time.Now().Format("20060102")
-	query := date + *lang
-
-	err = conn.GetMany(bson.M{"Lang": query}, &result)
+	err = conn.GetMany(bson.M{"Lang": *lang, "Date": date}, &result, sort)
 
 	return result, err
 }

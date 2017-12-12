@@ -58,6 +58,7 @@ type (
 		Title    string `json:"title"`
 		Abstract string `json:"abstract"`
 		Lang     string `json:"lang"`
+		Date     string `json:"date"`
 		Stars    int    `json:"stars"`
 		Today    int    `json:"today"`
 	}
@@ -103,6 +104,7 @@ func LangInfo(c echo.Context) error {
 				Title:    t.Title,
 				Abstract: t.Abstract,
 				Lang:     *req.Lang,
+				Date:     t.Date,
 				Stars:    t.Stars,
 				Today:    t.Today,
 			}
@@ -124,6 +126,7 @@ crawler:
 						Title:    tInfo.Title,
 						Abstract: tInfo.Abstract,
 						Lang:     *req.Lang,
+						Date:     tInfo.Date,
 						Stars:    tInfo.Stars,
 						Today:    tInfo.Today,
 					}
@@ -133,6 +136,7 @@ crawler:
 						Title:    tInfo.Title,
 						Abstract: tInfo.Abstract,
 						Lang:     tInfo.Lang,
+						Date:     tInfo.Date,
 						Stars:    tInfo.Stars,
 						Today:    tInfo.Today,
 					}
