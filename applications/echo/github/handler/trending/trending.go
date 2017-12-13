@@ -50,7 +50,7 @@ const (
 type (
 	// langReq - The request struct that get the trending of the day of a language.
 	langReq struct {
-		Lang *string `json:"lang" validate:"required,alpha"`
+		Lang *string `json:"lang" validate:"required"`
 	}
 
 	// infoResp - The response struct that represents the trending of the day of a language.
