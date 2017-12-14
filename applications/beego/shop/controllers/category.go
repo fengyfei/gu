@@ -44,13 +44,13 @@ type (
   }
 
   categoryAddReq struct {
-    Name     string `json:"name"`
-    Desc     string `json:"desc"`
-    ParentID uint   `json:"parentId"`
+    Name     string `json:"name" validate:"required,alphanumunicode,max=6"`
+    Desc     string `json:"desc" validate:"required,max=50"`
+    ParentID uint   `json:"parentId" validate:"required"`
   }
 
   subCategoryReq struct {
-    PID uint `json:"pid"`
+    PID uint `json:"pid" validate:"required"`
   }
 )
 
@@ -71,6 +71,14 @@ func (this *CategoryController) AddCategory() {
   }
 
   err = json.Unmarshal(this.Ctx.Input.RequestBody, &addReq)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+    goto finish
+  }
+
+  err = this.Validate(addReq)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
@@ -140,6 +148,14 @@ func (this *CategoryController) GetSubCategories() {
   }
 
   err = json.Unmarshal(this.Ctx.Input.RequestBody, &pidReq)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+    goto finish
+  }
+
+  err = this.Validate(pidReq)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
