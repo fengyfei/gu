@@ -46,7 +46,7 @@ type (
 
 	createReq struct {
 		Orders     []Order.OrderItem `json:"orders" validate:"required"`
-		ReceiveWay int8              `json:"receiveWay"`
+		ReceiveWay int8              `json:"receiveWay" validate:"required"`
 	}
 
 	confirmOrderReq struct {
@@ -127,6 +127,14 @@ func (this *OrderController) ConfirmOrder() {
 	err = json.Unmarshal(this.Ctx.Input.RequestBody, &req)
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		goto finish
+	}
+
+	err = this.Validate(&req)
+	if err != nil {
+		logger.Error(err)
+		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
 		goto finish
 	}
 

@@ -136,6 +136,14 @@ func (this *UserController) ChangeAdminPassword() {
 		goto finish
 	}
 
+	err = this.Validate(&req)
+	if err != nil {
+		logger.Error(err)
+		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+		goto finish
+	}
+
 	err = user.Service.ChangePassword(conn, adminId, &req.OldPass, &req.NewPass)
 	if err != nil {
 		logger.Error(err)

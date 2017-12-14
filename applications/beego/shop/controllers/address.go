@@ -45,18 +45,18 @@ type (
 	}
 
 	addReq struct {
-		Address   string `json:"address"`
-		IsDefault bool   `json:"isDefault"`
+		Address   string `json:"address" validate:"max=128"`
+		IsDefault bool   `json:"isDefault" validate:"required"`
 	}
 
 	setDefaultReq struct {
-		Id int `json:"id"`
+		Id int `json:"id" validate:"required"`
 	}
 
 	modifyReq struct {
-		Id        int    `json:"id"`
-		Address   string `json:"address"`
-		IsDefault bool   `json:"isDefault"`
+		Id        int    `json:"id" validate:"required"`
+		Address   string `json:"address" validate:"max=128"`
+		IsDefault bool   `json:"isDefault" validate:"required"`
 	}
 )
 
@@ -79,6 +79,14 @@ func (this *AddressController) AddAddress() {
 	err = json.Unmarshal(this.Ctx.Input.RequestBody, &req)
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		goto finish
+	}
+
+	err = this.Validate(&req)
+	if err != nil {
+		logger.Error(err)
+		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
 		goto finish
 	}
 
@@ -116,6 +124,14 @@ func (this *AddressController) SetDefault() {
 		goto finish
 	}
 
+	err = this.Validate(&req)
+	if err != nil {
+		logger.Error(err)
+		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+		goto finish
+	}
+
 	err = address.Service.SetDefault(conn, userId, req.Id)
 	if err != nil {
 		logger.Error(err)
@@ -145,6 +161,14 @@ func (this *AddressController) Modify() {
 	err = json.Unmarshal(this.Ctx.Input.RequestBody, &req)
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		goto finish
+	}
+
+	err = this.Validate(&req)
+	if err != nil {
+		logger.Error(err)
+		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
 		goto finish
 	}
 

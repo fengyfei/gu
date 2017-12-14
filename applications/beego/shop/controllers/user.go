@@ -105,6 +105,14 @@ func (u *UserController) WechatLogin() {
 		goto finish
 	}
 
+	err = u.Validate(&wechatUser)
+	if err != nil {
+		logger.Error(err)
+		u.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+		goto finish
+	}
+
 	url = fmt.Sprintf("https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code", APPID, SECRET, wechatUser.WechatCode)
 
 	wechatRes, err = http.Get(url)
@@ -258,6 +266,14 @@ func (this *UserController) ChangePassword() {
 	err = json.Unmarshal(this.Ctx.Input.RequestBody, &req)
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		goto finish
+	}
+
+	err = this.Validate(&req)
+	if err != nil {
+		logger.Error(err)
+		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
 		goto finish
 	}
 
