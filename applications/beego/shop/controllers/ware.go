@@ -47,7 +47,7 @@ type (
   }
 
   categoryReq struct {
-    CID uint `json:"cid"`
+    CID uint `json:"cid" validate:"required"`
   }
 
   homeReq struct {
@@ -96,32 +96,40 @@ func (this *WareController) CreateWare() {
     goto finish
   }
 
-  addReq.Avatar, err = util.SavePicture(addReq.Avatar, "ware/")
-  if err != nil {
-    logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInternalServerError}
+  if len(addReq.Avatar) > 0 {
+    addReq.Avatar, err = util.SavePicture(addReq.Avatar, "ware/")
+    if err != nil {
+      logger.Error(err)
+      this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInternalServerError}
 
-    goto finish
+      goto finish
+    }
   }
-  addReq.Image, err = util.SavePicture(addReq.Image, "ware/")
-  if err != nil {
-    logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInternalServerError}
+  if len(addReq.Image) > 0 {
+    addReq.Image, err = util.SavePicture(addReq.Image, "ware/")
+    if err != nil {
+      logger.Error(err)
+      this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInternalServerError}
 
-    goto finish
+      goto finish
+    }
   }
-  addReq.Introduce, err = util.SavePicture(addReq.Introduce, "wareIntro/")
-  if err != nil {
-    logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInternalServerError}
+  if len(addReq.DetailPic) > 0 {
+    addReq.DetailPic, err = util.SavePicture(addReq.DetailPic, "wareIntro/")
+    if err != nil {
+      logger.Error(err)
+      this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInternalServerError}
 
-    goto finish
+      goto finish
+    }
   }
 
   err = ware.Service.CreateWare(conn, addReq)
   if err != nil {
     logger.Error(err)
-    if !util.DeletePicture(addReq.Avatar) || !util.DeletePicture(addReq.Image) || !util.DeletePicture(addReq.Introduce) {
+    if (len(addReq.Avatar) > 0 && !util.DeletePicture(addReq.Avatar)) ||
+       (len(addReq.Image) > 0 && !util.DeletePicture(addReq.Image)) ||
+       (len(addReq.DetailPic) > 0 && !util.DeletePicture(addReq.DetailPic)) {
       logger.Error(errors.New("create ware failed and delete it's pictures go wrong, please delete picture manually"))
     }
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -182,6 +190,14 @@ func (this *WareController) GetWareByCategory() {
   }
 
   err = json.Unmarshal(this.Ctx.Input.RequestBody, &cidReq)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+    goto finish
+  }
+
+  err = this.Validate(cidReq)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
@@ -263,15 +279,48 @@ func (this *WareController) UpdateWithID() {
     goto finish
   }
 
+  if len(req.Avatar) > 0 {
+    req.Avatar, err = util.SavePicture(req.Avatar, "ware/")
+    if err != nil {
+      logger.Error(err)
+      this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInternalServerError}
+
+      goto finish
+    }
+  }
+  if len(req.Image) > 0 {
+    req.Image, err = util.SavePicture(req.Image, "ware/")
+    if err != nil {
+      logger.Error(err)
+      this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInternalServerError}
+
+      goto finish
+    }
+  }
+  if len(req.DetailPic) > 0 {
+    req.DetailPic, err = util.SavePicture(req.DetailPic, "wareIntro/")
+    if err != nil {
+      logger.Error(err)
+      this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInternalServerError}
+
+      goto finish
+    }
+  }
+
   err = ware.Service.UpdateWare(conn, req)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+    if (len(req.Avatar) > 0 && !util.DeletePicture(req.Avatar)) ||
+       (len(req.Image) > 0 && !util.DeletePicture(req.Image)) ||
+       (len(req.DetailPic) > 0 && !util.DeletePicture(req.DetailPic)) {
+      logger.Error(errors.New("update ware failed and delete it's pictures go wrong, please delete picture manually"))
+    }
 
     goto finish
   }
   this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
-  logger.Info("update ware info of", req.ID)
+  logger.Info("update ware info of id:", req.ID)
 
 finish:
   this.ServeJSON(true)

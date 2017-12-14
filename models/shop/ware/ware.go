@@ -33,6 +33,8 @@ import (
   "time"
   "github.com/fengyfei/gu/libs/orm"
   "github.com/jinzhu/gorm"
+  "github.com/fengyfei/gu/libs/logger"
+  "github.com/fengyfei/gu/applications/beego/shop/util"
 )
 
 type serviceProvider struct{}
@@ -44,8 +46,8 @@ var (
 type (
   Ware struct {
     ID         uint      `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
-    Name       string    `gorm:"type:varchar(50);not null"  json:"name" validate:"required"`
-    Desc       string    `gorm:"type:varchar(100);not null" json:"desc"`
+    Name       string    `gorm:"type:varchar(50);not null"  json:"name" validate:"required,alphanumunicode,max=12"`
+    Desc       string    `gorm:"type:varchar(100);not null" json:"desc" validate:"alphanumunicode,max=50"`
     CategoryID uint      `gorm:"not null" json:"categoryId"`
     TotalSale  uint      `gorm:"not null" json:"totalSale"`
     Inventory  uint      `gorm:"not null" json:"inventory"`
@@ -54,7 +56,7 @@ type (
     SalePrice  float32   `gorm:"not null;type:float" json:"salePrice"` // promotion price
     Avatar     string    `gorm:"type:varchar(100)"   json:"avatar"`
     Image      string    `gorm:"type:varchar(100)"   json:"image"`
-    Introduce  string    `gorm:"type:varchar(100)"   json:"introduce"`
+    DetailPic  string    `gorm:"type:varchar(100)"   json:"detailPic"`
     CreatedAt  time.Time `json:"createdAt"`
   }
 
@@ -71,14 +73,13 @@ type (
 
   UpdateReq struct {
     ID         uint   `json:"id" validate:"required"`
-    Desc       string `json:"desc"`
+    Name       string `json:"name"`
+    Desc       string `json:"desc" validate:"max=50"`
     CategoryID uint   `json:"categoryId"`
     TotalSale  uint   `json:"totalSale"`
-    Size       string `json:"size"`
-    Color      string `json:"color"`
     Avatar     string `json:"avatar"`
     Image      string `json:"image"`
-    Introduce  string `json:"introduce"`
+    DetailPic  string `json:"detailPic"`
     Inventory  uint   `json:"inventory"`
   }
 
@@ -104,7 +105,7 @@ func (sp *serviceProvider) CreateWare(conn orm.Connection, wareReq Ware) error {
   ware.SalePrice = wareReq.SalePrice
   ware.Avatar = wareReq.Avatar
   ware.Image = wareReq.Image
-  ware.Introduce = wareReq.Introduce
+  ware.DetailPic = wareReq.DetailPic
   ware.Inventory = wareReq.Inventory
 
   db := conn.(*gorm.DB).Exec("USE shop")
@@ -149,14 +150,46 @@ func (sp *serviceProvider) GetPromotionList(conn orm.Connection) ([]BriefInfo, e
   return list, res.Error
 }
 
-// update ware info
-func (sp *serviceProvider) UpdateWare(conn orm.Connection, req UpdateReq) error {
-  var res *gorm.DB
+// get new ware
+func (sp *serviceProvider) GetNewWares(conn orm.Connection) ([]BriefInfo, error) {
+  var (
+    res  *gorm.DB
+    list []BriefInfo
+  )
 
   db := conn.(*gorm.DB).Exec("USE shop")
-  res = db.Table("wares").Where("id = ?", req.ID).Updates(req)
+  res = db.Table("wares").Where("status = ?", 3).Scan(&list)
 
-  return res.Error
+  return list, res.Error
+}
+
+// update ware info
+func (sp *serviceProvider) UpdateWare(conn orm.Connection, req UpdateReq) error {
+  var imgs Ware
+
+  db := conn.(*gorm.DB).Exec("USE shop")
+  err := db.Table("wares").Select("avatar,image,detail_pic").Where("id = ?", req.ID).First(&imgs).Error
+  if err != nil {
+    logger.Error(err)
+    return err
+  }
+
+  err = db.Table("wares").Where("id = ?", req.ID).Updates(req).Error
+  if err != nil {
+    logger.Error(err)
+    return err
+  }
+
+  if len(req.Avatar) > 0 {
+    util.DeletePicture(imgs.Avatar)
+  }
+  if len(req.Image) > 0 {
+    util.DeletePicture(imgs.Image)
+  }
+  if len(req.DetailPic) > 0 {
+    util.DeletePicture(imgs.DetailPic)
+  }
+  return nil
 }
 
 // modify ware price
@@ -176,7 +209,7 @@ func (sp *serviceProvider) ModifyPrice(conn orm.Connection, req ModifyPriceReq) 
 func (sp *serviceProvider) GetByID(conn orm.Connection, id uint) (*Ware, error) {
   db := conn.(*gorm.DB).Exec("USE shop")
   ware := &Ware{}
-  err := db.Where("id = ?", id).First(&ware).Error
+  err := db.Table("wares").Where("id = ?", id).First(&ware).Error
 
   return ware, err
 }

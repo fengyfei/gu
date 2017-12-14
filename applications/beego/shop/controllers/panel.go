@@ -233,7 +233,6 @@ func (this *PanelController) GetPanelPage() {
       detail, err := panel.Service.GetDetail(conn, res[i].ID)
       if err != nil {
         logger.Error(err)
-
         res[i].Content = []interface{}{}
       } else {
         ids := strings.Split(detail.Content, "#")
@@ -241,7 +240,6 @@ func (this *PanelController) GetPanelPage() {
         wares, err := ware.Service.GetByIDs(conn, ids)
         if err != nil {
           logger.Error(err)
-
           res[i].Content = []interface{}{}
         } else {
           for k := range wares {
@@ -254,10 +252,21 @@ func (this *PanelController) GetPanelPage() {
       detail, err := panel.Service.GetDetail(conn, res[i].ID)
       if err != nil {
         logger.Error(err)
-
         res[i].Content = []interface{}{}
       } else {
         res[i].Content = append(res[i].Content, detail.Picture)
+      }
+    }
+    if res[i].Type == 3 {
+      if newWares, newErr := ware.Service.GetNewWares(conn); len(newWares) > 0 {
+        if newErr != nil {
+          logger.Error(newErr)
+          res[i].Content = []interface{}{}
+        } else {
+          res[i].Content = append(res[i].Content, newWares)
+        }
+      } else {
+        res[i].Content = []interface{}{}
       }
     }
   }
