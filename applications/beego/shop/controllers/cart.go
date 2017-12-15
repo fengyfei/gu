@@ -45,12 +45,12 @@ type (
 	}
 
 	addCartReq struct {
-		WareId int32 `json:"wareId"`
-		Count  int32 `json:"count"`
+		WareId uint `json:"wareId"`
+		Count  uint `json:"count"`
 	}
 
 	removeCartReq struct {
-		Id int32 `json:"id"`
+		Id uint `json:"id"`
 	}
 )
 
@@ -58,11 +58,11 @@ func (this *CartController) Add() {
 	var (
 		req    addCartReq
 		err    error
-		userId int32
+		userId uint
 		conn   orm.Connection
 	)
 
-	userId = this.Ctx.Request.Context().Value("userId").(int32)
+	userId = this.Ctx.Request.Context().Value("userId").(uint)
 
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
@@ -104,11 +104,11 @@ func (this *CartController) GetByUser() {
 	var (
 		items  []Cart.CartItem
 		err    error
-		userId int32
+		userId uint
 		conn   orm.Connection
 	)
 
-	userId = this.Ctx.Request.Context().Value("userId").(int32)
+	userId = this.Ctx.Request.Context().Value("userId").(uint)
 
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)

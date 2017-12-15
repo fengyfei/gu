@@ -90,7 +90,7 @@ func (u *UserController) WechatLogin() {
 	(
 		wechatUser WechatLoginReq
 		err        error
-		userId     int32
+		userId     uint
 		url        string
 		wechatData wechatLogin
 		wechatRes  *http.Response
@@ -200,7 +200,7 @@ func (this *UserController) PhoneLogin() {
 		loginReq phoneLoginReq
 		err      error
 		token    string
-		uid      int32
+		uid      uint
 	)
 
 	conn, err := mysql.Pool.Get()
@@ -249,12 +249,12 @@ finish:
 func (this *UserController) ChangePassword() {
 	var (
 		req    changePassReq
-		userId int32
+		userId uint
 		conn   orm.Connection
 		err    error
 	)
 
-	userId = this.Ctx.Request.Context().Value("userId").(int32)
+	userId = this.Ctx.Request.Context().Value("userId").(uint)
 
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)

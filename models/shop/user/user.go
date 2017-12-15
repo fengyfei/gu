@@ -48,7 +48,7 @@ var (
 )
 
 type User struct {
-	ID        int32  `gorm:"primary_key;auto_increment"`
+	ID        uint  `gorm:"primary_key;auto_increment"`
 	UserName  string `gorm:"unique;type:varchar(128)"`
 	NickName  string `gorm:"type:varchar(30)"`
 	Phone     string `gorm:"unique;default:null"`
@@ -57,7 +57,7 @@ type User struct {
 	CreatedAt *time.Time
 }
 
-func (this *serviceProvider) WechatLogin(conn orm.Connection, nickName, unionId *string) (int32, error) {
+func (this *serviceProvider) WechatLogin(conn orm.Connection, nickName, unionId *string) (uint, error) {
 
 	user := &User{}
 	res := &User{}
@@ -106,7 +106,7 @@ func (this *serviceProvider) PhoneRegister(conn orm.Connection, phone, password,
 	return db.Model(&User{}).Create(&user).Error
 }
 
-func (this *serviceProvider) PhoneLogin(conn orm.Connection, phone, password *string) (int32, error) {
+func (this *serviceProvider) PhoneLogin(conn orm.Connection, phone, password *string) (uint, error) {
 
 	db := conn.(*gorm.DB).Exec("USE shop")
 	user := &User{}
@@ -123,7 +123,7 @@ func (this *serviceProvider) PhoneLogin(conn orm.Connection, phone, password *st
 	return user.ID, err
 }
 
-func (this *serviceProvider) ChangePassword(conn orm.Connection, id int32, oldPass, newPass *string) error {
+func (this *serviceProvider) ChangePassword(conn orm.Connection, id uint, oldPass, newPass *string) error {
 	db := conn.(*gorm.DB).Exec("USE shop")
 	user := &User{}
 
@@ -144,7 +144,7 @@ func (this *serviceProvider) ChangePassword(conn orm.Connection, id int32, oldPa
 	return db.Save(&user).Error
 }
 
-func (this *serviceProvider) GetUserByID(conn orm.Connection, ID int32) (*User, error) {
+func (this *serviceProvider) GetUserByID(conn orm.Connection, ID uint) (*User, error) {
 	db := conn.(*gorm.DB).Exec("USE shop")
 	user := &User{}
 

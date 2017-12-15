@@ -42,14 +42,14 @@ var (
 )
 
 type CartItem struct {
-	ID        int32 `gorm:"primary_key;auto_increment"`
-	UserId    int32
-	WareId    int32
-	Count     int32
+	ID        uint `gorm:"primary_key;auto_increment"`
+	UserId    uint
+	WareId    uint
+	Count     uint
 	CreatedAt *time.Time
 }
 
-func (this *serviceProvider) Add(conn orm.Connection, userId, wareId, count int32) error {
+func (this *serviceProvider) Add(conn orm.Connection, userId, wareId, count uint) error {
 	db := conn.(*gorm.DB).Exec("USE shop")
 
 	item := &CartItem{}
@@ -72,7 +72,7 @@ func (this *serviceProvider) Add(conn orm.Connection, userId, wareId, count int3
 	return db.Model(&CartItem{}).Create(&item).Error
 }
 
-func (this *serviceProvider) GetByUserID(conn orm.Connection, userId int32) ([]CartItem, error) {
+func (this *serviceProvider) GetByUserID(conn orm.Connection, userId uint) ([]CartItem, error) {
 	db := conn.(*gorm.DB).Exec("USE shop")
 	items := []CartItem{}
 
@@ -81,7 +81,7 @@ func (this *serviceProvider) GetByUserID(conn orm.Connection, userId int32) ([]C
 	return items, err
 }
 
-func (this *serviceProvider) RemoveById(conn orm.Connection, id int32) error {
+func (this *serviceProvider) RemoveById(conn orm.Connection, id uint) error {
 	db := conn.(*gorm.DB).Exec("USE shop")
 	item := &CartItem{}
 	item.ID = id
@@ -89,7 +89,7 @@ func (this *serviceProvider) RemoveById(conn orm.Connection, id int32) error {
 	return db.Delete(&item).Error
 }
 
-func (this *serviceProvider) RemoveWhenOrder(tx *gorm.DB, userId int32, wareIdList []int32) error {
+func (this *serviceProvider) RemoveWhenOrder(tx *gorm.DB, userId uint, wareIdList []uint) error {
 	for i := 0; i < len(wareIdList); i++ {
 		item := &CartItem{}
 		item.ID = wareIdList[i]

@@ -50,7 +50,7 @@ type (
 	}
 
 	confirmOrderReq struct {
-		ID     int32 `json:"id"`
+		ID     uint `json:"id"`
 	}
 )
 
@@ -59,12 +59,12 @@ func (this *OrderController) CreateOrder() {
 		req     createReq
 		err     error
 		IP      string
-		userId  int32
+		userId  uint
 		conn    orm.Connection
 		signStr string
 	)
 
-	userId = this.Ctx.Request.Context().Value("userId").(int32)
+	userId = this.Ctx.Request.Context().Value("userId").(uint)
 
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
@@ -158,7 +158,7 @@ func (this *OrderController) GetUserOrder() {
 		err    error
 	)
 
-	userId := this.Ctx.Request.Context().Value("userId").(int32)
+	userId := this.Ctx.Request.Context().Value("userId").(uint)
 
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
@@ -179,3 +179,4 @@ func (this *OrderController) GetUserOrder() {
 finish:
 	this.ServeJSON(true)
 }
+

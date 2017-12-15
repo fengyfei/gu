@@ -42,13 +42,13 @@ var (
 )
 
 type Address struct {
-	ID        int32    `gorm:"primary_key;auto_increment"`
-	UserId    int32
+	ID        uint    `gorm:"primary_key;auto_increment"`
+	UserId    uint
 	Address   string `gorm:"type:varchar(128)"`
 	IsDefault bool
 }
 
-func (this *serviceProvider) Add(conn orm.Connection, userId int32, address string, isDefault bool) error {
+func (this *serviceProvider) Add(conn orm.Connection, userId uint, address string, isDefault bool) error {
 	var (
 		err error
 	)
@@ -77,7 +77,7 @@ func (this *serviceProvider) Add(conn orm.Connection, userId int32, address stri
 	return db.Model(&Address{}).Create(addr).Error
 }
 
-func (this *serviceProvider) SetDefault(conn orm.Connection, userId int32, id int) error {
+func (this *serviceProvider) SetDefault(conn orm.Connection, userId uint, id int) error {
 	var (
 		err     error
 		addr    Address

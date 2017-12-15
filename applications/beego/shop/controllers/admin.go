@@ -65,7 +65,7 @@ func (this *UserController) Login() {
 		loginReq phoneLoginReq
 		err      error
 		token    string
-		uid      int32
+		uid      uint
 	)
 
 	conn, err := mysql.Pool.Get()
@@ -116,7 +116,7 @@ func (this *UserController) ChangeAdminPassword() {
 		conn orm.Connection
 		err  error
 	)
-	adminId := this.Ctx.Request.Context().Value("userId").(int32)
+	adminId := this.Ctx.Request.Context().Value("userId").(uint)
 	isAdmin := this.Ctx.Request.Context().Value("isAdmin").(bool)
 	if !isAdmin {
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}

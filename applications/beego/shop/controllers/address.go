@@ -67,7 +67,7 @@ func (this *AddressController) AddAddress() {
 		conn orm.Connection
 	)
 
-	userId := this.Ctx.Request.Context().Value("userId").(int32)
+	userId := this.Ctx.Request.Context().Value("userId").(uint)
 
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
@@ -109,7 +109,7 @@ func (this *AddressController) SetDefault() {
 		conn orm.Connection
 	)
 
-	userId := this.Ctx.Request.Context().Value("userId").(int32)
+	userId := this.Ctx.Request.Context().Value("userId").(uint)
 
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
