@@ -61,6 +61,11 @@ type (
   recommendReq struct {
     UserID uint `json:"id" validate:"required"`
   }
+
+  ChangeStatusReq struct {
+    IDs    []uint `json:"ids" validate:"required,min=1"`
+    Status int8   `json:"status" validate:"required,eq=-1|eq=1|eq=2|eq=3"`
+  }
 )
 
 // add new ware
@@ -68,7 +73,7 @@ func (this *WareController) CreateWare() {
   var (
     err    error
     addReq ware.Ware
-    conn orm.Connection
+    conn   orm.Connection
   )
 
   conn, err = mysql.Pool.Get()
@@ -375,9 +380,9 @@ finish:
 // get homepage list with last wareID
 func (this *WareController) HomePageList() {
   var (
-    err error
+    err   error
     idReq homeReq
-    res []ware.BriefInfo
+    res   []ware.BriefInfo
   )
 
   conn, err := mysql.Pool.Get()
@@ -421,9 +426,9 @@ finish:
 // get recommend list
 func (this *WareController) RecommendList() {
   var (
-    err error
+    err   error
     idReq recommendReq
-    res []ware.BriefInfo
+    res   []ware.BriefInfo
   )
 
   conn, err := mysql.Pool.Get()
@@ -513,8 +518,8 @@ finish:
 // change status of wares
 func (this *WareController) ChangeStatus() {
   var (
-    err error
-    changeReq []ware.ChangeStatusReq
+    err       error
+    changeReq ChangeStatusReq
   )
 
   conn, err := mysql.Pool.Get()
@@ -534,7 +539,19 @@ func (this *WareController) ChangeStatus() {
     goto finish
   }
 
-  err = ware.Service.ChangeStatus(conn, changeReq)
+  err = this.Validate(changeReq)
+  if err != nil {
+    logger.Error(err)
+    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+    goto finish
+  }
+
+  // status: -1 -> delete or sold out
+  // 1 -> common
+  // 2 -> promotion
+  // 3 -> today new wares
+  err = ware.Service.ChangeStatus(conn, changeReq.IDs, changeReq.Status)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
