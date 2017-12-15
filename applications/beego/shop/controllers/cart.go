@@ -65,7 +65,6 @@ func (this *CartController) Add() {
 	userId = this.Ctx.Request.Context().Value("userId").(uint)
 
 	conn, err = mysql.Pool.Get()
-	defer mysql.Pool.Release(conn)
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
 		goto finish
@@ -111,7 +110,6 @@ func (this *CartController) GetByUser() {
 	userId = this.Ctx.Request.Context().Value("userId").(uint)
 
 	conn, err = mysql.Pool.Get()
-	defer mysql.Pool.Release(conn)
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
 		goto finish
@@ -138,7 +136,6 @@ func (this *CartController) Remove() {
 	)
 
 	conn, err = mysql.Pool.Get()
-	defer mysql.Pool.Release(conn)
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
 		goto finish

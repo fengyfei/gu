@@ -69,7 +69,6 @@ func (this *UserController) Login() {
 	)
 
 	conn, err := mysql.Pool.Get()
-	defer mysql.Pool.Release(conn)
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
 		goto finish
@@ -124,7 +123,6 @@ func (this *UserController) ChangeAdminPassword() {
 	}
 
 	conn, err = mysql.Pool.Get()
-	defer mysql.Pool.Release(conn)
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
 		goto finish

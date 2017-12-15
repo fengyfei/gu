@@ -160,7 +160,6 @@ func (this *UserController) PhoneRegister() {
 	)
 
 	conn, err := mysql.Pool.Get()
-	defer mysql.Pool.Release(conn)
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
 		goto finish
@@ -204,7 +203,6 @@ func (this *UserController) PhoneLogin() {
 	)
 
 	conn, err := mysql.Pool.Get()
-	defer mysql.Pool.Release(conn)
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
 		goto finish
@@ -257,7 +255,6 @@ func (this *UserController) ChangePassword() {
 	userId = this.Ctx.Request.Context().Value("userId").(uint)
 
 	conn, err = mysql.Pool.Get()
-	defer mysql.Pool.Release(conn)
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
 		goto finish

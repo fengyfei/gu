@@ -74,7 +74,6 @@ func (cc *CollectionController) GetByUserID() {
 	}
 
 	conn, err = mysql.Pool.Get()
-	defer mysql.Pool.Release(conn)
 	if err != nil {
 		logger.Error(err)
 
@@ -120,7 +119,6 @@ func (cc *CollectionController) Add() {
 	}
 
 	conn, err = mysql.Pool.Get()
-	defer mysql.Pool.Release(conn)
 	if err != nil {
 		logger.Error(err)
 
@@ -171,7 +169,6 @@ func (cc *CollectionController) Remove() {
 	)
 
 	conn, err = mysql.Pool.Get()
-	defer mysql.Pool.Release(conn)
 	if err != nil {
 		logger.Error(err)
 

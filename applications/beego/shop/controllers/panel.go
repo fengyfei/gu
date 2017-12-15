@@ -58,7 +58,6 @@ func (this *PanelController) AddPanel() {
   )
 
   conn, err = mysql.Pool.Get()
-  defer mysql.Pool.Release(conn)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -105,7 +104,6 @@ func (this *PanelController) AddPromotion() {
   )
 
   conn, err = mysql.Pool.Get()
-  defer mysql.Pool.Release(conn)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -152,7 +150,6 @@ func (this *PanelController) AddRecommend() {
   )
 
   conn, err = mysql.Pool.Get()
-  defer mysql.Pool.Release(conn)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -212,7 +209,6 @@ func (this *PanelController) GetPanelPage() {
   )
 
   conn, err := mysql.Pool.Get()
-  defer mysql.Pool.Release(conn)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}

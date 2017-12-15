@@ -70,7 +70,6 @@ func (this *AddressController) AddAddress() {
 	userId := this.Ctx.Request.Context().Value("userId").(uint)
 
 	conn, err = mysql.Pool.Get()
-	defer mysql.Pool.Release(conn)
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
 		goto finish
@@ -112,7 +111,6 @@ func (this *AddressController) SetDefault() {
 	userId := this.Ctx.Request.Context().Value("userId").(uint)
 
 	conn, err = mysql.Pool.Get()
-	defer mysql.Pool.Release(conn)
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
 		goto finish
@@ -152,7 +150,6 @@ func (this *AddressController) Modify() {
 	)
 
 	conn, err = mysql.Pool.Get()
-	defer mysql.Pool.Release(conn)
 	if err != nil {
 		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
 		goto finish

@@ -62,7 +62,6 @@ func (this *CategoryController) AddCategory() {
   )
 
   conn, err := mysql.Pool.Get()
-  defer mysql.Pool.Release(conn)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -109,7 +108,6 @@ func (this *CategoryController) GetMainCategories() {
   )
 
   conn, err := mysql.Pool.Get()
-  defer mysql.Pool.Release(conn)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -139,7 +137,6 @@ func (this *CategoryController) GetSubCategories() {
   )
 
   conn, err := mysql.Pool.Get()
-  defer mysql.Pool.Release(conn)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}

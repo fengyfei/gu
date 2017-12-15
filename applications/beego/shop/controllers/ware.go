@@ -77,7 +77,6 @@ func (this *WareController) CreateWare() {
   )
 
   conn, err = mysql.Pool.Get()
-  defer mysql.Pool.Release(conn)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -156,7 +155,6 @@ func (this *WareController) GetAllWare() {
   )
 
   conn, err := mysql.Pool.Get()
-  defer mysql.Pool.Release(conn)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -186,7 +184,6 @@ func (this *WareController) GetWareByCategory() {
   )
 
   conn, err := mysql.Pool.Get()
-  defer mysql.Pool.Release(conn)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -231,7 +228,6 @@ func (this *WareController) GetPromotion() {
   )
 
   conn, err := mysql.Pool.Get()
-  defer mysql.Pool.Release(conn)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -260,7 +256,6 @@ func (this *WareController) UpdateWithID() {
   )
 
   conn, err := mysql.Pool.Get()
-  defer mysql.Pool.Release(conn)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -339,7 +334,6 @@ func (this *WareController) ModifyPrice() {
   )
 
   conn, err := mysql.Pool.Get()
-  defer mysql.Pool.Release(conn)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -386,7 +380,6 @@ func (this *WareController) HomePageList() {
   )
 
   conn, err := mysql.Pool.Get()
-  defer mysql.Pool.Release(conn)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -432,7 +425,6 @@ func (this *WareController) RecommendList() {
   )
 
   conn, err := mysql.Pool.Get()
-  defer mysql.Pool.Release(conn)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -478,7 +470,6 @@ func (this *WareController) GetDetail() {
   )
 
   conn, err := mysql.Pool.Get()
-  defer mysql.Pool.Release(conn)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -523,7 +514,6 @@ func (this *WareController) ChangeStatus() {
   )
 
   conn, err := mysql.Pool.Get()
-  defer mysql.Pool.Release(conn)
   if err != nil {
     logger.Error(err)
     this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
