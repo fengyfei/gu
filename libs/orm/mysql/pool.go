@@ -31,133 +31,57 @@
 package mysql
 
 import (
-	"container/ring"
-	"errors"
-	"sync"
-
 	_ "github.com/go-sql-driver/mysql"
 
-	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/libs/orm"
 	"github.com/jinzhu/gorm"
 )
 
 const (
-	poolMaxSize = 200
+	poolMaxSize = 100
 	dialect     = "mysql"
-)
-
-var (
-	ErrNoConnection = errors.New("MySQL Connection expired")
 )
 
 // Pool represents the database connection pool.
 type Pool struct {
-	db      string
-	maxSize int
-	lock    sync.Mutex
-	pool    *ring.Ring
-	size    int
+	db *gorm.DB
 }
 
 // NewPool create a Pool according to the specified db and pool size.
 func NewPool(db string, size int) *Pool {
-	var (
-		err  error
-		conn *ring.Ring
-	)
+	d, err := gorm.Open(dialect, db)
 
-	if size <= 0 {
-		size = 20
-	}
-
-	if size > poolMaxSize {
-		size = poolMaxSize
+	if err != nil {
+		panic(err)
 	}
 
 	pool := &Pool{
-		db:      db,
-		maxSize: size,
+		db: d,
 	}
 
-	for i := 0; i < size; i++ {
-		conn = ring.New(1)
-		conn.Value, err = gorm.Open(dialect, db)
-
-		if err != nil {
-			logger.Error(err)
-			continue
-		}
-
-		if pool.pool == nil {
-			pool.pool = conn
-		}
-
-		pool.pool.Link(conn)
+	if size <= 0 {
+		size = 20
+	} else if size > poolMaxSize {
+		size = poolMaxSize
 	}
 
-	pool.size = pool.pool.Len()
-	if pool.size != size {
-		logger.Debug("New pool not enough!")
-	}
-
-	logger.Debug("Pool size:", pool.size)
+	pool.db.DB().SetMaxIdleConns(size)
+	pool.db.DB().SetMaxOpenConns(size << 1)
 
 	return pool
 }
 
 // Get get a connection from the pool.
 func (p *Pool) Get() (orm.Connection, error) {
-	p.lock.Lock()
-	defer p.lock.Unlock()
-
-	if p.size == 0 {
-		conn, err := gorm.Open(dialect, p.db)
-
-		if err != nil {
-			return nil, ErrNoConnection
-		}
-		return conn, nil
-	}
-
-	p.size -= 1
-
-	conn := p.pool.Unlink(1)
-	return conn.Value.(orm.Connection), nil
+	return p.db, nil
 }
 
 // Release put the connection back into the pool.
 func (p *Pool) Release(v orm.Connection) {
-	p.lock.Lock()
-	defer p.lock.Unlock()
-
-	if p.size == p.maxSize {
-		v.(*gorm.DB).Close()
-		return
-	}
-
-	conn := ring.New(1)
-	conn.Value = v
-
-	p.size += 1
-	p.pool.Prev().Link(conn)
+	return
 }
 
 // Close close the pool.
 func (p *Pool) Close() {
-	f := func(v interface{}) {
-		if v == nil {
-			return
-		}
-
-		conn := v.(*gorm.DB)
-		conn.Close()
-	}
-
-	p.lock.Lock()
-	defer p.lock.Unlock()
-
-	p.size = 0
-	p.pool.Do(f)
-	p.pool = nil
+	p.db.Close()
 }
