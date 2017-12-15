@@ -27,19 +27,22 @@
  *     Initial: 2017/11/13        Jia Chenhui
  */
 
-package permission
+package controller
 
 import (
-	"net/http"
+	json "github.com/json-iterator/go"
 
-	"github.com/jinzhu/gorm"
-	"github.com/labstack/echo"
-
-	"github.com/fengyfei/gu/applications/echo/admin/mysql"
-	"github.com/fengyfei/gu/applications/echo/core"
+	"github.com/fengyfei/gu/applications/beego/base"
+	"github.com/fengyfei/gu/applications/beego/polaris/mysql"
 	"github.com/fengyfei/gu/libs/constants"
+	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/models/staff"
 )
+
+// Permission - Permission associated handler.
+type Permission struct {
+	base.Controller
+}
 
 type (
 	// createReq - The request struct that create permission information.
@@ -62,67 +65,91 @@ type (
 )
 
 // Create - Create permission information.
-func Create(c echo.Context) error {
+func (p *Permission) Create() {
 	var (
 		err error
 		req createReq
 	)
 
-	if err = c.Bind(&req); err != nil {
-		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
+	if err = json.Unmarshal(p.Ctx.Input.RequestBody, &req); err != nil {
+		logger.Error(err)
+		p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+		goto finish
 	}
 
-	if err = c.Validate(&req); err != nil {
-		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
+	if err = p.Validate(&req); err != nil {
+		logger.Error(err)
+		p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+		goto finish
 	}
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
-		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
+		logger.Error(err)
+		p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+		goto finish
 	}
-	defer mysql.Pool.Release(conn)
 
 	if err = staff.Service.AddURLPermission(conn, req.URL, req.RoleId); err != nil {
-		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
+		logger.Error(err)
+		p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+		goto finish
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		constants.RespKeyStatus: constants.ErrSucceed,
-	})
+	p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+
+finish:
+	p.ServeJSON(true)
 }
 
 // Remove - Remove permission information.
-func Remove(c echo.Context) error {
+func (p *Permission) Remove() {
 	var (
 		err error
 		req removeReq
 	)
 
-	if err = c.Bind(&req); err != nil {
-		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
+	if err = json.Unmarshal(p.Ctx.Input.RequestBody, &req); err != nil {
+		logger.Error(err)
+		p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+		goto finish
 	}
 
-	if err = c.Validate(&req); err != nil {
-		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
+	if err = p.Validate(&req); err != nil {
+		logger.Error(err)
+		p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+		goto finish
 	}
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
-		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
+		logger.Error(err)
+		p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+		goto finish
 	}
-	defer mysql.Pool.Release(conn)
 
 	if err = staff.Service.RemoveURLPermission(conn, req.URL, req.RoleId); err != nil {
-		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
+		logger.Error(err)
+		p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+		goto finish
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		constants.RespKeyStatus: constants.ErrSucceed,
-	})
+	p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+
+finish:
+	p.ServeJSON(true)
 }
 
 // List - Get a list of permission for specified URL.
-func List(c echo.Context) error {
+func (p *Permission) List() {
 	var (
 		err        error
 		permission infoResp
@@ -131,17 +158,18 @@ func List(c echo.Context) error {
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
-		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
+		logger.Error(err)
+		p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+		goto finish
 	}
-	defer mysql.Pool.Release(conn)
 
 	plist, err := staff.Service.Permissions(conn)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
-		}
+		logger.Error(err)
+		p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
 
-		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
+		goto finish
 	}
 
 	for _, p := range plist {
@@ -153,8 +181,11 @@ func List(c echo.Context) error {
 		resp = append(resp, permission)
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
+	p.Data["json"] = map[string]interface{}{
 		constants.RespKeyStatus: constants.ErrSucceed,
 		constants.RespKeyData:   resp,
-	})
+	}
+
+finish:
+	p.ServeJSON(true)
 }

@@ -24,28 +24,36 @@
 
 /*
  * Revision History:
- *     Initial: 2017/11/02        Jia Chenhui
+ *     Initial: 2017/12/06        Jia Chenhui
  */
 
-package mysql
+package auth
 
 import (
-	"github.com/fengyfei/gu/libs/orm/mysql"
+	"github.com/astaxie/beego"
+	"github.com/fengyfei/gu/libs/rpc"
 )
 
 const (
-	poolSize = 20
+	RPCNumber = 10
 )
 
 var (
-	Pool *mysql.Pool
+	// RPCClients represents multiple RPC clients.
+	RPCClients *rpc.Clients
+	RPCAddress = beego.AppConfig.String("RPCAddr")
 )
 
-// InitPool initialize the connection pool.
-func InitPool(db string) {
-	Pool = mysql.NewPool(db, poolSize)
-
-	if Pool == nil {
-		panic("MySQL DB connection error.")
+func InitRPC() {
+	opt := rpc.Options{
+		Proto: "tcp",
+		Addr:  RPCAddress,
 	}
+	opts := make([]rpc.Options, RPCNumber)
+
+	for i := 0; i < RPCNumber; i++ {
+		opts = append(opts, opt)
+	}
+
+	RPCClients = rpc.Dials(opts)
 }

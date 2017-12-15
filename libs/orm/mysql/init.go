@@ -24,36 +24,22 @@
 
 /*
  * Revision History:
- *     Initial: 2017/12/06        Jia Chenhui
+ *     Initial: 2017/11/02        Jia Chenhui
  */
 
-package auth
-
-import (
-	"github.com/fengyfei/gu/applications/echo/admin/config"
-	"github.com/fengyfei/gu/libs/rpc"
-)
+package mysql
 
 const (
-	RPCNumber = 10
+	poolSize = 20
 )
 
-var (
-	// RPCClients represents multiple RPC clients.
-	RPCClients *rpc.Clients
-	RPCAddress = config.Conf.RPCAddr
-)
+// InitPool initialize the connection pool.
+func InitPool(db string) *Pool {
+	pool := NewPool(db, poolSize)
 
-func InitRPC() {
-	opt := rpc.Options{
-		Proto: "tcp",
-		Addr:  RPCAddress,
-	}
-	opts := make([]rpc.Options, RPCNumber)
-
-	for i := 0; i < RPCNumber; i++ {
-		opts = append(opts, opt)
+	if pool == nil {
+		panic("MySQL DB connection error.")
 	}
 
-	RPCClients = rpc.Dials(opts)
+	return pool
 }

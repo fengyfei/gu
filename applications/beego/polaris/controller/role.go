@@ -27,20 +27,24 @@
  *     Initial: 2017/11/09        Jia Chenhui
  */
 
-package role
+package controller
 
 import (
-	"net/http"
 	"time"
 
-	"github.com/jinzhu/gorm"
-	"github.com/labstack/echo"
+	json "github.com/json-iterator/go"
 
-	"github.com/fengyfei/gu/applications/echo/admin/mysql"
-	"github.com/fengyfei/gu/applications/echo/core"
+	"github.com/fengyfei/gu/applications/beego/base"
+	"github.com/fengyfei/gu/applications/beego/polaris/mysql"
 	"github.com/fengyfei/gu/libs/constants"
+	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/models/staff"
 )
+
+// Role - Role associated handler.
+type Role struct {
+	base.Controller
+}
 
 type (
 	// createReq - The request struct that create role information.
@@ -78,112 +82,149 @@ type (
 )
 
 // Create - Create role information.
-func Create(c echo.Context) error {
+func (r *Role) Create() {
 	var (
 		err error
 		req createReq
 	)
 
-	if err = c.Bind(&req); err != nil {
-		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
+	if err = json.Unmarshal(r.Ctx.Input.RequestBody, &req); err != nil {
+		logger.Error(err)
+		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+		goto finish
 	}
 
-	if err = c.Validate(&req); err != nil {
-		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
+	if err = r.Validate(&req); err != nil {
+		logger.Error(err)
+		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+		goto finish
 	}
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
-		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
+		logger.Error(err)
+		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+		goto finish
 	}
-	defer mysql.Pool.Release(conn)
 
 	if err = staff.Service.CreateRole(conn, req.Name, req.Intro); err != nil {
-		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
+		logger.Error(err)
+		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+		goto finish
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		constants.RespKeyStatus: constants.ErrSucceed,
-	})
+	r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+
+finish:
+	r.ServeJSON(true)
 }
 
 // Modify - Modify role information.
-func Modify(c echo.Context) error {
+func (r *Role) Modify() {
 	var (
 		err error
 		req modifyReq
 	)
 
-	if err = c.Bind(&req); err != nil {
-		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
+	if err = json.Unmarshal(r.Ctx.Input.RequestBody, &req); err != nil {
+		logger.Error(err)
+		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+		goto finish
 	}
 
-	if err = c.Validate(&req); err != nil {
-		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
+	if err = r.Validate(&req); err != nil {
+		logger.Error(err)
+		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+		goto finish
 	}
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
-		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
+		logger.Error(err)
+		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+		goto finish
 	}
-	defer mysql.Pool.Release(conn)
 
 	if err = staff.Service.ModifyRole(conn, req.Id, req.Name, req.Intro); err != nil {
-		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
+		logger.Error(err)
+		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+		goto finish
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		constants.RespKeyStatus: constants.ErrSucceed,
-	})
+	r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+
+finish:
+	r.ServeJSON(true)
 }
 
 // ModifyActive - Modify role status.
-func ModifyActive(c echo.Context) error {
+func (r *Role) ModifyActive() {
 	var (
 		err error
 		req activateReq
 	)
 
-	if err = c.Bind(&req); err != nil {
-		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
+	if err = json.Unmarshal(r.Ctx.Input.RequestBody, &req); err != nil {
+		logger.Error(err)
+		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+		goto finish
 	}
 
-	if err = c.Validate(&req); err != nil {
-		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
+	if err = r.Validate(&req); err != nil {
+		logger.Error(err)
+		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+		goto finish
 	}
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
-		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
+		logger.Error(err)
+		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+		goto finish
 	}
-	defer mysql.Pool.Release(conn)
 
 	if err = staff.Service.ModifyRoleActive(conn, req.Id, req.Active); err != nil {
-		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
+		logger.Error(err)
+		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+		goto finish
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		constants.RespKeyStatus: constants.ErrSucceed,
-	})
+	r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+
+finish:
+	r.ServeJSON(true)
 }
 
 // List - Get a list of active role details.
-func List(c echo.Context) error {
+func (r *Role) List() {
 	var resp []infoResp = make([]infoResp, 0)
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
-		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
+		logger.Error(err)
+		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+		goto finish
 	}
-	defer mysql.Pool.Release(conn)
 
 	rlist, err := staff.Service.RoleList(conn)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
-		}
+		logger.Error(err)
+		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
 
-		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
+		goto finish
 	}
 
 	for _, r := range rlist {
@@ -198,44 +239,57 @@ func List(c echo.Context) error {
 		resp = append(resp, info)
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
+	r.Data["json"] = map[string]interface{}{
 		constants.RespKeyStatus: constants.ErrSucceed,
 		constants.RespKeyData:   resp,
-	})
+	}
+
+finish:
+	r.ServeJSON(true)
 }
 
 // Info - Get detail information for specified role.
-func Info(c echo.Context) error {
+func (r *Role) Info() {
 	var (
 		err error
 		req infoReq
 	)
 
-	if err = c.Bind(&req); err != nil {
-		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
+	if err = json.Unmarshal(r.Ctx.Input.RequestBody, &req); err != nil {
+		logger.Error(err)
+		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+		goto finish
 	}
 
-	if err = c.Validate(&req); err != nil {
-		return core.NewErrorWithMsg(constants.ErrInvalidParam, err.Error())
+	if err = r.Validate(&req); err != nil {
+		logger.Error(err)
+		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+
+		goto finish
 	}
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
-		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
+		logger.Error(err)
+		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+		goto finish
 	}
-	defer mysql.Pool.Release(conn)
 
 	info, err := staff.Service.GetRoleByID(conn, req.Id)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
-		}
+		logger.Error(err)
+		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
 
-		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
+		goto finish
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
+	r.Data["json"] = map[string]interface{}{
 		constants.RespKeyStatus: constants.ErrSucceed,
 		constants.RespKeyData:   *info,
-	})
+	}
+
+finish:
+	r.ServeJSON(true)
 }

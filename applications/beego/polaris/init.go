@@ -27,58 +27,40 @@
  *     Initial: 2017/11/01        Jia Chenhui
  */
 
-package config
+package main
 
 import (
-	"github.com/spf13/viper"
-)
+	"strings"
 
-// staffServerConfig represents the server config struct.
-type staffServerConfig struct {
-	Address   string
-	RPCAddr   string
-	IsDebug   bool
-	CorsHosts []string
-	TokenKey  string
-	MongoURL  string
-	MysqlHost string
-	MysqlPort string
-	MysqlUser string
-	MysqlPass string
-	MysqlDb   string
-	MysqlSize int
-}
+	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/plugins/cors"
 
-var (
-	Conf *staffServerConfig
+	"github.com/fengyfei/gu/applications/beego/base"
+	"github.com/fengyfei/gu/applications/beego/polaris/auth"
+	"github.com/fengyfei/gu/applications/beego/polaris/router"
 )
 
 func init() {
-	Conf = load()
+	auth.InitRPC()
+	router.InitRouter()
+	base.InitJWTWithToken(beego.AppConfig.String("jwt::TokenKey"))
 }
 
-// load read config file.
-func load() *staffServerConfig {
-	viper.AddConfigPath("./")
-	viper.SetConfigName("config")
+// startServer starts an HTTP server.
+func startServer() {
+	go auth.RPCClients.Ping("AuthRPC.Ping")
 
-	if err := viper.ReadInConfig(); err != nil {
-		panic(err)
-	}
+	beego.InsertFilter("*", beego.BeforeRouter, cors.Allow(&cors.Options{
+		AllowOrigins:     strings.Split(beego.AppConfig.String("cors::hosts"), ","),
+		AllowMethods:     []string{"POST", "GET"},
+		AllowHeaders:     []string{"Origin", "Content-Type"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
 
-	c := &staffServerConfig{
-		Address:   viper.GetString("server.address"),
-		RPCAddr:   viper.GetString("server.rpcaddr"),
-		IsDebug:   viper.GetBool("server.debug"),
-		CorsHosts: viper.GetStringSlice("middleware.cors.hosts"),
-		TokenKey:  viper.GetString("middleware.jwt.tokenkey"),
-		MysqlHost: viper.GetString("mysql.host"),
-		MysqlPort: viper.GetString("mysql.port"),
-		MysqlUser: viper.GetString("mysql.user"),
-		MysqlPass: viper.GetString("mysql.pass"),
-		MysqlDb:   viper.GetString("mysql.db"),
-		MysqlSize: viper.GetInt("mysql.size"),
-	}
+	beego.InsertFilter("/*", beego.BeforeRouter, base.LoginFilter)
+	beego.InsertFilter("/*", beego.BeforeRouter, base.ActiveFilter)
+	beego.InsertFilter("/*", beego.BeforeRouter, base.PermissionFilter)
 
-	return c
+	beego.Run()
 }

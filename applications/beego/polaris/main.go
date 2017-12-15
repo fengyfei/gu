@@ -30,5 +30,5 @@
 package main
 
 func main() {
-	startEchoServer()
+	startServer()
 }

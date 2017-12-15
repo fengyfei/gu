@@ -24,59 +24,53 @@
 
 /*
  * Revision History:
- *     Initial: 2017/11/01        Jia Chenhui
+ *     Initial: 2017/12/14        Jia Chenhui
  */
 
-package main
+package mysql
 
 import (
 	"fmt"
 
+	"github.com/astaxie/beego"
 	"github.com/jinzhu/gorm"
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
-	"github.com/labstack/gommon/log"
 
-	"github.com/fengyfei/gu/applications/echo/admin/auth"
-	"github.com/fengyfei/gu/applications/echo/admin/config"
-	"github.com/fengyfei/gu/applications/echo/admin/mysql"
-	"github.com/fengyfei/gu/applications/echo/admin/routers"
-	"github.com/fengyfei/gu/applications/echo/core"
+	"github.com/fengyfei/gu/libs/orm/mysql"
 	"github.com/fengyfei/gu/models/staff"
 )
 
 var (
-	server *echo.Echo
+	// The only MySQL connection pool for this application.
+	Pool *mysql.Pool
 )
 
 func init() {
-	initMysql()
+	initConnection()
 	initTable()
-	auth.InitRPC()
 }
 
-// initMysql  initializes the MySQL connection.
-func initMysql() {
-	user := config.Conf.MysqlUser
-	pass := config.Conf.MysqlPass
-	url := config.Conf.MysqlHost
-	port := config.Conf.MysqlPort
-	sqlName := config.Conf.MysqlDb
+// initConnection  initializes the MySQL connection.
+func initConnection() {
+	user := beego.AppConfig.String("mysql::User")
+	pass := beego.AppConfig.String("mysql::Pass")
+	url := beego.AppConfig.String("mysql::Host")
+	port := beego.AppConfig.String("mysql::Port")
+	sqlName := beego.AppConfig.String("mysql::Db")
 
 	// You need to create a database manually.
 	// SQL: CREATE DATABASE staff CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 	dataSource := fmt.Sprintf(user + ":" + pass + "@" + "tcp(" + url + port + ")/" + sqlName + "?charset=utf8&parseTime=True&loc=Local")
 
-	mysql.InitPool(dataSource)
+	Pool = mysql.InitPool(dataSource)
 }
 
 // initTable create the MySQL table. All MySQL tables need to be created here.
 func initTable() {
-	conn, err := mysql.Pool.Get()
+	conn, err := Pool.Get()
 	if err != nil {
 		panic(err)
 	}
-	defer mysql.Pool.Release(conn)
+	defer Pool.Release(conn)
 
 	db := conn.(*gorm.DB).Set("gorm:table_options", "ENGINE=InnoDB").Set("gorm:table_options", "CHARSET=utf8mb4")
 
@@ -97,33 +91,4 @@ func initTable() {
 	default:
 		fmt.Println("[MySQL] All tables have been created.")
 	}
-}
-
-// startEchoServer starts an HTTP server.
-func startEchoServer() {
-	server = echo.New()
-
-	server.Use(middleware.Recover())
-	server.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: config.Conf.CorsHosts,
-		AllowMethods: []string{echo.GET, echo.POST},
-	}))
-	server.Use(core.CustomJWT(config.Conf.TokenKey))
-	server.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-		Format: "${time_rfc3339_nano} ${uri} ${method} ${status} ${remote_ip} ${latency_human} ${bytes_in} ${bytes_out}\n",
-	}))
-
-	server.HTTPErrorHandler = core.EchoRestfulErrorHandler
-	server.Validator = core.NewEchoValidator()
-
-	if config.Conf.IsDebug {
-		log.SetLevel(log.DEBUG)
-	} else {
-		log.SetLevel(log.INFO)
-	}
-
-	routers.InitRouter(server, config.Conf.TokenKey)
-	go auth.RPCClients.Ping("AuthRPC.Ping")
-
-	server.Start(config.Conf.Address)
 }
