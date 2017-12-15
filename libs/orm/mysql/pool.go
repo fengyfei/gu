@@ -35,6 +35,7 @@ import (
 
 	"github.com/fengyfei/gu/libs/orm"
 	"github.com/jinzhu/gorm"
+	"sync"
 )
 
 const (
@@ -83,5 +84,8 @@ func (p *Pool) Release(v orm.Connection) {
 
 // Close close the pool.
 func (p *Pool) Close() {
-	p.db.Close()
+	once := sync.Once{}
+	once.Do(func() {
+		p.db.Close()
+	})
 }

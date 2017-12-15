@@ -49,15 +49,15 @@ func main() {
 }
 
 func initTask() {
-	clearOrder := toolbox.NewTask("clearOrder", "0/10 * * * * *  ", func() error {
+	clearOrder := toolbox.NewTask("clearOrder", "0 0 0 */1 * *  ", func() error {
 		conn, err := mysql.Pool.Get()
-		defer mysql.Pool.Release(conn)
 		if err != nil {
 			return err
 		}
+
 		return order.Service.ClearUnpaidOrder(conn)
-		return nil
 	})
+
 	err := clearOrder.Run()
 	if err != nil {
 		logger.Error(err)
