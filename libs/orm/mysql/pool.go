@@ -53,9 +53,11 @@ var (
 
 // Pool represents the database connection pool.
 type Pool struct {
-	lock sync.Mutex
-	pool *ring.Ring
-	size int
+	db      string
+	maxSize int
+	lock    sync.Mutex
+	pool    *ring.Ring
+	size    int
 }
 
 // NewPool create a Pool according to the specified db and pool size.
@@ -65,18 +67,25 @@ func NewPool(db string, size int) *Pool {
 		conn *ring.Ring
 	)
 
+	if size <= 0 {
+		size = 20
+	}
+
 	if size > poolMaxSize {
 		size = poolMaxSize
 	}
 
-	pool := &Pool{}
+	pool := &Pool{
+		db:      db,
+		maxSize: size,
+	}
 
 	for i := 0; i < size; i++ {
 		conn = ring.New(1)
 		conn.Value, err = gorm.Open(dialect, db)
 
 		if err != nil {
-			i -= 1
+			logger.Error(err)
 			continue
 		}
 
@@ -103,7 +112,12 @@ func (p *Pool) Get() (orm.Connection, error) {
 	defer p.lock.Unlock()
 
 	if p.size == 0 {
-		return nil, ErrNoConnection
+		conn, err := gorm.Open(dialect, p.db)
+
+		if err != nil {
+			return nil, ErrNoConnection
+		}
+		return conn, nil
 	}
 
 	p.size -= 1
@@ -114,11 +128,16 @@ func (p *Pool) Get() (orm.Connection, error) {
 
 // Release put the connection back into the pool.
 func (p *Pool) Release(v orm.Connection) {
-	conn := ring.New(1)
-	conn.Value = v
-
 	p.lock.Lock()
 	defer p.lock.Unlock()
+
+	if p.size == p.maxSize {
+		v.(*gorm.DB).Close()
+		return
+	}
+
+	conn := ring.New(1)
+	conn.Value = v
 
 	p.size += 1
 	p.pool.Prev().Link(conn)
