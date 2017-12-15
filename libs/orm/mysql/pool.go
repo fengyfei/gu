@@ -71,20 +71,23 @@ func NewPool(db string, size int) *Pool {
 
 	pool := &Pool{}
 
-	pool.pool = ring.New(1)
-
 	for i := 0; i < size; i++ {
 		conn = ring.New(1)
 		conn.Value, err = gorm.Open(dialect, db)
 
 		if err != nil {
+			i -= 1
 			continue
+		}
+
+		if pool.pool == nil {
+			pool.pool = conn
 		}
 
 		pool.pool.Link(conn)
 	}
 
-	pool.size = pool.pool.Len() - 1
+	pool.size = pool.pool.Len()
 	if pool.size != size {
 		logger.Debug("New pool not enough!")
 	}
