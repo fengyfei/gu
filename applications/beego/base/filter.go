@@ -67,7 +67,7 @@ func ActiveFilter(c *context.Context) {
 			c.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}, false, false)
 		}
 
-		ok, err := staff.Service.IsActive(conn, uid)
+		ok, err := staff.Service.IsActive(conn, *uid)
 		if err != nil {
 			c.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}, false, false)
 		}
@@ -92,7 +92,7 @@ func PermissionFilter(c *context.Context) {
 
 		args := permission.Args{
 			URL: c.Request.RequestURI,
-			UId: uid,
+			UId: *uid,
 		}
 
 		rpcClient, err := auth.RPCClients.Get(auth.RPCAddress)

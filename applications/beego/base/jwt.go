@@ -93,7 +93,8 @@ func UserID(c *context.Context) (*int32, error) {
 	})
 
 	if claims, ok := token.Claims.(jwtgo.MapClaims); ok && token.Valid {
-		uid := claims[ClaimUID]
+		rawUID := claims[ClaimUID].(float64)
+		uid := int32(rawUID)
 		return &uid, nil
 	}
 

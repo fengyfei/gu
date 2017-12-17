@@ -33,13 +33,9 @@ import (
 	"github.com/astaxie/beego"
 
 	"github.com/fengyfei/gu/applications/beego/polaris/controller"
-	"github.com/fengyfei/gu/applications/echo/core"
 )
 
 func InitRouter() {
-	// JWT middleware does not affect these route.
-	core.URLMap["/api/v1/office/staff/login"] = struct{}{}
-
 	// Staff
 	beego.Router("/api/v1/office/staff/login", &controller.Staff{}, "post:Login")
 	beego.Router("/api/v1/office/staff/create", &controller.Staff{}, "post:Create")

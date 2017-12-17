@@ -36,6 +36,7 @@ import (
 	"github.com/fengyfei/gu/applications/beego/polaris/mysql"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/logger"
+	"github.com/fengyfei/gu/libs/orm"
 	"github.com/fengyfei/gu/models/staff"
 )
 
@@ -45,20 +46,20 @@ type Permission struct {
 }
 
 type (
-	// createReq - The request struct that create permission information.
-	createReq struct {
+	// createPmsReq - The request struct that create permission information.
+	createPmsReq struct {
 		URL    *string `json:"url" validate:"required,printascii,contains=/"`
 		RoleId int16   `json:"roleid" validate:"required"`
 	}
 
-	// removeReq - The request struct that remove permission information.
-	removeReq struct {
+	// removePmsReq - The request struct that remove permission information.
+	removePmsReq struct {
 		URL    *string `json:"url" validate:"required,printascii,contains=/"`
 		RoleId int16   `json:"roleid" validate:"required"`
 	}
 
-	// infoResp - The response struct that represents role information of URL.
-	infoResp struct {
+	// pmsInfoResp - The response struct that represents role information of URL.
+	pmsInfoResp struct {
 		URL    string `json:"url"`
 		RoleId int16  `json:"roleid"`
 	}
@@ -67,8 +68,9 @@ type (
 // Create - Create permission information.
 func (p *Permission) Create() {
 	var (
-		err error
-		req createReq
+		err  error
+		req  createPmsReq
+		conn orm.Connection
 	)
 
 	if err = json.Unmarshal(p.Ctx.Input.RequestBody, &req); err != nil {
@@ -85,7 +87,7 @@ func (p *Permission) Create() {
 		goto finish
 	}
 
-	conn, err := mysql.Pool.Get()
+	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -109,8 +111,9 @@ finish:
 // Remove - Remove permission information.
 func (p *Permission) Remove() {
 	var (
-		err error
-		req removeReq
+		err  error
+		req  removePmsReq
+		conn orm.Connection
 	)
 
 	if err = json.Unmarshal(p.Ctx.Input.RequestBody, &req); err != nil {
@@ -127,7 +130,7 @@ func (p *Permission) Remove() {
 		goto finish
 	}
 
-	conn, err := mysql.Pool.Get()
+	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -152,11 +155,13 @@ finish:
 func (p *Permission) List() {
 	var (
 		err        error
-		permission infoResp
-		resp       []infoResp = make([]infoResp, 0)
+		permission pmsInfoResp
+		conn       orm.Connection
+		plist      []staff.Permission
+		resp       []pmsInfoResp = make([]pmsInfoResp, 0)
 	)
 
-	conn, err := mysql.Pool.Get()
+	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -164,7 +169,7 @@ func (p *Permission) List() {
 		goto finish
 	}
 
-	plist, err := staff.Service.Permissions(conn)
+	plist, err = staff.Service.Permissions(conn)
 	if err != nil {
 		logger.Error(err)
 		p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -173,7 +178,7 @@ func (p *Permission) List() {
 	}
 
 	for _, p := range plist {
-		permission = infoResp{
+		permission = pmsInfoResp{
 			URL:    p.URL,
 			RoleId: p.RoleId,
 		}

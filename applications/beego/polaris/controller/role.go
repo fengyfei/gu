@@ -38,6 +38,7 @@ import (
 	"github.com/fengyfei/gu/applications/beego/polaris/mysql"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/logger"
+	"github.com/fengyfei/gu/libs/orm"
 	"github.com/fengyfei/gu/models/staff"
 )
 
@@ -47,32 +48,32 @@ type Role struct {
 }
 
 type (
-	// createReq - The request struct that create role information.
-	createReq struct {
+	// createRoleReq - The request struct that create role information.
+	createRoleReq struct {
 		Name  *string `json:"name" validate:"required,alpha,min=4,max=64"`
 		Intro *string `json:"intro" validate:"required,alphanumunicode,min=4,max=256"`
 	}
 
-	// modifyReq - The request struct that modify role information.
-	modifyReq struct {
+	// modifyRoleReq - The request struct that modify role information.
+	modifyRoleReq struct {
 		Id    int16   `json:"id" validate:"required"`
 		Name  *string `json:"name" validate:"required,alpha,min=4,max=64"`
 		Intro *string `json:"intro" validate:"required,alphanumunicode,min=4,max=256"`
 	}
 
-	// activateReq - The request struct that modify role status.
-	activateReq struct {
+	// activateRoleReq - The request struct that modify role status.
+	activateRoleReq struct {
 		Id     int16 `json:"id" validate:"required"`
 		Active bool  `json:"active"`
 	}
 
-	// infoReq - The request struct for get detail of specified role.
-	infoReq struct {
+	// roleInfoReq - The request struct for get detail of specified role.
+	roleInfoReq struct {
 		Id int16 `json:"id" validate:"required"`
 	}
 
-	// infoResp - The detail information for role.
-	infoResp struct {
+	// roleInfoResp - The detail information for role.
+	roleInfoResp struct {
 		Id      int16     `json:"id"`
 		Name    string    `json:"name"`
 		Intro   string    `json:"intro"`
@@ -84,8 +85,9 @@ type (
 // Create - Create role information.
 func (r *Role) Create() {
 	var (
-		err error
-		req createReq
+		err  error
+		req  createRoleReq
+		conn orm.Connection
 	)
 
 	if err = json.Unmarshal(r.Ctx.Input.RequestBody, &req); err != nil {
@@ -102,7 +104,7 @@ func (r *Role) Create() {
 		goto finish
 	}
 
-	conn, err := mysql.Pool.Get()
+	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -126,8 +128,9 @@ finish:
 // Modify - Modify role information.
 func (r *Role) Modify() {
 	var (
-		err error
-		req modifyReq
+		err  error
+		req  modifyRoleReq
+		conn orm.Connection
 	)
 
 	if err = json.Unmarshal(r.Ctx.Input.RequestBody, &req); err != nil {
@@ -144,7 +147,7 @@ func (r *Role) Modify() {
 		goto finish
 	}
 
-	conn, err := mysql.Pool.Get()
+	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -168,8 +171,9 @@ finish:
 // ModifyActive - Modify role status.
 func (r *Role) ModifyActive() {
 	var (
-		err error
-		req activateReq
+		err  error
+		req  activateRoleReq
+		conn orm.Connection
 	)
 
 	if err = json.Unmarshal(r.Ctx.Input.RequestBody, &req); err != nil {
@@ -186,7 +190,7 @@ func (r *Role) ModifyActive() {
 		goto finish
 	}
 
-	conn, err := mysql.Pool.Get()
+	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -209,9 +213,14 @@ finish:
 
 // List - Get a list of active role details.
 func (r *Role) List() {
-	var resp []infoResp = make([]infoResp, 0)
+	var (
+		err   error
+		conn  orm.Connection
+		rlist []staff.Role
+		resp  []roleInfoResp = make([]roleInfoResp, 0)
+	)
 
-	conn, err := mysql.Pool.Get()
+	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -219,7 +228,7 @@ func (r *Role) List() {
 		goto finish
 	}
 
-	rlist, err := staff.Service.RoleList(conn)
+	rlist, err = staff.Service.RoleList(conn)
 	if err != nil {
 		logger.Error(err)
 		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -228,7 +237,7 @@ func (r *Role) List() {
 	}
 
 	for _, r := range rlist {
-		info := infoResp{
+		info := roleInfoResp{
 			Id:      r.Id,
 			Name:    r.Name,
 			Intro:   r.Intro,
@@ -251,8 +260,10 @@ finish:
 // Info - Get detail information for specified role.
 func (r *Role) Info() {
 	var (
-		err error
-		req infoReq
+		err  error
+		req  roleInfoReq
+		info *staff.Role
+		conn orm.Connection
 	)
 
 	if err = json.Unmarshal(r.Ctx.Input.RequestBody, &req); err != nil {
@@ -269,7 +280,7 @@ func (r *Role) Info() {
 		goto finish
 	}
 
-	conn, err := mysql.Pool.Get()
+	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -277,7 +288,7 @@ func (r *Role) Info() {
 		goto finish
 	}
 
-	info, err := staff.Service.GetRoleByID(conn, req.Id)
+	info, err = staff.Service.GetRoleByID(conn, req.Id)
 	if err != nil {
 		logger.Error(err)
 		r.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}

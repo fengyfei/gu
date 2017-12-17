@@ -38,9 +38,9 @@ import (
 
 	"github.com/fengyfei/gu/applications/beego/base"
 	"github.com/fengyfei/gu/applications/beego/polaris/mysql"
-	"github.com/fengyfei/gu/applications/echo/core"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/logger"
+	"github.com/fengyfei/gu/libs/orm"
 	"github.com/fengyfei/gu/models/staff"
 )
 
@@ -61,8 +61,8 @@ type (
 		Pwd  *string `json:"pwd" validate:"required,printascii,excludesall=@-,min=6,max=30"`
 	}
 
-	// createReq - The request struct that create staff information.
-	createReq struct {
+	// createStaffReq - The request struct that create staff information.
+	createStaffReq struct {
 		Name     *string `json:"name" validate:"required,alphanum,min=2,max=30"`
 		Pwd      *string `json:"pwd" validate:"required,printascii,excludesall=@-,min=6,max=30"`
 		RealName *string `josn:"realname" validate:"required,alphanumunicode,min=2,max=20"`
@@ -71,8 +71,8 @@ type (
 		Male     bool    `json:"male"`
 	}
 
-	// modifyReq - The request struct that modify staff information.
-	modifyReq struct {
+	// modifyStaffReq - The request struct that modify staff information.
+	modifyStaffReq struct {
 		Name   *string `json:"name" validate:"required,alphanum,min=2,max=30"`
 		Mobile *string `json:"mobile" validate:"required,numeric,len=11"`
 		Email  *string `json:"email" validate:"required,email"`
@@ -90,8 +90,8 @@ type (
 		Mobile *string `json:"mobile" validate:"required,numeric,len=11"`
 	}
 
-	// activateReq - The request struct that modify staff status.
-	activateReq struct {
+	// activateStaffReq - The request struct that modify staff status.
+	activateStaffReq struct {
 		Id     int32 `json:"id" validate:"required"`
 		Active bool  `json:"active"`
 	}
@@ -101,13 +101,13 @@ type (
 		Id int32 `json:"id" validate:"required"`
 	}
 
-	// infoReq - The request struct that get one staff detail information.
-	infoReq struct {
+	// staffInfoReq - The request struct that get one staff detail information.
+	staffInfoReq struct {
 		Id int32 `json:"id" validate:"required"`
 	}
 
-	// infoResp - The more detail of one particular staff.
-	infoResp struct {
+	// staffInfoResp - The more detail of one particular staff.
+	staffInfoResp struct {
 		Id        int32     `json:"id"`
 		Name      string    `json:"name"`
 		RealName  string    `json:"realname"`
@@ -146,8 +146,11 @@ type (
 // Login - Staff login.
 func (s *Staff) Login() {
 	var (
-		err error
-		req loginReq
+		err   error
+		req   loginReq
+		uid   int32
+		token string
+		conn  orm.Connection
 	)
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
@@ -164,7 +167,7 @@ func (s *Staff) Login() {
 		goto finish
 	}
 
-	conn, err := mysql.Pool.Get()
+	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -172,12 +175,15 @@ func (s *Staff) Login() {
 		goto finish
 	}
 
-	uid, err := staff.Service.Login(conn, req.Name, req.Pwd)
+	uid, err = staff.Service.Login(conn, req.Name, req.Pwd)
 	if err != nil {
-		return core.NewErrorWithMsg(constants.ErrMysql, err.Error())
+		logger.Error(err)
+		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+
+		goto finish
 	}
 
-	_, token, err := base.NewToken(uid)
+	_, token, err = base.NewToken(uid)
 	if err != nil {
 		logger.Error(err)
 		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInternalServerError}
@@ -198,8 +204,9 @@ finish:
 // Create - Create staff information.
 func (s *Staff) Create() {
 	var (
-		err error
-		req createReq
+		err  error
+		req  createStaffReq
+		conn orm.Connection
 	)
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
@@ -216,7 +223,7 @@ func (s *Staff) Create() {
 		goto finish
 	}
 
-	conn, err := mysql.Pool.Get()
+	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -241,9 +248,10 @@ finish:
 // Modify - Modify staff information.
 func (s *Staff) Modify() {
 	var (
-		err error
-		uid int32
-		req modifyReq
+		err  error
+		uid  *int32
+		req  modifyStaffReq
+		conn orm.Connection
 	)
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
@@ -260,7 +268,7 @@ func (s *Staff) Modify() {
 		goto finish
 	}
 
-	conn, err := mysql.Pool.Get()
+	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -275,7 +283,7 @@ func (s *Staff) Modify() {
 		goto finish
 	}
 
-	if err = staff.Service.Modify(conn, uid, req.Name, req.Mobile, req.Email); err != nil {
+	if err = staff.Service.Modify(conn, *uid, req.Name, req.Mobile, req.Email); err != nil {
 		logger.Error(err)
 		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
 
@@ -291,9 +299,10 @@ finish:
 // ModifyPwd - Modify staff password.
 func (s *Staff) ModifyPwd() {
 	var (
-		err error
-		uid int32
-		req modifyPwdReq
+		err  error
+		uid  *int32
+		req  modifyPwdReq
+		conn orm.Connection
 	)
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
@@ -324,7 +333,7 @@ func (s *Staff) ModifyPwd() {
 		goto finish
 	}
 
-	conn, err := mysql.Pool.Get()
+	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -339,7 +348,7 @@ func (s *Staff) ModifyPwd() {
 		goto finish
 	}
 
-	if err = staff.Service.ModifyPwd(conn, uid, req.OldPwd, req.NewPwd); err != nil {
+	if err = staff.Service.ModifyPwd(conn, *uid, req.OldPwd, req.NewPwd); err != nil {
 		logger.Error(err)
 		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
 
@@ -355,9 +364,10 @@ finish:
 // ModifyMobile - Modify staff mobile.
 func (s *Staff) ModifyMobile() {
 	var (
-		err error
-		uid int32
-		req modifyMobileReq
+		err  error
+		uid  *int32
+		req  modifyMobileReq
+		conn orm.Connection
 	)
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
@@ -374,7 +384,7 @@ func (s *Staff) ModifyMobile() {
 		goto finish
 	}
 
-	conn, err := mysql.Pool.Get()
+	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -389,7 +399,7 @@ func (s *Staff) ModifyMobile() {
 		goto finish
 	}
 
-	if err = staff.Service.ModifyMobile(conn, uid, req.Mobile); err != nil {
+	if err = staff.Service.ModifyMobile(conn, *uid, req.Mobile); err != nil {
 		logger.Error(err)
 		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
 
@@ -405,8 +415,9 @@ finish:
 // ModifyActive - Modify staff status.
 func (s *Staff) ModifyActive() {
 	var (
-		err error
-		req activateReq
+		err  error
+		req  activateStaffReq
+		conn orm.Connection
 	)
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
@@ -423,7 +434,7 @@ func (s *Staff) ModifyActive() {
 		goto finish
 	}
 
-	conn, err := mysql.Pool.Get()
+	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -447,8 +458,9 @@ finish:
 // Dismiss - Dismissal of staff.
 func (s *Staff) Dismiss() {
 	var (
-		err error
-		req dismissReq
+		err  error
+		req  dismissReq
+		conn orm.Connection
 	)
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
@@ -465,7 +477,7 @@ func (s *Staff) Dismiss() {
 		goto finish
 	}
 
-	conn, err := mysql.Pool.Get()
+	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -488,9 +500,15 @@ finish:
 
 // List - Get a list of on-the-job staff details.
 func (s *Staff) List() {
-	var resp []infoResp = make([]infoResp, 0)
+	var (
+		err   error
+		info  staffInfoResp
+		slist []staff.Staff
+		conn  orm.Connection
+		resp  []staffInfoResp = make([]staffInfoResp, 0)
+	)
 
-	conn, err := mysql.Pool.Get()
+	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -498,7 +516,7 @@ func (s *Staff) List() {
 		goto finish
 	}
 
-	slist, err := staff.Service.List(conn)
+	slist, err = staff.Service.List(conn)
 	if err != nil {
 		logger.Error(err)
 		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -507,7 +525,7 @@ func (s *Staff) List() {
 	}
 
 	for _, s := range slist {
-		info := infoResp{
+		info = staffInfoResp{
 			Id:        s.Id,
 			Name:      s.Name,
 			RealName:  s.RealName,
@@ -534,8 +552,10 @@ finish:
 func (s *Staff) Info() {
 	var (
 		err  error
-		req  infoReq
-		resp infoResp
+		req  staffInfoReq
+		resp staffInfoResp
+		info *staff.Staff
+		conn orm.Connection
 	)
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
@@ -552,7 +572,7 @@ func (s *Staff) Info() {
 		goto finish
 	}
 
-	conn, err := mysql.Pool.Get()
+	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -560,7 +580,7 @@ func (s *Staff) Info() {
 		goto finish
 	}
 
-	info, err := staff.Service.GetByID(conn, req.Id)
+	info, err = staff.Service.GetByID(conn, req.Id)
 	if err != nil {
 		logger.Error(err)
 		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -568,7 +588,7 @@ func (s *Staff) Info() {
 		goto finish
 	}
 
-	resp = infoResp{
+	resp = staffInfoResp{
 		Id:        info.Id,
 		Name:      info.Name,
 		RealName:  info.RealName,
@@ -590,8 +610,9 @@ finish:
 // AddRole - Add a role to staff.
 func (s *Staff) AddRole() {
 	var (
-		err error
-		req addRoleReq
+		err  error
+		req  addRoleReq
+		conn orm.Connection
 	)
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
@@ -608,7 +629,7 @@ func (s *Staff) AddRole() {
 		goto finish
 	}
 
-	conn, err := mysql.Pool.Get()
+	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -630,8 +651,9 @@ finish:
 // RemoveRole - Remove role from staff.
 func (s *Staff) RemoveRole() {
 	var (
-		err error
-		req removeRoleReq
+		err  error
+		req  removeRoleReq
+		conn orm.Connection
 	)
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
@@ -648,7 +670,7 @@ func (s *Staff) RemoveRole() {
 		goto finish
 	}
 
-	conn, err := mysql.Pool.Get()
+	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -675,6 +697,8 @@ func (s *Staff) RoleList() {
 		err      error
 		req      roleListReq
 		relation roleListResp
+		rlist    []staff.Relation
+		conn     orm.Connection
 		resp     []roleListResp = make([]roleListResp, 0)
 	)
 
@@ -692,7 +716,7 @@ func (s *Staff) RoleList() {
 		goto finish
 	}
 
-	conn, err := mysql.Pool.Get()
+	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
@@ -700,7 +724,7 @@ func (s *Staff) RoleList() {
 		goto finish
 	}
 
-	rlist, err := staff.Service.AssociatedRoleList(conn, req.StaffId)
+	rlist, err = staff.Service.AssociatedRoleList(conn, req.StaffId)
 	if err != nil {
 		logger.Error(err)
 		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
