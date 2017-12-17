@@ -30,12 +30,13 @@
 package base
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/astaxie/beego/context"
+	beegoCtx "github.com/astaxie/beego/context"
 	jwtgo "github.com/dgrijalva/jwt-go"
 )
 
@@ -69,12 +70,12 @@ func NewToken(uid int32) (string, string, error) {
 }
 
 // UserID returns user identity.
-func UserID(c *context.Context) (*int32, error) {
+func UserID(ctx *beegoCtx.Context) (*int32, error) {
 	var (
 		err error
 	)
 
-	authString := c.Request.Header.Get("Authorization")
+	authString := ctx.Request.Header.Get("Authorization")
 	kv := strings.Split(authString, " ")
 
 	if len(kv) != 2 || kv[0] != "Bearer" {
@@ -100,4 +101,10 @@ func UserID(c *context.Context) (*int32, error) {
 
 	err = errors.New("invalid token")
 	return nil, err
+}
+
+// bindUID bind the uid to the context.
+func bindUID(ctx *beegoCtx.Context, uid int32) {
+	newCtx := context.WithValue(context.Background(), ClaimUID, uid)
+	ctx.Request = ctx.Request.WithContext(newCtx)
 }

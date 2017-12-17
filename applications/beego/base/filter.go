@@ -110,3 +110,16 @@ func PermissionFilter(c *context.Context) {
 		}
 	}
 }
+
+// JWTFilter check whether the token is valid,
+// and if the token is valid, bind it to the context.
+func JWTFilter(c *context.Context) {
+	if c.Request.RequestURI != loginURI {
+		uid, err := UserID(c)
+		if err != nil {
+			c.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}, false, false)
+		}
+
+		bindUID(c, *uid)
+	}
+}

@@ -58,6 +58,7 @@ func startServer() {
 		AllowCredentials: true,
 	}))
 
+	beego.InsertFilter("/*", beego.BeforeRouter, base.JWTFilter)
 	beego.InsertFilter("/*", beego.BeforeRouter, base.LoginFilter)
 	beego.InsertFilter("/*", beego.BeforeRouter, base.ActiveFilter)
 	beego.InsertFilter("/*", beego.BeforeRouter, base.PermissionFilter)

@@ -40,7 +40,6 @@ import (
 	"github.com/fengyfei/gu/applications/beego/polaris/mysql"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/logger"
-	"github.com/fengyfei/gu/libs/orm"
 	"github.com/fengyfei/gu/models/staff"
 )
 
@@ -146,11 +145,8 @@ type (
 // Login - Staff login.
 func (s *Staff) Login() {
 	var (
-		err   error
-		req   loginReq
-		uid   int32
-		token string
-		conn  orm.Connection
+		err error
+		req loginReq
 	)
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
@@ -163,19 +159,19 @@ func (s *Staff) Login() {
 		s.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
-	conn, err = mysql.Pool.Get()
+	conn, err := mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		s.WriteAndServeJSON(constants.ErrMysql)
 	}
 
-	uid, err = staff.Service.Login(conn, req.Name, req.Pwd)
+	uid, err := staff.Service.Login(conn, req.Name, req.Pwd)
 	if err != nil {
 		logger.Error(err)
 		s.WriteAndServeJSON(constants.ErrMysql)
 	}
 
-	_, token, err = base.NewToken(uid)
+	_, token, err := base.NewToken(uid)
 	if err != nil {
 		logger.Error(err)
 		s.WriteAndServeJSON(constants.ErrInternalServerError)
@@ -188,9 +184,8 @@ func (s *Staff) Login() {
 // Create - Create staff information.
 func (s *Staff) Create() {
 	var (
-		err  error
-		req  createStaffReq
-		conn orm.Connection
+		err error
+		req createStaffReq
 	)
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
@@ -203,7 +198,7 @@ func (s *Staff) Create() {
 		s.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
-	conn, err = mysql.Pool.Get()
+	conn, err := mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		s.WriteAndServeJSON(constants.ErrMysql)
@@ -221,10 +216,8 @@ func (s *Staff) Create() {
 // Modify - Modify staff information.
 func (s *Staff) Modify() {
 	var (
-		err  error
-		uid  *int32
-		req  modifyStaffReq
-		conn orm.Connection
+		err error
+		req modifyStaffReq
 	)
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
@@ -237,18 +230,15 @@ func (s *Staff) Modify() {
 		s.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
-	conn, err = mysql.Pool.Get()
+	conn, err := mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		s.WriteAndServeJSON(constants.ErrMysql)
 	}
 
-	if uid, err = base.UserID(s.Ctx); err != nil {
-		logger.Error(err)
-		s.WriteAndServeJSON(constants.ErrPermission)
-	}
+	uid := s.Ctx.Request.Context().Value(base.ClaimUID).(int32)
 
-	if err = staff.Service.Modify(conn, *uid, req.Name, req.Mobile, req.Email); err != nil {
+	if err = staff.Service.Modify(conn, uid, req.Name, req.Mobile, req.Email); err != nil {
 		logger.Error(err)
 		s.WriteAndServeJSON(constants.ErrMysql)
 	}
@@ -259,10 +249,8 @@ func (s *Staff) Modify() {
 // ModifyPwd - Modify staff password.
 func (s *Staff) ModifyPwd() {
 	var (
-		err  error
-		uid  *int32
-		req  modifyPwdReq
-		conn orm.Connection
+		err error
+		req modifyPwdReq
 	)
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
@@ -285,18 +273,15 @@ func (s *Staff) ModifyPwd() {
 		s.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
-	conn, err = mysql.Pool.Get()
+	conn, err := mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		s.WriteAndServeJSON(constants.ErrMysql)
 	}
 
-	if uid, err = base.UserID(s.Ctx); err != nil {
-		logger.Error(err)
-		s.WriteAndServeJSON(constants.ErrPermission)
-	}
+	uid := s.Ctx.Request.Context().Value(base.ClaimUID).(int32)
 
-	if err = staff.Service.ModifyPwd(conn, *uid, req.OldPwd, req.NewPwd); err != nil {
+	if err = staff.Service.ModifyPwd(conn, uid, req.OldPwd, req.NewPwd); err != nil {
 		logger.Error(err)
 		s.WriteAndServeJSON(constants.ErrMysql)
 	}
@@ -307,10 +292,8 @@ func (s *Staff) ModifyPwd() {
 // ModifyMobile - Modify staff mobile.
 func (s *Staff) ModifyMobile() {
 	var (
-		err  error
-		uid  *int32
-		req  modifyMobileReq
-		conn orm.Connection
+		err error
+		req modifyMobileReq
 	)
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
@@ -323,18 +306,15 @@ func (s *Staff) ModifyMobile() {
 		s.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
-	conn, err = mysql.Pool.Get()
+	conn, err := mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		s.WriteAndServeJSON(constants.ErrMysql)
 	}
 
-	if uid, err = base.UserID(s.Ctx); err != nil {
-		logger.Error(err)
-		s.WriteAndServeJSON(constants.ErrPermission)
-	}
+	uid := s.Ctx.Request.Context().Value(base.ClaimUID).(int32)
 
-	if err = staff.Service.ModifyMobile(conn, *uid, req.Mobile); err != nil {
+	if err = staff.Service.ModifyMobile(conn, uid, req.Mobile); err != nil {
 		logger.Error(err)
 		s.WriteAndServeJSON(constants.ErrMysql)
 	}
@@ -345,9 +325,8 @@ func (s *Staff) ModifyMobile() {
 // ModifyActive - Modify staff status.
 func (s *Staff) ModifyActive() {
 	var (
-		err  error
-		req  activateStaffReq
-		conn orm.Connection
+		err error
+		req activateStaffReq
 	)
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
@@ -360,7 +339,7 @@ func (s *Staff) ModifyActive() {
 		s.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
-	conn, err = mysql.Pool.Get()
+	conn, err := mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		s.WriteAndServeJSON(constants.ErrMysql)
@@ -377,9 +356,8 @@ func (s *Staff) ModifyActive() {
 // Dismiss - Dismissal of staff.
 func (s *Staff) Dismiss() {
 	var (
-		err  error
-		req  dismissReq
-		conn orm.Connection
+		err error
+		req dismissReq
 	)
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
@@ -392,7 +370,7 @@ func (s *Staff) Dismiss() {
 		s.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
-	conn, err = mysql.Pool.Get()
+	conn, err := mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		s.WriteAndServeJSON(constants.ErrMysql)
@@ -409,27 +387,24 @@ func (s *Staff) Dismiss() {
 // List - Get a list of on-the-job staff details.
 func (s *Staff) List() {
 	var (
-		err   error
-		info  staffInfoResp
-		slist []staff.Staff
-		conn  orm.Connection
-		resp  []staffInfoResp = make([]staffInfoResp, 0)
+		err  error
+		resp []staffInfoResp = make([]staffInfoResp, 0)
 	)
 
-	conn, err = mysql.Pool.Get()
+	conn, err := mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		s.WriteAndServeJSON(constants.ErrMysql)
 	}
 
-	slist, err = staff.Service.List(conn)
+	slist, err := staff.Service.List(conn)
 	if err != nil {
 		logger.Error(err)
 		s.WriteAndServeJSON(constants.ErrMysql)
 	}
 
 	for _, s := range slist {
-		info = staffInfoResp{
+		info := staffInfoResp{
 			Id:        s.Id,
 			Name:      s.Name,
 			RealName:  s.RealName,
@@ -449,11 +424,8 @@ func (s *Staff) List() {
 // Info - Get detail information for specified staff.
 func (s *Staff) Info() {
 	var (
-		err  error
-		req  staffInfoReq
-		resp staffInfoResp
-		info *staff.Staff
-		conn orm.Connection
+		err error
+		req staffInfoReq
 	)
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
@@ -466,19 +438,19 @@ func (s *Staff) Info() {
 		s.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
-	conn, err = mysql.Pool.Get()
+	conn, err := mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		s.WriteAndServeJSON(constants.ErrMysql)
 	}
 
-	info, err = staff.Service.GetByID(conn, req.Id)
+	info, err := staff.Service.GetByID(conn, req.Id)
 	if err != nil {
 		logger.Error(err)
 		s.WriteAndServeJSON(constants.ErrMysql)
 	}
 
-	resp = staffInfoResp{
+	resp := staffInfoResp{
 		Id:        info.Id,
 		Name:      info.Name,
 		RealName:  info.RealName,
@@ -494,9 +466,8 @@ func (s *Staff) Info() {
 // AddRole - Add a role to staff.
 func (s *Staff) AddRole() {
 	var (
-		err  error
-		req  addRoleReq
-		conn orm.Connection
+		err error
+		req addRoleReq
 	)
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
@@ -509,7 +480,7 @@ func (s *Staff) AddRole() {
 		s.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
-	conn, err = mysql.Pool.Get()
+	conn, err := mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		s.WriteAndServeJSON(constants.ErrMysql)
@@ -526,9 +497,8 @@ func (s *Staff) AddRole() {
 // RemoveRole - Remove role from staff.
 func (s *Staff) RemoveRole() {
 	var (
-		err  error
-		req  removeRoleReq
-		conn orm.Connection
+		err error
+		req removeRoleReq
 	)
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
@@ -541,7 +511,7 @@ func (s *Staff) RemoveRole() {
 		s.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
-	conn, err = mysql.Pool.Get()
+	conn, err := mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		s.WriteAndServeJSON(constants.ErrMysql)
@@ -558,12 +528,9 @@ func (s *Staff) RemoveRole() {
 // RoleList - List all the roles of the specified staff.
 func (s *Staff) RoleList() {
 	var (
-		err      error
-		req      roleListReq
-		relation roleListResp
-		rlist    []staff.Relation
-		conn     orm.Connection
-		resp     []roleListResp = make([]roleListResp, 0)
+		err  error
+		req  roleListReq
+		resp []roleListResp = make([]roleListResp, 0)
 	)
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
@@ -576,20 +543,20 @@ func (s *Staff) RoleList() {
 		s.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
-	conn, err = mysql.Pool.Get()
+	conn, err := mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		s.WriteAndServeJSON(constants.ErrMysql)
 	}
 
-	rlist, err = staff.Service.AssociatedRoleList(conn, req.StaffId)
+	rlist, err := staff.Service.AssociatedRoleList(conn, req.StaffId)
 	if err != nil {
 		logger.Error(err)
 		s.WriteAndServeJSON(constants.ErrMysql)
 	}
 
 	for _, r := range rlist {
-		relation = roleListResp{
+		relation := roleListResp{
 			StaffId: r.StaffId,
 			RoleId:  r.RoleId,
 			Created: *r.Created,

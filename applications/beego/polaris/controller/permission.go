@@ -36,7 +36,6 @@ import (
 	"github.com/fengyfei/gu/applications/beego/polaris/mysql"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/logger"
-	"github.com/fengyfei/gu/libs/orm"
 	"github.com/fengyfei/gu/models/staff"
 )
 
@@ -68,9 +67,8 @@ type (
 // Create - Create permission information.
 func (p *Permission) Create() {
 	var (
-		err  error
-		req  createPmsReq
-		conn orm.Connection
+		err error
+		req createPmsReq
 	)
 
 	if err = json.Unmarshal(p.Ctx.Input.RequestBody, &req); err != nil {
@@ -83,7 +81,7 @@ func (p *Permission) Create() {
 		p.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
-	conn, err = mysql.Pool.Get()
+	conn, err := mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		p.WriteAndServeJSON(constants.ErrMysql)
@@ -100,9 +98,8 @@ func (p *Permission) Create() {
 // Remove - Remove permission information.
 func (p *Permission) Remove() {
 	var (
-		err  error
-		req  removePmsReq
-		conn orm.Connection
+		err error
+		req removePmsReq
 	)
 
 	if err = json.Unmarshal(p.Ctx.Input.RequestBody, &req); err != nil {
@@ -115,7 +112,7 @@ func (p *Permission) Remove() {
 		p.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
-	conn, err = mysql.Pool.Get()
+	conn, err := mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		p.WriteAndServeJSON(constants.ErrMysql)
@@ -132,27 +129,24 @@ func (p *Permission) Remove() {
 // List - Get a list of permission for specified URL.
 func (p *Permission) List() {
 	var (
-		err        error
-		permission pmsInfoResp
-		conn       orm.Connection
-		plist      []staff.Permission
-		resp       []pmsInfoResp = make([]pmsInfoResp, 0)
+		err  error
+		resp []pmsInfoResp = make([]pmsInfoResp, 0)
 	)
 
-	conn, err = mysql.Pool.Get()
+	conn, err := mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		p.WriteAndServeJSON(constants.ErrMysql)
 	}
 
-	plist, err = staff.Service.Permissions(conn)
+	plist, err := staff.Service.Permissions(conn)
 	if err != nil {
 		logger.Error(err)
 		p.WriteAndServeJSON(constants.ErrMysql)
 	}
 
 	for _, p := range plist {
-		permission = pmsInfoResp{
+		permission := pmsInfoResp{
 			URL:    p.URL,
 			RoleId: p.RoleId,
 		}

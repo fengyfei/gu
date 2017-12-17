@@ -38,7 +38,6 @@ import (
 	"github.com/fengyfei/gu/applications/beego/polaris/mysql"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/logger"
-	"github.com/fengyfei/gu/libs/orm"
 	"github.com/fengyfei/gu/models/staff"
 )
 
@@ -85,9 +84,8 @@ type (
 // Create - Create role information.
 func (r *Role) Create() {
 	var (
-		err  error
-		req  createRoleReq
-		conn orm.Connection
+		err error
+		req createRoleReq
 	)
 
 	if err = json.Unmarshal(r.Ctx.Input.RequestBody, &req); err != nil {
@@ -100,7 +98,7 @@ func (r *Role) Create() {
 		r.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
-	conn, err = mysql.Pool.Get()
+	conn, err := mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		r.WriteAndServeJSON(constants.ErrMysql)
@@ -117,9 +115,8 @@ func (r *Role) Create() {
 // Modify - Modify role information.
 func (r *Role) Modify() {
 	var (
-		err  error
-		req  modifyRoleReq
-		conn orm.Connection
+		err error
+		req modifyRoleReq
 	)
 
 	if err = json.Unmarshal(r.Ctx.Input.RequestBody, &req); err != nil {
@@ -132,7 +129,7 @@ func (r *Role) Modify() {
 		r.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
-	conn, err = mysql.Pool.Get()
+	conn, err := mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		r.WriteAndServeJSON(constants.ErrMysql)
@@ -149,9 +146,8 @@ func (r *Role) Modify() {
 // ModifyActive - Modify role status.
 func (r *Role) ModifyActive() {
 	var (
-		err  error
-		req  activateRoleReq
-		conn orm.Connection
+		err error
+		req activateRoleReq
 	)
 
 	if err = json.Unmarshal(r.Ctx.Input.RequestBody, &req); err != nil {
@@ -164,7 +160,7 @@ func (r *Role) ModifyActive() {
 		r.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
-	conn, err = mysql.Pool.Get()
+	conn, err := mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		r.WriteAndServeJSON(constants.ErrMysql)
@@ -181,19 +177,17 @@ func (r *Role) ModifyActive() {
 // List - Get a list of active role details.
 func (r *Role) List() {
 	var (
-		err   error
-		conn  orm.Connection
-		rlist []staff.Role
-		resp  []roleInfoResp = make([]roleInfoResp, 0)
+		err  error
+		resp []roleInfoResp = make([]roleInfoResp, 0)
 	)
 
-	conn, err = mysql.Pool.Get()
+	conn, err := mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		r.WriteAndServeJSON(constants.ErrMysql)
 	}
 
-	rlist, err = staff.Service.RoleList(conn)
+	rlist, err := staff.Service.RoleList(conn)
 	if err != nil {
 		logger.Error(err)
 		r.WriteAndServeJSON(constants.ErrMysql)
@@ -217,10 +211,8 @@ func (r *Role) List() {
 // Info - Get detail information for specified role.
 func (r *Role) Info() {
 	var (
-		err  error
-		req  roleInfoReq
-		info *staff.Role
-		conn orm.Connection
+		err error
+		req roleInfoReq
 	)
 
 	if err = json.Unmarshal(r.Ctx.Input.RequestBody, &req); err != nil {
@@ -233,13 +225,13 @@ func (r *Role) Info() {
 		r.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
-	conn, err = mysql.Pool.Get()
+	conn, err := mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		r.WriteAndServeJSON(constants.ErrMysql)
 	}
 
-	info, err = staff.Service.GetRoleByID(conn, req.Id)
+	info, err := staff.Service.GetRoleByID(conn, req.Id)
 	if err != nil {
 		logger.Error(err)
 		r.WriteAndServeJSON(constants.ErrMysql)
