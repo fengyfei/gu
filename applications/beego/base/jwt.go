@@ -89,7 +89,7 @@ func UserID(c *context.Context) (*int32, error) {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
 
-		return TokenHMACKey, nil
+		return []byte(TokenHMACKey), nil
 	})
 
 	if claims, ok := token.Claims.(jwtgo.MapClaims); ok && token.Valid {

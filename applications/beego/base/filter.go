@@ -35,6 +35,7 @@ import (
 	"github.com/fengyfei/gu/applications/beego/polaris/auth"
 	"github.com/fengyfei/gu/applications/beego/polaris/mysql"
 	"github.com/fengyfei/gu/libs/constants"
+	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/libs/permission"
 	"github.com/fengyfei/gu/models/staff"
 )
@@ -46,9 +47,9 @@ var (
 // LoginFilter check if the user is logged in.
 func LoginFilter(c *context.Context) {
 	if c.Request.RequestURI != loginURI {
-		uid, _ := UserID(c)
-
-		if uid == nil {
+		uid, err := UserID(c)
+		if err != nil || uid == nil {
+			logger.Error(err)
 			c.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}, false, false)
 		}
 	}
@@ -59,16 +60,19 @@ func ActiveFilter(c *context.Context) {
 	if c.Request.RequestURI != loginURI {
 		conn, err := mysql.Pool.Get()
 		if err != nil {
+			logger.Error(err)
 			c.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}, false, false)
 		}
 
-		uid, _ := UserID(c)
-		if uid == nil {
+		uid, err := UserID(c)
+		if err != nil {
+			logger.Error(err)
 			c.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}, false, false)
 		}
 
 		ok, err := staff.Service.IsActive(conn, *uid)
 		if err != nil {
+			logger.Error(err)
 			c.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}, false, false)
 		}
 
@@ -97,7 +101,7 @@ func PermissionFilter(c *context.Context) {
 
 		rpcClient, err := auth.RPCClients.Get(auth.RPCAddress)
 		if err != nil || rpcClient == nil {
-			c.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}, false, false)
+			c.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrForbidden}, false, false)
 		}
 
 		err = rpcClient.Call("AuthRPC.Verify", &args, &ok)
