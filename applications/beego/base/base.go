@@ -32,6 +32,8 @@ package base
 import (
 	"github.com/astaxie/beego"
 	"gopkg.in/go-playground/validator.v9"
+
+	"github.com/fengyfei/gu/libs/constants"
 )
 
 // Controller wraps general functionality.
@@ -44,4 +46,18 @@ func (base Controller) Validate(val interface{}) error {
 	validator := validator.New()
 
 	return validator.Struct(val)
+}
+
+// WriteJSON write JSON data to controller.
+func (base Controller) WriteJSON(status int, data ...interface{}) {
+	if len(data) == 0 {
+		base.Data["json"] = map[string]interface{}{
+			constants.RespKeyStatus: status,
+		}
+	}
+
+	base.Data["json"] = map[string]interface{}{
+		constants.RespKeyStatus: status,
+		constants.RespKeyData:   data,
+	}
 }

@@ -75,14 +75,14 @@ func (p *Permission) Create() {
 
 	if err = json.Unmarshal(p.Ctx.Input.RequestBody, &req); err != nil {
 		logger.Error(err)
-		p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		p.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
 
 	if err = p.Validate(&req); err != nil {
 		logger.Error(err)
-		p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		p.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
@@ -90,19 +90,19 @@ func (p *Permission) Create() {
 	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
-		p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		p.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
 
 	if err = staff.Service.AddURLPermission(conn, req.URL, req.RoleId); err != nil {
 		logger.Error(err)
-		p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		p.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
 
-	p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+	p.WriteJSON(constants.ErrSucceed)
 
 finish:
 	p.ServeJSON(true)
@@ -118,14 +118,14 @@ func (p *Permission) Remove() {
 
 	if err = json.Unmarshal(p.Ctx.Input.RequestBody, &req); err != nil {
 		logger.Error(err)
-		p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		p.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
 
 	if err = p.Validate(&req); err != nil {
 		logger.Error(err)
-		p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		p.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
@@ -133,19 +133,19 @@ func (p *Permission) Remove() {
 	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
-		p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		p.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
 
 	if err = staff.Service.RemoveURLPermission(conn, req.URL, req.RoleId); err != nil {
 		logger.Error(err)
-		p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		p.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
 
-	p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+	p.WriteJSON(constants.ErrSucceed)
 
 finish:
 	p.ServeJSON(true)
@@ -164,7 +164,7 @@ func (p *Permission) List() {
 	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
-		p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		p.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
@@ -172,7 +172,7 @@ func (p *Permission) List() {
 	plist, err = staff.Service.Permissions(conn)
 	if err != nil {
 		logger.Error(err)
-		p.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		p.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
@@ -186,10 +186,7 @@ func (p *Permission) List() {
 		resp = append(resp, permission)
 	}
 
-	p.Data["json"] = map[string]interface{}{
-		constants.RespKeyStatus: constants.ErrSucceed,
-		constants.RespKeyData:   resp,
-	}
+	p.WriteJSON(constants.ErrSucceed, resp)
 
 finish:
 	p.ServeJSON(true)

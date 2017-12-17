@@ -155,14 +155,14 @@ func (s *Staff) Login() {
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		s.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
 
 	if err = s.Validate(&req); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		s.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
@@ -170,7 +170,7 @@ func (s *Staff) Login() {
 	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		s.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
@@ -178,7 +178,7 @@ func (s *Staff) Login() {
 	uid, err = staff.Service.Login(conn, req.Name, req.Pwd)
 	if err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		s.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
@@ -186,15 +186,12 @@ func (s *Staff) Login() {
 	_, token, err = base.NewToken(uid)
 	if err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInternalServerError}
+		s.WriteJSON(constants.ErrInternalServerError)
 
 		goto finish
 	}
 
-	s.Data["json"] = map[string]interface{}{
-		constants.RespKeyStatus: constants.ErrSucceed,
-		constants.RespKeyData:   token,
-	}
+	s.WriteJSON(constants.ErrSucceed, token)
 	fmt.Println("token:", token)
 
 finish:
@@ -211,14 +208,14 @@ func (s *Staff) Create() {
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		s.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
 
 	if err = s.Validate(&req); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		s.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
@@ -226,7 +223,7 @@ func (s *Staff) Create() {
 	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		s.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
@@ -234,12 +231,12 @@ func (s *Staff) Create() {
 	err = staff.Service.Create(conn, req.Name, req.Pwd, req.RealName, req.Mobile, req.Email, req.Male)
 	if err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		s.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
 
-	s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+	s.WriteJSON(constants.ErrSucceed)
 
 finish:
 	s.ServeJSON(true)
@@ -256,14 +253,14 @@ func (s *Staff) Modify() {
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		s.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
 
 	if err = s.Validate(&req); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		s.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
@@ -271,26 +268,26 @@ func (s *Staff) Modify() {
 	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		s.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
 
 	if uid, err = base.UserID(s.Ctx); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}
+		s.WriteJSON(constants.ErrPermission)
 
 		goto finish
 	}
 
 	if err = staff.Service.Modify(conn, *uid, req.Name, req.Mobile, req.Email); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		s.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
 
-	s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+	s.WriteJSON(constants.ErrSucceed)
 
 finish:
 	s.ServeJSON(true)
@@ -307,28 +304,28 @@ func (s *Staff) ModifyPwd() {
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		s.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
 
 	if err = s.Validate(&req); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		s.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
 
 	if *req.NewPwd == *req.OldPwd {
 		logger.Debug(errPwdRepeat.Error())
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		s.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
 
 	if *req.NewPwd != *req.Confirm {
 		logger.Debug(errPwdDisagree.Error())
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		s.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
@@ -336,26 +333,26 @@ func (s *Staff) ModifyPwd() {
 	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		s.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
 
 	if uid, err = base.UserID(s.Ctx); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}
+		s.WriteJSON(constants.ErrPermission)
 
 		goto finish
 	}
 
 	if err = staff.Service.ModifyPwd(conn, *uid, req.OldPwd, req.NewPwd); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		s.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
 
-	s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+	s.WriteJSON(constants.ErrSucceed)
 
 finish:
 	s.ServeJSON(true)
@@ -372,14 +369,14 @@ func (s *Staff) ModifyMobile() {
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		s.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
 
 	if err = s.Validate(&req); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		s.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
@@ -387,26 +384,26 @@ func (s *Staff) ModifyMobile() {
 	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		s.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
 
 	if uid, err = base.UserID(s.Ctx); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}
+		s.WriteJSON(constants.ErrPermission)
 
 		goto finish
 	}
 
 	if err = staff.Service.ModifyMobile(conn, *uid, req.Mobile); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		s.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
 
-	s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+	s.WriteJSON(constants.ErrSucceed)
 
 finish:
 	s.ServeJSON(true)
@@ -422,14 +419,14 @@ func (s *Staff) ModifyActive() {
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		s.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
 
 	if err = s.Validate(&req); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		s.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
@@ -437,19 +434,19 @@ func (s *Staff) ModifyActive() {
 	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		s.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
 
 	if err = staff.Service.ModifyActive(conn, req.Id, req.Active); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		s.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
 
-	s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+	s.WriteJSON(constants.ErrSucceed)
 
 finish:
 	s.ServeJSON(true)
@@ -465,14 +462,14 @@ func (s *Staff) Dismiss() {
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		s.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
 
 	if err = s.Validate(&req); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		s.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
@@ -480,19 +477,19 @@ func (s *Staff) Dismiss() {
 	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		s.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
 
 	if err = staff.Service.Dismiss(conn, req.Id); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		s.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
 
-	s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+	s.WriteJSON(constants.ErrSucceed)
 
 finish:
 	s.ServeJSON(true)
@@ -511,7 +508,7 @@ func (s *Staff) List() {
 	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		s.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
@@ -519,7 +516,7 @@ func (s *Staff) List() {
 	slist, err = staff.Service.List(conn)
 	if err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		s.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
@@ -539,10 +536,7 @@ func (s *Staff) List() {
 		resp = append(resp, info)
 	}
 
-	s.Data["json"] = map[string]interface{}{
-		constants.RespKeyStatus: constants.ErrSucceed,
-		constants.RespKeyData:   resp,
-	}
+	s.WriteJSON(constants.ErrSucceed, resp)
 
 finish:
 	s.ServeJSON(true)
@@ -560,14 +554,14 @@ func (s *Staff) Info() {
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		s.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
 
 	if err = s.Validate(&req); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		s.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
@@ -575,7 +569,7 @@ func (s *Staff) Info() {
 	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		s.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
@@ -583,7 +577,7 @@ func (s *Staff) Info() {
 	info, err = staff.Service.GetByID(conn, req.Id)
 	if err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		s.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
@@ -598,10 +592,7 @@ func (s *Staff) Info() {
 		CreatedAt: *info.CreatedAt,
 	}
 
-	s.Data["json"] = map[string]interface{}{
-		constants.RespKeyStatus: constants.ErrSucceed,
-		constants.RespKeyData:   resp,
-	}
+	s.WriteJSON(constants.ErrSucceed, resp)
 
 finish:
 	s.ServeJSON(true)
@@ -617,14 +608,14 @@ func (s *Staff) AddRole() {
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		s.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
 
 	if err = s.Validate(&req); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		s.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
@@ -632,17 +623,17 @@ func (s *Staff) AddRole() {
 	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		s.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
 
 	if err = staff.Service.AddRole(conn, req.StaffId, req.RoleId); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		s.WriteJSON(constants.ErrMysql)
 	}
 
-	s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+	s.WriteJSON(constants.ErrSucceed)
 
 finish:
 	s.ServeJSON(true)
@@ -658,14 +649,14 @@ func (s *Staff) RemoveRole() {
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		s.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
 
 	if err = s.Validate(&req); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		s.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
@@ -673,19 +664,19 @@ func (s *Staff) RemoveRole() {
 	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		s.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
 
 	if err = staff.Service.RemoveRole(conn, req.StaffId, req.RoleId); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		s.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
 
-	s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
+	s.WriteJSON(constants.ErrSucceed)
 
 finish:
 	s.ServeJSON(true)
@@ -704,14 +695,14 @@ func (s *Staff) RoleList() {
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		s.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
 
 	if err = s.Validate(&req); err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
+		s.WriteJSON(constants.ErrInvalidParam)
 
 		goto finish
 	}
@@ -719,7 +710,7 @@ func (s *Staff) RoleList() {
 	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		s.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
@@ -727,7 +718,7 @@ func (s *Staff) RoleList() {
 	rlist, err = staff.Service.AssociatedRoleList(conn, req.StaffId)
 	if err != nil {
 		logger.Error(err)
-		s.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+		s.WriteJSON(constants.ErrMysql)
 
 		goto finish
 	}
@@ -742,10 +733,7 @@ func (s *Staff) RoleList() {
 		resp = append(resp, relation)
 	}
 
-	s.Data["json"] = map[string]interface{}{
-		constants.RespKeyStatus: constants.ErrSucceed,
-		constants.RespKeyData:   resp,
-	}
+	s.WriteJSON(constants.ErrSucceed, resp)
 
 finish:
 	s.ServeJSON(true)
