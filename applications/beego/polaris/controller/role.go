@@ -92,37 +92,26 @@ func (r *Role) Create() {
 
 	if err = json.Unmarshal(r.Ctx.Input.RequestBody, &req); err != nil {
 		logger.Error(err)
-		r.WriteJSON(constants.ErrInvalidParam)
-
-		goto finish
+		r.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
 	if err = r.Validate(&req); err != nil {
 		logger.Error(err)
-		r.WriteJSON(constants.ErrInvalidParam)
-
-		goto finish
+		r.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
 	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
-		r.WriteJSON(constants.ErrMysql)
-
-		goto finish
+		r.WriteAndServeJSON(constants.ErrMysql)
 	}
 
 	if err = staff.Service.CreateRole(conn, req.Name, req.Intro); err != nil {
 		logger.Error(err)
-		r.WriteJSON(constants.ErrMysql)
-
-		goto finish
+		r.WriteAndServeJSON(constants.ErrMysql)
 	}
 
-	r.WriteJSON(constants.ErrSucceed)
-
-finish:
-	r.ServeJSON(true)
+	r.WriteAndServeJSON(constants.ErrSucceed)
 }
 
 // Modify - Modify role information.
@@ -135,37 +124,26 @@ func (r *Role) Modify() {
 
 	if err = json.Unmarshal(r.Ctx.Input.RequestBody, &req); err != nil {
 		logger.Error(err)
-		r.WriteJSON(constants.ErrInvalidParam)
-
-		goto finish
+		r.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
 	if err = r.Validate(&req); err != nil {
 		logger.Error(err)
-		r.WriteJSON(constants.ErrInvalidParam)
-
-		goto finish
+		r.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
 	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
-		r.WriteJSON(constants.ErrMysql)
-
-		goto finish
+		r.WriteAndServeJSON(constants.ErrMysql)
 	}
 
 	if err = staff.Service.ModifyRole(conn, req.Id, req.Name, req.Intro); err != nil {
 		logger.Error(err)
-		r.WriteJSON(constants.ErrMysql)
-
-		goto finish
+		r.WriteAndServeJSON(constants.ErrMysql)
 	}
 
-	r.WriteJSON(constants.ErrSucceed)
-
-finish:
-	r.ServeJSON(true)
+	r.WriteAndServeJSON(constants.ErrSucceed)
 }
 
 // ModifyActive - Modify role status.
@@ -178,37 +156,26 @@ func (r *Role) ModifyActive() {
 
 	if err = json.Unmarshal(r.Ctx.Input.RequestBody, &req); err != nil {
 		logger.Error(err)
-		r.WriteJSON(constants.ErrInvalidParam)
-
-		goto finish
+		r.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
 	if err = r.Validate(&req); err != nil {
 		logger.Error(err)
-		r.WriteJSON(constants.ErrInvalidParam)
-
-		goto finish
+		r.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
 	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
-		r.WriteJSON(constants.ErrMysql)
-
-		goto finish
+		r.WriteAndServeJSON(constants.ErrMysql)
 	}
 
 	if err = staff.Service.ModifyRoleActive(conn, req.Id, req.Active); err != nil {
 		logger.Error(err)
-		r.WriteJSON(constants.ErrMysql)
-
-		goto finish
+		r.WriteAndServeJSON(constants.ErrMysql)
 	}
 
-	r.WriteJSON(constants.ErrSucceed)
-
-finish:
-	r.ServeJSON(true)
+	r.WriteAndServeJSON(constants.ErrSucceed)
 }
 
 // List - Get a list of active role details.
@@ -223,17 +190,13 @@ func (r *Role) List() {
 	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
-		r.WriteJSON(constants.ErrMysql)
-
-		goto finish
+		r.WriteAndServeJSON(constants.ErrMysql)
 	}
 
 	rlist, err = staff.Service.RoleList(conn)
 	if err != nil {
 		logger.Error(err)
-		r.WriteJSON(constants.ErrMysql)
-
-		goto finish
+		r.WriteAndServeJSON(constants.ErrMysql)
 	}
 
 	for _, r := range rlist {
@@ -248,10 +211,7 @@ func (r *Role) List() {
 		resp = append(resp, info)
 	}
 
-	r.WriteJSON(constants.ErrSucceed, resp)
-
-finish:
-	r.ServeJSON(true)
+	r.WriteAndServeJSON(constants.ErrSucceed, resp)
 }
 
 // Info - Get detail information for specified role.
@@ -265,36 +225,25 @@ func (r *Role) Info() {
 
 	if err = json.Unmarshal(r.Ctx.Input.RequestBody, &req); err != nil {
 		logger.Error(err)
-		r.WriteJSON(constants.ErrInvalidParam)
-
-		goto finish
+		r.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
 	if err = r.Validate(&req); err != nil {
 		logger.Error(err)
-		r.WriteJSON(constants.ErrInvalidParam)
-
-		goto finish
+		r.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
 	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
-		r.WriteJSON(constants.ErrMysql)
-
-		goto finish
+		r.WriteAndServeJSON(constants.ErrMysql)
 	}
 
 	info, err = staff.Service.GetRoleByID(conn, req.Id)
 	if err != nil {
 		logger.Error(err)
-		r.WriteJSON(constants.ErrMysql)
-
-		goto finish
+		r.WriteAndServeJSON(constants.ErrMysql)
 	}
 
-	r.WriteJSON(constants.ErrSucceed, *info)
-
-finish:
-	r.ServeJSON(true)
+	r.WriteAndServeJSON(constants.ErrSucceed, *info)
 }

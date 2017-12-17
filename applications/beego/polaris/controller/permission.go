@@ -75,37 +75,26 @@ func (p *Permission) Create() {
 
 	if err = json.Unmarshal(p.Ctx.Input.RequestBody, &req); err != nil {
 		logger.Error(err)
-		p.WriteJSON(constants.ErrInvalidParam)
-
-		goto finish
+		p.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
 	if err = p.Validate(&req); err != nil {
 		logger.Error(err)
-		p.WriteJSON(constants.ErrInvalidParam)
-
-		goto finish
+		p.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
 	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
-		p.WriteJSON(constants.ErrMysql)
-
-		goto finish
+		p.WriteAndServeJSON(constants.ErrMysql)
 	}
 
 	if err = staff.Service.AddURLPermission(conn, req.URL, req.RoleId); err != nil {
 		logger.Error(err)
-		p.WriteJSON(constants.ErrMysql)
-
-		goto finish
+		p.WriteAndServeJSON(constants.ErrMysql)
 	}
 
-	p.WriteJSON(constants.ErrSucceed)
-
-finish:
-	p.ServeJSON(true)
+	p.WriteAndServeJSON(constants.ErrSucceed)
 }
 
 // Remove - Remove permission information.
@@ -118,37 +107,26 @@ func (p *Permission) Remove() {
 
 	if err = json.Unmarshal(p.Ctx.Input.RequestBody, &req); err != nil {
 		logger.Error(err)
-		p.WriteJSON(constants.ErrInvalidParam)
-
-		goto finish
+		p.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
 	if err = p.Validate(&req); err != nil {
 		logger.Error(err)
-		p.WriteJSON(constants.ErrInvalidParam)
-
-		goto finish
+		p.WriteAndServeJSON(constants.ErrInvalidParam)
 	}
 
 	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
-		p.WriteJSON(constants.ErrMysql)
-
-		goto finish
+		p.WriteAndServeJSON(constants.ErrMysql)
 	}
 
 	if err = staff.Service.RemoveURLPermission(conn, req.URL, req.RoleId); err != nil {
 		logger.Error(err)
-		p.WriteJSON(constants.ErrMysql)
-
-		goto finish
+		p.WriteAndServeJSON(constants.ErrMysql)
 	}
 
-	p.WriteJSON(constants.ErrSucceed)
-
-finish:
-	p.ServeJSON(true)
+	p.WriteAndServeJSON(constants.ErrSucceed)
 }
 
 // List - Get a list of permission for specified URL.
@@ -164,17 +142,13 @@ func (p *Permission) List() {
 	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
-		p.WriteJSON(constants.ErrMysql)
-
-		goto finish
+		p.WriteAndServeJSON(constants.ErrMysql)
 	}
 
 	plist, err = staff.Service.Permissions(conn)
 	if err != nil {
 		logger.Error(err)
-		p.WriteJSON(constants.ErrMysql)
-
-		goto finish
+		p.WriteAndServeJSON(constants.ErrMysql)
 	}
 
 	for _, p := range plist {
@@ -186,8 +160,5 @@ func (p *Permission) List() {
 		resp = append(resp, permission)
 	}
 
-	p.WriteJSON(constants.ErrSucceed, resp)
-
-finish:
-	p.ServeJSON(true)
+	p.WriteAndServeJSON(constants.ErrSucceed, resp)
 }

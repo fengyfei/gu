@@ -43,12 +43,12 @@ type Controller struct {
 
 // Validate the parameters.
 func (base Controller) Validate(val interface{}) error {
-	validator := validator.New()
+	v := validator.New()
 
-	return validator.Struct(val)
+	return v.Struct(val)
 }
 
-// WriteJSON write JSON data to controller.
+// WriteJSON write JSON encoding data to controller.
 func (base Controller) WriteJSON(status int, data ...interface{}) {
 	if len(data) == 0 {
 		base.Data["json"] = map[string]interface{}{
@@ -60,4 +60,22 @@ func (base Controller) WriteJSON(status int, data ...interface{}) {
 			constants.RespKeyData:   data,
 		}
 	}
+}
+
+// WriteAndServeJSON write JSON encoding data to controller and sends a response.
+func (base Controller) WriteAndServeJSON(status int, data ...interface{}) {
+	if len(data) == 0 {
+		base.Data["json"] = map[string]interface{}{
+			constants.RespKeyStatus: status,
+		}
+
+		base.ServeJSON(true)
+	}
+
+	base.Data["json"] = map[string]interface{}{
+		constants.RespKeyStatus: status,
+		constants.RespKeyData:   data,
+	}
+
+	base.ServeJSON(true)
 }
