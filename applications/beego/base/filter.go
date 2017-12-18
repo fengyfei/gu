@@ -36,7 +36,7 @@ import (
 	"github.com/fengyfei/gu/applications/beego/polaris/mysql"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/logger"
-	"github.com/fengyfei/gu/libs/permission"
+	"github.com/fengyfei/gu/libs/rpc/args"
 	"github.com/fengyfei/gu/models/staff"
 )
 
@@ -94,9 +94,9 @@ func PermissionFilter(ctx *context.Context) {
 			ctx.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}, false, false)
 		}
 
-		args := permission.Args{
+		permission := args.Permission{
 			URL: ctx.Request.RequestURI,
-			UId: *uid,
+			UID: *uid,
 		}
 
 		rpcClient, err := auth.RPCClients.Get(auth.RPCAddress)
@@ -104,7 +104,7 @@ func PermissionFilter(ctx *context.Context) {
 			ctx.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrForbidden}, false, false)
 		}
 
-		err = rpcClient.Call("AuthRPC.Verify", &args, &ok)
+		err = rpcClient.Call("AuthRPC.Verify", &permission, &ok)
 		if err != nil || !ok {
 			ctx.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrForbidden}, false, false)
 		}

@@ -36,7 +36,7 @@ import (
 )
 
 const (
-	RPCNumber = 10
+	rpcNumber = 10
 )
 
 var (
@@ -54,9 +54,9 @@ func initRPC() {
 		Proto: "tcp",
 		Addr:  RPCAddress,
 	}
-	opts := make([]rpc.Options, RPCNumber)
+	opts := make([]rpc.Options, rpcNumber)
 
-	for i := 0; i < RPCNumber; i++ {
+	for i := 0; i < rpcNumber; i++ {
 		opts = append(opts, opt)
 	}
 

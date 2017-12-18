@@ -27,9 +27,9 @@
  *     Initial: 2017/12/05        Jia Chenhui
  */
 
-package permission
+package args
 
-type Args struct {
+type Permission struct {
 	URL string
-	UId int32
+	UID int32
 }
