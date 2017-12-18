@@ -30,10 +30,13 @@
 package server
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
 	"net"
 	"net/http"
+	"os"
+	"time"
 )
 
 var (
@@ -47,6 +50,8 @@ type Entrypoint struct {
 	tlsConfig     *TLSConfiguration
 	server        *http.Server
 	listener      net.Listener
+	stop          chan bool
+	signals       chan os.Signal
 }
 
 // NewEntrypoint creates a new Entrypoint.
@@ -54,6 +59,8 @@ func NewEntrypoint(conf *Configuration, tlsConf *TLSConfiguration) *Entrypoint {
 	return &Entrypoint{
 		configuration: conf,
 		tlsConfig:     tlsConf,
+		stop:          make(chan bool, 1),
+		signals:       make(chan os.Signal, 1),
 	}
 }
 
@@ -115,5 +122,28 @@ func (ep *Entrypoint) Start(router http.Handler) error {
 		return err
 	}
 
-	return ep.startServer()
+	ep.configureSignals()
+
+	go ep.listenSignals()
+	go ep.startServer()
+
+	return nil
+}
+
+// Wait until stop channel emits a value.
+func (ep *Entrypoint) Wait() {
+	<-ep.stop
+}
+
+// Stop the http server.
+func (ep *Entrypoint) Stop() {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+
+	// graceful shutdown
+	if err := ep.server.Shutdown(ctx); err != nil {
+		ep.server.Close()
+	}
+	cancel()
+
+	close(ep.stop)
 }
