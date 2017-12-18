@@ -41,85 +41,85 @@ import (
 )
 
 var (
-	loginURI string = "/api/v1/office/staff/login"
+	loginURI = "/api/v1/office/staff/login"
 )
 
 // LoginFilter check if the user is logged in.
-func LoginFilter(c *context.Context) {
-	if c.Request.RequestURI != loginURI {
-		uid, err := UserID(c)
+func LoginFilter(ctx *context.Context) {
+	if ctx.Request.RequestURI != loginURI {
+		uid, err := getUID(ctx)
 		if err != nil || uid == nil {
 			logger.Error(err)
-			c.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}, false, false)
+			ctx.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}, false, false)
 		}
 	}
 }
 
 // ActiveFilter check whether the user is active.
-func ActiveFilter(c *context.Context) {
-	if c.Request.RequestURI != loginURI {
+func ActiveFilter(ctx *context.Context) {
+	if ctx.Request.RequestURI != loginURI {
 		conn, err := mysql.Pool.Get()
 		if err != nil {
 			logger.Error(err)
-			c.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}, false, false)
+			ctx.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}, false, false)
 		}
 
-		uid, err := UserID(c)
+		uid, err := getUID(ctx)
 		if err != nil {
 			logger.Error(err)
-			c.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}, false, false)
+			ctx.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}, false, false)
 		}
 
 		ok, err := staff.Service.IsActive(conn, *uid)
 		if err != nil {
 			logger.Error(err)
-			c.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}, false, false)
+			ctx.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}, false, false)
 		}
 
 		if !ok {
-			c.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}, false, false)
+			ctx.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}, false, false)
 		}
 	}
 }
 
 // IsPermissionMatch check whether the user permissions match the URL permissions.
-func PermissionFilter(c *context.Context) {
+func PermissionFilter(ctx *context.Context) {
 	var (
 		ok bool
 	)
 
-	if c.Request.RequestURI != loginURI {
-		uid, _ := UserID(c)
+	if ctx.Request.RequestURI != loginURI {
+		uid, _ := getUID(ctx)
 		if uid == nil {
-			c.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}, false, false)
+			ctx.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}, false, false)
 		}
 
 		args := permission.Args{
-			URL: c.Request.RequestURI,
+			URL: ctx.Request.RequestURI,
 			UId: *uid,
 		}
 
 		rpcClient, err := auth.RPCClients.Get(auth.RPCAddress)
 		if err != nil || rpcClient == nil {
-			c.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrForbidden}, false, false)
+			ctx.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrForbidden}, false, false)
 		}
 
 		err = rpcClient.Call("AuthRPC.Verify", &args, &ok)
 		if err != nil || !ok {
-			c.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrForbidden}, false, false)
+			ctx.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrForbidden}, false, false)
 		}
 	}
 }
 
 // JWTFilter check whether the token is valid,
 // and if the token is valid, bind it to the context.
-func JWTFilter(c *context.Context) {
-	if c.Request.RequestURI != loginURI {
-		uid, err := UserID(c)
+func JWTFilter(ctx *context.Context) {
+	if ctx.Request.RequestURI != loginURI {
+		uid, err := getUID(ctx)
 		if err != nil {
-			c.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}, false, false)
+			ctx.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}, false, false)
 		}
 
-		bindUID(c, *uid)
+		bindUID(ctx, *uid)
 	}
 }

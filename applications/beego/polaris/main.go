@@ -29,6 +29,37 @@
 
 package main
 
+import (
+	"strings"
+
+	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/plugins/cors"
+
+	"github.com/fengyfei/gu/applications/beego/base"
+	"github.com/fengyfei/gu/applications/beego/polaris/auth"
+	_ "github.com/fengyfei/gu/applications/beego/polaris/router"
+)
+
 func main() {
 	startServer()
+}
+
+// startServer starts an HTTP server.
+func startServer() {
+	go auth.RPCClients.Ping("AuthRPC.Ping")
+
+	beego.InsertFilter("*", beego.BeforeRouter, cors.Allow(&cors.Options{
+		AllowOrigins:     strings.Split(beego.AppConfig.String("cors::hosts"), ","),
+		AllowMethods:     []string{"POST", "GET"},
+		AllowHeaders:     []string{"Origin", "Content-Type"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
+
+	beego.InsertFilter("/*", beego.BeforeRouter, base.JWTFilter)
+	beego.InsertFilter("/*", beego.BeforeRouter, base.LoginFilter)
+	beego.InsertFilter("/*", beego.BeforeRouter, base.ActiveFilter)
+	beego.InsertFilter("/*", beego.BeforeRouter, base.PermissionFilter)
+
+	beego.Run()
 }

@@ -36,6 +36,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/astaxie/beego"
 	beegoCtx "github.com/astaxie/beego/context"
 	jwtgo "github.com/dgrijalva/jwt-go"
 )
@@ -44,17 +45,21 @@ const (
 	tokenExpireInHour = 48
 
 	ClaimUID     = "uid"
-	ClaimExpire  = "exp"
+	claimExpire  = "exp"
 	respTokenKey = "token"
 )
 
 var (
-	TokenHMACKey string
+	tokenHMACKey string
 )
 
-// InitJWTWithToken initialize the HMAC token.
-func InitJWTWithToken(token string) {
-	TokenHMACKey = token
+func init() {
+	initJWTWithToken(beego.AppConfig.String("jwt::TokenKey"))
+}
+
+// initJWTWithToken initialize the HMAC token.
+func initJWTWithToken(token string) {
+	tokenHMACKey = token
 }
 
 // NewToken generates a JWT token.
@@ -63,14 +68,33 @@ func NewToken(uid int32) (string, string, error) {
 
 	claims := token.Claims.(jwtgo.MapClaims)
 	claims[ClaimUID] = uid
-	claims[ClaimExpire] = time.Now().Add(time.Hour * tokenExpireInHour).Unix()
+	claims[claimExpire] = time.Now().Add(time.Hour * tokenExpireInHour).Unix()
 
-	t, err := token.SignedString([]byte(TokenHMACKey))
+	t, err := token.SignedString([]byte(tokenHMACKey))
 	return respTokenKey, t, err
 }
 
-// UserID returns user identity.
-func UserID(ctx *beegoCtx.Context) (*int32, error) {
+// getUID check whether the token is valid, it returns user identity if valid.
+func getUID(ctx *beegoCtx.Context) (*int32, error) {
+	claims, err := checkJWT(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	rawUID := claims[ClaimUID].(float64)
+	uid := int32(rawUID)
+
+	return &uid, nil
+}
+
+// bindUID bind the uid to the context.
+func bindUID(ctx *beegoCtx.Context, uid int32) {
+	newCtx := context.WithValue(context.Background(), ClaimUID, uid)
+	ctx.Request = ctx.Request.WithContext(newCtx)
+}
+
+// checkJWT check whether the token is valid, it returns claims if valid.
+func checkJWT(ctx *beegoCtx.Context) (jwtgo.MapClaims, error) {
 	var (
 		err error
 	)
@@ -90,21 +114,15 @@ func UserID(ctx *beegoCtx.Context) (*int32, error) {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
 
-		return []byte(TokenHMACKey), nil
+		return []byte(tokenHMACKey), nil
 	})
 
-	if claims, ok := token.Claims.(jwtgo.MapClaims); ok && token.Valid {
-		rawUID := claims[ClaimUID].(float64)
-		uid := int32(rawUID)
-		return &uid, nil
+	claims, ok := token.Claims.(jwtgo.MapClaims)
+
+	if !ok || !token.Valid {
+		err = errors.New("invalid token")
+		return nil, err
 	}
 
-	err = errors.New("invalid token")
-	return nil, err
-}
-
-// bindUID bind the uid to the context.
-func bindUID(ctx *beegoCtx.Context, uid int32) {
-	newCtx := context.WithValue(context.Background(), ClaimUID, uid)
-	ctx.Request = ctx.Request.WithContext(newCtx)
+	return claims, nil
 }

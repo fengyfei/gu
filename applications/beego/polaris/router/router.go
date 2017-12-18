@@ -35,6 +35,10 @@ import (
 	"github.com/fengyfei/gu/applications/beego/polaris/controller"
 )
 
+func init() {
+	InitRouter()
+}
+
 func InitRouter() {
 	// Staff
 	beego.Router("/api/v1/office/staff/login", &controller.Staff{}, "post:Login")

@@ -31,6 +31,7 @@ package auth
 
 import (
 	"github.com/astaxie/beego"
+
 	"github.com/fengyfei/gu/libs/rpc"
 )
 
@@ -44,7 +45,11 @@ var (
 	RPCAddress = beego.AppConfig.String("RPCAddr")
 )
 
-func InitRPC() {
+func init() {
+	initRPC()
+}
+
+func initRPC() {
 	opt := rpc.Options{
 		Proto: "tcp",
 		Addr:  RPCAddress,
