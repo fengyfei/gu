@@ -1,5 +1,5 @@
-hash: bd3f501df2b5e781ba34140bda58804e286c688aa5da8cac8218951448cb9aab
-updated: 2017-12-18T11:19:57.829809+08:00
+hash: 52d6211867261c7af874de52449b1a49c9dc2529cef3f05cd4a813b385f40a71
+updated: 2017-12-18T11:25:52.621907+08:00
 imports:
 - name: github.com/andybalholm/cascadia
   version: 349dd0209470eabd9514242c688c403c0926d266
@@ -120,6 +120,8 @@ imports:
   version: 25b30aa063fc18e48662b86996252eabdcf2f0c7
 - name: github.com/temoto/robotstxt
   version: 9e4646fa705336d5b2fa9dddfafbe0a1a965acd7
+- name: github.com/urfave/negroni
+  version: 5dbbc83f748fc3ad38585842b0aedab546d0ea1e
 - name: github.com/valyala/bytebufferpool
   version: e746df99fe4a3986f4d4f79e13c1e0117ce9c2f7
 - name: github.com/valyala/fasttemplate
