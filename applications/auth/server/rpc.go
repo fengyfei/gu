@@ -38,10 +38,6 @@ import (
 	"github.com/fengyfei/gu/models/staff"
 )
 
-const (
-	poolSize = 20
-)
-
 var (
 	errPermissionNotMatch = errors.New("user permissions and url permissions do not match")
 	errNoRole             = errors.New("this user or url has no role")
@@ -53,7 +49,7 @@ type AuthRPC struct {
 
 func newAuthRPC(db string) *AuthRPC {
 	ar := &AuthRPC{}
-	ar.pool = mysql.NewPool(db, poolSize)
+	ar.pool = mysql.InitPool(db)
 
 	if ar.pool == nil {
 		panic("MySQL DB connection error.")

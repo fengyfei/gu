@@ -29,10 +29,6 @@
 
 package mysql
 
-const (
-	poolSize = 20
-)
-
 // InitPool initialize the connection pool.
 func InitPool(db string) *Pool {
 	pool := NewPool(db, poolSize)

@@ -26,19 +26,22 @@
  * Revision History:
  *     Initial: 2017/11/02        Jia Chenhui
  *     Modify : 2017/11/04        Yang Chenglong
+ *     Modify : 2017/12/18        Jia Chenhui
  */
 
 package mysql
 
 import (
+	"sync"
+
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/jinzhu/gorm"
 
 	"github.com/fengyfei/gu/libs/orm"
-	"github.com/jinzhu/gorm"
-	"sync"
 )
 
 const (
+	poolSize    = 20
 	poolMaxSize = 100
 	dialect     = "mysql"
 )
@@ -61,7 +64,7 @@ func NewPool(db string, size int) *Pool {
 	}
 
 	if size <= 0 {
-		size = 20
+		size = poolSize
 	} else if size > poolMaxSize {
 		size = poolMaxSize
 	}
