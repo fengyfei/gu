@@ -57,7 +57,7 @@ func (base Controller) WriteJSON(status int, data ...interface{}) {
 	} else {
 		base.Data["json"] = map[string]interface{}{
 			constants.RespKeyStatus: status,
-			constants.RespKeyData:   data,
+			constants.RespKeyData:   data[0],
 		}
 	}
 }
@@ -74,7 +74,7 @@ func (base Controller) WriteAndServeJSON(status int, data ...interface{}) {
 
 	base.Data["json"] = map[string]interface{}{
 		constants.RespKeyStatus: status,
-		constants.RespKeyData:   data,
+		constants.RespKeyData:   data[0],
 	}
 
 	base.ServeJSON(true)

@@ -1,5 +1,5 @@
 #! /bin/sh
 
-linuxRelease=admin.linux
+linuxRelease=polaris.linux
 
 GOOS=linux GOARCH=amd64 go build -o $linuxRelease
