@@ -1,10 +1,9 @@
 package security
 
 import (
-"fmt"
-"net"
-
-"errors"
+	"fmt"
+	"net"
+	"errors"
 )
 
 // IP allows to check that addresses are in a white list

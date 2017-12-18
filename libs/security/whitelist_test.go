@@ -32,7 +32,7 @@ package security
 import (
 	"testing"
 	"net"
-	"fmt"
+	"github.com/fengyfei/gu/libs/logger"
 )
 
 func TestFindArray(t *testing.T) {
@@ -42,7 +42,7 @@ func TestFindArray(t *testing.T) {
 	if err != nil {
 		t.Error("parse err: ", err)
 	}
-	fmt.Printf("ip: %+v \n", *ip.whiteListsIPs[0])
+	logger.Info("ip: %+v \n", *ip.whiteListsIPs[0])
 
 	arr2 := []string{"12.54.66.68.55"}
 	ip, err = NewIP(arr2, false)
@@ -91,7 +91,6 @@ func TestIP_ContainsIP(t *testing.T) {
 	ipaddr2 := net.ParseIP("10.0.0.2")
 	ipaddr3 := net.ParseIP("192.0.2.4")
 	ipaddr4 := net.ParseIP("10.0.0.2333")
-	fmt.Println(ipaddr3)
 
 	exist := ip.ContainsIP(ipaddr1)
 	if !exist {
