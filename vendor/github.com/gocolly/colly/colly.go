@@ -72,6 +72,7 @@ type Collector struct {
 	requestCallbacks  []RequestCallback
 	responseCallbacks []ResponseCallback
 	errorCallbacks    []ErrorCallback
+	scrapedCallbacks  []ScrapedCallback
 	requestCount      uint32
 	responseCount     uint32
 	backend           *httpBackend
@@ -87,8 +88,12 @@ type Request struct {
 	Headers *http.Header
 	// Ctx is a context between a Request and a Response
 	Ctx *Context
-	// Depth is the number of the parents of this request
+	// Depth is the number of the parents of the request
 	Depth int
+	// Method is the HTTP method of the request
+	Method string
+	// Body is the request body which is used on POST/PUT requests
+	Body io.Reader
 	// Unique identifier of the request
 	Id        uint32
 	collector *Collector
@@ -123,6 +128,18 @@ type HTMLElement struct {
 	DOM *goquery.Selection
 }
 
+// NewHTMLElementFromSelectionNode creates a HTMLElement from a goquery.Selection Node.
+func NewHTMLElementFromSelectionNode(resp *Response, s *goquery.Selection, n *html.Node) *HTMLElement {
+	return &HTMLElement{
+		Name:       n.Data,
+		Request:    resp.Request,
+		Response:   resp,
+		Text:       goquery.NewDocumentFromNode(n).Text(),
+		DOM:        s,
+		attributes: n.Attr,
+	}
+}
+
 // Context provides a tiny layer for passing data between callbacks
 type Context struct {
 	contextMap map[string]interface{}
@@ -140,6 +157,9 @@ type HTMLCallback func(*HTMLElement)
 
 // ErrorCallback is a type alias for OnError callback functions
 type ErrorCallback func(*Response, error)
+
+// ScrapedCallback is a type alias for OnScraped callback functions
+type ScrapedCallback func(*Response)
 
 // ProxyFunc is a type alias for proxy setter functions.
 type ProxyFunc func(*http.Request) (*url.URL, error)
@@ -171,14 +191,14 @@ func NewContext() *Context {
 func (c *Collector) Init() {
 	c.UserAgent = "colly - https://github.com/gocolly/colly"
 	c.MaxDepth = 0
-	c.visitedURLs = make(map[uint64]bool, 0)
+	c.visitedURLs = make(map[uint64]bool)
 	c.MaxBodySize = 10 * 1024 * 1024
 	c.backend = &httpBackend{}
 	c.backend.Init()
 	c.backend.Client.CheckRedirect = c.checkRedirectFunc()
 	c.wg = &sync.WaitGroup{}
 	c.lock = &sync.RWMutex{}
-	c.robotsMap = make(map[string]*robotstxt.RobotsData, 0)
+	c.robotsMap = make(map[string]*robotstxt.RobotsData)
 	c.IgnoreRobotsTxt = true
 	c.Id = atomic.AddUint32(&collectorCounter, 1)
 }
@@ -201,19 +221,19 @@ func (c *Collector) Appengine(req *http.Request) {
 // request to the URL specified in parameter.
 // Visit also calls the previously provided callbacks
 func (c *Collector) Visit(URL string) error {
-	return c.scrape(URL, "GET", 1, nil, nil, nil)
+	return c.scrape(URL, "GET", 1, nil, nil, nil, true)
 }
 
 // Post starts a collector job by creating a POST request.
 // Post also calls the previously provided callbacks
 func (c *Collector) Post(URL string, requestData map[string]string) error {
-	return c.scrape(URL, "POST", 1, createFormReader(requestData), nil, nil)
+	return c.scrape(URL, "POST", 1, createFormReader(requestData), nil, nil, true)
 }
 
 // PostRaw starts a collector job by creating a POST request with raw binary data.
 // Post also calls the previously provided callbacks
 func (c *Collector) PostRaw(URL string, requestData []byte) error {
-	return c.scrape(URL, "POST", 1, bytes.NewReader(requestData), nil, nil)
+	return c.scrape(URL, "POST", 1, bytes.NewReader(requestData), nil, nil, true)
 }
 
 // PostMultipart starts a collector job by creating a Multipart POST request
@@ -223,7 +243,7 @@ func (c *Collector) PostMultipart(URL string, requestData map[string][]byte) err
 	hdr := http.Header{}
 	hdr.Set("Content-Type", "multipart/form-data; boundary="+boundary)
 	hdr.Set("User-Agent", c.UserAgent)
-	return c.scrape(URL, "POST", 1, createMultipartReader(boundary, requestData), nil, hdr)
+	return c.scrape(URL, "POST", 1, createMultipartReader(boundary, requestData), nil, hdr, true)
 }
 
 // Request starts a collector job by creating a custom HTTP request
@@ -237,7 +257,7 @@ func (c *Collector) PostMultipart(URL string, requestData map[string][]byte) err
 //   - "PATCH"
 //   - "OPTIONS"
 func (c *Collector) Request(method, URL string, requestData io.Reader, ctx *Context, hdr http.Header) error {
-	return c.scrape(URL, method, 1, requestData, ctx, hdr)
+	return c.scrape(URL, method, 1, requestData, ctx, hdr, true)
 }
 
 // SetDebugger attaches a debugger to the collector
@@ -246,10 +266,10 @@ func (c *Collector) SetDebugger(d debug.Debugger) {
 	c.debugger = d
 }
 
-func (c *Collector) scrape(u, method string, depth int, requestData io.Reader, ctx *Context, hdr http.Header) error {
+func (c *Collector) scrape(u, method string, depth int, requestData io.Reader, ctx *Context, hdr http.Header, checkRevisit bool) error {
 	c.wg.Add(1)
 	defer c.wg.Done()
-	if err := c.requestCheck(u, method, depth); err != nil {
+	if err := c.requestCheck(u, method, depth, checkRevisit); err != nil {
 		return err
 	}
 	parsedURL, err := url.Parse(u)
@@ -287,6 +307,8 @@ func (c *Collector) scrape(u, method string, depth int, requestData io.Reader, c
 		Headers:   &req.Header,
 		Ctx:       ctx,
 		Depth:     depth,
+		Method:    method,
+		Body:      requestData,
 		collector: c,
 		Id:        atomic.AddUint32(&c.requestCount, 1),
 	}
@@ -309,10 +331,12 @@ func (c *Collector) scrape(u, method string, depth int, requestData io.Reader, c
 
 	c.handleOnHTML(response)
 
+	c.handleOnScraped(response)
+
 	return nil
 }
 
-func (c *Collector) requestCheck(u, method string, depth int) error {
+func (c *Collector) requestCheck(u, method string, depth int, checkRevisit bool) error {
 	if u == "" {
 		return errors.New("Missing URL")
 	}
@@ -331,7 +355,7 @@ func (c *Collector) requestCheck(u, method string, depth int) error {
 			return errors.New("No URLFilters match")
 		}
 	}
-	if !c.AllowURLRevisit && method == "GET" {
+	if checkRevisit && !c.AllowURLRevisit && method == "GET" {
 		h := fnv.New64a()
 		h.Write([]byte(u))
 		uHash := h.Sum64()
@@ -479,6 +503,17 @@ func (c *Collector) OnError(f ErrorCallback) {
 	c.lock.Unlock()
 }
 
+// OnScraped registers a function. Function will be executed after
+// OnHTML, as a final part of the scraping.
+func (c *Collector) OnScraped(f ScrapedCallback) {
+	c.lock.Lock()
+	if c.scrapedCallbacks == nil {
+		c.scrapedCallbacks = make([]ScrapedCallback, 0, 4)
+	}
+	c.scrapedCallbacks = append(c.scrapedCallbacks, f)
+	c.lock.Unlock()
+}
+
 // WithTransport allows you to set a custom http.RoundTripper (transport)
 func (c *Collector) WithTransport(transport http.RoundTripper) {
 	c.backend.Client.Transport = transport
@@ -566,7 +601,7 @@ func (c *Collector) handleOnResponse(r *Response) {
 }
 
 func (c *Collector) handleOnHTML(resp *Response) {
-	if strings.Index(strings.ToLower(resp.Headers.Get("Content-Type")), "html") == -1 || len(c.htmlCallbacks) == 0 {
+	if !strings.Contains(strings.ToLower(resp.Headers.Get("Content-Type")), "html") || len(c.htmlCallbacks) == 0 {
 		return
 	}
 	doc, err := goquery.NewDocumentFromReader(bytes.NewBuffer(resp.Body))
@@ -576,14 +611,7 @@ func (c *Collector) handleOnHTML(resp *Response) {
 	for _, cc := range c.htmlCallbacks {
 		doc.Find(cc.Selector).Each(func(i int, s *goquery.Selection) {
 			for _, n := range s.Nodes {
-				e := &HTMLElement{
-					Name:       n.Data,
-					Request:    resp.Request,
-					Response:   resp,
-					Text:       goquery.NewDocumentFromNode(n).Text(),
-					DOM:        s,
-					attributes: n.Attr,
-				}
+				e := NewHTMLElementFromSelectionNode(resp, s, n)
 				if c.debugger != nil {
 					c.debugger.Event(createEvent("html", resp.Request.Id, c.Id, map[string]string{
 						"selector": cc.Selector,
@@ -622,6 +650,17 @@ func (c *Collector) handleOnError(response *Response, err error, request *Reques
 		f(response, err)
 	}
 	return err
+}
+
+func (c *Collector) handleOnScraped(r *Response) {
+	if c.debugger != nil {
+		c.debugger.Event(createEvent("scraped", r.Request.Id, c.Id, map[string]string{
+			"url": r.Request.URL.String(),
+		}))
+	}
+	for _, f := range c.scrapedCallbacks {
+		f(r)
+	}
 }
 
 // Limit adds a new LimitRule to the collector
@@ -681,7 +720,7 @@ func (c *Collector) Clone() *Collector {
 		requestCallbacks:  make([]RequestCallback, 0, 8),
 		responseCallbacks: make([]ResponseCallback, 0, 8),
 		robotsMap:         c.robotsMap,
-		visitedURLs:       make(map[uint64]bool, 0),
+		visitedURLs:       make(map[uint64]bool),
 		wg:                c.wg,
 	}
 }
@@ -775,21 +814,21 @@ func (r *Request) AbsoluteURL(u string) string {
 // request and preserves the Context of the previous request.
 // Visit also calls the previously provided callbacks
 func (r *Request) Visit(URL string) error {
-	return r.collector.scrape(r.AbsoluteURL(URL), "GET", r.Depth+1, nil, r.Ctx, nil)
+	return r.collector.scrape(r.AbsoluteURL(URL), "GET", r.Depth+1, nil, r.Ctx, nil, true)
 }
 
 // Post continues a collector job by creating a POST request and preserves the Context
 // of the previous request.
 // Post also calls the previously provided callbacks
 func (r *Request) Post(URL string, requestData map[string]string) error {
-	return r.collector.scrape(r.AbsoluteURL(URL), "POST", r.Depth+1, createFormReader(requestData), r.Ctx, nil)
+	return r.collector.scrape(r.AbsoluteURL(URL), "POST", r.Depth+1, createFormReader(requestData), r.Ctx, nil, true)
 }
 
 // PostRaw starts a collector job by creating a POST request with raw binary data.
 // PostRaw preserves the Context of the previous request
 // and calls the previously provided callbacks
 func (r *Request) PostRaw(URL string, requestData []byte) error {
-	return r.collector.scrape(r.AbsoluteURL(URL), "POST", r.Depth+1, bytes.NewReader(requestData), r.Ctx, nil)
+	return r.collector.scrape(r.AbsoluteURL(URL), "POST", r.Depth+1, bytes.NewReader(requestData), r.Ctx, nil, true)
 }
 
 // PostMultipart starts a collector job by creating a Multipart POST request
@@ -800,7 +839,12 @@ func (r *Request) PostMultipart(URL string, requestData map[string][]byte) error
 	hdr := http.Header{}
 	hdr.Set("Content-Type", "multipart/form-data; boundary="+boundary)
 	hdr.Set("User-Agent", r.collector.UserAgent)
-	return r.collector.scrape(r.AbsoluteURL(URL), "POST", r.Depth+1, createMultipartReader(boundary, requestData), r.Ctx, hdr)
+	return r.collector.scrape(r.AbsoluteURL(URL), "POST", r.Depth+1, createMultipartReader(boundary, requestData), r.Ctx, hdr, true)
+}
+
+// Retry submits HTTP request again with the same parameters
+func (r *Request) Retry() error {
+	return r.collector.scrape(r.URL.String(), r.Method, r.Depth, r.Body, r.Ctx, *r.Headers, false)
 }
 
 // UnmarshalBinary decodes Context value to nil
@@ -916,10 +960,10 @@ func randomBoundary() string {
 
 func (r *Response) fixCharset() {
 	contentType := strings.ToLower(r.Headers.Get("Content-Type"))
-	if strings.Index(contentType, "charset") == -1 {
+	if !strings.Contains(contentType, "charset") {
 		return
 	}
-	if strings.Index(contentType, "utf-8") != -1 || strings.Index(contentType, "utf8") != -1 {
+	if strings.Contains(contentType, "utf-8") || strings.Contains(contentType, "utf8") {
 		return
 	}
 	encodedBodyReader, err := charset.NewReader(bytes.NewReader(r.Body), contentType)

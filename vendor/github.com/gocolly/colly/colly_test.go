@@ -7,6 +7,8 @@ import (
 	"net"
 	"net/http"
 	"testing"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 var testServerPort int = 31337
@@ -98,6 +100,7 @@ func TestCollectorVisit(t *testing.T) {
 
 	onRequestCalled := false
 	onResponseCalled := false
+	onScrapedCalled := false
 
 	c.OnRequest(func(r *Request) {
 		onRequestCalled = true
@@ -116,6 +119,18 @@ func TestCollectorVisit(t *testing.T) {
 		}
 	})
 
+	c.OnScraped(func(r *Response) {
+		if onResponseCalled == false {
+			t.Error("OnScraped called before OnResponse")
+		}
+
+		if onRequestCalled == false {
+			t.Error("OnScraped called before OnRequest")
+		}
+
+		onScrapedCalled = true
+	})
+
 	c.Visit(testServerRootURL)
 
 	if !onRequestCalled {
@@ -124,6 +139,10 @@ func TestCollectorVisit(t *testing.T) {
 
 	if !onResponseCalled {
 		t.Error("Failed to call OnResponse callback")
+	}
+
+	if !onScrapedCalled {
+		t.Error("Failed to call OnScraped callback")
 	}
 }
 
@@ -277,4 +296,41 @@ func TestIgnoreRobotsWhenDisallowed(t *testing.T) {
 		t.Fatal(err)
 	}
 
+}
+
+func TestHTMLElement(t *testing.T) {
+	ctx := &Context{}
+	resp := &Response{
+		Request: &Request{
+			Ctx: ctx,
+		},
+		Ctx: ctx,
+	}
+
+	in := `<a href="http://go-colly.org">Colly</a>`
+	sel := "a[href]"
+	doc, err := goquery.NewDocumentFromReader(bytes.NewBuffer([]byte(in)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	elements := []*HTMLElement{}
+	doc.Find(sel).Each(func(i int, s *goquery.Selection) {
+		for _, n := range s.Nodes {
+			elements = append(elements, NewHTMLElementFromSelectionNode(resp, s, n))
+		}
+	})
+	len_elements := len(elements)
+	if len_elements != 1 {
+		t.Errorf("element lenght mismatch. got %d, expected %d.\n", len_elements, 1)
+	}
+	v := elements[0]
+	if v.Name != "a" {
+		t.Errorf("element tag mismatch. got %s, expected %s.\n", v.Name, "a")
+	}
+	if v.Text != "Colly" {
+		t.Errorf("element content mismatch. got %s, expected %s.\n", v.Text, "Colly")
+	}
+	if v.Attr("href") != "http://go-colly.org" {
+		t.Errorf("element href mismatch. got %s, expected %s.\n", v.Attr("href"), "http://go-colly.org")
+	}
 }
