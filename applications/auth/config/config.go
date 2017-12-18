@@ -48,11 +48,11 @@ var (
 )
 
 func init() {
-	Conf = load()
+	load()
 }
 
 // load read config file.
-func load() *rpcServerConfig {
+func load() {
 	viper.AddConfigPath("./")
 	viper.SetConfigName("config")
 
@@ -60,7 +60,7 @@ func load() *rpcServerConfig {
 		panic(err)
 	}
 
-	c := &rpcServerConfig{
+	Conf = &rpcServerConfig{
 		Address:   viper.GetString("server.address"),
 		MysqlHost: viper.GetString("mysql.host"),
 		MysqlPort: viper.GetString("mysql.port"),
@@ -68,6 +68,4 @@ func load() *rpcServerConfig {
 		MysqlPass: viper.GetString("mysql.pass"),
 		MysqlDb:   viper.GetString("mysql.db"),
 	}
-
-	return c
 }

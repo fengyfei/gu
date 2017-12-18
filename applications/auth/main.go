@@ -29,6 +29,27 @@
 
 package main
 
+import (
+	"fmt"
+
+	"github.com/fengyfei/gu/applications/auth/config"
+	"github.com/fengyfei/gu/applications/auth/server"
+)
+
 func main() {
 	run()
+}
+
+func run() {
+	user := config.Conf.MysqlUser
+	pass := config.Conf.MysqlPass
+	url := config.Conf.MysqlHost
+	port := config.Conf.MysqlPort
+	sqlName := config.Conf.MysqlDb
+
+	dataSource := fmt.Sprintf(user + ":" + pass + "@" + "tcp(" + url + port + ")/" + sqlName + "?charset=utf8&parseTime=True&loc=Local")
+	go server.InitServer(dataSource)
+
+	fmt.Println("RPC server started on:", config.Conf.Address)
+	select {}
 }

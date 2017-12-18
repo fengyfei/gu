@@ -33,8 +33,8 @@ import (
 	"errors"
 
 	"github.com/fengyfei/gu/libs/orm/mysql"
-	"github.com/fengyfei/gu/libs/permission"
 	"github.com/fengyfei/gu/libs/rpc"
+	"github.com/fengyfei/gu/libs/rpc/args"
 	"github.com/fengyfei/gu/models/staff"
 )
 
@@ -68,8 +68,8 @@ func (ar *AuthRPC) Ping(req *rpc.ReqKeepAlive, resp *rpc.RespKeepAlive) error {
 }
 
 // Verify check whether the user permissions match the URL permissions.
-func (ar *AuthRPC) Verify(args permission.Args, reply *bool) error {
-	err := ar.verifier(&(args.URL), args.UId)
+func (ar *AuthRPC) Verify(permission args.Permission, reply *bool) error {
+	err := ar.verifier(&(permission.URL), permission.UID)
 	if err != nil {
 		*reply = false
 		return err
