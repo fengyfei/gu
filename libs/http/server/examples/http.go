@@ -31,6 +31,7 @@ package main
 
 import (
 	"github.com/fengyfei/gu/libs/http/server"
+	"github.com/fengyfei/gu/libs/http/server/middleware"
 	"github.com/fengyfei/gu/libs/logger"
 
 	"github.com/gorilla/mux"
@@ -41,12 +42,15 @@ func main() {
 		Address: "127.0.0.1:9573",
 	}
 
-	server := server.NewEntrypoint(configuration, nil)
+	ep := server.NewEntrypoint(configuration, nil)
 
-	if err := server.Start(mux.NewRouter()); err != nil {
+	// add middlewares
+	ep.AttachMiddleware(middleware.NegroniLoggerHandler())
+
+	if err := ep.Start(mux.NewRouter()); err != nil {
 		logger.Error(err)
 		return
 	}
 
-	server.Wait()
+	ep.Wait()
 }
