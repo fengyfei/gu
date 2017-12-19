@@ -30,6 +30,8 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/http/server/middleware"
 	"github.com/fengyfei/gu/libs/logger"
@@ -37,17 +39,34 @@ import (
 	"github.com/gorilla/mux"
 )
 
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Index\n"))
+}
+
+func postHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Post\n"))
+}
+
+func panicHandler(w http.ResponseWriter, r *http.Request) {
+	panic("Panic testing")
+}
+
 func main() {
 	configuration := &server.Configuration{
 		Address: "127.0.0.1:9573",
 	}
+
+	router := mux.NewRouter()
+	router.HandleFunc("/", indexHandler).Methods("GET")
+	router.HandleFunc("/post", postHandler).Methods("POST")
+	router.HandleFunc("/panic", panicHandler).Methods("GET")
 
 	ep := server.NewEntrypoint(configuration, nil)
 
 	// add middlewares
 	ep.AttachMiddleware(middleware.NegroniLoggerHandler())
 
-	if err := ep.Start(mux.NewRouter()); err != nil {
+	if err := ep.Start(router); err != nil {
 		logger.Error(err)
 		return
 	}

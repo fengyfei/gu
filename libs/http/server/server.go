@@ -89,7 +89,7 @@ func (ep *Entrypoint) prepare(router http.Handler) error {
 	ep.listener = listener
 	ep.server = &http.Server{
 		Addr:      ep.configuration.Address,
-		Handler:   router,
+		Handler:   ep.buildRouter(router),
 		TLSConfig: tlsConfig,
 	}
 
@@ -103,6 +103,18 @@ func (ep *Entrypoint) createTLSConfig() (*tls.Config, error) {
 	}
 
 	return nil, nil
+}
+
+func (ep *Entrypoint) buildRouter(router http.Handler) http.Handler {
+	n := negroni.New()
+
+	for _, mw := range ep.middlewares {
+		n.Use(mw)
+	}
+
+	n.Use(negroni.Wrap(http.HandlerFunc(router.ServeHTTP)))
+
+	return n
 }
 
 func (ep *Entrypoint) startServer() error {
