@@ -48,23 +48,10 @@ func (base Controller) Validate(val interface{}) error {
 	return v.Struct(val)
 }
 
-// WriteJSON write JSON encoding data to controller.
-func (base Controller) WriteJSON(status int, data ...interface{}) {
-	if len(data) == 0 {
-		base.Data["json"] = map[string]interface{}{
-			constants.RespKeyStatus: status,
-		}
-	} else {
-		base.Data["json"] = map[string]interface{}{
-			constants.RespKeyStatus: status,
-			constants.RespKeyData:   data[0],
-		}
-	}
-}
-
-// WriteAndServeJSON write JSON encoding data to controller and sends a response.
-func (base Controller) WriteAndServeJSON(status int, data ...interface{}) {
-	if len(data) == 0 {
+// WriteStatusAndDataJSON write JSON encoding status (and data) to controller and sends a response.
+// The data is optional.
+func (base Controller) WriteStatusAndDataJSON(status int, data interface{}) {
+	if data == nil {
 		base.Data["json"] = map[string]interface{}{
 			constants.RespKeyStatus: status,
 		}
@@ -74,7 +61,17 @@ func (base Controller) WriteAndServeJSON(status int, data ...interface{}) {
 
 	base.Data["json"] = map[string]interface{}{
 		constants.RespKeyStatus: status,
-		constants.RespKeyData:   data[0],
+		constants.RespKeyData:   data,
+	}
+
+	base.ServeJSON(true)
+}
+
+// WriteStatusAndTokenJSON write JSON encoding status and token to controller and sends a response.
+func (base Controller) WriteStatusAndTokenJSON(status int, token interface{}) {
+	base.Data["json"] = map[string]interface{}{
+		constants.RespKeyStatus: status,
+		constants.RespKeyToken:  token,
 	}
 
 	base.ServeJSON(true)
