@@ -24,18 +24,29 @@
 
 /*
  * Revision History:
- *     Initial: 2017/12/18        Feng Yifei
+ *     Initial: 2017/12/19        Feng Yifei
  */
 
-package server
+package main
 
-// Configuration for a http server.
-type Configuration struct {
-	Address string
-}
+import (
+	"github.com/fengyfei/gu/libs/http/server"
+	"github.com/fengyfei/gu/libs/logger"
 
-// TLSConfiguration is the configuration for a https server.
-type TLSConfiguration struct {
-	Key  string
-	Cert string
+	"github.com/gorilla/mux"
+)
+
+func main() {
+	configuration := &server.Configuration{
+		Address: "127.0.0.1:9573",
+	}
+
+	server := server.NewEntrypoint(configuration, nil)
+
+	if err := server.Start(mux.NewRouter()); err != nil {
+		logger.Error(err)
+		return
+	}
+
+	server.Wait()
 }

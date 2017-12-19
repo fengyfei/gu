@@ -40,8 +40,7 @@ import (
 )
 
 var (
-	errMultipleRouter = errors.New("Entrypoint already has a router")
-	errNoRouter       = errors.New("Entrypoint requires a router")
+	errNoRouter = errors.New("Entrypoint requires a router")
 )
 
 // Entrypoint represents a http server.
@@ -110,10 +109,6 @@ func (ep *Entrypoint) startServer() error {
 
 // Start the entrypoint.
 func (ep *Entrypoint) Start(router http.Handler) error {
-	if ep.server.Handler != nil {
-		return errMultipleRouter
-	}
-
 	if router == nil {
 		return errNoRouter
 	}
