@@ -37,6 +37,10 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/fengyfei/gu/libs/http/server/middleware"
+	"github.com/fengyfei/gu/libs/logger"
+	"github.com/urfave/negroni"
 )
 
 var (
@@ -49,6 +53,7 @@ type Entrypoint struct {
 	tlsConfig     *TLSConfiguration
 	server        *http.Server
 	listener      net.Listener
+	middlewares   []negroni.Handler
 	stop          chan bool
 	signals       chan os.Signal
 }
@@ -60,6 +65,7 @@ func NewEntrypoint(conf *Configuration, tlsConf *TLSConfiguration) *Entrypoint {
 		tlsConfig:     tlsConf,
 		stop:          make(chan bool, 1),
 		signals:       make(chan os.Signal, 1),
+		middlewares:   []negroni.Handler{middleware.NegroniRecoverHandler()},
 	}
 }
 
@@ -121,6 +127,8 @@ func (ep *Entrypoint) Start(router http.Handler) error {
 
 	go ep.listenSignals()
 	go ep.startServer()
+
+	logger.Info("Serving on ", ep.configuration.Address)
 
 	return nil
 }
