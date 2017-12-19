@@ -49,6 +49,6 @@ func Warn(v ...interface{}) {
 }
 
 // Error prints error.
-func Error(err error) {
-	beego.Error(err)
+func Error(v ...interface{}) {
+	beego.Error(v...)
 }
