@@ -113,6 +113,11 @@ func (ep *Entrypoint) startServer() error {
 	return ep.server.Serve(ep.listener)
 }
 
+// AttachMiddleware attach a new middleware on entrypoint.
+func (ep *Entrypoint) AttachMiddleware(handler negroni.Handler) {
+	ep.middlewares = append(ep.middlewares, handler)
+}
+
 // Start the entrypoint.
 func (ep *Entrypoint) Start(router http.Handler) error {
 	if router == nil {
