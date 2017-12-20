@@ -35,9 +35,21 @@ import (
 	"github.com/fengyfei/gu/libs/logger"
 )
 
-func indexHandler(c *server.Context) error {
-	// w.Write([]byte("Index\n"))
-	return nil
+type echo struct {
+	Message *string `json:"message"`
+}
+
+func echoHandler(c *server.Context) error {
+	var (
+		err error
+		req echo
+	)
+
+	if err = c.JSONBody(&req); err != nil {
+		return err
+	}
+
+	return c.ServeJSON(&req)
 }
 
 func postHandler(c *server.Context) error {
@@ -56,7 +68,7 @@ func main() {
 	}
 
 	router := server.NewRouter()
-	router.Get("/", indexHandler)
+	router.Post("/", echoHandler)
 	router.Post("/post", postHandler)
 	router.Get("/panic", panicHandler)
 

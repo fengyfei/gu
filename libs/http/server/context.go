@@ -30,7 +30,15 @@
 package server
 
 import (
+	"errors"
 	"net/http"
+
+	json "github.com/json-iterator/go"
+)
+
+var (
+	errNoBody        = errors.New("Request body is empty")
+	errEmptyResponse = errors.New("Empty JSON response body")
 )
 
 // Context wraps http.Request and http.ResponseWriter.
@@ -53,4 +61,28 @@ func (c *Context) Reset(r *http.Request, w http.ResponseWriter) {
 	c.request = r
 	c.responseWriter = w
 	c.LastError = nil
+}
+
+// JSONBody parses the JSON request body.
+func (c *Context) JSONBody(v interface{}) error {
+	if c.request.ContentLength == 0 {
+		return errNoBody
+	}
+
+	return json.NewDecoder(c.request.Body).Decode(v)
+}
+
+// ServeJSON sends a JSON response.
+func (c *Context) ServeJSON(v interface{}) error {
+	if v == nil {
+		return errEmptyResponse
+	}
+
+	resp, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.responseWriter.Write(resp)
+	return err
 }
