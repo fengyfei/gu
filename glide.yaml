@@ -28,6 +28,8 @@ import:
   version: v1.6.0
 - package: github.com/urfave/negroni
   version: v0.3.0
+- package: github.com/nats-io/go-nats-streaming
+  version: v0.3.4
 testImport:
 - package: github.com/smartystreets/goconvey
   version: 1.6.3

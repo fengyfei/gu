@@ -1,10 +1,10 @@
-hash: 52d6211867261c7af874de52449b1a49c9dc2529cef3f05cd4a813b385f40a71
-updated: 2017-12-18T11:25:52.621907+08:00
+hash: 931059926acd2dbeb538dba48a8957b562e9e40e9114571bd2241be54bd22b79
+updated: 2017-12-20T15:51:00.798673+08:00
 imports:
 - name: github.com/andybalholm/cascadia
   version: 349dd0209470eabd9514242c688c403c0926d266
 - name: github.com/asciimoo/colly
-  version: e4fd930317448c73619297054e62634c8db8ea22
+  version: 4bb658ff4497a3e18fdd695621d390391fe8667b
 - name: github.com/astaxie/beego
   version: d96289a81bf67728cff7a19b067aaecc65a62ec6
   subpackages:
@@ -54,13 +54,15 @@ imports:
   - util/runes
   - util/strings
 - name: github.com/gocolly/colly
-  version: e4fd930317448c73619297054e62634c8db8ea22
+  version: 4bb658ff4497a3e18fdd695621d390391fe8667b
   subpackages:
   - debug
 - name: github.com/golang/protobuf
   version: 0a4f71a498b7c4812f64969510bcb4eca251e33a
   subpackages:
   - proto
+- name: github.com/gorilla/context
+  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
   version: 7f08801859139f86dfafd1c296e2cba9a80d292e
 - name: github.com/hashicorp/hcl
@@ -102,6 +104,8 @@ imports:
   version: fc9e8d8ef48496124e79ae0df75490096eccf6fe
 - name: github.com/mitchellh/mapstructure
   version: d0303fe809921458f417bcf828397a65db30a7e4
+- name: github.com/nats-io/go-nats-streaming
+  version: 6e620057a207bd61e992c1c5b6a2de7b6a4cb010
 - name: github.com/pelletier/go-toml
   version: 69d355db5304c0f7f809a2edc054553e7142f016
 - name: github.com/PuerkitoBio/goquery
