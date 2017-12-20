@@ -57,6 +57,11 @@ func NewRouter() *Router {
 	return r
 }
 
+// Handler returns a http.Handler.
+func (rt *Router) Handler() http.Handler {
+	return rt.router
+}
+
 // SetErrorHandler attach a global error handler on router.
 func (rt *Router) SetErrorHandler(h func(*Context)) {
 	rt.errHandler = h
