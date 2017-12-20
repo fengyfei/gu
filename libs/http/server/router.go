@@ -40,14 +40,14 @@ import (
 type Router struct {
 	router     *mux.Router
 	ctxPool    sync.Pool
-	errHandler func(*Context, error)
+	errHandler func(*Context)
 }
 
 // NewRouter returns a router.
 func NewRouter() *Router {
 	r := &Router{
 		router:     mux.NewRouter(),
-		errHandler: func(_ *Context, _ error) {},
+		errHandler: func(_ *Context) {},
 	}
 
 	r.ctxPool.New = func() interface{} {
@@ -55,6 +55,11 @@ func NewRouter() *Router {
 	}
 
 	return r
+}
+
+// SetErrorHandler attach a global error handler on router.
+func (rt *Router) SetErrorHandler(h func(*Context)) {
+	rt.errHandler = h
 }
 
 // Get adds a route path access via GET method.
@@ -75,7 +80,8 @@ func (rt *Router) wrapHandlerFunc(f HandlerFunc) http.HandlerFunc {
 
 		c.Reset(r, w)
 		if err := f(c); err != nil {
-			rt.errHandler(c, err)
+			c.LastError = err
+			rt.errHandler(c)
 		}
 	}
 }

@@ -37,6 +37,7 @@ import (
 type Context struct {
 	request        *http.Request
 	responseWriter http.ResponseWriter
+	LastError      error
 }
 
 // NewContext create a new context.
@@ -51,4 +52,5 @@ func NewContext(r *http.Request, w http.ResponseWriter) *Context {
 func (c *Context) Reset(r *http.Request, w http.ResponseWriter) {
 	c.request = r
 	c.responseWriter = w
+	c.LastError = nil
 }
