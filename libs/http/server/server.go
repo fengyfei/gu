@@ -25,6 +25,7 @@
 /*
  * Revision History:
  *     Initial: 2017/12/18        Feng Yifei
+ *     Modify:  2017/12/19        Jia Chenhui
  */
 
 package server
@@ -102,7 +103,16 @@ func (ep *Entrypoint) createTLSConfig() (*tls.Config, error) {
 		return nil, nil
 	}
 
-	return nil, nil
+	cert, err := tls.LoadX509KeyPair(ep.tlsConfig.Cert, ep.tlsConfig.Key)
+	if err != nil {
+		return nil, err
+	}
+
+	config := &tls.Config{
+		Certificates: []tls.Certificate{cert},
+	}
+
+	return config, nil
 }
 
 func (ep *Entrypoint) buildRouter(router http.Handler) http.Handler {
