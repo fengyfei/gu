@@ -30,11 +30,15 @@
 package constants
 
 const (
-	charsetUTF8                    = "charset=UTF-8"
+	// charset
+	charsetUTF8 = "charset=UTF-8"
+
+	// MIME
 	MIMEApplicationJSON            = "application/json"
 	MIMEApplicationJSONCharsetUTF8 = MIMEApplicationJSON + "; " + charsetUTF8
 	MIMEMultipartForm              = "multipart/form-data"
 
+	// Header
 	HeaderCookie      = "Cookie"
 	HeaderSetCookie   = "Set-Cookie"
 	HeaderUpgrade     = "Upgrade"

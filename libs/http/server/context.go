@@ -110,6 +110,7 @@ func (c *Context) Redirect(status int, url string) error {
 	return nil
 }
 
+// Cookies return all cookies.
 func (c *Context) Cookies() []*http.Cookie {
 	return c.request.Cookies()
 }
@@ -128,22 +129,27 @@ func (c *Context) SetCookie(name string, value string) {
 	http.SetCookie(c.responseWriter, &cook)
 }
 
+// Request return the request.
 func (c *Context) Request() *http.Request {
 	return c.request
 }
 
+// SetRequest set the r as the new request.
 func (c *Context) SetRequest(r *http.Request) {
 	c.request = r
 }
 
+// Response return the responseWriter
 func (c *Context) Response() http.ResponseWriter {
 	return c.responseWriter
 }
 
+// FormValue returns the first value for the named component of the query.
 func (c *Context) FormValue(name string) string {
 	return c.request.FormValue(name)
 }
 
+// FormParams return the parsed form data
 func (c *Context) FormParams() (url.Values, error) {
 	if strings.HasPrefix(c.request.Header.Get(constants.HeaderContentType), constants.MIMEMultipartForm) {
 		if err := c.request.ParseMultipartForm(defaultMemory); err != nil {
@@ -157,10 +163,12 @@ func (c *Context) FormParams() (url.Values, error) {
 	return c.request.Form, nil
 }
 
+// SetHeader Set header for response.
 func (c *Context) SetHeader(key, val string) {
 	c.responseWriter.Header().Set(key, val)
 }
 
+// GetHeader Get header from request by a given key.
 func (c *Context) GetHeader(key string) string {
 	return c.request.Header.Get(key)
 }
