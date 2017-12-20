@@ -36,7 +36,7 @@ import (
 )
 
 type echo struct {
-	Message *string `json:"message"`
+	Message *string `json:"message" validate:"required,min=6"`
 }
 
 func echoHandler(c *server.Context) error {
@@ -62,6 +62,11 @@ func echoHandler(c *server.Context) error {
 
 	if err = c.JSONBody(&req); err != nil {
 		logger.Error("Parses the JSON request body error:", err)
+		return err
+	}
+	err = c.Validate(&req)
+	if err != nil {
+		logger.Error(err)
 		return err
 	}
 

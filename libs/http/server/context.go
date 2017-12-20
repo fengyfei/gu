@@ -36,6 +36,7 @@ import (
 	"strings"
 
 	json "github.com/json-iterator/go"
+	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/fengyfei/gu/libs/constants"
 )
@@ -53,6 +54,7 @@ var (
 type Context struct {
 	request        *http.Request
 	responseWriter http.ResponseWriter
+	Validator      *validator.Validate
 	LastError      error
 }
 
@@ -61,6 +63,7 @@ func NewContext(r *http.Request, w http.ResponseWriter) *Context {
 	return &Context{
 		request:        r,
 		responseWriter: w,
+		Validator:      validator.New(),
 	}
 }
 
@@ -171,4 +174,9 @@ func (c *Context) SetHeader(key, val string) {
 // GetHeader Get header from request by a given key.
 func (c *Context) GetHeader(key string) string {
 	return c.request.Header.Get(key)
+}
+
+// Validate the parameters.
+func (c *Context) Validate(val interface{}) error {
+	return c.Validator.Struct(val)
 }
