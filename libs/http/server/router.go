@@ -55,34 +55,15 @@ func NewRouter() *Router {
 		return NewContext(nil, nil)
 	}
 
+	r.router.NotFoundHandler = http.NotFoundHandler()
+	r.router.MethodNotAllowedHandler = MethodNotAllowedHandler()
+
 	return r
 }
 
 // Handler returns a http.Handler.
 func (rt *Router) Handler() http.Handler {
 	return rt.router
-}
-
-// SetNotFoundHandler attach a global NotFound handler on router.
-func (rt *Router) SetNotFoundHandler(h http.Handler) {
-	if rt.router.NotFoundHandler == nil {
-		if h == nil {
-			rt.router.NotFoundHandler = http.NotFoundHandler()
-		} else {
-			rt.router.NotFoundHandler = h
-		}
-	}
-}
-
-// SetMethodNotAllowedHandler attach a global MethodNotAllowed handler on router.
-func (rt *Router) SetMethodNotAllowedHandler(h http.Handler) {
-	if rt.router.MethodNotAllowedHandler == nil {
-		if h == nil {
-			rt.router.MethodNotAllowedHandler = MethodNotAllowedHandler()
-		} else {
-			rt.router.MethodNotAllowedHandler = h
-		}
-	}
 }
 
 // SetErrorHandler attach a global error handler on router.
@@ -117,10 +98,7 @@ func (rt *Router) wrapHandlerFunc(f HandlerFunc) http.HandlerFunc {
 // MethodNotAllowedHandler returns a simple request handler
 // that replies to each request with a ``405 method not allowed'' reply.
 func MethodNotAllowedHandler() http.Handler {
-	return http.HandlerFunc(MethodNotAllowed)
-}
-
-// MethodNotAllowed replies to the request with an HTTP 405 method not allowed error.
-func MethodNotAllowed(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "405 method not allowed", http.StatusMethodNotAllowed)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "405 method not allowed", http.StatusMethodNotAllowed)
+	})
 }
