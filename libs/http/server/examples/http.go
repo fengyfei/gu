@@ -41,11 +41,27 @@ type echo struct {
 
 func echoHandler(c *server.Context) error {
 	var (
-		err error
-		req echo
+		err  error
+		req  echo
+		user string
 	)
 
+	header := c.GetHeader("auth")
+	logger.Debug("header:", header)
+	c.SetHeader("auth", "vbnmfs")
+
+	user = c.FormValue("user")
+	logger.Debug("user:", user)
+
+	c.SetCookie("id", "123456")
+	id, err := c.GetCookie("id")
+	if err != nil {
+		return err
+	}
+	logger.Debug("id:", id.Value)
+
 	if err = c.JSONBody(&req); err != nil {
+		logger.Error("Parses the JSON request body error:", err)
 		return err
 	}
 

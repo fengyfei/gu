@@ -32,13 +32,21 @@ package server
 import (
 	"errors"
 	"net/http"
+	"net/url"
+	"strings"
 
 	json "github.com/json-iterator/go"
+
+	"github.com/fengyfei/gu/libs/constants"
 )
 
+const defaultMemory = 32 << 20 // 32 MB
+
 var (
-	errNoBody        = errors.New("Request body is empty")
-	errEmptyResponse = errors.New("Empty JSON response body")
+	errNoBody              = errors.New("Request body is empty")
+	errEmptyResponse       = errors.New("Empty JSON response body")
+	errNotJsonBody         = errors.New("Request body is not json")
+	errInvalidRedirectCode = errors.New("Invalid redirect status code")
 )
 
 // Context wraps http.Request and http.ResponseWriter.
@@ -69,6 +77,10 @@ func (c *Context) JSONBody(v interface{}) error {
 		return errNoBody
 	}
 
+	if conType := c.request.Header.Get(constants.HeaderContentType); !strings.EqualFold(conType, constants.MIMEApplicationJSON) {
+		return errNotJsonBody
+	}
+
 	return json.NewDecoder(c.request.Body).Decode(v)
 }
 
@@ -83,6 +95,72 @@ func (c *Context) ServeJSON(v interface{}) error {
 		return err
 	}
 
+	c.responseWriter.Header().Set(constants.HeaderContentType, constants.MIMEApplicationJSONCharsetUTF8)
 	_, err = c.responseWriter.Write(resp)
 	return err
+}
+
+// Redirect does redirection to localurl with http header status code.
+func (c *Context) Redirect(status int, url string) error {
+	if status < 300 || status > 308 {
+		return errInvalidRedirectCode
+	}
+	c.responseWriter.Header().Set(constants.HeaderLocation, url)
+	c.responseWriter.WriteHeader(status)
+	return nil
+}
+
+func (c *Context) Cookies() []*http.Cookie {
+	return c.request.Cookies()
+}
+
+// GetCookie Get cookie from request by a given key.
+func (c *Context) GetCookie(key string) (*http.Cookie, error) {
+	return c.request.Cookie(key)
+}
+
+// SetCookie Set cookie for response.
+func (c *Context) SetCookie(name string, value string) {
+	cook := http.Cookie{
+		Name:  name,
+		Value: value,
+	}
+	http.SetCookie(c.responseWriter, &cook)
+}
+
+func (c *Context) Request() *http.Request {
+	return c.request
+}
+
+func (c *Context) SetRequest(r *http.Request) {
+	c.request = r
+}
+
+func (c *Context) Response() http.ResponseWriter {
+	return c.responseWriter
+}
+
+func (c *Context) FormValue(name string) string {
+	return c.request.FormValue(name)
+}
+
+func (c *Context) FormParams() (url.Values, error) {
+	if strings.HasPrefix(c.request.Header.Get(constants.HeaderContentType), constants.MIMEMultipartForm) {
+		if err := c.request.ParseMultipartForm(defaultMemory); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := c.request.ParseForm(); err != nil {
+			return nil, err
+		}
+	}
+	return c.request.Form, nil
+}
+
+func (c *Context) SetHeader(key, val string) {
+	c.responseWriter.Header().Set(key, val)
+}
+
+func (c *Context) GetHeader(key string) string {
+	return c.request.Header.Get(key)
 }
