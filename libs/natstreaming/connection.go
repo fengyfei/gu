@@ -30,7 +30,14 @@
 package natstreaming
 
 import (
+	"errors"
+
 	stan "github.com/nats-io/go-nats-streaming"
+)
+
+var (
+	errEmptySubject = errors.New("Could't subscribe to a empty subject")
+	errEmptyGroup   = errors.New("Could't subscribe to a subject with a empty group name")
 )
 
 // Connection is a connection to nats streaming server.
@@ -74,9 +81,31 @@ func (c *Connection) Close() error {
 
 // Subscribe on subject.
 func (c *Connection) Subscribe(subject string, handler stan.MsgHandler, opt stan.SubscriptionOption) (*Subscriber, error) {
+	if subject == "" {
+		return nil, errEmptySubject
+	}
+
+	return c.subscribe(subject, "", handler, opt)
+}
+
+// QueueSubscribe creates a queue subscription on a nats streaming server on a subject.
+func (c *Connection) QueueSubscribe(subject, group string, handler stan.MsgHandler, opt stan.SubscriptionOption) (*Subscriber, error) {
+	if subject == "" {
+		return nil, errEmptySubject
+	}
+
+	if group == "" {
+		return nil, errEmptyGroup
+	}
+
+	return c.subscribe(subject, group, handler, opt)
+}
+
+func (c *Connection) subscribe(subject, group string, handler stan.MsgHandler, opt stan.SubscriptionOption) (*Subscriber, error) {
 	s := &Subscriber{
 		conn:    c,
 		Subject: subject,
+		Group:   group,
 		Handler: handler,
 	}
 
@@ -84,7 +113,7 @@ func (c *Connection) Subscribe(subject string, handler stan.MsgHandler, opt stan
 		opt = subscribeDefaultOption
 	}
 
-	sub, err := c.conn.Subscribe(subject, handler, opt)
+	sub, err := c.conn.QueueSubscribe(subject, group, handler, opt)
 	if err != nil {
 		return nil, err
 	}
