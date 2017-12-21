@@ -1,5 +1,5 @@
 hash: 931059926acd2dbeb538dba48a8957b562e9e40e9114571bd2241be54bd22b79
-updated: 2017-12-20T15:51:00.798673+08:00
+updated: 2017-12-21T10:52:53.922164+08:00
 imports:
 - name: github.com/andybalholm/cascadia
   version: 349dd0209470eabd9514242c688c403c0926d266
@@ -57,6 +57,12 @@ imports:
   version: 4bb658ff4497a3e18fdd695621d390391fe8667b
   subpackages:
   - debug
+- name: github.com/gogo/protobuf
+  version: 100ba4e885062801d56799d78530b73b178a78f3
+  subpackages:
+  - gogoproto
+  - proto
+  - protoc-gen-gogo/descriptor
 - name: github.com/golang/protobuf
   version: 0a4f71a498b7c4812f64969510bcb4eca251e33a
   subpackages:
@@ -104,8 +110,19 @@ imports:
   version: fc9e8d8ef48496124e79ae0df75490096eccf6fe
 - name: github.com/mitchellh/mapstructure
   version: d0303fe809921458f417bcf828397a65db30a7e4
+- name: github.com/nats-io/go-nats
+  version: 61923ed1eaf8398000991fbbee2ef11ab5a5be0d
 - name: github.com/nats-io/go-nats-streaming
   version: 6e620057a207bd61e992c1c5b6a2de7b6a4cb010
+  subpackages:
+  - pb
+- name: github.com/nats-io/nats
+  version: d66cb54e6b7bdd93f0b28afc8450d84c780dfb68
+  subpackages:
+  - encoders/builtin
+  - util
+- name: github.com/nats-io/nuid
+  version: 33c603157d6fd1b0ac2599bcc4a286b36479a06d
 - name: github.com/pelletier/go-toml
   version: 69d355db5304c0f7f809a2edc054553e7142f016
 - name: github.com/PuerkitoBio/goquery
