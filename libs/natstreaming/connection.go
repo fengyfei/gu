@@ -71,3 +71,29 @@ func (c *Connection) connect() error {
 func (c *Connection) Close() error {
 	return c.conn.Close()
 }
+
+// Subscribe on subject.
+func (c *Connection) Subscribe(subject string, handler stan.MsgHandler, opt stan.SubscriptionOption) (*Subscriber, error) {
+	s := &Subscriber{
+		conn:    c,
+		Subject: subject,
+		Handler: handler,
+	}
+
+	if opt == nil {
+		opt = subscribeDefaultOption
+	}
+
+	sub, err := c.conn.Subscribe(subject, handler, opt)
+	if err != nil {
+		return nil, err
+	}
+	s.Sub = sub
+
+	return s, nil
+}
+
+// Publish a message on a subject.
+func (c *Connection) Publish(subject string, message []byte) error {
+	return c.conn.Publish(subject, message)
+}

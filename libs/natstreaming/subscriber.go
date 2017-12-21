@@ -27,59 +27,42 @@
  *     Initial: 2017/12/21        Feng Yifei
  */
 
-package main
+package natstreaming
 
 import (
-	"fmt"
-	"sync"
+	"time"
 
-	"github.com/fengyfei/gu/libs/logger"
-	ns "github.com/fengyfei/gu/libs/natstreaming"
 	stan "github.com/nats-io/go-nats-streaming"
 )
 
-func main() {
-	const (
-		subject = "subject"
-	)
+// Subscriber wraps a subscription to a channel.
+type Subscriber struct {
+	conn    *Connection // Original connection
+	Subject string
+	Group   string
+	Handler stan.MsgHandler
+	Sub     stan.Subscription
+}
 
-	var (
-		subscriber *ns.Subscriber
-		wg         *sync.WaitGroup
-	)
+// Unsubscribe the subject.
+func (sub *Subscriber) Unsubscribe() error {
+	return sub.Sub.Unsubscribe()
+}
 
-	basicMessageHandler := func(msg *stan.Msg) {
-		logger.Info(msg.Sequence, msg.Subject, string(msg.Data))
-		wg.Done()
+// MessageHandler is the messages handler for the subscription.
+func (sub *Subscriber) MessageHandler(msg *stan.Msg) {
+	if sub.Handler != nil {
+		sub.Handler(msg)
 	}
+}
 
-	conn, err := ns.NewConnection("test-cluster", "tester", "nats://localhost:4222")
-	if err != nil {
-		logger.Error(err)
-		return
-	}
+func subscribeDefaultOption(opts *stan.SubscriptionOptions) error {
+	opts.DurableName = ""
+	opts.MaxInflight = 1
+	opts.AckWait = 10 * time.Second
+	opts.StartAt = 0
+	opts.StartSequence = 0
+	opts.ManualAcks = false
 
-	defer conn.Close()
-
-	subscriber, err = conn.Subscribe(subject, basicMessageHandler, nil)
-	if err != nil {
-		logger.Error(err)
-		return
-	}
-	defer subscriber.Unsubscribe()
-
-	wg = &sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		for i := 0; i < 100; i++ {
-			wg.Add(1)
-			if err := conn.Publish(subject, []byte(fmt.Sprintf("Message %d", i))); err != nil {
-				logger.Error("Publish error:", err)
-			}
-		}
-		wg.Done()
-	}()
-
-	wg.Wait()
-	logger.Debug("Closing")
+	return nil
 }
