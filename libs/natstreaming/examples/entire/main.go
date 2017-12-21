@@ -40,7 +40,7 @@ import (
 	"github.com/nats-io/go-nats-streaming/pb"
 )
 
-func durableOption(opts *stan.SubscriptionOptions) error {
+func entireOption(opts *stan.SubscriptionOptions) error {
 	opts.StartAt = pb.StartPosition_First
 
 	return nil
@@ -48,7 +48,7 @@ func durableOption(opts *stan.SubscriptionOptions) error {
 
 func main() {
 	const (
-		subject = "subject"
+		subject = "entire"
 	)
 
 	var (
@@ -56,7 +56,7 @@ func main() {
 		wg         = &sync.WaitGroup{}
 	)
 
-	basicMessageHandler := func(msg *stan.Msg) {
+	messageHandler := func(msg *stan.Msg) {
 		logger.Info(time.Now().UnixNano(), msg.Timestamp, msg.Sequence, msg.Subject, string(msg.Data))
 	}
 
@@ -77,7 +77,7 @@ func main() {
 		wg.Done()
 	}()
 
-	subscriber, err = conn.Subscribe(subject, basicMessageHandler, durableOption)
+	subscriber, err = conn.Subscribe(subject, messageHandler, entireOption)
 	if err != nil {
 		logger.Error(err)
 		return
