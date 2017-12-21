@@ -25,6 +25,7 @@
 /*
  * Revision History:
  *     Initial: 2017/12/18        Feng Yifei
+ *     Modify:  2017/12/19        Jia Chenhui
  */
 
 package server
@@ -38,9 +39,30 @@ import (
 	"os"
 	"time"
 
-	"github.com/fengyfei/gu/libs/http/server/middleware"
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/urfave/negroni"
+)
+
+// HTTP methods
+const (
+	GET     = "GET"
+	POST    = "POST"
+	OPTIONS = "OPTIONS"
+)
+
+// Headers
+const (
+	HeaderOrigin = "Origin"
+	HeaderVary   = "Vary"
+
+	// Access control
+	HeaderAccessControlRequestMethod    = "Access-Control-Request-Method"
+	HeaderAccessControlRequestHeaders   = "Access-Control-Request-Headers"
+	HeaderAccessControlAllowOrigin      = "Access-Control-Allow-Origin"
+	HeaderAccessControlAllowHeaders     = "Access-Control-Allow-Headers"
+	HeaderAccessControlExposeHeaders    = "Access-Control-Expose-Headers"
+	HeaderAccessControlAllowCredentials = "Access-Control-Allow-Credentials"
+	HeaderAccessControlMaxAge           = "Access-Control-Max-Age"
 )
 
 var (
@@ -65,7 +87,7 @@ func NewEntrypoint(conf *Configuration, tlsConf *TLSConfiguration) *Entrypoint {
 		tlsConfig:     tlsConf,
 		stop:          make(chan bool, 1),
 		signals:       make(chan os.Signal, 1),
-		middlewares:   []negroni.Handler{middleware.NegroniRecoverHandler()},
+		middlewares:   []negroni.Handler{},
 	}
 }
 
@@ -102,7 +124,16 @@ func (ep *Entrypoint) createTLSConfig() (*tls.Config, error) {
 		return nil, nil
 	}
 
-	return nil, nil
+	cert, err := tls.LoadX509KeyPair(ep.tlsConfig.Cert, ep.tlsConfig.Key)
+	if err != nil {
+		return nil, err
+	}
+
+	config := &tls.Config{
+		Certificates: []tls.Certificate{cert},
+	}
+
+	return config, nil
 }
 
 func (ep *Entrypoint) buildRouter(router http.Handler) http.Handler {

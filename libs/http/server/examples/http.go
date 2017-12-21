@@ -30,25 +30,57 @@
 package main
 
 import (
-	"net/http"
-
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/http/server/middleware"
 	"github.com/fengyfei/gu/libs/logger"
-
-	"github.com/gorilla/mux"
 )
 
-func indexHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Index\n"))
+type echo struct {
+	Message *string `json:"message" validate:"required,min=6"`
 }
 
-func postHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Post\n"))
+func echoHandler(c *server.Context) error {
+	var (
+		err  error
+		req  echo
+		user string
+	)
+
+	header := c.GetHeader("auth")
+	logger.Debug("header:", header)
+	c.SetHeader("auth", "vbnmfs")
+
+	user = c.FormValue("user")
+	logger.Debug("user:", user)
+
+	c.SetCookie("id", "123456")
+	id, err := c.GetCookie("id")
+	if err != nil {
+		return err
+	}
+	logger.Debug("id:", id.Value)
+
+	if err = c.JSONBody(&req); err != nil {
+		logger.Error("Parses the JSON request body error:", err)
+		return err
+	}
+	err = c.Validate(&req)
+	if err != nil {
+		logger.Error(err)
+		return err
+	}
+
+	return c.ServeJSON(&req)
 }
 
-func panicHandler(w http.ResponseWriter, r *http.Request) {
+func postHandler(c *server.Context) error {
+	// w.Write([]byte("Post\n"))
+	return nil
+}
+
+func panicHandler(c *server.Context) error {
 	panic("Panic testing")
+	return nil
 }
 
 func main() {
@@ -56,17 +88,19 @@ func main() {
 		Address: "127.0.0.1:9573",
 	}
 
-	router := mux.NewRouter()
-	router.HandleFunc("/", indexHandler).Methods("GET")
-	router.HandleFunc("/post", postHandler).Methods("POST")
-	router.HandleFunc("/panic", panicHandler).Methods("GET")
+	router := server.NewRouter()
+	router.Post("/", echoHandler)
+	router.Post("/post", postHandler)
+	router.Get("/panic", panicHandler)
 
 	ep := server.NewEntrypoint(configuration, nil)
 
 	// add middlewares
+	ep.AttachMiddleware(middleware.NegroniRecoverHandler())
 	ep.AttachMiddleware(middleware.NegroniLoggerHandler())
+	ep.AttachMiddleware(server.WrapMiddlewareFunc(middleware.CORS()))
 
-	if err := ep.Start(router); err != nil {
+	if err := ep.Start(router.Handler()); err != nil {
 		logger.Error(err)
 		return
 	}

@@ -28,3 +28,11 @@ services:
     ports:
       - "127.0.0.1:27017:27017"
     restart: always
+  nats-streaming-server:
+    container_name: nats-streaming-server
+    image: nats-streaming
+    ports:
+      - "127.0.0.1:4222:4222"
+      - "127.0.0.1:8223:8223"
+    command: ["-m", "8222", "--store", "file", "--dir", "nats-streaming"]
+    restart: always
