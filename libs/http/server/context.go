@@ -171,6 +171,12 @@ func (c *Context) SetHeader(key, val string) {
 	c.responseWriter.Header().Set(key, val)
 }
 
+// WriteHeader sends an HTTP response header with status code.
+func (c *Context) WriteHeader(code int) error {
+	c.responseWriter.WriteHeader(code)
+	return nil
+}
+
 // GetHeader Get header from request by a given key.
 func (c *Context) GetHeader(key string) string {
 	return c.request.Header.Get(key)

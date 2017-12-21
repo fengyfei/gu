@@ -44,6 +44,28 @@ import (
 	"github.com/urfave/negroni"
 )
 
+// HTTP methods
+const (
+	GET     = "GET"
+	POST    = "POST"
+	OPTIONS = "OPTIONS"
+)
+
+// Headers
+const (
+	HeaderOrigin = "Origin"
+	HeaderVary   = "Vary"
+
+	// Access control
+	HeaderAccessControlRequestMethod    = "Access-Control-Request-Method"
+	HeaderAccessControlRequestHeaders   = "Access-Control-Request-Headers"
+	HeaderAccessControlAllowOrigin      = "Access-Control-Allow-Origin"
+	HeaderAccessControlAllowHeaders     = "Access-Control-Allow-Headers"
+	HeaderAccessControlExposeHeaders    = "Access-Control-Expose-Headers"
+	HeaderAccessControlAllowCredentials = "Access-Control-Allow-Credentials"
+	HeaderAccessControlMaxAge           = "Access-Control-Max-Age"
+)
+
 var (
 	errNoRouter = errors.New("Entrypoint requires a router")
 )

@@ -30,4 +30,7 @@
 package server
 
 // HandlerFunc defines a handler function to handle http request.
-type HandlerFunc func(c *Context) error
+type HandlerFunc func(*Context) error
+
+// MiddlewareFunc defines a function to process middleware.
+type MiddlewareFunc func(HandlerFunc) HandlerFunc
