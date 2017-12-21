@@ -39,7 +39,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/fengyfei/gu/libs/http/server/middleware"
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/urfave/negroni"
 )
@@ -88,7 +87,7 @@ func NewEntrypoint(conf *Configuration, tlsConf *TLSConfiguration) *Entrypoint {
 		tlsConfig:     tlsConf,
 		stop:          make(chan bool, 1),
 		signals:       make(chan os.Signal, 1),
-		middlewares:   []negroni.Handler{middleware.NegroniRecoverHandler()},
+		middlewares:   []negroni.Handler{},
 	}
 }
 

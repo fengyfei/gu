@@ -96,7 +96,9 @@ func main() {
 	ep := server.NewEntrypoint(configuration, nil)
 
 	// add middlewares
+	ep.AttachMiddleware(middleware.NegroniRecoverHandler())
 	ep.AttachMiddleware(middleware.NegroniLoggerHandler())
+	ep.AttachMiddleware(server.WrapMiddlewareFunc(middleware.CORS()))
 
 	if err := ep.Start(router.Handler()); err != nil {
 		logger.Error(err)
