@@ -29,25 +29,5 @@
 
 package server
 
-import (
-	"net/http"
-
-	"github.com/urfave/negroni"
-)
-
 // HandlerFunc defines a handler function to handle http request.
 type HandlerFunc func(*Context) error
-
-// MiddlewareFunc defines a function to process middleware.
-type MiddlewareFunc func(HandlerFunc) HandlerFunc
-
-// WrapMiddlewareFunc wraps `func(HandlerFunc) HandlerFunc` into `negroni.HandlerFunc`
-func WrapMiddlewareFunc(m func(HandlerFunc) HandlerFunc) negroni.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-		m(func(c *Context) (err error) {
-			c.SetRequest(r)
-			next.ServeHTTP(c.Response(), c.Request())
-			return
-		})
-	}
-}

@@ -69,7 +69,7 @@ func panicHandler(c *server.Context) error {
 // curl -k https://127.0.0.1:9574/panic
 func https() {
 	configuration := &server.Configuration{
-		Address: "127.0.0.1:9574",
+		Address: "0.0.0.0:9574",
 	}
 
 	tlsConfig := &server.TLSConfiguration{
@@ -83,9 +83,12 @@ func https() {
 	router.Get("/panic", panicHandler)
 
 	ep := server.NewEntrypoint(configuration, tlsConfig)
+	cors := middleware.CORSAllowAll()
 
 	// add middlewares
+	ep.AttachMiddleware(middleware.NegroniRecoverHandler())
 	ep.AttachMiddleware(middleware.NegroniLoggerHandler())
+	ep.AttachMiddleware(cors)
 
 	if err := ep.Start(router.Handler()); err != nil {
 		logger.Error(err)

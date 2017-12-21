@@ -85,7 +85,7 @@ func panicHandler(c *server.Context) error {
 
 func main() {
 	configuration := &server.Configuration{
-		Address: "127.0.0.1:9573",
+		Address: "0.0.0.0:9573",
 	}
 
 	router := server.NewRouter()
@@ -94,11 +94,12 @@ func main() {
 	router.Get("/panic", panicHandler)
 
 	ep := server.NewEntrypoint(configuration, nil)
+	cors := middleware.CORSAllowAll()
 
 	// add middlewares
 	ep.AttachMiddleware(middleware.NegroniRecoverHandler())
 	ep.AttachMiddleware(middleware.NegroniLoggerHandler())
-	ep.AttachMiddleware(server.WrapMiddlewareFunc(middleware.CORS()))
+	ep.AttachMiddleware(cors)
 
 	if err := ep.Start(router.Handler()); err != nil {
 		logger.Error(err)
