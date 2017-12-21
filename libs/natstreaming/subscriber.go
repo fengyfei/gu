@@ -30,9 +30,14 @@
 package natstreaming
 
 import (
+	"errors"
 	"time"
 
 	stan "github.com/nats-io/go-nats-streaming"
+)
+
+var (
+	errInvalidSubscription = errors.New("Try to close a invalid subscription")
 )
 
 // Subscriber wraps a subscription to a channel.
@@ -46,6 +51,9 @@ type Subscriber struct {
 
 // Unsubscribe the subject.
 func (sub *Subscriber) Unsubscribe() error {
+	if sub.Sub == nil {
+		return errInvalidSubscription
+	}
 	return sub.Sub.Unsubscribe()
 }
 

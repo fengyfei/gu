@@ -102,6 +102,10 @@ func (c *Connection) QueueSubscribe(subject, group string, handler stan.MsgHandl
 }
 
 func (c *Connection) subscribe(subject, group string, handler stan.MsgHandler, opt stan.SubscriptionOption) (*Subscriber, error) {
+	var (
+		err error
+		sub stan.Subscription
+	)
 	s := &Subscriber{
 		conn:    c,
 		Subject: subject,
@@ -113,7 +117,12 @@ func (c *Connection) subscribe(subject, group string, handler stan.MsgHandler, o
 		opt = subscribeDefaultOption
 	}
 
-	sub, err := c.conn.QueueSubscribe(subject, group, handler, opt)
+	if group != "" {
+		sub, err = c.conn.QueueSubscribe(subject, group, handler, opt)
+	} else {
+		sub, err = c.conn.Subscribe(subject, handler, opt)
+	}
+
 	if err != nil {
 		return nil, err
 	}
