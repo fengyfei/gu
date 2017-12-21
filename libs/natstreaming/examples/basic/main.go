@@ -32,6 +32,7 @@ package main
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/fengyfei/gu/libs/logger"
 	ns "github.com/fengyfei/gu/libs/natstreaming"
@@ -49,7 +50,7 @@ func main() {
 	)
 
 	basicMessageHandler := func(msg *stan.Msg) {
-		logger.Info(msg.Sequence, msg.Subject, string(msg.Data))
+		logger.Info(time.Now().UnixNano(), msg.Timestamp, msg.Sequence, msg.Subject, string(msg.Data))
 		wg.Done()
 	}
 

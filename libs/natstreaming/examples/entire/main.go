@@ -27,41 +27,65 @@
  *     Initial: 2017/12/21        Feng Yifei
  */
 
-package natstreaming
+package main
 
 import (
+	"fmt"
+	"sync"
 	"time"
 
+	"github.com/fengyfei/gu/libs/logger"
+	ns "github.com/fengyfei/gu/libs/natstreaming"
 	stan "github.com/nats-io/go-nats-streaming"
+	"github.com/nats-io/go-nats-streaming/pb"
 )
 
-// Subscriber wraps a subscription to a channel.
-type Subscriber struct {
-	conn    *Connection // Original connection
-	Subject string
-	Group   string
-	Handler stan.MsgHandler
-	Sub     stan.Subscription
-}
-
-// Unsubscribe the subject.
-func (sub *Subscriber) Unsubscribe() error {
-	return sub.Sub.Unsubscribe()
-}
-
-// MessageHandler is the messages handler for the subscription.
-func (sub *Subscriber) MessageHandler(msg *stan.Msg) {
-	if sub.Handler != nil {
-		sub.Handler(msg)
-	}
-}
-
-func subscribeDefaultOption(opts *stan.SubscriptionOptions) error {
-	opts.DurableName = ""
-	opts.MaxInflight = 1
-	opts.AckWait = 10 * time.Second
-	opts.StartAt = 0 // StartPosition_NewOnly
-	opts.ManualAcks = false
+func durableOption(opts *stan.SubscriptionOptions) error {
+	opts.StartAt = pb.StartPosition_First
 
 	return nil
+}
+
+func main() {
+	const (
+		subject = "subject"
+	)
+
+	var (
+		subscriber *ns.Subscriber
+		wg         = &sync.WaitGroup{}
+	)
+
+	basicMessageHandler := func(msg *stan.Msg) {
+		logger.Info(time.Now().UnixNano(), msg.Timestamp, msg.Sequence, msg.Subject, string(msg.Data))
+	}
+
+	conn, err := ns.NewConnection("test-cluster", "tester", "nats://localhost:4222")
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+
+	defer conn.Close()
+	wg.Add(1)
+	go func() {
+		for i := 0; i < 100; i++ {
+			if err := conn.Publish(subject, []byte(fmt.Sprintf("Message %d", i))); err != nil {
+				logger.Error("Publish error:", err)
+			}
+		}
+		wg.Done()
+	}()
+
+	subscriber, err = conn.Subscribe(subject, basicMessageHandler, durableOption)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	defer subscriber.Unsubscribe()
+	wg.Wait()
+
+	time.Sleep(2 * time.Second)
+
+	logger.Debug("Closing")
 }
