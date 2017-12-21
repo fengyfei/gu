@@ -79,6 +79,19 @@ func (c *Connection) Subscribe(subject string, handler nc.MsgHandler) (*Subscrib
 	return c.subscribe(subject, "", handler)
 }
 
+// QueueSubscribe creates a queue subscription on a nats streaming server on a subject.
+func (c *Connection) QueueSubscribe(subject, group string, handler nc.MsgHandler) (*Subscriber, error) {
+	if subject == "" {
+		return nil, errEmptySubject
+	}
+
+	if group == "" {
+		return nil, errEmptyGroup
+	}
+
+	return c.subscribe(subject, group, handler)
+}
+
 func (c *Connection) subscribe(subject, group string, handler nc.MsgHandler) (*Subscriber, error) {
 	var (
 		sub *nc.Subscription
