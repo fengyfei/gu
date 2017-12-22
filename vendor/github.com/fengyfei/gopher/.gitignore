@@ -1,8 +1,0 @@
-*.log
-.idea
-
-*.DS_Store
-
-libchan/client/client
-
-libchan/server/server
