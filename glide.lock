@@ -1,6 +1,10 @@
-hash: 931059926acd2dbeb538dba48a8957b562e9e40e9114571bd2241be54bd22b79
-updated: 2017-12-21T10:52:53.922164+08:00
+hash: 4f99f6c406989e678a7d851a2d1a32eaeb85295b2cd5e3e42c4f299bb85098ea
+updated: 2017-12-22T14:13:11.864256+08:00
 imports:
+- name: github.com/allegro/bigcache
+  version: aa76879d59fa5d93c43680238227dbf7a53f5c28
+  subpackages:
+  - queue
 - name: github.com/andybalholm/cascadia
   version: 349dd0209470eabd9514242c688c403c0926d266
 - name: github.com/asciimoo/colly
@@ -67,6 +71,8 @@ imports:
   version: 0a4f71a498b7c4812f64969510bcb4eca251e33a
   subpackages:
   - proto
+- name: github.com/golang/snappy
+  version: 553a641470496b2327abcac10b36396bd98e45c9
 - name: github.com/gorilla/context
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
@@ -108,6 +114,8 @@ imports:
   version: 3fa8c76f9daed4067e4a806fb7e4dc86455c6d6a
 - name: github.com/mattn/go-isatty
   version: fc9e8d8ef48496124e79ae0df75490096eccf6fe
+- name: github.com/minio/minio-go
+  version: 06dcf064d9e3b1dfd21b9a01a822da7665a9c971
 - name: github.com/mitchellh/mapstructure
   version: d0303fe809921458f417bcf828397a65db30a7e4
 - name: github.com/nats-io/go-nats
@@ -139,6 +147,21 @@ imports:
   version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
 - name: github.com/spf13/viper
   version: 25b30aa063fc18e48662b86996252eabdcf2f0c7
+- name: github.com/syndtr/goleveldb
+  version: 34011bf325bce385408353a30b101fe5e923eb6e
+  subpackages:
+  - leveldb
+  - leveldb/cache
+  - leveldb/comparer
+  - leveldb/errors
+  - leveldb/filter
+  - leveldb/iterator
+  - leveldb/journal
+  - leveldb/memdb
+  - leveldb/opt
+  - leveldb/storage
+  - leveldb/table
+  - leveldb/util
 - name: github.com/temoto/robotstxt
   version: 9e4646fa705336d5b2fa9dddfafbe0a1a965acd7
 - name: github.com/urfave/negroni
@@ -210,6 +233,10 @@ imports:
 - name: gopkg.in/yaml.v2
   version: 3b4ad1db5b2a649883ff3782f5f9f6fb52be71af
 testImports:
+- name: github.com/fengyfei/gopher
+  version: a3ac8156e32b1371861ed77934e1561246c2dc86
+  subpackages:
+  - bigcache
 - name: github.com/gopherjs/gopherjs
   version: 444abdf920945de5d4a977b572bcc6c674d1e4eb
   subpackages:

@@ -43,20 +43,23 @@ import (
 	"github.com/urfave/negroni"
 )
 
-// HTTP methods
 const (
+	// HTTP methods
+	PUT     = "PUT"
 	GET     = "GET"
 	POST    = "POST"
+	HEAD    = "HEAD"
+	PATCH   = "PATCH"
+	DELETE  = "DELETE"
 	OPTIONS = "OPTIONS"
-)
 
-// Headers
-const (
+	// Headers
 	HeaderOrigin = "Origin"
 	HeaderVary   = "Vary"
 
 	// Access control
 	HeaderAccessControlRequestMethod    = "Access-Control-Request-Method"
+	HeaderAccessControlAllowMethods     = "Access-Control-Allow-Methods"
 	HeaderAccessControlRequestHeaders   = "Access-Control-Request-Headers"
 	HeaderAccessControlAllowOrigin      = "Access-Control-Allow-Origin"
 	HeaderAccessControlAllowHeaders     = "Access-Control-Allow-Headers"

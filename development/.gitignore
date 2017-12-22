@@ -3,3 +3,4 @@ portainer
 mysql
 mongo
 nats-streaming
+minio
