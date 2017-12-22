@@ -44,3 +44,15 @@ services:
       - "127.0.0.1:6222:6222"
       - "127.0.0.1:8222:8222"
     restart: always
+  minio:
+    container_name: minio
+    image: minio/minio
+    volumes:
+      - ./minio:/data
+    ports:
+      - "127.0.0.1:9001:9000"
+    environment:
+      - MINIO_ACCESS_KEY=minio
+      - MINIO_SECRET_KEY=minio20171222
+    command: ["server", "/data"]
+    restart: always
