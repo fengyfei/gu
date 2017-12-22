@@ -1,5 +1,5 @@
 hash: 2437b24f76260b9b65a5660e2f9592484cc7b64e7a1dc839fed6b626912a27c3
-updated: 2017-12-22T10:16:27.676058+08:00
+updated: 2017-12-22T10:37:40.06478+08:00
 imports:
 - name: github.com/andybalholm/cascadia
   version: 349dd0209470eabd9514242c688c403c0926d266
@@ -67,6 +67,8 @@ imports:
   version: 0a4f71a498b7c4812f64969510bcb4eca251e33a
   subpackages:
   - proto
+- name: github.com/golang/snappy
+  version: 553a641470496b2327abcac10b36396bd98e45c9
 - name: github.com/gorilla/context
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
@@ -141,6 +143,19 @@ imports:
   version: 25b30aa063fc18e48662b86996252eabdcf2f0c7
 - name: github.com/syndtr/goleveldb
   version: 34011bf325bce385408353a30b101fe5e923eb6e
+  subpackages:
+  - leveldb
+  - leveldb/cache
+  - leveldb/comparer
+  - leveldb/errors
+  - leveldb/filter
+  - leveldb/iterator
+  - leveldb/journal
+  - leveldb/memdb
+  - leveldb/opt
+  - leveldb/storage
+  - leveldb/table
+  - leveldb/util
 - name: github.com/temoto/robotstxt
   version: 9e4646fa705336d5b2fa9dddfafbe0a1a965acd7
 - name: github.com/urfave/negroni
