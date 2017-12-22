@@ -100,7 +100,7 @@ type CORS struct {
 	optionPassthrough bool
 }
 
-// CORSWithConfig creates a new CORS handler with the provided options.
+// CORSWithConfig creates a new CORS handler with the provided config.
 func CORSWithConfig(config CORSConfig) *CORS {
 	if config.Skipper == nil {
 		config.Skipper = DefaultSkipper
@@ -173,12 +173,12 @@ func CORSWithConfig(config CORSConfig) *CORS {
 	return c
 }
 
-// Default creates a new CORS handler with default options.
-func Default() *CORS {
+// CORSDefault creates a new CORS handler with default config.
+func CORSDefault() *CORS {
 	return CORSWithConfig(CORSConfig{})
 }
 
-// AllowAll create a new CORS handler with permissive configuration allowing all
+// CORSAllowAll create a new CORS handler with permissive configuration allowing all
 // origins with all standard methods with any header and credentials.
 func CORSAllowAll() *CORS {
 	return CORSWithConfig(CORSConfig{
