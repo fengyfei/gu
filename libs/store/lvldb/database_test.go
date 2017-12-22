@@ -31,6 +31,9 @@ package lvldb
 
 import (
 	"testing"
+	"math/rand"
+	"time"
+	"strconv"
 )
 
 func TestDatabaseOpenClose(t *testing.T) {
@@ -87,3 +90,46 @@ func TestDatabaseOperations(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func BenchmarkDatabase_Put(b *testing.B) {
+	db, err := NewDatabase("tests/basic", 0, 0)
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer func() {
+		if err := db.Close(); err != nil {
+			b.Fatal(err)
+		}
+	}()
+
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	for i := 0; i < b.N; i++ {
+		err := db.Put([]byte(strconv.Itoa(r.Intn(b.N))),  value())
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkDatabase_Get(b *testing.B) {
+	db, err := NewDatabase("tests/basic", 0, 0)
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer func() {
+		if err := db.Close(); err != nil {
+			b.Fatal(err)
+		}
+	}()
+
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	for i := 0; i < b.N; i++ {
+		db.Get([]byte(strconv.Itoa(r.Intn(b.N))))
+	}
+}
+
+func value() []byte {
+	return make([]byte, 100)
+}
+
