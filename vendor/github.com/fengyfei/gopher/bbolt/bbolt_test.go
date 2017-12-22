@@ -25,6 +25,7 @@
 /*
  * Revision History:
  *     Initial: 2017/09/14        Yang Chenglong
+ *     Modify : 2017/12/22        Yang Chenglong
  */
 
 package bbolt
@@ -38,11 +39,18 @@ import (
 	"time"
 )
 
+var db *BboltDB
+
+func init() {
+	db,_ = NewBboltDB("user.db",0666,nil)
+}
+
 func BenchmarkUserServiceProvider_Put(b *testing.B) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
 	for i := 0; i < b.N; i++ {
 		name := fmt.Sprintf("test%s", strconv.Itoa(r.Intn(b.N)))
-		err := UserService.Put("user", name, value())
+		err := db.Put("user", name, value())
 		if err != nil {
 			log.Printf("create testing: %v", err)
 		}
@@ -53,7 +61,7 @@ func BenchmarkUserServiceProvider_Get(b *testing.B) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for i := 0; i < b.N; i++ {
 		name := fmt.Sprintf("test%s", strconv.Itoa(r.Intn(b.N)))
-		UserService.Get("user", name)
+		db.Get("user", name)
 	}
 }
 

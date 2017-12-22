@@ -25,48 +25,44 @@
 /*
  * Revision History:
  *     Initial: 2017/09/16        Jia Chenhui
+ *     Modify : 2017/12/22        Yang Chenglong
  */
 
 package cache
 
 import (
-	"time"
-
 	"github.com/allegro/bigcache"
 )
 
-type CacheServiceProvider struct{}
-
-var (
-	customConfig  bigcache.Config
-	CacheInstance *bigcache.BigCache
-	CacheServer   *CacheServiceProvider
-)
-
-func init() {
-	customConfig = bigcache.Config{
-		Shards:             1024,
-		LifeWindow:         3 * time.Minute,
-		MaxEntriesInWindow: 1000 * 10 * 60,
-		MaxEntrySize:       500,
-		Verbose:            true,
-		HardMaxCacheSize:   8192,
-		OnRemove:           nil,
-	}
-
-	CacheInstance, _ = bigcache.NewBigCache(customConfig)
-	CacheServer = &CacheServiceProvider{}
+type CacheDB struct {
+	db     *bigcache.BigCache
 }
 
-func (csp *CacheServiceProvider) SetOne(id string, name []byte) {
-	CacheInstance.Set(id, []byte(name))
+func NewCacheDB(customConfig bigcache.Config) (*CacheDB, error) {
+	db, err := bigcache.NewBigCache(customConfig)
+
+	return &CacheDB{
+		db:     db,
+	}, err
 }
 
-func (csp *CacheServiceProvider) GetOne(id string) (string, error) {
-	nameByte, err := CacheInstance.Get(id)
+func (c *CacheDB) Set(id string, name []byte) error {
+	return c.db.Set(id, []byte(name))
+}
+
+func (c *CacheDB) Get(id string) ([]byte, error) {
+	nameByte, err := c.db.Get(id)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return string(nameByte), nil
+	return nameByte, nil
+}
+
+func (c *CacheDB) Reset() error {
+	return c.db.Reset()
+}
+
+func (c *CacheDB) Len() int {
+	return c.db.Len()
 }

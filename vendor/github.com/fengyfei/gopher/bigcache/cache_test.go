@@ -34,19 +34,37 @@ import (
 	"math/rand"
 	"strconv"
 	"testing"
+	"time"
 
+	"github.com/allegro/bigcache"
 	"github.com/fengyfei/gopher/bigcache"
 )
 
-func BenchmarkCacheServiceProvider_SetOne(b *testing.B) {
+var customConfig bigcache.Config
+var db *cache.CacheDB
+
+func init() {
+	customConfig = bigcache.Config{
+		Shards:             1024,
+		LifeWindow:         3 * time.Minute,
+		MaxEntriesInWindow: 1000 * 10 * 60,
+		MaxEntrySize:       500,
+		Verbose:            true,
+		HardMaxCacheSize:   8192,
+		OnRemove:           nil,
+	}
+	db, _ = cache.NewCacheDB(customConfig)
+}
+
+func BenchmarkCacheDB_Get(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		cache.CacheServer.SetOne(key(rand.Intn(b.N)), value())
+		db.Set(key(rand.Intn(b.N)), value())
 	}
 }
 
-func BenchmarkCacheServiceProvider_GetOne(b *testing.B) {
+func BenchmarkCacheServiceProvider_Get(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		cache.CacheServer.GetOne(strconv.Itoa(rand.Intn(b.N)))
+		db.Get(strconv.Itoa(rand.Intn(b.N)))
 	}
 }
 

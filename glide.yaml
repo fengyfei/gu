@@ -33,6 +33,8 @@ import:
 - package: github.com/syndtr/goleveldb
 - package: github.com/allegro/bigcache
   version: ^1.0.0
+- package: github.com/minio/minio-go
+  version: 4.0.4
 testImport:
 - package: github.com/smartystreets/goconvey
   version: 1.6.3

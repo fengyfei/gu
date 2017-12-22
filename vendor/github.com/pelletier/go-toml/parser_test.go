@@ -46,7 +46,7 @@ func assertTree(t *testing.T, tree *Tree, err error, ref map[string]interface{})
 func TestCreateSubTree(t *testing.T) {
 	tree := newTree()
 	tree.createSubTree([]string{"a", "b", "c"}, Position{})
-	tree.Set("a.b.c", "", false, 42)
+	tree.Set("a.b.c", 42)
 	if tree.Get("a.b.c") != 42 {
 		t.Fail()
 	}
@@ -652,7 +652,7 @@ func TestTomlValueStringRepresentation(t *testing.T) {
 			"[\"gamma\",\"delta\"]"},
 		{nil, ""},
 	} {
-		result, err := tomlValueStringRepresentation(item.Value, "", false)
+		result, err := tomlValueStringRepresentation(item.Value)
 		if err != nil {
 			t.Errorf("Test %d - unexpected error: %s", idx, err)
 		}

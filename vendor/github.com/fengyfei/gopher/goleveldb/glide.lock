@@ -1,0 +1,52 @@
+hash: 5d656f6afe1e0ecc9796ce806e8f482b735b8c3c826c0f9b748d9a462509eba9
+updated: 2017-12-22T12:46:20.362684+08:00
+imports:
+- name: github.com/allegro/bigcache
+  version: aa76879d59fa5d93c43680238227dbf7a53f5c28
+- name: github.com/dgraph-io/badger
+  version: 69611218c7078be6de16f4ea13fb256e701b6b73
+- name: github.com/docker/libchan
+  version: aea6f64450cfc4145ae3f1a9a821dafd97624f09
+  subpackages:
+  - spdy
+- name: github.com/golang/snappy
+  version: 553a641470496b2327abcac10b36396bd98e45c9
+- name: github.com/graphql-go/graphql
+  version: 0c7d73fea519ce6751ecb4d5835c5a87a384cf6c
+- name: github.com/matryer/vice
+  version: b43d8efdd2a26ca83fec74eaec9273f8c3f06d67
+- name: github.com/nats-io/go-nats-streaming
+  version: 6e620057a207bd61e992c1c5b6a2de7b6a4cb010
+- name: github.com/syndtr/goleveldb
+  version: 34011bf325bce385408353a30b101fe5e923eb6e
+  subpackages:
+  - leveldb
+  - leveldb/cache
+  - leveldb/comparer
+  - leveldb/errors
+  - leveldb/filter
+  - leveldb/iterator
+  - leveldb/journal
+  - leveldb/memdb
+  - leveldb/opt
+  - leveldb/storage
+  - leveldb/table
+  - leveldb/util
+- name: golang.org/x/crypto
+  version: 9ef620b9ca2f82b55030ffd4f41327fa9e77a92c
+  subpackages:
+  - acme
+- name: golang.org/x/net
+  version: 1c05540f6879653db88113bc4a2b70aec4bd491f
+  subpackages:
+  - html
+- name: golang.org/x/sys
+  version: 43e60d72a8e2bd92ee98319ba9a384a0e9837c08
+  subpackages:
+  - unix
+- name: golang.org/x/text
+  version: eb22672bea55af56d225d4e35405f4d2e9f062a0
+  subpackages:
+  - encoding
+  - transform
+testImports: []
