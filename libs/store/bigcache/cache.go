@@ -33,10 +33,12 @@ import (
 	"github.com/allegro/bigcache"
 )
 
+// CacheDB represent a BigCache instance.
 type CacheDB struct {
 	db     *bigcache.BigCache
 }
 
+// NewCacheDB creates a new bigcache database.
 func NewCacheDB(customConfig bigcache.Config) (*CacheDB, error) {
 	db, err := bigcache.NewBigCache(customConfig)
 
@@ -45,10 +47,12 @@ func NewCacheDB(customConfig bigcache.Config) (*CacheDB, error) {
 	}, err
 }
 
+// Set saves entry under the key.
 func (c *CacheDB) Set(id string, name []byte) error {
 	return c.db.Set(id, []byte(name))
 }
 
+// Get reads entry for the key.
 func (c *CacheDB) Get(id string) ([]byte, error) {
 	nameByte, err := c.db.Get(id)
 	if err != nil {
@@ -58,10 +62,12 @@ func (c *CacheDB) Get(id string) ([]byte, error) {
 	return nameByte, nil
 }
 
+// Reset empties all cache shards.
 func (c *CacheDB) Reset() error {
 	return c.db.Reset()
 }
 
+// Len computes number of entries in cache.
 func (c *CacheDB) Len() int {
 	return c.db.Len()
 }
