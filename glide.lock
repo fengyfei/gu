@@ -1,10 +1,12 @@
-hash: 4f99f6c406989e678a7d851a2d1a32eaeb85295b2cd5e3e42c4f299bb85098ea
-updated: 2017-12-22T14:13:11.864256+08:00
+hash: a7885ade4307aa0dfb3babfb4dbf72cbe553d25ad0fef21e8c10b1394d556311
+updated: 2017-12-22T20:49:06.303848+08:00
 imports:
 - name: github.com/allegro/bigcache
   version: aa76879d59fa5d93c43680238227dbf7a53f5c28
   subpackages:
   - queue
+- name: github.com/AndreasBriese/bbloom
+  version: 28f7e881ca57bc00e028f9ede9f0d9104cfeef5e
 - name: github.com/andybalholm/cascadia
   version: 349dd0209470eabd9514242c688c403c0926d266
 - name: github.com/asciimoo/colly
@@ -35,8 +37,18 @@ imports:
   - mch/core
   - mch/pay
   - util
+- name: github.com/dgraph-io/badger
+  version: 69611218c7078be6de16f4ea13fb256e701b6b73
+  subpackages:
+  - options
+  - protos
+  - skl
+  - table
+  - "y"
 - name: github.com/dgrijalva/jwt-go
   version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
+- name: github.com/dgryski/go-farm
+  version: ac7624ea8da311f2fbbd94401d8c1cf66089f9fb
 - name: github.com/fsnotify/fsnotify
   version: 4da3e2cfbabc9f751898f250b49f2439785783a1
 - name: github.com/go-playground/locales
@@ -133,6 +145,8 @@ imports:
   version: 33c603157d6fd1b0ac2599bcc4a286b36479a06d
 - name: github.com/pelletier/go-toml
   version: 69d355db5304c0f7f809a2edc054553e7142f016
+- name: github.com/pkg/errors
+  version: a22138067af1c4942683050411a841ade67fe1eb
 - name: github.com/PuerkitoBio/goquery
   version: bc4e06eb0792d1a14661d19dd7822163c25bb6bd
 - name: github.com/spf13/afero
@@ -186,6 +200,8 @@ imports:
   - html
   - html/atom
   - html/charset
+  - internal/timeseries
+  - trace
 - name: golang.org/x/sys
   version: abf9c25f54453410d0c6668e519582a9e1115027
   subpackages:
@@ -233,10 +249,6 @@ imports:
 - name: gopkg.in/yaml.v2
   version: 3b4ad1db5b2a649883ff3782f5f9f6fb52be71af
 testImports:
-- name: github.com/fengyfei/gopher
-  version: a3ac8156e32b1371861ed77934e1561246c2dc86
-  subpackages:
-  - bigcache
 - name: github.com/gopherjs/gopherjs
   version: 444abdf920945de5d4a977b572bcc6c674d1e4eb
   subpackages:
