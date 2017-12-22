@@ -45,9 +45,14 @@ func NewBadgerDB(mode options.FileLoadingMode, dir string, compactFlag bool) (*B
 	opt.ValueDir = opt.Dir
 	opt.DoNotCompact = compactFlag
 	db, err := badger.Open(opt)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &BadgerDB{
 		db: db,
-	}, err
+	}, nil
 }
 
 func (db *BadgerDB) Set(key, value []byte) error {
