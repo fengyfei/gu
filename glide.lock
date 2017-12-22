@@ -1,5 +1,5 @@
-hash: 931059926acd2dbeb538dba48a8957b562e9e40e9114571bd2241be54bd22b79
-updated: 2017-12-21T10:52:53.922164+08:00
+hash: 2437b24f76260b9b65a5660e2f9592484cc7b64e7a1dc839fed6b626912a27c3
+updated: 2017-12-22T10:16:27.676058+08:00
 imports:
 - name: github.com/andybalholm/cascadia
   version: 349dd0209470eabd9514242c688c403c0926d266
@@ -139,6 +139,8 @@ imports:
   version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
 - name: github.com/spf13/viper
   version: 25b30aa063fc18e48662b86996252eabdcf2f0c7
+- name: github.com/syndtr/goleveldb
+  version: 34011bf325bce385408353a30b101fe5e923eb6e
 - name: github.com/temoto/robotstxt
   version: 9e4646fa705336d5b2fa9dddfafbe0a1a965acd7
 - name: github.com/urfave/negroni

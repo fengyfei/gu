@@ -30,6 +30,7 @@ import:
   version: v0.3.0
 - package: github.com/nats-io/go-nats-streaming
   version: v0.3.4
+- package: github.com/syndtr/goleveldb
 testImport:
 - package: github.com/smartystreets/goconvey
   version: 1.6.3
