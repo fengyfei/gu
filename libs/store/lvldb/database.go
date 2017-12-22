@@ -92,3 +92,23 @@ func (db *Database) Path() string {
 func (db *Database) Close() error {
 	return db.db.Close()
 }
+
+// Has checks if a key exists in the database.
+func (db *Database) Has(key []byte) (bool, error) {
+	return db.db.Has(key, nil)
+}
+
+// Get a value via the key.
+func (db *Database) Get(key []byte) ([]byte, error) {
+	return db.db.Get(key, nil)
+}
+
+// Put a key/vaue.
+func (db *Database) Put(key, value []byte) error {
+	return db.db.Put(key, value, nil)
+}
+
+// Delete a key/value.
+func (db *Database) Delete(key []byte) error {
+	return db.db.Delete(key, nil)
+}

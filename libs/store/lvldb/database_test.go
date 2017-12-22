@@ -33,7 +33,7 @@ import (
 	"testing"
 )
 
-func TestDatabase(t *testing.T) {
+func TestDatabaseOpenClose(t *testing.T) {
 	db, err := NewDatabase("tests/basic", 0, 0)
 	if err != nil {
 		t.Fatal(err)
@@ -43,4 +43,47 @@ func TestDatabase(t *testing.T) {
 			t.Fatal(err)
 		}
 	}()
+}
+
+func TestDatabaseOperations(t *testing.T) {
+	db, err := NewDatabase("tests/basic", 0, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := db.Close(); err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	key := []byte("level")
+	if exists, _ := db.Has(key); exists {
+		t.Fatal("Key exists")
+	}
+
+	if err = db.Put(key, []byte("first")); err != nil {
+		t.Fatal(err)
+	}
+
+	if exists, _ := db.Has(key); !exists {
+		t.Fatal("Key not exists")
+	}
+
+	if err = db.Put(key, []byte("second")); err != nil {
+		t.Fatal(err)
+	}
+
+	if v, e := db.Get(key); e != nil {
+		t.Fatal(e)
+	} else if string(v) != "second" {
+		t.Fatal("Invalid value")
+	}
+
+	if err = db.Delete(key); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = db.Delete(key); err != nil {
+		t.Fatal(err)
+	}
 }
