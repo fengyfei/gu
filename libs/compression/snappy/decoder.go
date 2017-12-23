@@ -30,80 +30,38 @@
 package snappy
 
 import (
-	"bytes"
-	"fmt"
-	"os"
-	"testing"
+	"io"
+	"io/ioutil"
+
+	gs "github.com/golang/snappy"
 )
 
-func TestBasic(t *testing.T) {
-	var (
-		dst, want []byte
-		err       error
-	)
-	src := []byte("Hello world, with gosnappy, have a good day.")
+// Decoder is a decoder for a streaming.
+type Decoder struct {
+	dec *gs.Reader
+	r   io.Reader
+	w   io.Writer
+}
 
-	if dst, err = Encode(src); err != nil {
-		t.Fatal(err)
-	}
-
-	fmt.Println("Source length:", len(src), ",Encoded length:", len(dst))
-
-	if want, err = Decode(dst); err != nil {
-		t.Fatal(err)
-	}
-
-	if !bytes.Equal(src, want) {
-		t.Fatal("Not same with original")
+// NewDecoder create a decoder object.
+func NewDecoder(r io.Reader, w io.Writer) *Decoder {
+	return &Decoder{
+		dec: gs.NewReader(r),
+		r:   r,
+		w:   w,
 	}
 }
 
-func TestEncoder(t *testing.T) {
-	var (
-		src, dst *os.File
-		err      error
-	)
-
-	// curl www.sina.com.cn > sina.html
-	src, err = os.Open("./sina.html")
+// Decode the stream.
+func (s *Decoder) Decode() error {
+	content, err := ioutil.ReadAll(s.dec)
 	if err != nil {
-		t.Fatal(err)
+		return err
 	}
-	defer src.Close()
 
-	dst, err = os.Create("./sina.enc")
-	if err != nil {
-		t.Fatal(err)
+	if _, err = s.w.Write(content); err != nil {
+		return err
 	}
-	defer dst.Close()
 
-	encoder := NewEncoder(src, dst)
-	if err = encoder.Encode(); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestDecoder(t *testing.T) {
-	var (
-		src, dst *os.File
-		err      error
-	)
-
-	// curl www.sina.com.cn > sina.html
-	src, err = os.Open("./sina.enc")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer src.Close()
-
-	dst, err = os.Create("./sina.dec")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer dst.Close()
-
-	decoder := NewDecoder(src, dst)
-	if err = decoder.Decode(); err != nil {
-		t.Fatal(err)
-	}
+	return nil
 }
