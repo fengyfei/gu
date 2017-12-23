@@ -30,8 +30,10 @@
 package main
 
 import (
-	"github.com/minio/minio-go"
 	"testing"
+
+	"fmt"
+	"github.com/minio/minio-go"
 )
 
 var (
@@ -41,9 +43,9 @@ var (
 
 func TestNewClient(t *testing.T) {
 	config := Config{
-		endpoint:        "127.0.0.1:9000",
-		accessKeyID:     "0JHZFDAGV294U21N3082",
-		secretAccessKey: "CVWRWo96wfck4M3Z9VU7QCsWHV/z3nqN9EpaoF3i",
+		endpoint:        "127.0.0.1:9001",
+		accessKeyID:     "minio",
+		secretAccessKey: "minio20171222",
 		useSSL:          false,
 	}
 	c, err = NewClient(&config)
@@ -53,7 +55,7 @@ func TestNewClient(t *testing.T) {
 }
 
 func TestClient_NewBucket(t *testing.T) {
-	bucketName := "myfiles"
+	bucketName := "myfile"
 	location := "us-east-8"
 
 	err = c.NewBucket(bucketName, location)
@@ -62,14 +64,14 @@ func TestClient_NewBucket(t *testing.T) {
 	}
 }
 
-func TestClient_PutFile(t *testing.T) {
-	bucketName := "myfiles"
+func TestClient_PutObject(t *testing.T) {
+	bucketName := "myfile"
 	objectName := "test.zip"
 	filePath := "./test.zip"
 	contentType := "application/zip"
 
 	// Upload the zip file with FPutObject
-	n, err := c.PutFile(bucketName, objectName, filePath, minio.PutObjectOptions{ContentType: contentType})
+	n, err := c.PutObject(bucketName, objectName, filePath, minio.PutObjectOptions{ContentType: contentType})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,21 +79,68 @@ func TestClient_PutFile(t *testing.T) {
 	t.Log("the size of file is:", n)
 }
 
+func TestClient_PutImage(t *testing.T) {
+	bucketName := "myfile"
+	objectName := "test.png"
+	filePath := "./test.png"
+	n, err := c.PutImage(bucketName, objectName, filePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log("the size of file is:", n)
+}
+
+func TestClient_PutText(t *testing.T) {
+	bucketName := "myfile"
+	objectName := "T_test.txt"
+	filePath := "./Ttest.txt"
+	n, err := c.PutImage(bucketName, objectName, filePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log("the size of file is:", n)
+}
+
+func TestClient_ListBuckets(t *testing.T) {
+	buckets, err := c.ListBuckets()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, bucket := range buckets {
+		fmt.Println("bucket:", bucket.Name)
+	}
+
+}
+
+func TestClient_ListObjects(t *testing.T) {
+	doneCh := make(chan struct{})
+	defer close(doneCh)
+	info := c.ListObjects("myfile", "", true, doneCh)
+	for v := range info {
+		if v.Err != nil {
+			t.Log(v.Err)
+			return
+		}
+		t.Log(v)
+	}
+}
 func TestClient_GetFile(t *testing.T) {
-	bucketName := "myfiles"
+	bucketName := "myfile"
 	objectName := "test.zip"
 	filePath := "./test1.zip"
 
-	err := c.GetFile(bucketName, objectName, filePath, minio.GetObjectOptions{})
+	err := c.GetObject(bucketName, objectName, filePath, minio.GetObjectOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestClient_DeleteFie(t *testing.T) {
-	bucketName := "myfiles"
+	bucketName := "myfile"
 	objectName := "test.zip"
-	err := c.DeleteFie(bucketName, objectName)
+	err := c.DeleteObject(bucketName, objectName)
 	if err != nil {
 		t.Fatal(err)
 	}

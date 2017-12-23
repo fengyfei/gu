@@ -30,8 +30,9 @@
 package main
 
 import (
-	"github.com/fengyfei/gu/libs/logger"
 	"github.com/minio/minio-go"
+
+	"github.com/fengyfei/gu/libs/logger"
 )
 
 // Config contains the necessary configuration about Client.
@@ -82,8 +83,13 @@ func (c *Client) NewBucket(name string, timezone string) error {
 	return nil
 }
 
-// PutFile creates an object in a bucket, with contents from file at filePath.
-func (c *Client) PutFile(bucketName, objectName, filePath string, opts minio.PutObjectOptions) (int64, error) {
+// ListBuckets list all buckets owned by this authenticated user.
+func (c *Client) ListBuckets() ([]minio.BucketInfo, error) {
+	return c.client.ListBuckets()
+}
+
+// PutObject creates an object in a bucket, with contents from file at filePath.
+func (c *Client) PutObject(bucketName, objectName, filePath string, opts minio.PutObjectOptions) (int64, error) {
 	n, err := c.client.FPutObject(bucketName, objectName, filePath, opts)
 	if err != nil {
 		logger.Error("Put file error:", err)
@@ -93,12 +99,32 @@ func (c *Client) PutFile(bucketName, objectName, filePath string, opts minio.Put
 	return n, nil
 }
 
-// GetFile downloads contents of an object to a local file.
-func (c *Client) GetFile(bucketName, objectName, filePath string, opts minio.GetObjectOptions) error {
+// PutZip creates an Zip Object in a bucket.
+func (c *Client) PutZip(bucketName, objectName, filePath string) (int64, error) {
+	return c.PutObject(bucketName, objectName, filePath, minio.PutObjectOptions{ContentType: "application/zip"})
+}
+
+// PutText creates an Text Object in a bucket.
+func (c *Client) PutText(bucketName, objectName, filePath string) (int64, error) {
+	return c.PutObject(bucketName, objectName, filePath, minio.PutObjectOptions{ContentType: "application/text"})
+}
+
+// PutImage creates an Image Object in a bucket.
+func (c *Client) PutImage(bucketName, objectName, filePath string) (int64, error) {
+	return c.PutObject(bucketName, objectName, filePath, minio.PutObjectOptions{ContentType: "image/jpeg"})
+}
+
+// GetObject downloads contents of an object to a local file.
+func (c *Client) GetObject(bucketName, objectName, filePath string, opts minio.GetObjectOptions) error {
 	return c.client.FGetObject(bucketName, objectName, filePath, opts)
 }
 
-// DeleteFie removes an object from a bucket.
-func (c *Client) DeleteFie(bucketName, objectName string) error {
+// DeleteObject removes an object from a bucket.
+func (c *Client) DeleteObject(bucketName, objectName string) error {
 	return c.client.RemoveObject(bucketName, objectName)
+}
+
+// ListObjects lists all objects matching the objectPrefix from the specified bucket.
+func (c *Client) ListObjects(bucketName, objectPrefix string, recursive bool, doneCh <-chan struct{}) <-chan minio.ObjectInfo {
+	return c.client.ListObjectsV2(bucketName, objectPrefix, recursive, doneCh)
 }
