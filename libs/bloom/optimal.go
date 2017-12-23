@@ -33,14 +33,10 @@ import (
 	"math"
 )
 
-const (
-	scale = 2.0
-)
-
 func k(p float64) uint {
 	return uint(math.Ceil(-math.Log2(p)))
 }
 
 func m(n uint, p float64) uint {
-	return uint(math.Ceil(-float64(n)*float64(1.44)*math.Log2(p)) * scale)
+	return uint(math.Ceil(float64(n) / ((math.Log(p) * math.Log(1-p)) / math.Abs(math.Log(p)))))
 }
