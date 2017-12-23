@@ -42,6 +42,7 @@ type Router struct {
 	router     *mux.Router
 	ctxPool    sync.Pool
 	errHandler func(*Context)
+	filters    [FinishRouter + 1][]*FilterRouter
 }
 
 // NewRouter returns a router.
@@ -83,15 +84,48 @@ func (rt *Router) Post(pattern string, handler HandlerFunc) {
 
 // Wraps a HandlerFunc to a http.HandlerFunc.
 func (rt *Router) wrapHandlerFunc(f HandlerFunc) http.HandlerFunc {
+	var (
+		err error
+	)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		c := rt.ctxPool.Get().(*Context)
 		defer rt.ctxPool.Put(c)
-
 		c.Reset(r, w)
-		if err := f(c); err != nil {
-			c.LastError = err
-			rt.errHandler(c)
+
+		if len(rt.filters[BeforeStatic]) > 0 && rt.execFilter(c, BeforeStatic) {
+			err = errFilterNotPassed
+			goto finish
 		}
+
+		if len(rt.filters[BeforeRouter]) > 0 && rt.execFilter(c, BeforeRouter) {
+			err = errFilterNotPassed
+			goto finish
+		}
+
+		if len(rt.filters[BeforeExec]) > 0 && rt.execFilter(c, BeforeExec) {
+			err = errFilterNotPassed
+			goto finish
+		}
+
+		// execute HandlerFunc
+		if err = f(c); err != nil {
+			goto finish
+		}
+
+		if len(rt.filters[AfterExec]) > 0 && rt.execFilter(c, AfterExec) {
+			err = errFilterNotPassed
+			goto finish
+		}
+
+		if len(rt.filters[FinishRouter]) > 0 && rt.execFilter(c, FinishRouter) {
+			err = errFilterNotPassed
+			goto finish
+		}
+
+	finish:
+		c.LastError = err
+		rt.errHandler(c)
 	}
 }
 

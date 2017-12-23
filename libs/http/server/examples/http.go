@@ -83,12 +83,26 @@ func panicHandler(c *server.Context) error {
 	return nil
 }
 
+func loginFilter(c *server.Context) {
+	msg := "testFilter"
+	resp := echo{
+		Message: &msg,
+	}
+
+	if c.Request().RequestURI != "/login" {
+		if true {
+			c.ServeJSON(&resp)
+		}
+	}
+}
+
 func main() {
 	configuration := &server.Configuration{
 		Address: "0.0.0.0:9573",
 	}
 
 	router := server.NewRouter()
+	router.InsertFilter("/*", server.BeforeExec, loginFilter)
 	router.Post("/", echoHandler)
 	router.Post("/post", postHandler)
 	router.Get("/panic", panicHandler)

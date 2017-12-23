@@ -25,6 +25,7 @@
 /*
  * Revision History:
  *     Initial: 2017/12/19        Feng Yifei
+ *     Modify:  2017/12/23        Jia Chenhui
  */
 
 package server
@@ -51,11 +52,13 @@ var (
 )
 
 // Context wraps http.Request and http.ResponseWriter.
+// Returned set to true if response was written to then don't execute other handler.
 type Context struct {
 	request        *http.Request
 	responseWriter http.ResponseWriter
 	Validator      *validator.Validate
 	LastError      error
+	Returned       bool
 }
 
 // NewContext create a new context.
@@ -72,6 +75,7 @@ func (c *Context) Reset(r *http.Request, w http.ResponseWriter) {
 	c.request = r
 	c.responseWriter = w
 	c.LastError = nil
+	c.Returned = false
 }
 
 // JSONBody parses the JSON request body.
@@ -98,6 +102,7 @@ func (c *Context) ServeJSON(v interface{}) error {
 		return err
 	}
 
+	c.Returned = true
 	c.responseWriter.Header().Set(constants.HeaderContentType, constants.MIMEApplicationJSONCharsetUTF8)
 	_, err = c.responseWriter.Write(resp)
 	return err
@@ -108,6 +113,7 @@ func (c *Context) Redirect(status int, url string) error {
 	if status < 300 || status > 308 {
 		return errInvalidRedirectCode
 	}
+	c.Returned = true
 	c.responseWriter.Header().Set(constants.HeaderLocation, url)
 	c.responseWriter.WriteHeader(status)
 	return nil
@@ -168,11 +174,13 @@ func (c *Context) FormParams() (url.Values, error) {
 
 // SetHeader Set header for response.
 func (c *Context) SetHeader(key, val string) {
+	c.Returned = true
 	c.responseWriter.Header().Set(key, val)
 }
 
 // WriteHeader sends an HTTP response header with status code.
 func (c *Context) WriteHeader(code int) error {
+	c.Returned = true
 	c.responseWriter.WriteHeader(code)
 	return nil
 }
