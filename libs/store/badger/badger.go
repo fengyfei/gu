@@ -34,10 +34,12 @@ import (
 	"github.com/dgraph-io/badger/options"
 )
 
+// BadgerDB represent a badger instance.
 type BadgerDB struct {
 	db *badger.DB
 }
 
+// NewBadgerDB creates a new badger database.
 func NewBadgerDB(mode options.FileLoadingMode, dir string, compactFlag bool) (*BadgerDB, error) {
 	opt := badger.DefaultOptions
 	opt.TableLoadingMode = mode
@@ -55,6 +57,7 @@ func NewBadgerDB(mode options.FileLoadingMode, dir string, compactFlag bool) (*B
 	}, nil
 }
 
+// Set saves entry under the key.
 func (db *BadgerDB) Set(key, value []byte) error {
 	return db.db.Update(func(txn *badger.Txn) error {
 		err := txn.Set(key, value)
@@ -62,6 +65,7 @@ func (db *BadgerDB) Set(key, value []byte) error {
 	})
 }
 
+// Get reads entry for the key.
 func (db *BadgerDB) Get(key []byte) ([]byte, error) {
 	txn := db.db.NewTransaction(false)
 	defer txn.Discard()
@@ -78,6 +82,7 @@ func (db *BadgerDB) Get(key []byte) ([]byte, error) {
 	return v, err
 }
 
+// Delete delete entry for the key.
 func (db *BadgerDB) Delete(key []byte) error {
 	return db.db.Update(func(txn *badger.Txn) error {
 		err := txn.Delete(key)
