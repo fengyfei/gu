@@ -94,11 +94,9 @@ func (rt *Router) wrapHandlerFunc(f HandlerFunc, filters ...FilterFunc) http.Han
 
 		if len(filters) > 0 {
 			for _, filter := range filters {
-				if passed := execFilter(c, filter); !passed {
-					err = errFilterNotPassed
-
-					c.LastError = err
-					rt.errHandler(c)
+				if passed := filter(c); !passed {
+					c.LastError = errFilterNotPassed
+					return
 				}
 			}
 		}

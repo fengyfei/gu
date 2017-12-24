@@ -24,7 +24,6 @@
 
 /*
  * Revision History:
- *     From: https://github.com/astaxie/beego/blob/master/router.go
  *     Modify: 2017/12/22        Jia Chenhui
  */
 
@@ -41,11 +40,3 @@ var (
 // FilterFunc defines a filter function which is invoked before the controller
 // handler is executed.
 type FilterFunc func(*Context) bool
-
-func execFilter(c *Context, filter FilterFunc) (passed bool) {
-	if filter(c) {
-		return true
-	}
-
-	return false
-}
