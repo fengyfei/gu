@@ -91,7 +91,7 @@ func (rt *Router) wrapHandlerFunc(f HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		c := rt.ctxPool.Get().(*Context)
 		defer rt.ctxPool.Put(c)
-		c.Reset(r, w)
+		c.Reset(w, r)
 
 		if len(rt.filters[BeforeStatic]) > 0 && rt.execFilter(c, BeforeStatic) {
 			err = errFilterNotPassed

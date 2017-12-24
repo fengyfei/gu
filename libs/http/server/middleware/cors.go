@@ -223,7 +223,7 @@ func (c *CORS) HandlerFunc(w http.ResponseWriter, r *http.Request) {
 
 // Negroni compatible interface.
 func (c *CORS) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	ctx := server.NewContext(r, w)
+	ctx := server.NewContext(w, r)
 	if c.skipper(ctx) {
 		next(w, r)
 	}

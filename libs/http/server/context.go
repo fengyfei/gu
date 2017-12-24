@@ -38,42 +38,40 @@ import (
 
 	json "github.com/json-iterator/go"
 	"gopkg.in/go-playground/validator.v9"
-
-	"github.com/fengyfei/gu/libs/constants"
 )
 
 const defaultMemory = 32 << 20 // 32 MB
 
 var (
-	errNoBody              = errors.New("Request body is empty")
-	errEmptyResponse       = errors.New("Empty JSON response body")
-	errNotJsonBody         = errors.New("Request body is not json")
-	errInvalidRedirectCode = errors.New("Invalid redirect status code")
+	errNoBody              = errors.New("request body is empty")
+	errEmptyResponse       = errors.New("empty JSON response body")
+	errNotJsonBody         = errors.New("request body is not JSON")
+	errInvalidRedirectCode = errors.New("invalid redirect status code")
 )
 
 // Context wraps http.Request and http.ResponseWriter.
 // Returned set to true if response was written to then don't execute other handler.
 type Context struct {
-	request        *http.Request
 	responseWriter http.ResponseWriter
+	request        *http.Request
 	Validator      *validator.Validate
 	LastError      error
 	Returned       bool
 }
 
 // NewContext create a new context.
-func NewContext(r *http.Request, w http.ResponseWriter) *Context {
+func NewContext(w http.ResponseWriter, r *http.Request) *Context {
 	return &Context{
-		request:        r,
 		responseWriter: w,
+		request:        r,
 		Validator:      validator.New(),
 	}
 }
 
 // Reset the context.
-func (c *Context) Reset(r *http.Request, w http.ResponseWriter) {
-	c.request = r
+func (c *Context) Reset(w http.ResponseWriter, r *http.Request) {
 	c.responseWriter = w
+	c.request = r
 	c.LastError = nil
 	c.Returned = false
 }
@@ -84,7 +82,7 @@ func (c *Context) JSONBody(v interface{}) error {
 		return errNoBody
 	}
 
-	if conType := c.request.Header.Get(constants.HeaderContentType); !strings.EqualFold(conType, constants.MIMEApplicationJSON) {
+	if conType := c.request.Header.Get(HeaderContentType); !strings.EqualFold(conType, MIMEApplicationJSON) {
 		return errNotJsonBody
 	}
 
@@ -103,7 +101,7 @@ func (c *Context) ServeJSON(v interface{}) error {
 	}
 
 	c.Returned = true
-	c.responseWriter.Header().Set(constants.HeaderContentType, constants.MIMEApplicationJSONCharsetUTF8)
+	c.responseWriter.Header().Set(HeaderContentType, MIMEApplicationJSONCharsetUTF8)
 	_, err = c.responseWriter.Write(resp)
 	return err
 }
@@ -114,7 +112,7 @@ func (c *Context) Redirect(status int, url string) error {
 		return errInvalidRedirectCode
 	}
 	c.Returned = true
-	c.responseWriter.Header().Set(constants.HeaderLocation, url)
+	c.responseWriter.Header().Set(HeaderLocation, url)
 	c.responseWriter.WriteHeader(status)
 	return nil
 }
@@ -160,7 +158,7 @@ func (c *Context) FormValue(name string) string {
 
 // FormParams return the parsed form data
 func (c *Context) FormParams() (url.Values, error) {
-	if strings.HasPrefix(c.request.Header.Get(constants.HeaderContentType), constants.MIMEMultipartForm) {
+	if strings.HasPrefix(c.request.Header.Get(HeaderContentType), MIMEMultipartForm) {
 		if err := c.request.ParseMultipartForm(defaultMemory); err != nil {
 			return nil, err
 		}

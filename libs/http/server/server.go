@@ -44,6 +44,9 @@ import (
 )
 
 const (
+	// charset
+	charsetUTF8 = "charset=UTF-8"
+
 	// HTTP methods
 	PUT     = "PUT"
 	GET     = "GET"
@@ -53,9 +56,19 @@ const (
 	DELETE  = "DELETE"
 	OPTIONS = "OPTIONS"
 
+	// MIME
+	MIMEApplicationJSON            = "application/json"
+	MIMEApplicationJSONCharsetUTF8 = MIMEApplicationJSON + "; " + charsetUTF8
+	MIMEMultipartForm              = "multipart/form-data"
+
 	// Headers
-	HeaderOrigin = "Origin"
-	HeaderVary   = "Vary"
+	HeaderOrigin      = "Origin"
+	HeaderVary        = "Vary"
+	HeaderCookie      = "Cookie"
+	HeaderSetCookie   = "Set-Cookie"
+	HeaderUpgrade     = "Upgrade"
+	HeaderContentType = "Content-Type"
+	HeaderLocation    = "Location"
 
 	// Access control
 	HeaderAccessControlRequestMethod    = "Access-Control-Request-Method"
@@ -69,7 +82,7 @@ const (
 )
 
 var (
-	errNoRouter = errors.New("Entrypoint requires a router")
+	errNoRouter = errors.New("entrypoint requires a router")
 )
 
 // Entrypoint represents a http server.
