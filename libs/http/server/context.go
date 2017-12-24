@@ -56,7 +56,6 @@ type Context struct {
 	request        *http.Request
 	Validator      *validator.Validate
 	LastError      error
-	Returned       bool
 }
 
 // NewContext create a new context.
@@ -73,7 +72,6 @@ func (c *Context) Reset(w http.ResponseWriter, r *http.Request) {
 	c.responseWriter = w
 	c.request = r
 	c.LastError = nil
-	c.Returned = false
 }
 
 // JSONBody parses the JSON request body.
@@ -100,7 +98,6 @@ func (c *Context) ServeJSON(v interface{}) error {
 		return err
 	}
 
-	c.Returned = true
 	c.responseWriter.Header().Set(HeaderContentType, MIMEApplicationJSONCharsetUTF8)
 	_, err = c.responseWriter.Write(resp)
 	return err
@@ -111,7 +108,6 @@ func (c *Context) Redirect(status int, url string) error {
 	if status < 300 || status > 308 {
 		return errInvalidRedirectCode
 	}
-	c.Returned = true
 	c.responseWriter.Header().Set(HeaderLocation, url)
 	c.responseWriter.WriteHeader(status)
 	return nil
@@ -172,13 +168,11 @@ func (c *Context) FormParams() (url.Values, error) {
 
 // SetHeader Set header for response.
 func (c *Context) SetHeader(key, val string) {
-	c.Returned = true
 	c.responseWriter.Header().Set(key, val)
 }
 
 // WriteHeader sends an HTTP response header with status code.
 func (c *Context) WriteHeader(code int) error {
-	c.Returned = true
 	c.responseWriter.WriteHeader(code)
 	return nil
 }

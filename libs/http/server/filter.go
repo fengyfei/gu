@@ -34,60 +34,17 @@ import (
 	"errors"
 )
 
-// default filter execution points.
-const (
-	BeforeStatic = iota
-	BeforeRouter
-	BeforeExec
-	AfterExec
-	FinishRouter
-)
-
 var (
-	errNotRightFilterPosition = errors.New("can not find this filter position")
-	errFilterNotPassed        = errors.New("filter check is not passed")
+	errFilterNotPassed = errors.New("filter check is not passed")
 )
 
 // FilterFunc defines a filter function which is invoked before the controller
 // handler is executed.
-type FilterFunc func(*Context)
+type FilterFunc func(*Context) bool
 
-// FilterRouter defines a filter operation which is invoked before the
-// controller handler is executed.
-type FilterRouter struct {
-	filterFunc FilterFunc
-	pattern    string
-}
-
-// InsertFilter Add a FilterFunc with pattern rule and action constant.
-func (rt *Router) InsertFilter(pattern string, pos int, filter FilterFunc) error {
-	fr := &FilterRouter{
-		filterFunc: filter,
-		pattern:    pattern,
-	}
-
-	if pos < BeforeStatic || pos > FinishRouter {
-		return errNotRightFilterPosition
-	}
-
-	rt.filters[pos] = append(rt.filters[pos], fr)
-
-	return nil
-}
-
-// execFilter execution filter. If the filter is passed, return false, else true.
-func (rt *Router) execFilter(ctx *Context, pos int) (returned bool) {
-	for _, fr := range rt.filters[pos] {
-		if ctx.Returned {
-			return true
-		}
-
-		fr.filterFunc(ctx)
-
-		// check whether the filterFunc changes ctx.Returned
-		if ctx.Returned {
-			return true
-		}
+func execFilter(c *Context, filter FilterFunc) (passed bool) {
+	if filter(c) {
+		return true
 	}
 
 	return false
