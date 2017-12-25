@@ -27,7 +27,7 @@
  *     Initial: 2017/12/23        Yang Chenglong
  */
 
-package main
+package minio
 
 import (
 	"github.com/minio/minio-go"
@@ -75,10 +75,9 @@ func (c *Client) NewBucket(name string, timezone string) error {
 		if err == nil && exists {
 			logger.Warn("We already own", name)
 			return nil
-		} else {
-			logger.Error("make bucket error:", err)
-			return err
 		}
+		logger.Error("make bucket error:", err)
+		return err
 	}
 	return nil
 }

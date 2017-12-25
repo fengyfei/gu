@@ -27,7 +27,7 @@
  *     Initial: 2017/12/23        Yang Chenglong
  */
 
-package main
+package minio
 
 import (
 	"testing"
