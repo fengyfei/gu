@@ -94,6 +94,10 @@ func loginFilter(c *server.Context) bool {
 	return true
 }
 
+var (
+	defaultJWT = middleware.JWTWithKey("uid")
+)
+
 func main() {
 	configuration := &server.Configuration{
 		Address: "0.0.0.0:9573",
@@ -111,6 +115,7 @@ func main() {
 	ep.AttachMiddleware(middleware.NegroniRecoverHandler())
 	ep.AttachMiddleware(middleware.NegroniLoggerHandler())
 	ep.AttachMiddleware(cors)
+	ep.AttachMiddleware(defaultJWT)
 
 	if err := ep.Start(router.Handler()); err != nil {
 		logger.Error(err)

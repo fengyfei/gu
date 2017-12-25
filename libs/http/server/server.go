@@ -62,13 +62,14 @@ const (
 	MIMEMultipartForm              = "multipart/form-data"
 
 	// Headers
-	HeaderOrigin      = "Origin"
-	HeaderVary        = "Vary"
-	HeaderCookie      = "Cookie"
-	HeaderSetCookie   = "Set-Cookie"
-	HeaderUpgrade     = "Upgrade"
-	HeaderContentType = "Content-Type"
-	HeaderLocation    = "Location"
+	HeaderOrigin        = "Origin"
+	HeaderVary          = "Vary"
+	HeaderCookie        = "Cookie"
+	HeaderSetCookie     = "Set-Cookie"
+	HeaderUpgrade       = "Upgrade"
+	HeaderContentType   = "Content-Type"
+	HeaderLocation      = "Location"
+	HeaderAuthorization = "Authorization"
 
 	// Access control
 	HeaderAccessControlRequestMethod    = "Access-Control-Request-Method"
