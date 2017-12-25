@@ -38,6 +38,7 @@ import (
 
 	"github.com/fengyfei/gu/applications/beego/base"
 	"github.com/fengyfei/gu/applications/beego/polaris/mysql"
+	"github.com/fengyfei/gu/applications/beego/polaris/utils"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/models/staff"
@@ -171,7 +172,7 @@ func (s *Staff) Login() {
 		s.WriteStatusAndDataJSON(constants.ErrMysql, nil)
 	}
 
-	_, token, err := base.NewToken(uid)
+	_, token, err := utils.NewToken(uid)
 	if err != nil {
 		logger.Error(err)
 		s.WriteStatusAndDataJSON(constants.ErrInternalServerError, nil)
@@ -236,7 +237,7 @@ func (s *Staff) Modify() {
 		s.WriteStatusAndDataJSON(constants.ErrMysql, nil)
 	}
 
-	uid := s.Ctx.Request.Context().Value(base.ClaimUID).(int32)
+	uid := s.Ctx.Request.Context().Value(utils.ClaimUID).(int32)
 
 	if err = staff.Service.Modify(conn, uid, req.Name, req.Mobile, req.Email); err != nil {
 		logger.Error(err)
@@ -279,7 +280,7 @@ func (s *Staff) ModifyPwd() {
 		s.WriteStatusAndDataJSON(constants.ErrMysql, nil)
 	}
 
-	uid := s.Ctx.Request.Context().Value(base.ClaimUID).(int32)
+	uid := s.Ctx.Request.Context().Value(utils.ClaimUID).(int32)
 
 	if err = staff.Service.ModifyPwd(conn, uid, req.OldPwd, req.NewPwd); err != nil {
 		logger.Error(err)
@@ -312,7 +313,7 @@ func (s *Staff) ModifyMobile() {
 		s.WriteStatusAndDataJSON(constants.ErrMysql, nil)
 	}
 
-	uid := s.Ctx.Request.Context().Value(base.ClaimUID).(int32)
+	uid := s.Ctx.Request.Context().Value(utils.ClaimUID).(int32)
 
 	if err = staff.Service.ModifyMobile(conn, uid, req.Mobile); err != nil {
 		logger.Error(err)

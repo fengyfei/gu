@@ -27,7 +27,7 @@
  *     Initial: 2017/11/01        Jia Chenhui
  */
 
-package base
+package utils
 
 import (
 	"context"

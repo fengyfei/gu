@@ -35,9 +35,9 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/plugins/cors"
 
-	"github.com/fengyfei/gu/applications/beego/base"
 	"github.com/fengyfei/gu/applications/beego/polaris/auth"
 	_ "github.com/fengyfei/gu/applications/beego/polaris/router"
+	"github.com/fengyfei/gu/applications/beego/polaris/utils"
 )
 
 func main() {
@@ -56,10 +56,10 @@ func startServer() {
 		AllowCredentials: true,
 	}))
 
-	beego.InsertFilter("/*", beego.BeforeRouter, base.JWTFilter)
-	beego.InsertFilter("/*", beego.BeforeRouter, base.LoginFilter)
-	beego.InsertFilter("/*", beego.BeforeRouter, base.ActiveFilter)
-	beego.InsertFilter("/*", beego.BeforeRouter, base.PermissionFilter)
+	beego.InsertFilter("/*", beego.BeforeRouter, utils.JWTFilter)
+	beego.InsertFilter("/*", beego.BeforeRouter, utils.LoginFilter)
+	beego.InsertFilter("/*", beego.BeforeRouter, utils.ActiveFilter)
+	beego.InsertFilter("/*", beego.BeforeRouter, utils.PermissionFilter)
 
 	beego.Run()
 }
