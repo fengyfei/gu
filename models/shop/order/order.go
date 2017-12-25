@@ -43,41 +43,41 @@ type serviceProvider struct{}
 
 var (
 	Service         *serviceProvider
-	defaultParentId int32 = 0x0
-	unPay           int32 = 0x0
-	StatusUnpay     int32 = 0x0
-	StatusPaid      int32 = 0x1
-	StatusConfirmed int32 = 0x2
+	defaultParentId uint = 0x0
+	unPay           uint = 0x0
+	StatusUnpay     uint = 0x0
+	StatusPaid      uint = 0x1
+	StatusConfirmed uint = 0x2
 )
 
 const AMonth = 30 * 24 * 60 * 60 * 1e9
 
 type Order struct {
-	ID         int32 `gorm:"primary_key;auto_increment"`
+	ID         uint `gorm:"primary_key;auto_increment"`
 	BillID     string
-	UserID     int32
-	ParentID   int32
-	Status     int32
-	WareId     int32
-	Count      int32
+	UserID     uint
+	ParentID   uint
+	Status     uint
+	WareId     uint
+	Count      uint
 	Price      float64
 	ReceiveWay int8
 	CreatedAt  *time.Time
 }
 
 type OrderItem struct {
-	WareId int32   `json:"wareId" validate:"required"`
-	Count  int32   `json:"count" validate:"required"`
+	WareId uint   `json:"wareId" validate:"required"`
+	Count  uint   `json:"count" validate:"required"`
 	Price  float64 `json:"price" validate:"required"`
 }
 
-func (this *serviceProvider) OrderByWechat(conn orm.Connection, userId int32, IP string, receiveWay int8, orders []OrderItem) (string, error) {
+func (this *serviceProvider) OrderByWechat(conn orm.Connection, userId uint, IP string, receiveWay int8, orders []OrderItem) (string, error) {
 	var (
 		parentOrder Order
 		err         error
 		totalPrice  float64
 		childOrders []OrderItem
-		wareIdList  = make([]int32, len(orders))
+		wareIdList  = make([]uint, len(orders))
 		/*user        *User.User
 		totalFee    int64
 		paySign     string*/
@@ -140,12 +140,12 @@ errFinish:
 	return "", err
 }
 
-func (this *serviceProvider) ChangeStateByOne(conn orm.Connection, ID, status int32) error {
+func (this *serviceProvider) ChangeStateByOne(conn orm.Connection, ID, status uint) error {
 	db := conn.(*gorm.DB).Exec("USE shop")
 	return db.Model(&Order{}).Where("id = ?", ID).Update("status", status).Error
 }
 
-func (this *serviceProvider) ChangeStateByGroup(conn orm.Connection, IdList []int32, status int32) error {
+func (this *serviceProvider) ChangeStateByGroup(conn orm.Connection, IdList []uint, status uint) error {
 	var err error
 	db := conn.(*gorm.DB).Exec("USE shop")
 	tx := db.Begin()
@@ -163,7 +163,7 @@ onErr:
 	return err
 }
 
-func (this *serviceProvider) GetUserOrder(conn orm.Connection, userId int32) (*[]Order, error) {
+func (this *serviceProvider) GetUserOrder(conn orm.Connection, userId uint) (*[]Order, error) {
 	var (
 		orders []Order
 	)
@@ -175,7 +175,7 @@ func (this *serviceProvider) GetUserOrder(conn orm.Connection, userId int32) (*[
 	return &orders, nil
 }
 
-func (this *serviceProvider) GetByStatus(conn orm.Connection, status int32) ([]Order, error) {
+func (this *serviceProvider) GetByStatus(conn orm.Connection, status uint) ([]Order, error) {
 	var (
 		orders []Order
 	)
@@ -191,7 +191,7 @@ func (this *serviceProvider) GetParents(conn orm.Connection) ([]Order, error) {
 	return parents, err
 }
 
-func (this *serviceProvider) GetByParentId(conn orm.Connection, parentId int32) ([]Order, error) {
+func (this *serviceProvider) GetByParentId(conn orm.Connection, parentId uint) ([]Order, error) {
 	var parents []Order
 	db := conn.(*gorm.DB)
 	err := db.Where("parent_id = ", parentId).Find(&parents).Error
