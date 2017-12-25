@@ -191,9 +191,6 @@ func (c *Context) Validate(val interface{}) error {
 }
 
 func (c *Context) Set(key string, value interface{}) {
-	if c.store == nil {
-		c.store = make(map[string]interface{})
-	}
 	c.store[key] = value
 }
 
