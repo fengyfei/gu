@@ -4,3 +4,4 @@ mysql
 mongo
 nats-streaming
 minio
+dgraph

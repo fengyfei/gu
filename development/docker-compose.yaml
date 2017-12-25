@@ -56,3 +56,14 @@ services:
       - MINIO_SECRET_KEY=minio20171222
     command: ["server", "/data"]
     restart: always
+  dgraph:
+    container_name: dgraph
+    image: dgraph/dgraph
+    volumes:
+      - ./dgraph:/dgraph
+    ports:
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:8081:8081"
+      - "127.0.0.1:9080:9080"
+    command: ["dgraph", "zero", "--port_offset=-2000"]
+    restart: always
