@@ -30,6 +30,7 @@
 package main
 
 import (
+	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/http/server/middleware"
 	"github.com/fengyfei/gu/libs/logger"
@@ -85,16 +86,12 @@ func panicHandler(c *server.Context) error {
 
 func loginFilter(c *server.Context) bool {
 	if c.Request().RequestURI != "/login" {
+		// there must be this one
+		c.ServeJSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission})
 		return false
 	}
 
 	return true
-}
-
-func errHandler(c *server.Context) {
-	if c.LastError != nil {
-		c.ServeJSON(c.LastError)
-	}
 }
 
 func main() {
@@ -103,10 +100,9 @@ func main() {
 	}
 
 	router := server.NewRouter()
-	router.SetErrorHandler(errHandler)
 	router.Post("/", echoHandler, loginFilter)
-	router.Post("/post", postHandler)
-	router.Get("/panic", panicHandler)
+	router.Post("/post", postHandler, loginFilter)
+	router.Get("/panic", panicHandler, loginFilter)
 
 	ep := server.NewEntrypoint(configuration, nil)
 	cors := middleware.CORSAllowAll()

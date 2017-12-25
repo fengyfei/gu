@@ -24,7 +24,7 @@
 
 /*
  * Revision History:
- *     Modify: 2017/12/22        Jia Chenhui
+ *     Initial: 2017/12/22        Jia Chenhui
  */
 
 package server
