@@ -8,12 +8,12 @@ import (
 	"log"
 	"runtime"
 
-	"github.com/nats-io/go-nats"
+	"github.com/nats-io/nats"
 )
 
 // NOTE: Use tls scheme for TLS, e.g. nats-rply -s tls://demo.nats.io:4443 foo hello
 func usage() {
-	log.Fatalf("Usage: nats-rply [-s server][-t] <subject> <response>\n")
+	log.Fatalf("Usage: nats-rply [-s server][-t] <subject> <reponse>\n")
 }
 
 func printMsg(m *nats.Msg, i int) {
