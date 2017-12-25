@@ -24,8 +24,8 @@
 
 /*
  * Revision History:
- *     From: https://github.com/rs/cors/blob/master/cors.go
- *     Modify:  2017/12/21        Jia Chenhui
+ *     From:   https://github.com/rs/cors/blob/master/cors.go
+ *     Modify: 2017/12/21        Jia Chenhui
  */
 
 package middleware
