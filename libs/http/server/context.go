@@ -45,7 +45,7 @@ const defaultMemory = 32 << 20 // 32 MB
 var (
 	errNoBody              = errors.New("request body is empty")
 	errEmptyResponse       = errors.New("empty JSON response body")
-	errNotJsonBody         = errors.New("request body is not JSON")
+	errNotJSONBody         = errors.New("request body is not JSON")
 	errInvalidRedirectCode = errors.New("invalid redirect status code")
 )
 
@@ -84,7 +84,7 @@ func (c *Context) JSONBody(v interface{}) error {
 	}
 
 	if conType := c.request.Header.Get(HeaderContentType); !strings.EqualFold(conType, MIMEApplicationJSON) {
-		return errNotJsonBody
+		return errNotJSONBody
 	}
 
 	return json.NewDecoder(c.request.Body).Decode(v)
@@ -190,10 +190,12 @@ func (c *Context) Validate(val interface{}) error {
 	return c.Validator.Struct(val)
 }
 
+// Set a kev/value on context.
 func (c *Context) Set(key string, value interface{}) {
 	c.store[key] = value
 }
 
+// Get a value for a key.
 func (c *Context) Get(key string) interface{} {
 	return c.store[key]
 }
