@@ -56,6 +56,7 @@ type Context struct {
 	request        *http.Request
 	Validator      *validator.Validate
 	LastError      error
+	store          map[string]interface{}
 }
 
 // NewContext create a new context.
@@ -63,6 +64,7 @@ func NewContext(w http.ResponseWriter, r *http.Request) *Context {
 	return &Context{
 		responseWriter: w,
 		request:        r,
+		store:          make(map[string]interface{}),
 		Validator:      validator.New(),
 	}
 }
@@ -71,6 +73,7 @@ func NewContext(w http.ResponseWriter, r *http.Request) *Context {
 func (c *Context) Reset(w http.ResponseWriter, r *http.Request) {
 	c.responseWriter = w
 	c.request = r
+	c.store = make(map[string]interface{})
 	c.LastError = nil
 }
 
@@ -185,4 +188,15 @@ func (c *Context) GetHeader(key string) string {
 // Validate the parameters.
 func (c *Context) Validate(val interface{}) error {
 	return c.Validator.Struct(val)
+}
+
+func (c *Context) Set(key string, value interface{}) {
+	if c.store == nil {
+		c.store = make(map[string]interface{})
+	}
+	c.store[key] = value
+}
+
+func (c *Context) Get(key string) interface{} {
+	return c.store[key]
 }
