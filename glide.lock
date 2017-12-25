@@ -1,5 +1,5 @@
 hash: 71481292630f7c2460227ec5068d7301cc703a719c5005b332dec680a49cbacb
-updated: 2017-12-25T11:11:27.939504+08:00
+updated: 2017-12-25T11:52:29.903629+08:00
 imports:
 - name: github.com/allegro/bigcache
   version: aa76879d59fa5d93c43680238227dbf7a53f5c28
@@ -89,6 +89,10 @@ imports:
   version: 553a641470496b2327abcac10b36396bd98e45c9
 - name: github.com/google/gops
   version: 57e77c5c37da1f4e1af49f9d1fe760f146c1579e
+  subpackages:
+  - agent
+  - internal
+  - signal
 - name: github.com/gorilla/context
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
@@ -110,6 +114,8 @@ imports:
   version: 1c35d901db3da928c72a72d8458480cc9ade058f
 - name: github.com/json-iterator/go
   version: 6240e1e7983a85228f7fd9c3e1b6932d46ec58e2
+- name: github.com/kardianos/osext
+  version: ae77be60afb1dcacde03767a8c37337fad28ac14
 - name: github.com/kennygrant/sanitize
   version: 2e6820834a1f36c626bf19a253b7d3cc060e9b8b
 - name: github.com/labstack/echo
