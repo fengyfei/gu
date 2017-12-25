@@ -83,10 +83,6 @@ func (rt *Router) Post(pattern string, handler HandlerFunc, filters ...FilterFun
 
 // Wraps a HandlerFunc to a http.HandlerFunc.
 func (rt *Router) wrapHandlerFunc(f HandlerFunc, filters ...FilterFunc) http.HandlerFunc {
-	var (
-		err error
-	)
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		c := rt.ctxPool.Get().(*Context)
 		defer rt.ctxPool.Put(c)
@@ -101,7 +97,7 @@ func (rt *Router) wrapHandlerFunc(f HandlerFunc, filters ...FilterFunc) http.Han
 			}
 		}
 
-		if err = f(c); err != nil {
+		if err := f(c); err != nil {
 			c.LastError = err
 			rt.errHandler(c)
 		}
