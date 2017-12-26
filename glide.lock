@@ -1,5 +1,5 @@
-hash: 71481292630f7c2460227ec5068d7301cc703a719c5005b332dec680a49cbacb
-updated: 2017-12-25T11:52:29.903629+08:00
+hash: e1e9191173308990419d207f635e8c1eb9d8b83c879c49ecf4e261ab0651ab50
+updated: 2017-12-26T14:00:56.400216+08:00
 imports:
 - name: github.com/allegro/bigcache
   version: aa76879d59fa5d93c43680238227dbf7a53f5c28
@@ -75,6 +75,8 @@ imports:
   version: 4bb658ff4497a3e18fdd695621d390391fe8667b
   subpackages:
   - debug
+- name: github.com/godbus/dbus
+  version: a389bdde4dd695d414e47b755e95e72b7826432c
 - name: github.com/gogo/protobuf
   version: 100ba4e885062801d56799d78530b73b178a78f3
   subpackages:
