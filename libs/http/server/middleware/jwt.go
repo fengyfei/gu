@@ -31,6 +31,7 @@
 package middleware
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -195,7 +196,7 @@ func (j *JWT) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.Handle
 		return
 	}
 
-	// extract token string from header/query/cookie
+	// extract token string from request header/query/cookie
 	parts := strings.Split(j.tokenLookup, ":")
 	extractor := jwtFromHeader(parts[1], j.authScheme)
 	switch parts[0] {
@@ -222,7 +223,8 @@ func (j *JWT) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.Handle
 
 	if err == nil && token.Valid {
 		// store user information from token into context
-		ctx.Set(j.contextKey, token)
+		ctxWithClaims := context.WithValue(context.Background(), j.contextKey, token.Claims)
+		r = r.WithContext(ctxWithClaims)
 		next(w, r)
 		return
 	}
