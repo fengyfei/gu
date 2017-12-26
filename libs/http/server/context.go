@@ -135,11 +135,6 @@ func (c *Context) SetCookie(name string, value string) {
 	http.SetCookie(c.responseWriter, &cook)
 }
 
-// ResponseWriter return the responseWriter.
-func (c *Context) ResponseWriter() http.ResponseWriter {
-	return c.responseWriter
-}
-
 // Request return the request.
 func (c *Context) Request() *http.Request {
 	return c.request

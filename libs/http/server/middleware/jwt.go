@@ -202,7 +202,7 @@ func (j *JWT) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.Handle
 
 	auth, err := extractor(ctx)
 	if err != nil {
-		ctx.WriteHeader(http.StatusBadRequest)
+		ctx.WriteHeader(http.StatusForbidden)
 		return
 	}
 	token := new(jwt.Token)
@@ -217,9 +217,9 @@ func (j *JWT) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.Handle
 	if err == nil && token.Valid {
 		// Store user information from token into context.
 		ctx.Set(j.contextKey, token)
-		next(ctx.ResponseWriter(), ctx.Request())
+		next(w, r)
 	}
-	ctx.WriteHeader(http.StatusUnauthorized)
+	ctx.WriteHeader(http.StatusForbidden)
 	return
 }
 

@@ -24,7 +24,8 @@
 
 /*
  * Revision History:
- *     From: https://github.com/rs/cors/blob/master/utils.go
+ *     From:    https://github.com/rs/cors/blob/master/utils.go
+ *     Initial: 2017/12/21        Jia Chenhui
  */
 
 package middleware
