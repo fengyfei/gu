@@ -226,6 +226,7 @@ func (c *CORS) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.Handl
 	ctx := server.NewContext(w, r)
 	if c.skipper(ctx) {
 		next(w, r)
+		return
 	}
 
 	if r.Method == server.OPTIONS && r.Header.Get(server.HeaderAccessControlRequestMethod) != "" {

@@ -53,6 +53,7 @@ type JWTConfig struct {
 
 	// Signing key to validate token.
 	// Required.
+	// Note: if SigningMethod is AlgorithmHS256, SigningKey type must be []byte.
 	SigningKey interface{}
 
 	// Signing method, used to check token signing method.
@@ -185,12 +186,16 @@ func JWTWithConfig(config JWTConfig) *JWT {
 	}
 }
 
+// ServeHTTP implements negroni compatible interface.
 func (j *JWT) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	// execute skipper
 	ctx := server.NewContext(w, r)
 	if j.skipper(ctx) {
 		next(w, r)
+		return
 	}
 
+	// extract token string from header/query/cookie
 	parts := strings.Split(j.tokenLookup, ":")
 	extractor := jwtFromHeader(parts[1], j.authScheme)
 	switch parts[0] {
@@ -207,6 +212,7 @@ func (j *JWT) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.Handle
 	}
 	token := new(jwt.Token)
 
+	// validate, and return a token
 	if _, ok := j.claims.(jwt.MapClaims); ok {
 		token, err = jwt.Parse(auth, j.keyFunc)
 	} else {
@@ -215,12 +221,13 @@ func (j *JWT) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.Handle
 	}
 
 	if err == nil && token.Valid {
-		// Store user information from token into context.
+		// store user information from token into context
 		ctx.Set(j.contextKey, token)
 		next(w, r)
+		return
 	}
+
 	ctx.WriteHeader(http.StatusForbidden)
-	return
 }
 
 // jwtFromHeader returns a `jwtExtractor` that extracts token from the request header.
