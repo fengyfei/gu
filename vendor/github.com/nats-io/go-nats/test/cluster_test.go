@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nats-io/gnatsd/auth"
-	"github.com/nats-io/nats"
+	"github.com/nats-io/gnatsd/test"
+	"github.com/nats-io/go-nats"
 )
 
 var testServers = []string{
@@ -26,7 +26,7 @@ var testServers = []string{
 var servers = strings.Join(testServers, ",")
 
 func TestServersOption(t *testing.T) {
-	opts := nats.DefaultOptions
+	opts := nats.GetDefaultOptions()
 	opts.NoRandomize = true
 
 	_, err := opts.Connect()
@@ -123,16 +123,15 @@ func TestAuthServers(t *testing.T) {
 		"nats://localhost:1224",
 	}
 
-	auth := &auth.Plain{
-		Username: "derek",
-		Password: "foo",
-	}
+	opts := test.DefaultTestOptions
+	opts.Username = "derek"
+	opts.Password = "foo"
 
-	as1 := RunServerOnPort(1222)
-	as1.SetClientAuthMethod(auth)
+	opts.Port = 1222
+	as1 := RunServerWithOptions(opts)
 	defer as1.Shutdown()
-	as2 := RunServerOnPort(1224)
-	as2.SetClientAuthMethod(auth)
+	opts.Port = 1224
+	as2 := RunServerWithOptions(opts)
 	defer as2.Shutdown()
 
 	pservers := strings.Join(plainServers, ",")
@@ -299,7 +298,7 @@ func TestProperReconnectDelay(t *testing.T) {
 	defer s1.Shutdown()
 
 	var srvs string
-	opts := nats.DefaultOptions
+	opts := nats.GetDefaultOptions()
 	if runtime.GOOS == "windows" {
 		srvs = strings.Join(testServers[:2], ",")
 	} else {
@@ -353,7 +352,7 @@ func TestProperFalloutAfterMaxAttempts(t *testing.T) {
 	s1 := RunServerOnPort(1222)
 	defer s1.Shutdown()
 
-	opts := nats.DefaultOptions
+	opts := nats.GetDefaultOptions()
 	// Reduce the list of servers for Windows tests
 	if runtime.GOOS == "windows" {
 		opts.Servers = testServers[:2]
@@ -365,10 +364,8 @@ func TestProperFalloutAfterMaxAttempts(t *testing.T) {
 	opts.NoRandomize = true
 	opts.ReconnectWait = (25 * time.Millisecond)
 
-	dcbCalled := false
 	dch := make(chan bool)
 	opts.DisconnectedCB = func(_ *nats.Conn) {
-		dcbCalled = true
 		dch <- true
 	}
 
@@ -424,7 +421,7 @@ func TestProperFalloutAfterMaxAttemptsWithAuthMismatch(t *testing.T) {
 	s2, _ := RunServerWithConfig("./configs/tlsverify.conf")
 	defer s2.Shutdown()
 
-	opts := nats.DefaultOptions
+	opts := nats.GetDefaultOptions()
 	opts.Servers = myServers
 	opts.NoRandomize = true
 	if runtime.GOOS == "windows" {
@@ -434,10 +431,8 @@ func TestProperFalloutAfterMaxAttemptsWithAuthMismatch(t *testing.T) {
 	}
 	opts.ReconnectWait = (25 * time.Millisecond)
 
-	dcbCalled := false
 	dch := make(chan bool)
 	opts.DisconnectedCB = func(_ *nats.Conn) {
-		dcbCalled = true
 		dch <- true
 	}
 
@@ -467,12 +462,14 @@ func TestProperFalloutAfterMaxAttemptsWithAuthMismatch(t *testing.T) {
 
 	// Wait for ClosedCB
 	if e := WaitTime(cch, 5*time.Second); e != nil {
-		t.Fatalf("Did not receive a closed callback message, #reconnects: %v", nc.Reconnects)
+		reconnects := nc.Stats().Reconnects
+		t.Fatalf("Did not receive a closed callback message, #reconnects: %v", reconnects)
 	}
 
 	// Make sure we have not exceeded MaxReconnect
-	if nc.Reconnects != uint64(opts.MaxReconnect) {
-		t.Fatalf("Num reconnects was %v, expected %v", nc.Reconnects, opts.MaxReconnect)
+	reconnects := nc.Stats().Reconnects
+	if reconnects != uint64(opts.MaxReconnect) {
+		t.Fatalf("Num reconnects was %v, expected %v", reconnects, opts.MaxReconnect)
 	}
 
 	// Make sure we are not still reconnecting..
@@ -491,7 +488,7 @@ func TestTimeoutOnNoServers(t *testing.T) {
 	s1 := RunServerOnPort(1222)
 	defer s1.Shutdown()
 
-	opts := nats.DefaultOptions
+	opts := nats.GetDefaultOptions()
 	if runtime.GOOS == "windows" {
 		opts.Servers = testServers[:2]
 		opts.MaxReconnect = 2
@@ -504,12 +501,10 @@ func TestTimeoutOnNoServers(t *testing.T) {
 	}
 	opts.NoRandomize = true
 
-	dcbCalled := false
 	dch := make(chan bool)
 	opts.DisconnectedCB = func(nc *nats.Conn) {
 		// Suppress any additional calls
 		nc.SetDisconnectHandler(nil)
-		dcbCalled = true
 		dch <- true
 	}
 
@@ -559,7 +554,7 @@ func TestPingReconnect(t *testing.T) {
 	s1 := RunServerOnPort(1222)
 	defer s1.Shutdown()
 
-	opts := nats.DefaultOptions
+	opts := nats.GetDefaultOptions()
 	opts.Servers = testServers
 	opts.NoRandomize = true
 	opts.ReconnectWait = 200 * time.Millisecond

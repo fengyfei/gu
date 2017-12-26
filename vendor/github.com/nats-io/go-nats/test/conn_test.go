@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -16,7 +15,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nats-io/nats"
+	"github.com/nats-io/gnatsd/server"
+	"github.com/nats-io/gnatsd/test"
+	"github.com/nats-io/go-nats"
 )
 
 func TestDefaultConnection(t *testing.T) {
@@ -54,7 +55,7 @@ func TestConnClosedCB(t *testing.T) {
 	defer s.Shutdown()
 
 	ch := make(chan bool)
-	o := nats.DefaultOptions
+	o := nats.GetDefaultOptions()
 	o.Url = nats.DefaultURL
 	o.ClosedCB = func(_ *nats.Conn) {
 		ch <- true
@@ -74,7 +75,7 @@ func TestCloseDisconnectedCB(t *testing.T) {
 	defer s.Shutdown()
 
 	ch := make(chan bool)
-	o := nats.DefaultOptions
+	o := nats.GetDefaultOptions()
 	o.Url = nats.DefaultURL
 	o.AllowReconnect = false
 	o.DisconnectedCB = func(_ *nats.Conn) {
@@ -95,7 +96,7 @@ func TestServerStopDisconnectedCB(t *testing.T) {
 	defer s.Shutdown()
 
 	ch := make(chan bool)
-	o := nats.DefaultOptions
+	o := nats.GetDefaultOptions()
 	o.Url = nats.DefaultURL
 	o.AllowReconnect = false
 	o.DisconnectedCB = func(nc *nats.Conn) {
@@ -132,7 +133,7 @@ func TestServerSecureConnections(t *testing.T) {
 
 	received := 0
 	nc.Subscribe("foo", func(m *nats.Msg) {
-		received += 1
+		received++
 		if !bytes.Equal(m.Data, omsg) {
 			t.Fatal("Message received does not match")
 		}
@@ -222,14 +223,14 @@ func TestClientCertificate(t *testing.T) {
 	nc, err := nats.Connect(secureURL, nats.Secure())
 	if err == nil {
 		nc.Close()
-		t.Fatal("Sould have failed (TLS) connection without client certificate")
+		t.Fatal("Should have failed (TLS) connection without client certificate")
 	}
 
 	// Check parameters validity
 	nc, err = nats.Connect(secureURL, nats.ClientCert("", ""))
 	if err == nil {
 		nc.Close()
-		t.Fatal("Sould have failed due to invalid parameters")
+		t.Fatal("Should have failed due to invalid parameters")
 	}
 
 	// Should fail because wrong key
@@ -237,7 +238,7 @@ func TestClientCertificate(t *testing.T) {
 		nats.ClientCert("./configs/certs/client-cert.pem", "./configs/certs/key.pem"))
 	if err == nil {
 		nc.Close()
-		t.Fatal("Sould have failed due to invalid key")
+		t.Fatal("Should have failed due to invalid key")
 	}
 
 	// Should fail because no CA
@@ -245,7 +246,7 @@ func TestClientCertificate(t *testing.T) {
 		nats.ClientCert("./configs/certs/client-cert.pem", "./configs/certs/client-key.pem"))
 	if err == nil {
 		nc.Close()
-		t.Fatal("Sould have failed due to missing ca")
+		t.Fatal("Should have failed due to missing ca")
 	}
 
 	nc, err = nats.Connect(secureURL,
@@ -261,7 +262,7 @@ func TestClientCertificate(t *testing.T) {
 
 	received := 0
 	nc.Subscribe("foo", func(m *nats.Msg) {
-		received += 1
+		received++
 		if !bytes.Equal(m.Data, omsg) {
 			t.Fatal("Message received does not match")
 		}
@@ -287,12 +288,13 @@ func TestServerTLSHintConnections(t *testing.T) {
 
 	nc, err := nats.Connect(secureURL, nats.RootCAs("./configs/certs/badca.pem"))
 	if err == nil {
+		nc.Close()
 		t.Fatal("Expected an error from bad RootCA file")
 	}
 
 	nc, err = nats.Connect(secureURL, nats.RootCAs("./configs/certs/ca.pem"))
 	if err != nil {
-		t.Fatal("Failed to create secure (TLS) connection", err)
+		t.Fatalf("Failed to create secure (TLS) connection: %v", err)
 	}
 	defer nc.Close()
 }
@@ -482,7 +484,7 @@ func TestMoreErrOnConnect(t *testing.T) {
 
 	close(case1)
 
-	opts := nats.DefaultOptions
+	opts := nats.GetDefaultOptions()
 	opts.Servers = []string{natsURL}
 	opts.Timeout = 20 * time.Millisecond
 	opts.Verbose = true
@@ -555,7 +557,7 @@ func TestErrOnMaxPayloadLimit(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	natsURL := fmt.Sprintf("nats://%s:%d", addr.IP, addr.Port)
-	opts := nats.DefaultOptions
+	opts := nats.GetDefaultOptions()
 	opts.Servers = []string{natsURL}
 	nc, err := opts.Connect()
 	if err != nil {
@@ -581,7 +583,7 @@ func TestConnectVerbose(t *testing.T) {
 	s := RunDefaultServer()
 	defer s.Shutdown()
 
-	o := nats.DefaultOptions
+	o := nats.GetDefaultOptions()
 	o.Verbose = true
 
 	nc, err := o.Connect()
@@ -612,7 +614,7 @@ func isRunningInAsyncCBDispatcher() error {
 		return nil
 	}
 
-	return errors.New(fmt.Sprintf("Callback not executed from dispatcher:\n %s\n", strStacks))
+	return fmt.Errorf("callback not executed from dispatcher:\n %s", strStacks)
 }
 
 func TestCallbacksOrder(t *testing.T) {
@@ -842,7 +844,7 @@ func TestFlushReleaseOnClose(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	natsURL := fmt.Sprintf("nats://%s:%d", addr.IP, addr.Port)
-	opts := nats.DefaultOptions
+	opts := nats.GetDefaultOptions()
 	opts.AllowReconnect = false
 	opts.Servers = []string{natsURL}
 	nc, err := opts.Connect()
@@ -909,7 +911,7 @@ func TestMaxPendingOut(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	natsURL := fmt.Sprintf("nats://%s:%d", addr.IP, addr.Port)
-	opts := nats.DefaultOptions
+	opts := nats.GetDefaultOptions()
 	opts.PingInterval = 20 * time.Millisecond
 	opts.MaxPingsOut = 2
 	opts.AllowReconnect = false
@@ -983,7 +985,7 @@ func TestErrInReadLoop(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	natsURL := fmt.Sprintf("nats://%s:%d", addr.IP, addr.Port)
-	opts := nats.DefaultOptions
+	opts := nats.GetDefaultOptions()
 	opts.AllowReconnect = false
 	opts.ClosedCB = func(_ *nats.Conn) { cch <- true }
 	opts.Servers = []string{natsURL}
@@ -1073,7 +1075,7 @@ func TestErrStaleConnection(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	natsURL := fmt.Sprintf("nats://%s:%d", addr.IP, addr.Port)
-	opts := nats.DefaultOptions
+	opts := nats.GetDefaultOptions()
 	opts.AllowReconnect = true
 	opts.DisconnectedCB = func(_ *nats.Conn) {
 		// Interested only in the first disconnect cb
@@ -1164,7 +1166,7 @@ func TestServerErrorClosesConnection(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	natsURL := fmt.Sprintf("nats://%s:%d", addr.IP, addr.Port)
-	opts := nats.DefaultOptions
+	opts := nats.GetDefaultOptions()
 	opts.AllowReconnect = true
 	opts.DisconnectedCB = func(_ *nats.Conn) { dch <- true }
 	opts.ReconnectedCB = func(_ *nats.Conn) { atomic.AddInt64(&reconnected, 1) }
@@ -1227,27 +1229,50 @@ func TestNoRaceOnLastError(t *testing.T) {
 	s := RunDefaultServer()
 	defer s.Shutdown()
 
+	// Access LastError in disconnection and closed handlers to make sure
+	// that there is no race. It is possible in some cases that
+	// nc.LastError() returns a non nil error. We don't care here about the
+	// returned value.
 	dch := func(c *nats.Conn) {
-		// Just access LastError to make sure that there is no race
-		if c.LastError() != nil {
-			if c.LastError().Error() == "" {
-			}
-		}
+		c.LastError()
+	}
+	closedCh := make(chan struct{})
+	cch := func(c *nats.Conn) {
+		c.LastError()
+		closedCh <- struct{}{}
 	}
 	nc, err := nats.Connect(nats.DefaultURL,
 		nats.DisconnectHandler(dch),
+		nats.ClosedHandler(cch),
+		nats.MaxReconnects(-1),
 		nats.ReconnectWait(5*time.Millisecond))
 	if err != nil {
 		t.Fatalf("Unable to connect: %v\n", err)
 	}
 	defer nc.Close()
 
+	// Restart the server several times to trigger a reconnection.
 	for i := 0; i < 10; i++ {
 		s.Shutdown()
 		time.Sleep(10 * time.Millisecond)
 		s = RunDefaultServer()
 	}
+	nc.Close()
 	s.Shutdown()
+	select {
+	case <-closedCh:
+	case <-time.After(5 * time.Second):
+		t.Fatal("Timeout waiting for the closed callback")
+	}
+}
+
+type customDialer struct {
+	ch chan bool
+}
+
+func (cd *customDialer) Dial(network, address string) (net.Conn, error) {
+	cd.ch <- true
+	return nil, fmt.Errorf("on purpose")
 }
 
 func TestUseCustomDialer(t *testing.T) {
@@ -1293,5 +1318,228 @@ func TestUseCustomDialer(t *testing.T) {
 	defer nc3.Close()
 	if nc3.Opts.Dialer.Timeout != nats.DefaultTimeout {
 		t.Fatalf("Expected DialTimeout to be set to %v, got %v", nats.DefaultTimeout, nc.Opts.Dialer.Timeout)
+	}
+
+	// Create custom dialer that return error on Dial().
+	cdialer := &customDialer{ch: make(chan bool, 1)}
+
+	// When both Dialer and CustomDialer are set, CustomDialer
+	// should take precedence. That means that the connection
+	// should fail for these two set of options.
+	options := []*nats.Options{
+		&nats.Options{Dialer: dialer, CustomDialer: cdialer},
+		&nats.Options{CustomDialer: cdialer},
+	}
+	for _, o := range options {
+		o.Servers = []string{nats.DefaultURL}
+		nc, err := o.Connect()
+		// As of now, Connect() would not return the actual dialer error,
+		// instead it returns "no server available for connections".
+		// So use go channel to ensure that custom dialer's Dial() method
+		// was invoked.
+		if err == nil {
+			if nc != nil {
+				nc.Close()
+			}
+			t.Fatal("Expected error, got none")
+		}
+		if err := Wait(cdialer.ch); err != nil {
+			t.Fatal("Did not get our notification")
+		}
+	}
+	// Same with variadic
+	foptions := [][]nats.Option{
+		[]nats.Option{nats.Dialer(dialer), nats.SetCustomDialer(cdialer)},
+		[]nats.Option{nats.SetCustomDialer(cdialer)},
+	}
+	for _, fos := range foptions {
+		nc, err := nats.Connect(nats.DefaultURL, fos...)
+		if err == nil {
+			if nc != nil {
+				nc.Close()
+			}
+			t.Fatal("Expected error, got none")
+		}
+		if err := Wait(cdialer.ch); err != nil {
+			t.Fatal("Did not get our notification")
+		}
+	}
+}
+
+func TestDefaultOptionsDialer(t *testing.T) {
+	s := RunDefaultServer()
+	defer s.Shutdown()
+
+	opts1 := nats.DefaultOptions
+	opts2 := nats.DefaultOptions
+
+	nc1, err := opts1.Connect()
+	if err != nil {
+		t.Fatalf("Unexpected error on connect: %v", err)
+	}
+	defer nc1.Close()
+
+	nc2, err := opts2.Connect()
+	if err != nil {
+		t.Fatalf("Unexpected error on connect: %v", err)
+	}
+	defer nc2.Close()
+
+	if nc1.Opts.Dialer == nc2.Opts.Dialer {
+		t.Fatalf("Expected each connection to have its own dialer")
+	}
+}
+
+func TestCustomFlusherTimeout(t *testing.T) {
+	s := RunDefaultServer()
+	defer s.Shutdown()
+
+	opts := &nats.Options{
+		Servers: []string{nats.DefaultURL},
+
+		// Reasonably large flusher timeout will not induce errors
+		// when we can flush fast
+		FlusherTimeout: 10 * time.Second,
+	}
+	nc1, err := opts.Connect()
+	if err != nil {
+		t.Fatalf("Expected to be able to connect, got: %s", err)
+	}
+	doneCh := make(chan struct{})
+	payload := ""
+	for i := 0; i < 8192; i++ {
+		payload += "A"
+	}
+	payloadBytes := []byte(payload)
+
+	go func() {
+		for {
+			select {
+			case <-time.After(200 * time.Millisecond):
+				err := nc1.Publish("hello", payloadBytes)
+				if err != nil {
+					t.Errorf("Error during publish: %s", err)
+				}
+			case <-time.After(5 * time.Second):
+				t.Errorf("Timeout publishing messages")
+				return
+			case <-doneCh:
+				return
+			}
+		}
+	}()
+	defer nc1.Close()
+
+	opts = &nats.Options{
+		Servers: []string{nats.DefaultURL},
+
+		// Use short flusher timeout to trigger the error
+		FlusherTimeout: 1 * time.Microsecond,
+
+		// Upon failure to be able to exercice ping pong interval
+		// then we will hit this timeout and disconnect
+		PingInterval: 500 * time.Millisecond,
+	}
+
+	opts.DisconnectedCB = func(nc *nats.Conn) {
+		// Ping loops that test is done
+		doneCh <- struct{}{}
+	}
+
+	nc2, err := opts.Connect()
+	if err != nil {
+		t.Fatalf("Expected to be able to connect, got: %s", err)
+	}
+	defer nc2.Close()
+
+	// Consume messages to make the reading loop work
+	_, err = nc2.Subscribe(">", func(_ *nats.Msg) {})
+	if err != nil {
+		t.Fatalf("Expected to be able to create subscription, got: %s", err)
+	}
+
+	for {
+		select {
+		case <-time.After(100 * time.Millisecond):
+			// Some of the publishes will succeed and others fail with i/o timeout error
+			// but eventually ping interval will fail and close the connection.
+			err = nc2.Publish("world", payloadBytes)
+			if err == nats.ErrConnectionClosed {
+				return
+			}
+		case <-time.After(5 * time.Second):
+			t.Errorf("Timeout publishing messages")
+			return
+		}
+	}
+}
+
+func TestNewServers(t *testing.T) {
+	s1Opts := test.DefaultTestOptions
+	s1Opts.Cluster.Host = "localhost"
+	s1Opts.Cluster.Port = 6222
+	s1 := test.RunServer(&s1Opts)
+	defer s1.Shutdown()
+
+	s2Opts := test.DefaultTestOptions
+	s2Opts.Port = s1Opts.Port + 1
+	s2Opts.Cluster.Host = "localhost"
+	s2Opts.Cluster.Port = 6223
+	s2Opts.Routes = server.RoutesFromStr("nats://localhost:6222")
+	s2 := test.RunServer(&s2Opts)
+	defer s2.Shutdown()
+
+	ch := make(chan bool)
+	cb := func(_ *nats.Conn) {
+		ch <- true
+	}
+	url := fmt.Sprintf("nats://%s:%d", s1Opts.Host, s1Opts.Port)
+	nc1, err := nats.Connect(url, nats.DiscoveredServersHandler(cb))
+	if err != nil {
+		t.Fatalf("Error on connect: %v", err)
+	}
+	defer nc1.Close()
+
+	nc2, err := nats.Connect(url)
+	if err != nil {
+		t.Fatalf("Error on connect: %v", err)
+	}
+	defer nc2.Close()
+	nc2.SetDiscoveredServersHandler(cb)
+
+	opts := nats.GetDefaultOptions()
+	opts.Url = nats.DefaultURL
+	opts.DiscoveredServersCB = cb
+	nc3, err := opts.Connect()
+	if err != nil {
+		t.Fatalf("Error on connect: %v", err)
+	}
+	defer nc3.Close()
+
+	// Make sure that handler is not invoked on initial connect.
+	select {
+	case <-ch:
+		t.Fatalf("Handler should not have been invoked")
+	case <-time.After(500 * time.Millisecond):
+	}
+
+	// Start a new server.
+	s3Opts := test.DefaultTestOptions
+	s3Opts.Port = s2Opts.Port + 1
+	s3Opts.Cluster.Host = "localhost"
+	s3Opts.Cluster.Port = 6224
+	s3Opts.Routes = server.RoutesFromStr("nats://localhost:6222")
+	s3 := test.RunServer(&s3Opts)
+	defer s3.Shutdown()
+
+	// The callbacks should have been invoked
+	if err := Wait(ch); err != nil {
+		t.Fatal("Did not get our callback")
+	}
+	if err := Wait(ch); err != nil {
+		t.Fatal("Did not get our callback")
+	}
+	if err := Wait(ch); err != nil {
+		t.Fatal("Did not get our callback")
 	}
 }

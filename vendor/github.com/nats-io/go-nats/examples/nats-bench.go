@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nats-io/nats"
-	"github.com/nats-io/nats/bench"
+	"github.com/nats-io/go-nats"
+	"github.com/nats-io/go-nats/bench"
 )
 
 // Some sane defaults
@@ -52,7 +52,7 @@ func main() {
 	}
 
 	// Setup the option block
-	opts := nats.DefaultOptions
+	opts := nats.GetDefaultOptions()
 	opts.Servers = strings.Split(*urls, ",")
 	for i, s := range opts.Servers {
 		opts.Servers[i] = strings.Trim(s, " ")

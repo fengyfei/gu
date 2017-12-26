@@ -7,8 +7,6 @@ import (
 	"net"
 	"net/http"
 	"testing"
-
-	"github.com/PuerkitoBio/goquery"
 )
 
 var testServerPort int = 31337
@@ -70,24 +68,6 @@ func init() {
 		w.Write([]byte("disallowed"))
 	})
 
-	http.HandleFunc("/set_cookie", func(w http.ResponseWriter, r *http.Request) {
-		c := &http.Cookie{Name: "test", Value: "testv", HttpOnly: false}
-		http.SetCookie(w, c)
-		w.WriteHeader(200)
-		w.Write([]byte("ok"))
-	})
-
-	http.HandleFunc("/check_cookie", func(w http.ResponseWriter, r *http.Request) {
-		cs := r.Cookies()
-		if len(cs) != 1 || r.Cookies()[0].Value != "testv" {
-			w.WriteHeader(500)
-			w.Write([]byte("nok"))
-			return
-		}
-		w.WriteHeader(200)
-		w.Write([]byte("ok"))
-	})
-
 	go func() {
 		if err := srv.Serve(listener); err != nil {
 			log.Printf("Httpserver: ListenAndServe() error: %s", err)
@@ -100,7 +80,6 @@ func TestCollectorVisit(t *testing.T) {
 
 	onRequestCalled := false
 	onResponseCalled := false
-	onScrapedCalled := false
 
 	c.OnRequest(func(r *Request) {
 		onRequestCalled = true
@@ -119,18 +98,6 @@ func TestCollectorVisit(t *testing.T) {
 		}
 	})
 
-	c.OnScraped(func(r *Response) {
-		if onResponseCalled == false {
-			t.Error("OnScraped called before OnResponse")
-		}
-
-		if onRequestCalled == false {
-			t.Error("OnScraped called before OnRequest")
-		}
-
-		onScrapedCalled = true
-	})
-
 	c.Visit(testServerRootURL)
 
 	if !onRequestCalled {
@@ -139,10 +106,6 @@ func TestCollectorVisit(t *testing.T) {
 
 	if !onResponseCalled {
 		t.Error("Failed to call OnResponse callback")
-	}
-
-	if !onScrapedCalled {
-		t.Error("Failed to call OnScraped callback")
 	}
 }
 
@@ -166,16 +129,6 @@ func TestCollectorOnHTML(t *testing.T) {
 		}
 	})
 
-	c.OnHTML("body", func(e *HTMLElement) {
-		if e.ChildAttr("p", "class") != "description" {
-			t.Error("Invalid class value")
-		}
-		classes := e.ChildAttrs("p", "class")
-		if len(classes) != 2 {
-			t.Error("Invalid class values")
-		}
-	})
-
 	c.Visit(testServerRootURL + "/html")
 
 	if !titleCallbackCalled {
@@ -184,32 +137,6 @@ func TestCollectorOnHTML(t *testing.T) {
 
 	if paragraphCallbackCount != 2 {
 		t.Error("Failed to find all <p> tags")
-	}
-}
-
-func TestCollectorURLRevisit(t *testing.T) {
-	c := NewCollector()
-
-	visitCount := 0
-
-	c.OnRequest(func(r *Request) {
-		visitCount += 1
-	})
-
-	c.Visit(testServerRootURL)
-	c.Visit(testServerRootURL)
-
-	if visitCount != 1 {
-		t.Error("URL revisited")
-	}
-
-	c.AllowURLRevisit = true
-
-	c.Visit(testServerRootURL)
-	c.Visit(testServerRootURL)
-
-	if visitCount != 3 {
-		t.Error("URL not revisited")
 	}
 }
 
@@ -226,18 +153,6 @@ func TestCollectorPost(t *testing.T) {
 	c.Post(testServerRootURL+"login", map[string]string{
 		"name": postValue,
 	})
-}
-
-func TestCollectorCookies(t *testing.T) {
-	c := NewCollector()
-
-	if err := c.Visit(testServerRootURL + "set_cookie"); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := c.Visit(testServerRootURL + "check_cookie"); err != nil {
-		t.Fatalf("Failed to use previously set cookies: %s", err)
-	}
 }
 
 func BenchmarkVisit(b *testing.B) {
@@ -296,41 +211,4 @@ func TestIgnoreRobotsWhenDisallowed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-}
-
-func TestHTMLElement(t *testing.T) {
-	ctx := &Context{}
-	resp := &Response{
-		Request: &Request{
-			Ctx: ctx,
-		},
-		Ctx: ctx,
-	}
-
-	in := `<a href="http://go-colly.org">Colly</a>`
-	sel := "a[href]"
-	doc, err := goquery.NewDocumentFromReader(bytes.NewBuffer([]byte(in)))
-	if err != nil {
-		t.Fatal(err)
-	}
-	elements := []*HTMLElement{}
-	doc.Find(sel).Each(func(i int, s *goquery.Selection) {
-		for _, n := range s.Nodes {
-			elements = append(elements, NewHTMLElementFromSelectionNode(resp, s, n))
-		}
-	})
-	elementsLen := len(elements)
-	if elementsLen != 1 {
-		t.Errorf("element length mismatch. got %d, expected %d.\n", elementsLen, 1)
-	}
-	v := elements[0]
-	if v.Name != "a" {
-		t.Errorf("element tag mismatch. got %s, expected %s.\n", v.Name, "a")
-	}
-	if v.Text != "Colly" {
-		t.Errorf("element content mismatch. got %s, expected %s.\n", v.Text, "Colly")
-	}
-	if v.Attr("href") != "http://go-colly.org" {
-		t.Errorf("element href mismatch. got %s, expected %s.\n", v.Attr("href"), "http://go-colly.org")
-	}
 }
