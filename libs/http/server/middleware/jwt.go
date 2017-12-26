@@ -143,7 +143,6 @@ func JWTWithKey(key interface{}) *JWT {
 }
 
 // JWTWithConfig returns a JWT with specified config.
-// See: `JWT()`.
 func JWTWithConfig(config JWTConfig) *JWT {
 	// defaults
 	if config.Skipper == nil {
