@@ -68,18 +68,13 @@ func NewClient(c *Config) (*Client, error) {
 
 // NewBucket creates a new bucket.
 func (c *Client) NewBucket(name string, timezone string) error {
-	err := c.client.MakeBucket(name, timezone)
-	if err != nil {
-		// Check to see if we already own this bucket (which happens if you run this twice)
-		exists, err := c.client.BucketExists(name)
-		if err == nil && exists {
-			logger.Warn("We already own", name)
-			return nil
-		}
-		logger.Error("make bucket error:", err)
-		return err
+	exists, err := c.client.BucketExists(name)
+	if err == nil && exists {
+		logger.Warn("We already own", name)
+		return nil
 	}
-	return nil
+
+	return c.client.MakeBucket(name, timezone)
 }
 
 // ListBuckets list all buckets owned by this authenticated user.
