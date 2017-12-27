@@ -149,11 +149,11 @@ func (ep *Entrypoint) createTLSConfig() (*tls.Config, error) {
 	}
 
 	if exists, err = file.FileExists(ep.tlsConfig.Cert); !exists {
-		panic(errTLSConfig)
+		return nil, errTLSConfig
 	}
 
 	if exists, err = file.FileExists(ep.tlsConfig.Key); !exists {
-		panic(errTLSConfig)
+		return nil, errTLSConfig
 	}
 
 	cert, err := tls.LoadX509KeyPair(ep.tlsConfig.Cert, ep.tlsConfig.Key)
