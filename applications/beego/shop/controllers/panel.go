@@ -60,39 +60,29 @@ func (this *PanelController) AddPanel() {
   conn, err = mysql.Pool.Get()
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
 
   err = json.Unmarshal(this.Ctx.Input.RequestBody, &addReq)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   err = this.Validate(addReq)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   err = panel.Service.CreatePanel(conn, addReq)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
-  this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
-  logger.Info("create panel", addReq.Title, "success")
 
-finish:
-  this.ServeJSON(true)
+  logger.Info("create panel", addReq.Title, "success")
+  this.WriteStatusAndDataJSON(constants.ErrSucceed, nil)
 }
 
 // add promotion list
@@ -106,39 +96,29 @@ func (this *PanelController) AddPromotion() {
   conn, err = mysql.Pool.Get()
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
 
   err = json.Unmarshal(this.Ctx.Input.RequestBody, &addReq)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   err = this.Validate(addReq)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   err = panel.Service.AddPromotionList(conn, addReq)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
-  this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
-  logger.Info("add promotion list success")
 
-finish:
-  this.ServeJSON(true)
+  logger.Info("add promotion list success")
+  this.WriteStatusAndDataJSON(constants.ErrSucceed, nil)
 }
 
 // add recommend
@@ -152,33 +132,25 @@ func (this *PanelController) AddRecommend() {
   conn, err = mysql.Pool.Get()
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
 
   err = json.Unmarshal(this.Ctx.Input.RequestBody, &addReq)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   err = this.Validate(addReq)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   addReq.Picture, err = util.SavePicture(addReq.Picture, "recommend/")
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInternalServerError}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInternalServerError, nil)
   }
 
   err = panel.Service.AddRecommend(conn, addReq)
@@ -187,15 +159,11 @@ func (this *PanelController) AddRecommend() {
     if !util.DeletePicture(addReq.Picture) {
       logger.Error(errors.New("add recommend failed and delete it's pictures go wrong, please delete picture manually"))
     }
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
-  this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
-  logger.Info("add recommend of panel success")
 
-finish:
-  this.ServeJSON(true)
+  logger.Info("add recommend of panel success")
+  this.WriteStatusAndDataJSON(constants.ErrSucceed, nil)
 }
 
 // TODO: add second-hand
@@ -211,17 +179,13 @@ func (this *PanelController) GetPanelPage() {
   conn, err := mysql.Pool.Get()
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
 
   res, err = panel.Service.GetPanels(conn)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
 
   for i := range res {
@@ -266,8 +230,6 @@ func (this *PanelController) GetPanelPage() {
       }
     }
   }
-  this.Data["json"] = res
 
-finish:
-  this.ServeJSON(true)
+  this.WriteStatusAndDataJSON(constants.ErrSucceed, res)
 }
