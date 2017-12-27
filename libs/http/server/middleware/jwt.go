@@ -86,39 +86,14 @@ type JWTConfig struct {
 }
 
 type JWT struct {
-	// skipper defines a function to skip middleware.
-	skipper Skipper
-
-	// signing key to validate token.
-	// Required.
-	signingKey interface{}
-
-	// signing method, used to check token signing method.
-	// Optional. Default value HS256.
+	skipper       Skipper
+	signingKey    interface{}
 	signingMethod string
-
-	// context key to store user information from the token into context.
-	// Optional. Default value "user".
-	contextKey string
-
-	// Claims are extendable claims data defining token content.
-	// Optional. Default value jwt.MapClaims
-	claims jwt.Claims
-
-	// tokenLookup is a string in the form of "<source>:<name>" that is used
-	// to extract token from the request.
-	// Optional. Default value "header:Authorization".
-	// Possible values:
-	// - "header:<name>"
-	// - "query:<name>"
-	// - "cookie:<name>"
-	tokenLookup string
-
-	// authScheme to be used in the Authorization header.
-	// Optional. Default value "Bearer".
-	authScheme string
-
-	keyFunc jwt.Keyfunc
+	contextKey    string
+	claims        jwt.Claims
+	tokenLookup   string
+	authScheme    string
+	keyFunc       jwt.Keyfunc
 }
 
 type jwtExtractor func(*server.Context) (string, error)
