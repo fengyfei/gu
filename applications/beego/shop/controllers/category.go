@@ -64,39 +64,29 @@ func (this *CategoryController) AddCategory() {
   conn, err := mysql.Pool.Get()
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
 
   err = json.Unmarshal(this.Ctx.Input.RequestBody, &addReq)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   err = this.Validate(addReq)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   err = category.Service.AddCategory(conn, &addReq.Name, &addReq.Desc, &addReq.ParentID)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
-  this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
-  logger.Info("create category", addReq.Name, "success")
 
-finish:
-  this.ServeJSON(true)
+  logger.Info("create category", addReq.Name, "success")
+  this.WriteStatusAndDataJSON(constants.ErrSucceed, nil)
 }
 
 // get all parent categories
@@ -110,22 +100,16 @@ func (this *CategoryController) GetMainCategories() {
   conn, err := mysql.Pool.Get()
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
 
   res, err = category.Service.GetCategory(conn, pid)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
-  this.Data["json"] = res
 
-finish:
-  this.ServeJSON(true)
+  this.WriteStatusAndDataJSON(constants.ErrSucceed, res)
 }
 
 // get categories of the specified pid
@@ -139,36 +123,26 @@ func (this *CategoryController) GetSubCategories() {
   conn, err := mysql.Pool.Get()
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
 
   err = json.Unmarshal(this.Ctx.Input.RequestBody, &pidReq)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   err = this.Validate(pidReq)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   res, err = category.Service.GetCategory(conn, pidReq.PID)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
-  this.Data["json"] = res
 
-finish:
-  this.ServeJSON(true)
+  this.WriteStatusAndDataJSON(constants.ErrSucceed, res)
 }
