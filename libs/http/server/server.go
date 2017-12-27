@@ -40,6 +40,7 @@ import (
 	"time"
 
 	"github.com/fengyfei/gu/libs/logger"
+	"github.com/fengyfei/gu/libs/util/file"
 	"github.com/urfave/negroni"
 )
 
@@ -83,7 +84,8 @@ const (
 )
 
 var (
-	errNoRouter = errors.New("entrypoint requires a router")
+	errNoRouter  = errors.New("entrypoint requires a router")
+	errTLSConfig = errors.New("cert or key file in the TLS configuration does not exist")
 )
 
 // Entrypoint represents a http server.
@@ -137,8 +139,21 @@ func (ep *Entrypoint) prepare(router http.Handler) error {
 
 // Create the TLS Configuration for the http server.
 func (ep *Entrypoint) createTLSConfig() (*tls.Config, error) {
+	var (
+		err    error
+		exists bool
+	)
+
 	if ep.tlsConfig == nil {
 		return nil, nil
+	}
+
+	if exists, err = file.FileExists(ep.tlsConfig.Cert); !exists {
+		panic(errTLSConfig)
+	}
+
+	if exists, err = file.FileExists(ep.tlsConfig.Key); !exists {
+		panic(errTLSConfig)
 	}
 
 	cert, err := tls.LoadX509KeyPair(ep.tlsConfig.Cert, ep.tlsConfig.Key)
