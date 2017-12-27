@@ -48,6 +48,7 @@ const (
 	AlgorithmHS256 = "HS256"
 )
 
+// JWTConfig is a configuration container to setup the JWT middleware.
 type JWTConfig struct {
 	// Skipper defines a function to skip middleware.
 	Skipper Skipper
@@ -85,6 +86,7 @@ type JWTConfig struct {
 	keyFunc jwt.Keyfunc
 }
 
+// JWT represents a JWT HTTP handler.
 type JWT struct {
 	skipper       Skipper
 	signingKey    interface{}

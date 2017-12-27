@@ -75,7 +75,7 @@ type CORSConfig struct {
 	OptionsPassthrough bool
 }
 
-// CORS http handler
+// CORS represents a CORS HTTP handler.
 type CORS struct {
 	// skipper defines a function to skip middleware.
 	skipper Skipper
