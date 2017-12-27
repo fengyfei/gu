@@ -66,6 +66,10 @@ func checkDir(path string) error {
 }
 
 func SavePicture(base64Str string, pathPrefix string) (string, error) {
+  if !strings.Contains(base64Str, "base64") || !strings.Contains(base64Str, "image") {
+    return "", errors.New("unvalid image base64 string")
+  }
+
   slice := strings.Split(base64Str, ",")
   suffix := string([]byte(slice[0])[11:len(slice[0]) - 7]) // picture format suffix
 

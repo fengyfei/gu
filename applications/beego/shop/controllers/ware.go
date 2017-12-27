@@ -79,52 +79,40 @@ func (this *WareController) CreateWare() {
   conn, err = mysql.Pool.Get()
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
 
   err = json.Unmarshal(this.Ctx.Input.RequestBody, &addReq)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   err = this.Validate(addReq)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   if len(addReq.Avatar) > 0 {
     addReq.Avatar, err = util.SavePicture(addReq.Avatar, "ware/")
     if err != nil {
       logger.Error(err)
-      this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInternalServerError}
-
-      goto finish
+      this.WriteStatusAndDataJSON(constants.ErrInternalServerError, nil)
     }
   }
   if len(addReq.Image) > 0 {
     addReq.Image, err = util.SavePicture(addReq.Image, "ware/")
     if err != nil {
       logger.Error(err)
-      this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInternalServerError}
-
-      goto finish
+      this.WriteStatusAndDataJSON(constants.ErrInternalServerError, nil)
     }
   }
   if len(addReq.DetailPic) > 0 {
     addReq.DetailPic, err = util.SavePicture(addReq.DetailPic, "wareIntro/")
     if err != nil {
       logger.Error(err)
-      this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInternalServerError}
-
-      goto finish
+      this.WriteStatusAndDataJSON(constants.ErrInternalServerError, nil)
     }
   }
 
@@ -136,15 +124,11 @@ func (this *WareController) CreateWare() {
        (len(addReq.DetailPic) > 0 && !util.DeletePicture(addReq.DetailPic)) {
       logger.Error(errors.New("create ware failed and delete it's pictures go wrong, please delete picture manually"))
     }
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
-  this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
-  logger.Info("create ware", addReq.Name, "success")
 
-finish:
-  this.ServeJSON(true)
+  logger.Info("create ware", addReq.Name, "success")
+  this.WriteStatusAndDataJSON(constants.ErrSucceed, nil)
 }
 
 // get all wares
@@ -157,22 +141,16 @@ func (this *WareController) GetAllWare() {
   conn, err := mysql.Pool.Get()
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
 
   res, err = ware.Service.GetAllWare(conn)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
-  this.Data["json"] = res
 
-finish:
-  this.ServeJSON(true)
+  this.WriteStatusAndDataJSON(constants.ErrSucceed, res)
 }
 
 // get ware by categoryID
@@ -186,38 +164,28 @@ func (this *WareController) GetWareByCategory() {
   conn, err := mysql.Pool.Get()
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
 
   err = json.Unmarshal(this.Ctx.Input.RequestBody, &cidReq)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   err = this.Validate(cidReq)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   res, err = ware.Service.GetByCID(conn, cidReq.CID)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
-  this.Data["json"] = res
 
-finish:
-  this.ServeJSON(true)
+  this.WriteStatusAndDataJSON(constants.ErrSucceed, res)
 }
 
 // get promotion wares
@@ -230,22 +198,16 @@ func (this *WareController) GetPromotion() {
   conn, err := mysql.Pool.Get()
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
 
   res, err = ware.Service.GetPromotionList(conn)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
-  this.Data["json"] = res
 
-finish:
-  this.ServeJSON(true)
+  this.WriteStatusAndDataJSON(constants.ErrSucceed, res)
 }
 
 // update ware info
@@ -258,72 +220,56 @@ func (this *WareController) UpdateWithID() {
   conn, err := mysql.Pool.Get()
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
 
   err = json.Unmarshal(this.Ctx.Input.RequestBody, &req)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   err = this.Validate(req)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   if len(req.Avatar) > 0 {
     req.Avatar, err = util.SavePicture(req.Avatar, "ware/")
     if err != nil {
       logger.Error(err)
-      this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInternalServerError}
-
-      goto finish
+      this.WriteStatusAndDataJSON(constants.ErrInternalServerError, nil)
     }
   }
   if len(req.Image) > 0 {
     req.Image, err = util.SavePicture(req.Image, "ware/")
     if err != nil {
       logger.Error(err)
-      this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInternalServerError}
-
-      goto finish
+      this.WriteStatusAndDataJSON(constants.ErrInternalServerError, nil)
     }
   }
   if len(req.DetailPic) > 0 {
     req.DetailPic, err = util.SavePicture(req.DetailPic, "wareIntro/")
     if err != nil {
       logger.Error(err)
-      this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInternalServerError}
-
-      goto finish
+      this.WriteStatusAndDataJSON(constants.ErrInternalServerError, nil)
     }
   }
 
   err = ware.Service.UpdateWare(conn, req)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
     if (len(req.Avatar) > 0 && !util.DeletePicture(req.Avatar)) ||
        (len(req.Image) > 0 && !util.DeletePicture(req.Image)) ||
        (len(req.DetailPic) > 0 && !util.DeletePicture(req.DetailPic)) {
       logger.Error(errors.New("update ware failed and delete it's pictures go wrong, please delete picture manually"))
     }
-
-    goto finish
   }
-  this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
-  logger.Info("update ware info of id:", req.ID)
 
-finish:
-  this.ServeJSON(true)
+  logger.Info("update ware info of id:", req.ID)
+  this.WriteStatusAndDataJSON(constants.ErrSucceed, nil)
 }
 
 // modify price
@@ -336,39 +282,29 @@ func (this *WareController) ModifyPrice() {
   conn, err := mysql.Pool.Get()
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
 
   err = json.Unmarshal(this.Ctx.Input.RequestBody, &req)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   err = this.Validate(req)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   err = ware.Service.ModifyPrice(conn, req)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
-  this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
-  logger.Info("modify price of", req.ID)
 
-finish:
-  this.ServeJSON(true)
+  logger.Info("modify price of", req.ID)
+  this.WriteStatusAndDataJSON(constants.ErrSucceed, nil)
 }
 
 // get homepage list with last wareID
@@ -382,38 +318,28 @@ func (this *WareController) HomePageList() {
   conn, err := mysql.Pool.Get()
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
 
   err = json.Unmarshal(this.Ctx.Input.RequestBody, &idReq)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   err = this.Validate(idReq)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   res, err = ware.Service.HomePageList(conn, idReq.LastID)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
-  this.Data["json"] = res
 
-finish:
-  this.ServeJSON(true)
+  this.WriteStatusAndDataJSON(constants.ErrSucceed, res)
 }
 
 // get recommend list
@@ -427,38 +353,28 @@ func (this *WareController) RecommendList() {
   conn, err := mysql.Pool.Get()
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
 
   err = json.Unmarshal(this.Ctx.Input.RequestBody, &idReq)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   err = this.Validate(idReq)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   res, err = ware.Service.GetRecommendList(conn, idReq.UserID)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
-  this.Data["json"] = res
 
-finish:
-  this.ServeJSON(true)
+  this.WriteStatusAndDataJSON(constants.ErrSucceed, res)
 }
 
 // get detail info of ware
@@ -472,38 +388,28 @@ func (this *WareController) GetDetail() {
   conn, err := mysql.Pool.Get()
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
 
   err = json.Unmarshal(this.Ctx.Input.RequestBody, &req)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   err = this.Validate(req)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   res, err = ware.Service.GetByID(conn, req.ID)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
-  this.Data["json"] = res
 
-finish:
-  this.ServeJSON(true)
+  this.WriteStatusAndDataJSON(constants.ErrSucceed, res)
 }
 
 // change status of wares
@@ -516,25 +422,19 @@ func (this *WareController) ChangeStatus() {
   conn, err := mysql.Pool.Get()
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
 
   err = json.Unmarshal(this.Ctx.Input.RequestBody, &changeReq)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   err = this.Validate(changeReq)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
   }
 
   // status: -1 -> delete or sold out
@@ -544,13 +444,9 @@ func (this *WareController) ChangeStatus() {
   err = ware.Service.ChangeStatus(conn, changeReq.IDs, changeReq.Status)
   if err != nil {
     logger.Error(err)
-    this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-
-    goto finish
+    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
   }
-  this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
-  logger.Info("change ware status success")
 
-finish:
-  this.ServeJSON(true)
+  logger.Info("change ware status success")
+  this.WriteStatusAndDataJSON(constants.ErrSucceed, nil)
 }
