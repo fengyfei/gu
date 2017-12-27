@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nats-io/go-nats"
+	"github.com/nats-io/nats"
 )
 
 func BenchmarkPublishSpeed(b *testing.B) {
@@ -112,30 +112,6 @@ func BenchmarkRequest(b *testing.B) {
 	s := RunDefaultServer()
 	defer s.Shutdown()
 	nc := NewDefaultConnection(b)
-	defer nc.Close()
-	ok := []byte("ok")
-	nc.Subscribe("req", func(m *nats.Msg) {
-		nc.Publish(m.Reply, ok)
-	})
-	b.StartTimer()
-	b.ReportAllocs()
-	q := []byte("q")
-	for i := 0; i < b.N; i++ {
-		_, err := nc.Request("req", q, 1*time.Second)
-		if err != nil {
-			b.Fatalf("Err %v\n", err)
-		}
-	}
-}
-
-func BenchmarkOldRequest(b *testing.B) {
-	b.StopTimer()
-	s := RunDefaultServer()
-	defer s.Shutdown()
-	nc, err := nats.Connect(nats.DefaultURL, nats.UseOldRequestStyle())
-	if err != nil {
-		b.Fatalf("Failed to connect: %v", err)
-	}
 	defer nc.Close()
 	ok := []byte("ok")
 	nc.Subscribe("req", func(m *nats.Msg) {

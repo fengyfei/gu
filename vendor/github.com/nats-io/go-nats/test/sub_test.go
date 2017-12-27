@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nats-io/go-nats"
+	"github.com/nats-io/nats"
 )
 
 // More advanced tests on subscriptions
@@ -371,9 +371,6 @@ func TestIsValidSubscriber(t *testing.T) {
 	defer nc.Close()
 
 	sub, err := nc.SubscribeSync("foo")
-	if err != nil {
-		t.Fatalf("Error on subscribe: %v", err)
-	}
 	if !sub.IsValid() {
 		t.Fatalf("Subscription should be valid")
 	}
@@ -505,7 +502,7 @@ func TestAsyncErrHandler(t *testing.T) {
 	s := RunDefaultServer()
 	defer s.Shutdown()
 
-	opts := nats.GetDefaultOptions()
+	opts := nats.DefaultOptions
 
 	nc, err := opts.Connect()
 	if err != nil {
@@ -584,7 +581,7 @@ func TestAsyncErrHandlerChanSubscription(t *testing.T) {
 	s := RunDefaultServer()
 	defer s.Shutdown()
 
-	opts := nats.GetDefaultOptions()
+	opts := nats.DefaultOptions
 
 	nc, err := opts.Connect()
 	if err != nil {
@@ -853,8 +850,6 @@ func TestChanSubscriberPendingLimits(t *testing.T) {
 
 	nc := NewDefaultConnection(t)
 	defer nc.Close()
-	ncp := NewDefaultConnection(t)
-	defer ncp.Close()
 
 	// There was a defect that prevented to receive more than
 	// the default pending message limit. Trying to send more
@@ -881,12 +876,11 @@ func TestChanSubscriberPendingLimits(t *testing.T) {
 				t.Fatalf("Unexpected error on subscribe: %v", err)
 			}
 			defer sub.Unsubscribe()
-			nc.Flush()
 
-			// Send some messages
+			// Send some messages to ourselves.
 			go func() {
 				for i := 0; i < total; i++ {
-					if err := ncp.Publish("foo", []byte("Hello")); err != nil {
+					if err := nc.Publish("foo", []byte("Hello")); err != nil {
 						t.Fatalf("Unexpected error on publish: %v", err)
 					}
 				}

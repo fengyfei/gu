@@ -1,5 +1,5 @@
-hash: e1e9191173308990419d207f635e8c1eb9d8b83c879c49ecf4e261ab0651ab50
-updated: 2017-12-26T14:39:03.912419+08:00
+hash: 7e4423124cd1edbfac72a6bd485de26f2a19eebe452435ad0b74f8f48b71e1d5
+updated: 2017-12-27T20:19:25.612383+08:00
 imports:
 - name: github.com/allegro/bigcache
   version: aa76879d59fa5d93c43680238227dbf7a53f5c28
@@ -10,7 +10,7 @@ imports:
 - name: github.com/andybalholm/cascadia
   version: 349dd0209470eabd9514242c688c403c0926d266
 - name: github.com/asciimoo/colly
-  version: ca0b7983f7a266a74fa1a6ba5d9bfa91fd82b7b3
+  version: 4bb658ff4497a3e18fdd695621d390391fe8667b
 - name: github.com/astaxie/beego
   version: d96289a81bf67728cff7a19b067aaecc65a62ec6
   subpackages:
@@ -37,6 +37,8 @@ imports:
   - mch/core
   - mch/pay
   - util
+- name: github.com/davecgh/go-spew
+  version: 346938d642f2ec3594ed81d874461961cd0faa76
 - name: github.com/dgraph-io/badger
   version: 69611218c7078be6de16f4ea13fb256e701b6b73
   subpackages:
@@ -46,7 +48,7 @@ imports:
   - table
   - "y"
 - name: github.com/dgrijalva/jwt-go
-  version: dbeaa9332f19a944acb5736b4456cfcc02140e29
+  version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
 - name: github.com/dgryski/go-farm
   version: ac7624ea8da311f2fbbd94401d8c1cf66089f9fb
 - name: github.com/fsnotify/fsnotify
@@ -71,16 +73,20 @@ imports:
   - syntax/lexer
   - util/runes
   - util/strings
+- name: github.com/gocolly/colly
+  version: 4bb658ff4497a3e18fdd695621d390391fe8667b
+  subpackages:
+  - debug
 - name: github.com/godbus/dbus
   version: a389bdde4dd695d414e47b755e95e72b7826432c
 - name: github.com/gogo/protobuf
-  version: 35b81a066e522fb86ece043a8ef1dbfa10b4fed1
+  version: 100ba4e885062801d56799d78530b73b178a78f3
   subpackages:
   - gogoproto
   - proto
   - protoc-gen-gogo/descriptor
 - name: github.com/golang/protobuf
-  version: 1e59b77b52bf8e4b449a57e6f79f21226d571845
+  version: 0a4f71a498b7c4812f64969510bcb4eca251e33a
   subpackages:
   - proto
 - name: github.com/golang/snappy
@@ -96,7 +102,7 @@ imports:
 - name: github.com/gorilla/mux
   version: 7f08801859139f86dfafd1c296e2cba9a80d292e
 - name: github.com/hashicorp/hcl
-  version: 23c074d0eceb2b8a5bfdbb271ab780cde70f05a8
+  version: 392dba7d905ed5d04a5794ba89f558b27e2ba1ca
   subpackages:
   - hcl/ast
   - hcl/parser
@@ -122,18 +128,18 @@ imports:
   - '...'
   - middleware
 - name: github.com/labstack/gommon
-  version: 57409ada9da0f2afad6664c49502f8c50fbd8476
+  version: 779b8a8b9850a97acba6a3fe20feb628c39e17c1
   subpackages:
   - bytes
   - color
   - log
   - random
 - name: github.com/magiconair/properties
-  version: 49d762b9817ba1c2e9d0c69183c2b4a8b8f1d934
+  version: be5ece7dd465ab0765a9682137865547526d1dfb
 - name: github.com/mattn/go-colorable
-  version: 6fcc0c1fd9b620311d821b106a400b35dc95c497
+  version: 3fa8c76f9daed4067e4a806fb7e4dc86455c6d6a
 - name: github.com/mattn/go-isatty
-  version: 6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c
+  version: fc9e8d8ef48496124e79ae0df75490096eccf6fe
 - name: github.com/minio/minio-go
   version: 06dcf064d9e3b1dfd21b9a01a822da7665a9c971
   subpackages:
@@ -146,34 +152,36 @@ imports:
 - name: github.com/mitchellh/go-homedir
   version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/mitchellh/mapstructure
-  version: 06020f85339e21b2478f756a78e295255ffa4d6a
+  version: d0303fe809921458f417bcf828397a65db30a7e4
 - name: github.com/nats-io/go-nats
-  version: d66cb54e6b7bdd93f0b28afc8450d84c780dfb68
-  subpackages:
-  - encoders/builtin
-  - util
+  version: 61923ed1eaf8398000991fbbee2ef11ab5a5be0d
 - name: github.com/nats-io/go-nats-streaming
   version: 6e620057a207bd61e992c1c5b6a2de7b6a4cb010
   subpackages:
   - pb
+- name: github.com/nats-io/nats
+  version: d66cb54e6b7bdd93f0b28afc8450d84c780dfb68
+  subpackages:
+  - encoders/builtin
+  - util
 - name: github.com/nats-io/nuid
   version: 33c603157d6fd1b0ac2599bcc4a286b36479a06d
 - name: github.com/pelletier/go-toml
-  version: 0131db6d737cfbbfb678f8b7d92e55e27ce46224
+  version: 69d355db5304c0f7f809a2edc054553e7142f016
 - name: github.com/pkg/errors
-  version: e881fd58d78e04cf6d0de1217f8707c8cc2249bc
+  version: a22138067af1c4942683050411a841ade67fe1eb
 - name: github.com/PuerkitoBio/goquery
-  version: 1a71cc719d0d5b9e4f14ae072bef08b576b0bab5
+  version: bc4e06eb0792d1a14661d19dd7822163c25bb6bd
 - name: github.com/spf13/afero
-  version: 8d919cbe7e2627e417f3e45c3c0e489a5b7e2536
+  version: 9be650865eab0c12963d8753212f4f9c66cdcf12
   subpackages:
   - mem
 - name: github.com/spf13/cast
   version: acbeb36b902d72a7a4c18e8f3241075e7ab763e4
 - name: github.com/spf13/jwalterweatherman
-  version: 12bd96e66386c1960ab0f74ced1362f66f552f7b
+  version: 0efa5202c04663c757d84f90f5219c1250baf94f
 - name: github.com/spf13/pflag
-  version: 4c012f6dcd9546820e378d0bdda4d8fc772cdfea
+  version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
 - name: github.com/spf13/viper
   version: 25b30aa063fc18e48662b86996252eabdcf2f0c7
 - name: github.com/syndtr/goleveldb
@@ -202,14 +210,14 @@ imports:
 - name: go.uber.org/multierr
   version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
 - name: golang.org/x/crypto
-  version: d585fd2cc9195196078f516b69daff6744ef5e84
+  version: dd85ac7e6a88fc6ca420478e934de5f1a42dd3c6
   subpackages:
   - acme
   - acme/autocert
   - bcrypt
   - blowfish
 - name: golang.org/x/net
-  version: c73622c77280266305273cb545f54516ced95b93
+  version: 570fa1c91359c1869590e9cedf3b53162a51a167
   subpackages:
   - context
   - html
@@ -218,11 +226,11 @@ imports:
   - internal/timeseries
   - trace
 - name: golang.org/x/sys
-  version: 83801418e1b59fb1880e363299581ee543af32ca
+  version: abf9c25f54453410d0c6668e519582a9e1115027
   subpackages:
   - unix
 - name: golang.org/x/text
-  version: 6eab0e8f74e86c598ec3b6fad4888e0c11482d48
+  version: 836efe42bb4aa16aaa17b9c155d8813d336ed720
   subpackages:
   - encoding
   - encoding/charmap
@@ -240,6 +248,18 @@ imports:
   - runes
   - transform
   - unicode/norm
+- name: google.golang.org/appengine
+  version: d11fc8a8dccf41ab5bd3c51a3ea52051240e325c
+  subpackages:
+  - internal
+  - internal/app_identity
+  - internal/base
+  - internal/datastore
+  - internal/log
+  - internal/modules
+  - internal/remote_api
+  - internal/urlfetch
+  - urlfetch
 - name: gopkg.in/go-playground/validator.v9
   version: b1f51f36f1c98cc97f777d6fc9d4b05eaa0cabb5
 - name: gopkg.in/mgo.v2
@@ -250,10 +270,10 @@ imports:
   - internal/sasl
   - internal/scram
 - name: gopkg.in/yaml.v2
-  version: 287cf08546ab5e7e37d55a84f7ed3fd1db036de5
+  version: 3b4ad1db5b2a649883ff3782f5f9f6fb52be71af
 testImports:
 - name: github.com/gopherjs/gopherjs
-  version: a0a7cfed7b2a54080888fd2b3d4a3ec14562c86c
+  version: 444abdf920945de5d4a977b572bcc6c674d1e4eb
   subpackages:
   - js
 - name: github.com/jtolds/gls
