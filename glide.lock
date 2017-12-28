@@ -1,5 +1,5 @@
-hash: 906b91566234aa637bb88eb9f76fc0538343174b28aa39002024c7dd5bec0e4f
-updated: 2017-12-28T11:11:25.353027+08:00
+hash: 67d283f85e674400b0c6e02243c1100f6d6d7f891620f557d4b73743caad28f5
+updated: 2017-12-28T15:42:45.810782+08:00
 imports:
 - name: github.com/allegro/bigcache
   version: aa76879d59fa5d93c43680238227dbf7a53f5c28
@@ -168,6 +168,8 @@ imports:
   - util
 - name: github.com/nats-io/nuid
   version: 33c603157d6fd1b0ac2599bcc4a286b36479a06d
+- name: github.com/nsqio/go-nsq
+  version: eee57a3ac4174c55924125bb15eeeda8cffb6e6f
 - name: github.com/pelletier/go-toml
   version: 69d355db5304c0f7f809a2edc054553e7142f016
 - name: github.com/pkg/errors
