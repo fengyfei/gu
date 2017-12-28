@@ -5,3 +5,4 @@ mongo
 nats-streaming
 minio
 dgraph
+nsq
