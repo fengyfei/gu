@@ -1,5 +1,5 @@
-hash: 7e4423124cd1edbfac72a6bd485de26f2a19eebe452435ad0b74f8f48b71e1d5
-updated: 2017-12-27T20:19:25.612383+08:00
+hash: 906b91566234aa637bb88eb9f76fc0538343174b28aa39002024c7dd5bec0e4f
+updated: 2017-12-28T11:11:25.353027+08:00
 imports:
 - name: github.com/allegro/bigcache
   version: aa76879d59fa5d93c43680238227dbf7a53f5c28
@@ -39,6 +39,8 @@ imports:
   - util
 - name: github.com/davecgh/go-spew
   version: 346938d642f2ec3594ed81d874461961cd0faa76
+  subpackages:
+  - spew
 - name: github.com/dgraph-io/badger
   version: 69611218c7078be6de16f4ea13fb256e701b6b73
   subpackages:
@@ -184,6 +186,10 @@ imports:
   version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
 - name: github.com/spf13/viper
   version: 25b30aa063fc18e48662b86996252eabdcf2f0c7
+- name: github.com/stretchr/testify
+  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
+  subpackages:
+  - assert
 - name: github.com/syndtr/goleveldb
   version: 34011bf325bce385408353a30b101fe5e923eb6e
   subpackages:
@@ -278,6 +284,10 @@ testImports:
   - js
 - name: github.com/jtolds/gls
   version: 77f18212c9c7edc9bd6a33d383a7b545ce62f064
+- name: github.com/pmezard/go-difflib
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  subpackages:
+  - difflib
 - name: github.com/smartystreets/assertions
   version: 0b37b35ec7434b77e77a4bb29b79677cced992ea
   subpackages:
