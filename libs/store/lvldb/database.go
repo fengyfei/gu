@@ -103,7 +103,7 @@ func (db *Database) Get(key []byte) ([]byte, error) {
 	return db.db.Get(key, nil)
 }
 
-// Put a key/vaue.
+// Put a key/value.
 func (db *Database) Put(key, value []byte) error {
 	return db.db.Put(key, value, nil)
 }
