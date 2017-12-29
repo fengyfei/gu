@@ -1,5 +1,5 @@
-hash: 67d283f85e674400b0c6e02243c1100f6d6d7f891620f557d4b73743caad28f5
-updated: 2017-12-28T15:42:45.810782+08:00
+hash: 4d94d201281ab95323238d1b5edd47721bae207ee81d9ddbe1ed6c3061f3d5e0
+updated: 2017-12-29T14:53:57.052012+08:00
 imports:
 - name: github.com/allegro/bigcache
   version: aa76879d59fa5d93c43680238227dbf7a53f5c28
@@ -103,6 +103,8 @@ imports:
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
   version: 7f08801859139f86dfafd1c296e2cba9a80d292e
+- name: github.com/grpc-ecosystem/go-grpc-middleware
+  version: 967bee733a734780623ac3d7c8e9216e4372ea62
 - name: github.com/hashicorp/hcl
   version: 392dba7d905ed5d04a5794ba89f558b27e2ba1ca
   subpackages:
@@ -268,6 +270,8 @@ imports:
   - internal/remote_api
   - internal/urlfetch
   - urlfetch
+- name: google.golang.org/grpc
+  version: e687fa4e6424368ece6e4fe727cea2c806a0fcb4
 - name: gopkg.in/go-playground/validator.v9
   version: b1f51f36f1c98cc97f777d6fc9d4b05eaa0cabb5
 - name: gopkg.in/mgo.v2

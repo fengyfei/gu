@@ -51,6 +51,9 @@ import:
   version: v1.1.4
 - package: github.com/nsqio/go-nsq
   version: v1.0.7
+- package: google.golang.org/grpc
+  version: v1.8.2
+- package: github.com/grpc-ecosystem/go-grpc-middleware
 testImport:
 - package: github.com/smartystreets/goconvey
   version: 1.6.3
