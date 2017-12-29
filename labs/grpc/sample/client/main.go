@@ -57,9 +57,12 @@ func main() {
 		name = os.Args[1]
 	}
 
-	r, err := c.SayHello(context.Background(), &pb.HelloRequest{Name: name})
-	if err != nil {
-		log.Fatalf("could not greet: %v", err)
+	for i := 0; i < 10; i++ {
+		r, err := c.SayHello(context.Background(), &pb.HelloRequest{Name: name})
+		if err != nil {
+			log.Printf("could not greet: %v", err)
+			continue
+		}
+		log.Printf("Greeting: %s", r.Message)
 	}
-	log.Printf("Greeting: %s", r.Message)
 }
