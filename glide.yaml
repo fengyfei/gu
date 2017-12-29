@@ -54,6 +54,7 @@ import:
 - package: google.golang.org/grpc
   version: v1.8.2
 - package: github.com/grpc-ecosystem/go-grpc-middleware
+- package: google.golang.org/genproto
 testImport:
 - package: github.com/smartystreets/goconvey
   version: 1.6.3
