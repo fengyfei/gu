@@ -30,8 +30,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
-	"os"
+	"sync"
+	"time"
 
 	pb "github.com/fengyfei/gu/labs/grpc/sample/greeter"
 	"golang.org/x/net/context"
@@ -39,30 +41,44 @@ import (
 )
 
 const (
-	address     = "localhost:50051"
-	defaultName = "grpc"
+	address = "localhost:50051"
+	n       = 50
 )
 
 func main() {
-	conn, err := grpc.Dial(address, grpc.WithInsecure())
-	if err != nil {
-		log.Fatalf("did not connect: %v", err)
-	}
-	defer conn.Close()
+	conns := make([]*grpc.ClientConn, n)
+	wg := &sync.WaitGroup{}
 
-	c := pb.NewGreeterClient(conn)
-
-	name := defaultName
-	if len(os.Args) > 1 {
-		name = os.Args[1]
-	}
-
-	for i := 0; i < 10; i++ {
-		r, err := c.SayHello(context.Background(), &pb.HelloRequest{Name: name})
+	for i := 0; i < n; i++ {
+		conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithWriteBufferSize(1*1024*1024))
 		if err != nil {
-			log.Printf("could not greet: %v", err)
-			continue
+			log.Fatalf("did not connect: %v", err)
 		}
-		log.Printf("Greeting: %s", r.Message)
+		defer conn.Close()
+
+		conns[i] = conn
 	}
+
+	start := time.Now().UnixNano()
+	for i := 0; i < 100000; i++ {
+		wg.Add(1)
+		name := fmt.Sprintf("Go %d", i+1)
+		go func() {
+			conn := conns[i%n]
+			c := pb.NewGreeterClient(conn)
+			r, err := c.SayHello(context.Background(), &pb.HelloRequest{Name: name})
+			if err != nil {
+				log.Printf("could not greet: %v", err)
+			} else {
+				log.Printf("Greeting: %s", r.Message)
+			}
+
+			wg.Done()
+		}()
+	}
+
+	wg.Wait()
+	end := time.Now().UnixNano()
+
+	fmt.Printf("Execution time: %f\n", float64(end-start)/1000000000)
 }

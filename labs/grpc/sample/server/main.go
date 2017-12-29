@@ -56,7 +56,7 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 	counter++
 
 	if (counter % 2) == 0 {
-		panic("greeter server panic")
+		// panic("greeter server panic")
 	}
 
 	return &pb.HelloReply{Message: "Hello " + in.Name}, nil
