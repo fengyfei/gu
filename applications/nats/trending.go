@@ -24,44 +24,18 @@
 
 /*
  * Revision History:
- *     Initial: 2017/11/17        Jia Chenhui
+ *     Initial: 2017/12/29        Jia Chenhui
  */
 
-package conf
+package nats
 
-import (
-	"github.com/spf13/viper"
+const (
+	// The NATS subject of getting the trend of a language for the day.
+	SubjectTrending = "GitHubTrending"
 )
 
-// githubConfig represents the server config struct.
-type githubConfig struct {
-	Address   string
-	NatsURL   string
-	MongoURL  string
-	CorsHosts []string
-}
-
-var (
-	GithubConfig *githubConfig
-)
-
-func init() {
-	load()
-}
-
-// load read config file.
-func load() {
-	viper.AddConfigPath("./conf")
-	viper.SetConfigName("config")
-
-	if err := viper.ReadInConfig(); err != nil {
-		panic(err)
-	}
-
-	GithubConfig = &githubConfig{
-		Address:   viper.GetString("server.address"),
-		NatsURL:   viper.GetString("server.natsurl"),
-		MongoURL:  viper.GetString("mongo.url"),
-		CorsHosts: viper.GetStringSlice("middleware.cors.hosts"),
-	}
+// StartLangCrawler publish a message to the subscriber to start the specified
+// language crawler.
+func StartLangCrawler(lang *string) {
+	Conn.Publish(SubjectTrending, []byte(*lang))
 }

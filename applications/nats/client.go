@@ -24,44 +24,34 @@
 
 /*
  * Revision History:
- *     Initial: 2017/11/17        Jia Chenhui
+ *     Initial: 2017/12/29        Jia Chenhui
  */
 
-package conf
+package nats
 
 import (
-	"github.com/spf13/viper"
+	"github.com/fengyfei/gu/applications/github/conf"
+	"github.com/fengyfei/gu/libs/logger"
+	nc "github.com/fengyfei/gu/libs/nats"
 )
 
-// githubConfig represents the server config struct.
-type githubConfig struct {
-	Address   string
-	NatsURL   string
-	MongoURL  string
-	CorsHosts []string
-}
-
 var (
-	GithubConfig *githubConfig
+	// Conn represents the global NATS connection.
+	Conn *nc.Connection
 )
 
 func init() {
-	load()
+	initConn()
 }
 
-// load read config file.
-func load() {
-	viper.AddConfigPath("./conf")
-	viper.SetConfigName("config")
+func initConn() {
+	var err error
 
-	if err := viper.ReadInConfig(); err != nil {
+	Conn, err = nc.NewConnection(conf.GithubConfig.NatsURL)
+	if err != nil {
+		logger.Error(err)
 		panic(err)
 	}
 
-	GithubConfig = &githubConfig{
-		Address:   viper.GetString("server.address"),
-		NatsURL:   viper.GetString("server.natsurl"),
-		MongoURL:  viper.GetString("mongo.url"),
-		CorsHosts: viper.GetStringSlice("middleware.cors.hosts"),
-	}
+	logger.Debug("Successfully connect to NATS server.")
 }

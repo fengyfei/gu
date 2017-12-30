@@ -24,44 +24,42 @@
 
 /*
  * Revision History:
- *     Initial: 2017/11/17        Jia Chenhui
+ *     Initial: 2017/12/30        Jia Chenhui
  */
 
-package conf
+package crawler
 
 import (
-	"github.com/spf13/viper"
+	"sync"
+
+	"github.com/fengyfei/gu/libs/crawler/github"
 )
 
-// githubConfig represents the server config struct.
-type githubConfig struct {
-	Address   string
-	NatsURL   string
-	MongoURL  string
-	CorsHosts []string
+// trendingCache use to store trending in specified language.
+type trendingCache struct {
+	mux   sync.RWMutex
+	cache map[string][]*github.Trending
 }
 
-var (
-	GithubConfig *githubConfig
-)
-
-func init() {
-	load()
+func newCache() *trendingCache {
+	return &trendingCache{
+		cache: make(map[string][]*github.Trending),
+	}
 }
 
-// load read config file.
-func load() {
-	viper.AddConfigPath("./conf")
-	viper.SetConfigName("config")
+// Store store the trending data in TrendingCache.
+func (tc *trendingCache) Store(lang string, trending []*github.Trending) {
+	tc.mux.Lock()
+	defer tc.mux.Unlock()
 
-	if err := viper.ReadInConfig(); err != nil {
-		panic(err)
-	}
+	tc.cache[lang] = trending
+}
 
-	GithubConfig = &githubConfig{
-		Address:   viper.GetString("server.address"),
-		NatsURL:   viper.GetString("server.natsurl"),
-		MongoURL:  viper.GetString("mongo.url"),
-		CorsHosts: viper.GetStringSlice("middleware.cors.hosts"),
-	}
+// Load getting the trending data of the specified language from TrendingCache.
+func (tc *trendingCache) Load(lang string) ([]*github.Trending, bool) {
+	tc.mux.RLock()
+	defer tc.mux.RUnlock()
+
+	t, ok := tc.cache[lang]
+	return t, ok
 }

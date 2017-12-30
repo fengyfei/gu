@@ -32,6 +32,7 @@ package router
 import (
 	"github.com/fengyfei/gu/applications/github/handler/article"
 	"github.com/fengyfei/gu/applications/github/handler/repos"
+	"github.com/fengyfei/gu/applications/github/handler/trending"
 	"github.com/fengyfei/gu/libs/http/server"
 )
 
@@ -58,4 +59,7 @@ func register(r *server.Router) {
 	r.Get("/api/v1/techcats/repos/list", repos.List)
 	r.Get("/api/v1/techcats/repos/activelist", repos.ActiveList)
 	r.Post("/api/v1/techcats/repos/info", repos.Info)
+
+	// Trending
+	r.Post("/api/v1/techcats/trending/lang", trending.LangInfo)
 }

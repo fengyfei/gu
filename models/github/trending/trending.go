@@ -35,7 +35,7 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
-	"github.com/fengyfei/gu/applications/echo/github/conf"
+	"github.com/fengyfei/gu/applications/github/conf"
 	"github.com/fengyfei/gu/libs/mongo"
 	"github.com/fengyfei/gu/models/github"
 )
@@ -53,7 +53,7 @@ func init() {
 		cname = "trending"
 	)
 
-	url := conf.Configuration.MongoURL + "/" + github.Database
+	url := conf.GithubConfig.MongoURL + "/" + github.Database
 	s, err := mgo.Dial(url)
 	if err != nil {
 		panic(err)
@@ -104,6 +104,13 @@ func (sp *serviceProvider) CreateList(docs []*Trending) error {
 	}
 
 	return nil
+}
+
+func (sp *serviceProvider) Create(doc *Trending) error {
+	conn := session.Connect()
+	defer conn.Disconnect()
+
+	return conn.Insert(doc)
 }
 
 // GetByLang get library trending based on the language.

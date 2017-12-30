@@ -1,6 +1,7 @@
 {
   "server": {
-    "address": ":21001"
+    "address": ":21001",
+    "natsurl": "nats://localhost:4223"
   },
   "middleware": {
     "cors": {
