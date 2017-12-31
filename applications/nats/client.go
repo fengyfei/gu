@@ -53,5 +53,5 @@ func initConn() {
 		panic(err)
 	}
 
-	logger.Debug("Successfully connect to NATS server.")
+	logger.Debug("Successfully connect to NATS server:", conf.GithubConfig.NatsURL)
 }

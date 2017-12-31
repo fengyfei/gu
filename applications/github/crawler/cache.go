@@ -30,36 +30,66 @@
 package crawler
 
 import (
+	"sort"
 	"sync"
 
 	"github.com/fengyfei/gu/libs/crawler/github"
 )
 
-// trendingCache use to store trending in specified language.
+// reposCache use to store the different repos of trending data, the key is
+// "title + date".
+type reposCache map[string]*github.Trending
+
+// trendingCache use to store the trending data of specified language.
 type trendingCache struct {
 	mux   sync.RWMutex
-	cache map[string][]*github.Trending
+	cache map[string]reposCache
 }
 
-func newCache() *trendingCache {
+func newTrendingCache() *trendingCache {
 	return &trendingCache{
-		cache: make(map[string][]*github.Trending),
+		cache: make(map[string]reposCache),
 	}
 }
 
 // Store store the trending data in TrendingCache.
-func (tc *trendingCache) Store(lang string, trending []*github.Trending) {
+func (tc *trendingCache) Store(lang string, trending *github.Trending) {
 	tc.mux.Lock()
 	defer tc.mux.Unlock()
 
-	tc.cache[lang] = trending
+	reposKey := trending.Title + trending.Date
+
+	if _, ok := tc.cache[lang]; ok {
+		tc.cache[lang][reposKey] = trending
+	} else {
+		tc.cache[lang] = make(reposCache)
+		tc.cache[lang][reposKey] = trending
+	}
 }
 
-// Load getting the trending data of the specified language from TrendingCache.
+// Load getting the trending list of the specified language from TrendingCache.
+// The results were descended in sequence according to the field "Today" of
+// struct "github.Trending".
 func (tc *trendingCache) Load(lang string) ([]*github.Trending, bool) {
+	var list []*github.Trending
+
 	tc.mux.RLock()
 	defer tc.mux.RUnlock()
 
-	t, ok := tc.cache[lang]
-	return t, ok
+	if trendingMap, ok := tc.cache[lang]; ok {
+		for title := range trendingMap {
+			list = append(list, trendingMap[title])
+		}
+
+		sortByStar(list)
+		return list, true
+	}
+
+	return nil, false
+}
+
+func sortByStar(list []*github.Trending) {
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].Today > list[j].Today
+	})
 }

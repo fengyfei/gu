@@ -34,8 +34,8 @@ const (
 	SubjectTrending = "GitHubTrending"
 )
 
-// StartLangCrawler publish a message to the subscriber to start the specified
-// language crawler.
-func StartLangCrawler(lang *string) {
+// StartTrendingCrawler publish a message to the subscriber to start the
+// specified language crawler.
+func StartTrendingCrawler(lang *string) {
 	Conn.Publish(SubjectTrending, []byte(*lang))
 }

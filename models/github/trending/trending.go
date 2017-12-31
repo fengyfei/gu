@@ -110,7 +110,10 @@ func (sp *serviceProvider) Create(doc *Trending) error {
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	return conn.Insert(doc)
+	query := bson.M{"Title": doc.Title, "Lang": doc.Lang, "Date": doc.Date}
+	_, err := conn.Upsert(query, doc)
+
+	return err
 }
 
 // GetByLang get library trending based on the language.

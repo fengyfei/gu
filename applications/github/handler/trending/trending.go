@@ -30,6 +30,8 @@
 package trending
 
 import (
+	"time"
+
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/applications/github/crawler"
 	"github.com/fengyfei/gu/applications/nats"
@@ -80,9 +82,10 @@ func LangInfo(c *server.Context) error {
 	}
 
 readFromCache:
-	tList, ok = crawler.TrendingCache.Load(*req.Lang)
-	if !ok {
-		nats.StartLangCrawler(req.Lang)
+	if tList, ok = crawler.TrendingCache.Load(*req.Lang); !ok {
+		nats.StartTrendingCrawler(req.Lang)
+		time.Sleep(5 * time.Second)
+
 		goto readFromCache
 	}
 
