@@ -48,7 +48,7 @@ var (
 )
 
 type User struct {
-	ID        uint  `gorm:"primary_key;auto_increment"`
+	ID        uint   `gorm:"primary_key;auto_increment"`
 	UserName  string `gorm:"unique;type:varchar(128)"`
 	NickName  string `gorm:"type:varchar(30)"`
 	Phone     string `gorm:"unique;default:null"`

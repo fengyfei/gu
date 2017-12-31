@@ -43,31 +43,34 @@ type serviceProvider struct{}
 
 var (
 	Service         *serviceProvider
-	defaultParentId uint = 0x0
-	unPay           uint = 0x0
-	StatusUnpay     uint = 0x0
-	StatusPaid      uint = 0x1
-	StatusConfirmed uint = 0x2
+	defaultParentId uint  = 0x0
+	unPay           uint  = 0x0
+	StatusUnpay     uint  = 0x0
+	StatusPaid      uint  = 0x1
+	StatusConfirmed uint  = 0x2
+	PayWayOnline    int32 = 0x0
+	PayWayOffline   int32 = 0x1
+	PayWayByBank    int32 = 0x2
 )
 
 const AMonth = 30 * 24 * 60 * 60 * 1e9
 
 type Order struct {
-	ID         uint `gorm:"primary_key;auto_increment"`
-	BillID     string
-	UserID     uint
-	ParentID   uint
-	Status     uint
-	WareId     uint
-	Count      uint
-	Price      float64
-	ReceiveWay int8
+	ID         uint    `gorm:"primary_key;auto_increment"`
+	BillID     string  `gorm:"not null"`
+	UserID     uint    `gorm:"not null"`
+	ParentID   uint    `gorm:"not null"`
+	Status     uint    `gorm:"not null";default:0`
+	WareId     uint    `gorm:"not null"`
+	Count      uint    `gorm:"not null";default:0`
+	Price      float64 `gorm:"not null";default:0`
+	ReceiveWay int32   `gorm:"not null";default:0`
 	CreatedAt  *time.Time
 }
 
 type OrderItem struct {
-	WareId uint   `json:"wareId" validate:"required"`
-	Count  uint   `json:"count" validate:"required"`
+	WareId uint    `json:"wareId" validate:"required"`
+	Count  uint    `json:"count" validate:"required"`
 	Price  float64 `json:"price" validate:"required"`
 }
 

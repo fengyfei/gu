@@ -43,9 +43,9 @@ var (
 
 type CartItem struct {
 	ID        uint `gorm:"primary_key;auto_increment"`
-	UserId    uint
-	WareId    uint
-	Count     uint
+	UserId    uint `gorm:"not null"`
+	WareId    uint `gorm:"not null"`
+	Count     uint `gorm:"not null";default:0`
 	CreatedAt *time.Time
 }
 

@@ -42,10 +42,10 @@ var (
 )
 
 type Address struct {
-	ID        uint    `gorm:"primary_key;auto_increment"`
-	UserId    uint
+	ID        uint   `gorm:"primary_key;auto_increment"`
+	UserId    uint   `gorm:"not null"`
 	Address   string `gorm:"type:varchar(128)"`
-	IsDefault bool
+	IsDefault bool   `gorm:"not null";default:"false"`
 }
 
 func (this *serviceProvider) Add(conn orm.Connection, userId uint, address string, isDefault bool) error {
