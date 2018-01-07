@@ -30,25 +30,62 @@
 package logger
 
 import (
-	"github.com/astaxie/beego"
+	"os"
+
+	"github.com/op/go-logging"
 )
+
+const guModuleID = "gu"
+
+var (
+	guLogger         *logging.Logger
+	backend          *logging.LogBackend
+	format           logging.Formatter
+	backendFormatter logging.Backend
+)
+
+func init() {
+	guLogger = logging.MustGetLogger(guModuleID)
+	backend = logging.NewLogBackend(os.Stderr, "", 0)
+	format = logging.MustStringFormatter(
+		`%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{id:03x}%{color:reset} %{message}`,
+	)
+	backendFormatter = logging.NewBackendFormatter(backend, format)
+	logging.SetBackend(backendFormatter)
+}
 
 // Debug prints debug messages.
 func Debug(v ...interface{}) {
-	beego.Debug(v...)
+	if len(v) > 1 {
+		guLogger.Debug(v[0].(string), v[1:]...)
+	} else {
+		guLogger.Debug("Debug: %s", v...)
+	}
 }
 
 // Info prints normal messages.
 func Info(v ...interface{}) {
-	beego.Info(v...)
+	if len(v) > 1 {
+		guLogger.Info(v[0].(string), v[1:]...)
+	} else {
+		guLogger.Info("Info: %s", v...)
+	}
 }
 
 // Warn prints warning messages.
 func Warn(v ...interface{}) {
-	beego.Warn(v...)
+	if len(v) > 1 {
+		guLogger.Warning(v[0].(string), v[1:]...)
+	} else {
+		guLogger.Warning("Warning: %s", v...)
+	}
 }
 
 // Error prints error.
 func Error(v ...interface{}) {
-	beego.Error(v...)
+	if len(v) > 1 {
+		guLogger.Error(v[0].(string), v[1:]...)
+	} else {
+		guLogger.Error("Error: %s", v...)
+	}
 }
