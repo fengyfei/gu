@@ -115,8 +115,10 @@ func main() {
 							s.Watcher.Add(name)
 						}
 					}
-					err := s.BuildFiles(args, pkgObj, currentDirectory)
-					return err
+					if err := s.BuildFiles(args, pkgObj, currentDirectory); err != nil {
+						return err
+					}
+					return nil
 				}
 
 				// Expand import path patterns.
@@ -340,7 +342,10 @@ func main() {
 						}
 					}
 					_, err := s.BuildPackage(testPkg)
-					return err
+					if err != nil {
+						return err
+					}
+					return nil
 				}
 
 				if err := collectTests(&gbuild.PackageData{

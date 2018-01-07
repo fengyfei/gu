@@ -1,8 +1,8 @@
 language: go
 go:
-  - 1.7.x
-  - 1.8.x
-  - 1.9.x
+  - 1.7
+  - 1.8
+  - 1.9
   - tip
 os:
   - linux
@@ -14,7 +14,5 @@ script:
   - OUT="$(go get -a)"; test -z "$OUT" || (echo "$OUT" && return 1)
   - OUT="$(gofmt -l -d ./)"; test -z "$OUT" || (echo "$OUT" && return 1)
   - go vet -v ./...
-  - go test -race -v -coverprofile=coverage.txt -covermode=atomic ./
+  - go test ./
   - go build
-after_success:
-  - bash <(curl -s https://codecov.io/bash)

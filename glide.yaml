@@ -55,6 +55,8 @@ import:
   version: v1.8.2
 - package: github.com/grpc-ecosystem/go-grpc-middleware
 - package: google.golang.org/genproto
+- package: github.com/op/go-logging
+  version: ^1.0.0
 testImport:
 - package: github.com/smartystreets/goconvey
   version: 1.6.3
