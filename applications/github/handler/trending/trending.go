@@ -89,6 +89,8 @@ readFromCache:
 		goto readFromCache
 	}
 
+	// Read the cache and crawl the new data at the same time.
+	nats.StartTrendingCrawler(req.Lang)
 	for _, t = range tList {
 		info = infoResp{
 			Title:    t.Title,
