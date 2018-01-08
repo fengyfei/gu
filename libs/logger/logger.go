@@ -30,62 +30,31 @@
 package logger
 
 import (
-	"os"
+	"strings"
 
-	"github.com/op/go-logging"
+	"github.com/fengyfei/gu/libs/logger/logs"
 )
-
-const guModuleID = "gu"
-
-var (
-	guLogger         *logging.Logger
-	backend          *logging.LogBackend
-	format           logging.Formatter
-	backendFormatter logging.Backend
-)
-
-func init() {
-	guLogger = logging.MustGetLogger(guModuleID)
-	backend = logging.NewLogBackend(os.Stderr, "", 0)
-	format = logging.MustStringFormatter(
-		`%{color}%{time:2006/01/02 15:04:05.000} %{shortfunc} ▶ %{id:03x}%{color:reset} %{message}`,
-	)
-	backendFormatter = logging.NewBackendFormatter(backend, format)
-	logging.SetBackend(backendFormatter)
-}
 
 // Debug prints debug messages.
 func Debug(v ...interface{}) {
-	if len(v) > 1 {
-		guLogger.Debug(v[0].(string), v[1:]...)
-	} else {
-		guLogger.Debug("Debug: %s", v...)
-	}
+	logs.Debug(generateFmtStr(len(v)), v...)
 }
 
 // Info prints normal messages.
 func Info(v ...interface{}) {
-	if len(v) > 1 {
-		guLogger.Info(v[0].(string), v[1:]...)
-	} else {
-		guLogger.Info("Info: %s", v...)
-	}
+	logs.Info(generateFmtStr(len(v)), v...)
 }
 
 // Warn prints warning messages.
 func Warn(v ...interface{}) {
-	if len(v) > 1 {
-		guLogger.Warning(v[0].(string), v[1:]...)
-	} else {
-		guLogger.Warning("Warning: %s", v...)
-	}
+	logs.Warn(generateFmtStr(len(v)), v...)
 }
 
 // Error prints error.
 func Error(v ...interface{}) {
-	if len(v) > 1 {
-		guLogger.Error(v[0].(string), v[1:]...)
-	} else {
-		guLogger.Error("Error: %s", v...)
-	}
+	logs.Error(generateFmtStr(len(v)), v...)
+}
+
+func generateFmtStr(n int) string {
+	return strings.Repeat("%v ", n)
 }
