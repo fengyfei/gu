@@ -48,7 +48,7 @@ func init() {
 	guLogger = logging.MustGetLogger(guModuleID)
 	backend = logging.NewLogBackend(os.Stderr, "", 0)
 	format = logging.MustStringFormatter(
-		`%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{id:03x}%{color:reset} %{message}`,
+		`%{color}%{time:2006/01/02 15:04:05.000} %{shortfunc} ▶ %{id:03x}%{color:reset} %{message}`,
 	)
 	backendFormatter = logging.NewBackendFormatter(backend, format)
 	logging.SetBackend(backendFormatter)
