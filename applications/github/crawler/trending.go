@@ -68,7 +68,7 @@ func subAndStartCrawler() {
 		panic(err)
 	}
 
-	logger.Info("Successfully subscribe to NATS subject: %s", nats.SubjectTrending)
+	logger.Info("Successfully subscribe to NATS subject:", nats.SubjectTrending)
 }
 
 // storeTrending store it to TrendingCache and MongoDB when the trending

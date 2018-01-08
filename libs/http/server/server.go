@@ -208,7 +208,7 @@ func (ep *Entrypoint) Start(router http.Handler) error {
 	go ep.listenSignals()
 	go ep.startServer()
 
-	logger.Info("Serving on %s", ep.configuration.Address)
+	logger.Info("Serving on:", ep.configuration.Address)
 
 	return nil
 }
