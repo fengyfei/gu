@@ -60,3 +60,15 @@ func serverKeepaliveOptions() []gorpc.ServerOption {
 	serverOpts = append(serverOpts, gorpc.KeepaliveEnforcementPolicy(kep))
 	return serverOpts
 }
+
+func clientKeepaliveOptions() []gorpc.DialOption {
+	var clientOpts []gorpc.DialOption
+
+	kap := keepalive.ClientParameters{
+		Time:    keepaliveOptions.ClientKeepaliveTime * time.Second,
+		Timeout: keepaliveOptions.ClientKeepaliveTimeout * time.Second,
+	}
+	clientOpts = append(clientOpts, gorpc.WithKeepaliveParams(kap))
+
+	return clientOpts
+}

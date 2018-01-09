@@ -28,3 +28,75 @@
  */
 
 package grpc
+
+import (
+	"errors"
+
+	gorpc "google.golang.org/grpc"
+)
+
+// Client defines an interface representing a gRPC-based client.
+type Client interface {
+	// Target returns the RPC server address.
+	Target() string
+	// Conn returns the client connection to an RPC server.
+	Conn() *gorpc.ClientConn
+	// Options returns a list of DialOption.
+	Options() []gorpc.DialOption
+	// Stop tears down the ClientConn and all underlying connections.
+	Stop()
+}
+
+type clientImpl struct {
+	target  string
+	options []gorpc.DialOption
+	conn    *gorpc.ClientConn
+}
+
+// Target - Client interface implementation.
+func (c *clientImpl) Target() string {
+	return c.target
+}
+
+// Conn - Client interface implementation.
+func (c *clientImpl) Conn() *gorpc.ClientConn {
+	return c.conn
+}
+
+// Options - Client interface implementation.
+func (c *clientImpl) Options() []gorpc.DialOption {
+	return c.options
+}
+
+// Stop - Client interface implementation.
+func (c *clientImpl) Stop() {
+	c.conn.Close()
+}
+
+// NewClientToTarget creates a new Client based on a target server address.
+func NewClientToTarget(target string) (Client, error) {
+	if target == "" {
+		return nil, errors.New("empty target server")
+	}
+
+	var dialOpts []gorpc.DialOption
+
+	client := clientImpl{
+		target: target,
+	}
+
+	// buffer size options
+	dialOpts = append(dialOpts, gorpc.WithWriteBufferSize(serverMaxRecvMsgSize))
+	// keepalive options
+	dialOpts = append(dialOpts, clientKeepaliveOptions()...)
+
+	conn, err := gorpc.Dial(target, dialOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	client.options = dialOpts
+	client.conn = conn
+
+	return client, nil
+}
