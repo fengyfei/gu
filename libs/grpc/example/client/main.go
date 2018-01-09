@@ -37,7 +37,9 @@ import (
 
 	pb "github.com/fengyfei/gu/labs/grpc/sample/greeter"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
+	gorpc "google.golang.org/grpc"
+
+	"github.com/fengyfei/gu/libs/grpc"
 )
 
 const (
@@ -46,17 +48,17 @@ const (
 )
 
 func main() {
-	conns := make([]*grpc.ClientConn, n)
+	conns := make([]*gorpc.ClientConn, n)
 	wg := &sync.WaitGroup{}
 
 	for i := 0; i < n; i++ {
-		conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithWriteBufferSize(1*1024*1024))
+		client, err := grpc.NewClientToTarget(address)
 		if err != nil {
 			log.Fatalf("did not connect: %v", err)
 		}
-		defer conn.Close()
+		defer client.Stop()
 
-		conns[i] = conn
+		conns[i] = client.Conn()
 	}
 
 	start := time.Now().UnixNano()

@@ -33,9 +33,10 @@ import (
 	"context"
 	"log"
 
+	"google.golang.org/grpc/reflection"
+
 	"github.com/fengyfei/gu/libs/grpc"
 	pb "github.com/fengyfei/gu/libs/grpc/example/greeter"
-	"google.golang.org/grpc/reflection"
 )
 
 const (
