@@ -81,22 +81,22 @@ func NewClientToTarget(target string) (Client, error) {
 
 	var dialOpts []gorpc.DialOption
 
-	client := clientImpl{
-		target: target,
-	}
-
+	dialOpts = append(dialOpts, gorpc.WithInsecure())
 	// buffer size options
 	dialOpts = append(dialOpts, gorpc.WithWriteBufferSize(serverMaxRecvMsgSize))
 	// keepalive options
 	dialOpts = append(dialOpts, clientKeepaliveOptions()...)
 
-	conn, err := gorpc.Dial(target, dialOpts)
+	conn, err := gorpc.Dial(target, dialOpts...)
 	if err != nil {
 		return nil, err
 	}
 
-	client.options = dialOpts
-	client.conn = conn
+	client := &clientImpl{
+		target:  target,
+		options: dialOpts,
+		conn:    conn,
+	}
 
 	return client, nil
 }

@@ -65,8 +65,8 @@ func clientKeepaliveOptions() []gorpc.DialOption {
 	var clientOpts []gorpc.DialOption
 
 	kap := keepalive.ClientParameters{
-		Time:    keepaliveOptions.ClientKeepaliveTime * time.Second,
-		Timeout: keepaliveOptions.ClientKeepaliveTimeout * time.Second,
+		Time:    time.Duration(keepaliveOptions.ClientKeepaliveTime) * time.Second,
+		Timeout: time.Duration(keepaliveOptions.ClientKeepaliveTimeout) * time.Second,
 	}
 	clientOpts = append(clientOpts, gorpc.WithKeepaliveParams(kap))
 
