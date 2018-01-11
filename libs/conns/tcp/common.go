@@ -45,8 +45,8 @@ func isValidMessageID(id int32) (bool, error) {
 	}
 
 	if id > int32(maxReservedMessageID) {
-		return true, nil
+		return false, errors.New("message id not allowed")
 	}
 
-	return false, errors.New("message id not allowed")
+	return true, nil
 }
