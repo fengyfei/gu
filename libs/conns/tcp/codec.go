@@ -55,15 +55,12 @@ func encode(message *Message) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func decode(payload []byte) (*Message, error) {
-	var (
-		err     error
-		message *Message
-	)
+func decode(payload []byte) (Message, error) {
+	var message Message
 
 	buf := bytes.NewBuffer(payload)
 
-	err = binary.Read(buf, binary.BigEndian, &message.len)
+	err := binary.Read(buf, binary.BigEndian, &message.len)
 	if err != nil {
 		return nil, err
 	}
