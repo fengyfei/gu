@@ -88,6 +88,13 @@ func (tc *trendingCache) Load(lang string) ([]*github.Trending, bool) {
 	return nil, false
 }
 
+// Flush used to clean the cache.
+func (tc *trendingCache) Flush() {
+	tc.mux.Lock()
+	tc.cache = make(map[string]reposCache)
+	tc.mux.Unlock()
+}
+
 func sortByStar(list []*github.Trending) {
 	sort.Slice(list, func(i, j int) bool {
 		return list[i].Today > list[j].Today

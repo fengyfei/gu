@@ -69,6 +69,7 @@ func LangInfo(c *server.Context) error {
 		t     *github.Trending
 		tList []*github.Trending
 		info  infoResp
+		today string = time.Now().Format("20060102")
 	)
 
 	if err = c.JSONBody(&req); err != nil {
@@ -89,8 +90,6 @@ readFromCache:
 		goto readFromCache
 	}
 
-	// Read the cache and crawl the new data at the same time.
-	nats.StartTrendingCrawler(req.Lang)
 	for _, t = range tList {
 		info = infoResp{
 			Title:    t.Title,
@@ -102,6 +101,12 @@ readFromCache:
 		}
 
 		resp = append(resp, info)
+	}
+
+	// Check whether the data in the cache is up-to-date.
+	if t.Date != today {
+		crawler.TrendingCache.Flush()
+		nats.StartTrendingCrawler(req.Lang)
 	}
 
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, resp)
