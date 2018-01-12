@@ -105,7 +105,7 @@ readFromCache:
 
 	// Check whether the data in the cache is up-to-date.
 	if t.Date != today {
-		crawler.TrendingCache.Flush()
+		crawler.TrendingCache.Flush(t.Lang)
 		nats.StartTrendingCrawler(req.Lang)
 	}
 

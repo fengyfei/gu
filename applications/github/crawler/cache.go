@@ -76,9 +76,9 @@ func (tc *trendingCache) Load(lang string) ([]*github.Trending, bool) {
 	tc.mux.RLock()
 	defer tc.mux.RUnlock()
 
-	if trendingMap, ok := tc.cache[lang]; ok {
-		for title := range trendingMap {
-			list = append(list, trendingMap[title])
+	if reposMap, ok := tc.cache[lang]; ok {
+		for reposKey := range reposMap {
+			list = append(list, reposMap[reposKey])
 		}
 
 		sortByStar(list)
@@ -88,10 +88,10 @@ func (tc *trendingCache) Load(lang string) ([]*github.Trending, bool) {
 	return nil, false
 }
 
-// Flush used to clean the cache.
-func (tc *trendingCache) Flush() {
+// Flush clears the cache for the specified language.
+func (tc *trendingCache) Flush(lang string) {
 	tc.mux.Lock()
-	tc.cache = make(map[string]reposCache)
+	tc.cache[lang] = make(reposCache)
 	tc.mux.Unlock()
 }
 
