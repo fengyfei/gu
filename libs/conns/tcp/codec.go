@@ -58,7 +58,7 @@ func encode(message *Message) ([]byte, error) {
 func decode(payload []byte) (Message, error) {
 	var message Message
 
-	buf := bytes.NewBuffer(payload)
+	buf := bytes.NewReader(payload)
 
 	err := binary.Read(buf, binary.BigEndian, &message.len)
 	if err != nil {
