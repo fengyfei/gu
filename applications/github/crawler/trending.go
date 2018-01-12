@@ -83,7 +83,7 @@ func storeTrending() {
 		select {
 		case tInfo = <-github.DataPipe:
 			// write to cache
-			TrendingCache.Store(tInfo.Lang, tInfo)
+			TrendingCache.Write(&tInfo.Lang, tInfo)
 
 			// write to database
 			t := &trending.Trending{

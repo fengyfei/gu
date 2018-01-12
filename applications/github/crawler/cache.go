@@ -52,31 +52,31 @@ func newTrendingCache() *trendingCache {
 	}
 }
 
-// Store store the trending data in TrendingCache.
-func (tc *trendingCache) Store(lang string, trending *github.Trending) {
+// Write write the trending data to TrendingCache.
+func (tc *trendingCache) Write(lang *string, trending *github.Trending) {
 	tc.mux.Lock()
 	defer tc.mux.Unlock()
 
 	reposKey := trending.Title + trending.Date
 
-	if _, ok := tc.cache[lang]; ok {
-		tc.cache[lang][reposKey] = trending
+	if _, ok := tc.cache[*lang]; ok {
+		tc.cache[*lang][reposKey] = trending
 	} else {
-		tc.cache[lang] = make(reposCache)
-		tc.cache[lang][reposKey] = trending
+		tc.cache[*lang] = make(reposCache)
+		tc.cache[*lang][reposKey] = trending
 	}
 }
 
-// Load getting the trending list of the specified language from TrendingCache.
+// Read getting the trending list of the specified language from TrendingCache.
 // The results were descended in sequence according to the field "Today" of
 // struct "github.Trending".
-func (tc *trendingCache) Load(lang string) ([]*github.Trending, bool) {
+func (tc *trendingCache) Read(lang *string) ([]*github.Trending, bool) {
 	var list []*github.Trending
 
 	tc.mux.RLock()
 	defer tc.mux.RUnlock()
 
-	if reposMap, ok := tc.cache[lang]; ok {
+	if reposMap, ok := tc.cache[*lang]; ok {
 		for reposKey := range reposMap {
 			list = append(list, reposMap[reposKey])
 		}
@@ -89,9 +89,9 @@ func (tc *trendingCache) Load(lang string) ([]*github.Trending, bool) {
 }
 
 // Flush clears the cache for the specified language.
-func (tc *trendingCache) Flush(lang string) {
+func (tc *trendingCache) Flush(lang *string) {
 	tc.mux.Lock()
-	tc.cache[lang] = make(reposCache)
+	tc.cache[*lang] = make(reposCache)
 	tc.mux.Unlock()
 }
 

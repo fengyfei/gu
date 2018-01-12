@@ -83,7 +83,7 @@ func LangInfo(c *server.Context) error {
 	}
 
 readFromCache:
-	if tList, ok = crawler.TrendingCache.Load(*req.Lang); !ok {
+	if tList, ok = crawler.TrendingCache.Read(req.Lang); !ok {
 		nats.StartTrendingCrawler(req.Lang)
 		time.Sleep(5 * time.Second)
 
@@ -105,7 +105,7 @@ readFromCache:
 
 	// Check whether the data in the cache is up-to-date.
 	if t.Date != today {
-		crawler.TrendingCache.Flush(t.Lang)
+		crawler.TrendingCache.Flush(req.Lang)
 		nats.StartTrendingCrawler(req.Lang)
 	}
 
