@@ -55,7 +55,7 @@ func encode(message *Message) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func decode(payload []byte) (Message, error) {
+func decode(payload []byte) (*Message, error) {
 	var message Message
 
 	buf := bytes.NewReader(payload)
@@ -75,5 +75,5 @@ func decode(payload []byte) (Message, error) {
 		return nil, err
 	}
 
-	return message, nil
+	return &message, nil
 }
