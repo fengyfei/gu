@@ -30,11 +30,8 @@
 package tcp
 
 import (
-	"bufio"
 	"errors"
-	"io"
 	"net"
-	"strings"
 	"sync"
 
 	"github.com/fengyfei/gu/libs/logger"
@@ -48,15 +45,10 @@ var (
 type Server struct {
 	mux       sync.RWMutex
 	listener  net.Listener
-	connMap   map[string]net.Conn
 	onlineMap map[string]bool
-	handler   map[string]HandleFunc
 }
 
-// HandlerFunc represents the handler that process information on net.Conn.
-type HandleFunc func(*bufio.ReadWriter)
-
-// NewServer create a Server.
+// NewServer creates a Server.
 func NewServer(address string) (*Server, error) {
 	l, err := net.Listen("tcp", address)
 	if err != nil {
@@ -65,66 +57,13 @@ func NewServer(address string) (*Server, error) {
 
 	server := &Server{
 		listener:  l,
-		connMap:   make(map[string]net.Conn),
 		onlineMap: make(map[string]bool),
-		handler:   make(map[string]HandleFunc),
 	}
 
 	return server, nil
 }
 
-// Listen waits for and returns the next connection to the listener.
-func (s *Server) Listen() {
-	for {
-		conn, err := s.listener.Accept()
-		if err != nil {
-			continue
-		}
-
-		s.connMap[conn.RemoteAddr().String()] = conn
-		s.onlineMap[conn.RemoteAddr().String()] = true
-		go s.HandleMsg(conn)
-	}
-}
-
-// AddHandler add a HandlerFunc of the specified name to server.
-func (s *Server) AddHandler(name string, f HandleFunc) {
-	s.mux.Lock()
-	s.handler[name] = f
-	s.mux.Unlock()
-}
-
-// HandleMsg handle the information on net.Conn.
-func (s *Server) HandleMsg(conn net.Conn) {
-	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
-	defer conn.Close()
-
-	for {
-		logger.Debug("Receive message...")
-		cmd, err := rw.ReadString("\n")
-		switch {
-		case err == io.EOF:
-			logger.Debug("Reached EOF - close this connection.")
-			return
-		case err != nil:
-			logger.Debug("Error reading command. Got: '"+cmd+"'", err)
-			return
-		}
-		cmd = strings.Trim(cmd, "\n ")
-		logger.Debug(cmd + "'")
-
-		s.mux.RLock()
-		handleCommand, ok := s.handler[cmd]
-		s.mux.RUnlock()
-		if !ok {
-			logger.Debug("Command '" + cmd + "' is not registered.")
-			return
-		}
-		handleCommand(rw)
-	}
-}
-
-// IsOnline check if the specified user id is online.
+// IsOnline checks if the specified user id is online.
 func (s *Server) IsOnline(id string) bool {
 	s.mux.RLock()
 	defer s.mux.RUnlock()
@@ -136,7 +75,7 @@ func (s *Server) IsOnline(id string) bool {
 	return true
 }
 
-// Add set the user of the specified id to be online.
+// Add sets the user of the specified id to be online.
 func (s *Server) Add(id string) bool {
 	if id == "" {
 		logger.Debug("Add:", errIDNotExists)
@@ -150,7 +89,7 @@ func (s *Server) Add(id string) bool {
 	return true
 }
 
-// Remove remove the user with the specified id from the online users.
+// Remove removes the user with the specified id from the online users.
 func (s *Server) Remove(id string) {
 	s.mux.Lock()
 	delete(s.onlineMap, id)

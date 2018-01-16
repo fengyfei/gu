@@ -31,6 +31,7 @@ package tcp
 
 import (
 	"errors"
+	"net"
 	"sync"
 
 	"github.com/fengyfei/gu/libs/logger"
@@ -48,7 +49,7 @@ type Session struct {
 	connMap map[string]interface{}
 }
 
-// NewSession create a Session.
+// NewSession creates a Session.
 func NewSession(id string) *Session {
 	return &Session{
 		ID:      id,
@@ -56,7 +57,7 @@ func NewSession(id string) *Session {
 	}
 }
 
-// SessionID return the session ID.
+// SessionID returns the session ID.
 func (s *Session) SessionID() string {
 	return s.ID
 }
@@ -109,7 +110,7 @@ func (s *Session) Get(id string) interface{} {
 	return v
 }
 
-// Remove remove the specified id from this session.
+// Remove removes the specified id from this session.
 func (s *Session) Remove(id string) {
 	if s.connMap == nil {
 		logger.Error(errEmptyConnMap)
@@ -123,6 +124,21 @@ func (s *Session) Remove(id string) {
 
 // Broadcast send information to the connection in this session.
 func (s *Session) Broadcast(message []byte) error {
+	if s.connMap == nil {
+		return errEmptyConnMap
+	}
+
+	for _, v := range s.connMap {
+		conn, ok := v.(net.Conn)
+		if !ok {
+			continue
+		}
+
+		go func() {
+			conn.Write(message)
+		}()
+	}
+
 	return nil
 }
 
