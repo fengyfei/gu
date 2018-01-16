@@ -37,5 +37,20 @@ import (
 // Conn is a client connection.
 type Conn struct {
 	conn net.Conn
-	klt  *time.Timer
+	kat  *time.Timer
+}
+
+// NewConn connects to the address on TCP.
+func NewConn(address string) (*Conn, error) {
+	c, err := net.Dial("tcp", address)
+	if err != nil {
+		return nil, err
+	}
+
+	connection := &Conn{
+		conn: c,
+		kat:  time.NewTimer(keepaliveDuration),
+	}
+
+	return connection, nil
 }

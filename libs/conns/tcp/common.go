@@ -31,12 +31,14 @@ package tcp
 
 import (
 	"errors"
+	"time"
 )
 
 const (
 	maxReservedMessageID = 0x1000
 	// MessageKeepalive is the keepalive message id.
-	MessageKeepalive = 0x1
+	MessageKeepalive  = 0x1
+	keepaliveDuration = 1 * time.Second
 )
 
 func isValidMessageID(id int32) (bool, error) {
