@@ -54,3 +54,8 @@ func NewConn(address string) (*Conn, error) {
 
 	return connection, nil
 }
+
+// Conn returns net.Conn of Conn.
+func (c *Conn) Conn() net.Conn {
+	return c.conn
+}

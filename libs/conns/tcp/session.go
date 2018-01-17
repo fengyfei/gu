@@ -134,9 +134,7 @@ func (s *Session) Broadcast(message []byte) error {
 			continue
 		}
 
-		go func() {
-			conn.Write(message)
-		}()
+		conn.Write(message)
 	}
 
 	return nil

@@ -63,6 +63,11 @@ func NewServer(address string) (*Server, error) {
 	return server, nil
 }
 
+// Listener returns the net.Listener of Server.
+func (s *Server) Listener() net.Listener {
+	return s.listener
+}
+
 // IsOnline checks if the specified user id is online.
 func (s *Server) IsOnline(id string) bool {
 	s.mux.RLock()
