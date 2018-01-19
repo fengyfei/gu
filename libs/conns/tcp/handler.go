@@ -24,55 +24,14 @@
 
 /*
  * Revision History:
- *     Initial: 2018/01/08        Feng Yifei
+ *     Initial: 2018/01/18        Jia Chenhui
  */
 
 package tcp
 
-import (
-	"net"
-)
-
-// Message is a general tcp message format.
-type Message struct {
-	len     int32
-	id      int32
-	payload []byte
-}
-
-// NewMessage create a Message with capacity.
-func NewMessage(cap int) *Message {
-	return &Message{
-		len:     0,
-		id:      0,
-		payload: make([]byte, cap),
-	}
-}
-
-// Reset clean the Message.
-func (m *Message) Reset() {
-	m.len = 0
-	m.id = 0
-}
-
-// Read read from conn.
-func (m *Message) Read(conn net.Conn) error {
-	size, err := conn.Read(m.payload)
-	if err != nil {
-		return err
-	}
-
-	m.len = size
-
-	return nil
-}
-
-// Write write to conn.
-func (m *Message) Write(conn net.Conn) error {
-	_, err := conn.Write(m.payload[:m.len])
-	if err != nil {
-		return err
-	}
-
-	return nil
+// Handler represents the operation dispatched by the TCP server.
+type Handler interface {
+	OnMessage(*Message) error
+	OnError(error) error
+	OnClose() error
 }

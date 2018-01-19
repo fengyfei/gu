@@ -30,37 +30,143 @@
 package tcp
 
 import (
-	"errors"
 	"net"
 	"sync"
 
 	"github.com/fengyfei/gu/libs/logger"
 )
 
-var (
-	errIDNotExists = errors.New("this id does not exist")
-)
-
 // Server is a general tcp server.
 type Server struct {
-	mux       sync.RWMutex
-	listener  net.Listener
-	onlineMap map[string]bool
+	options  *Options
+	conns    *sync.Map
+	listener net.Listener
+	buffer   []*Message
+	sender   chan *Message
+	mux      sync.RWMutex
+	stop     chan struct{}
 }
 
 // NewServer creates a Server.
-func NewServer(address string) (*Server, error) {
-	l, err := net.Listen("tcp", address)
+func NewServer(opts *Options) *Server {
+	return &Server{
+		options: opts,
+		conns:   &sync.Map{},
+		buffer:  make([]*Message, opts.ReadBufSize),
+		sender:  make(chan *Message),
+		stop:    make(chan struct{}),
+	}
+}
+
+// ListenAndServe listen on the TCP network and then calls Serve to handle
+// requests on incoming connections.
+func (s *Server) ListenAndServe() error {
+	l, err := net.Listen("tcp", s.options.Address+":"+s.options.Port)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	server := &Server{
-		listener:  l,
-		onlineMap: make(map[string]bool),
+	s.Serve(l)
+	return nil
+}
+
+// Serve start the TCP server to accept.
+func (s *Server) Serve(listener net.Listener) {
+	defer func() {
+		s.mux.Lock()
+		lis := s.listener
+		s.listener = nil
+		s.mux.Unlock()
+
+		if lis != nil {
+			lis.Close()
+		}
+	}()
+
+	s.mux.Lock()
+	s.listener = listener
+	s.mux.Unlock()
+
+	logger.Debug("TCP server listen on:", listener.Addr().String())
+
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			continue
+		}
+
+		select {
+		case <-s.stop:
+			return
+		default:
+		}
+
+		go s.handlerConn(conn)
+	}
+}
+
+// handlerConn handle net.Conn.
+func (s *Server) handlerConn(conn net.Conn) {
+	go s.receive(conn)
+
+	ipStr := conn.RemoteAddr().String()
+	s.mux.Lock()
+	if s.conns == nil {
+		s.mux.Unlock()
+		conn.Close()
+		return
+	}
+	s.mux.Unlock()
+
+	if !s.Add(ipStr) {
+		conn.Close()
+		return
+	}
+	defer s.Remove(ipStr)
+
+	for {
+		select {
+		case <-s.stop:
+			conn.Close()
+			return
+		case msg := <-s.sender:
+			err := msg.Write(conn)
+			if err != nil {
+				s.options.Handler.OnError(err)
+			}
+		default:
+		}
+	}
+}
+
+// receive receive message from conn.
+func (s *Server) receive(conn net.Conn) {
+	index := 0
+	capacity := s.options.ReadBufSize
+
+	for {
+		msg := s.buffer[index]
+		msg.Reset()
+
+		err := msg.Read(conn)
+		if err != nil {
+			s.options.Handler.OnError(err)
+		} else {
+			s.options.Handler.OnMessage(msg)
+		}
+
+		index = (index + 1) % capacity
+	}
+}
+
+// Send send a message to conn.
+func (s *Server) Send(payload []byte, conn net.Conn) error {
+	msg, err := decode(payload)
+	if err != nil {
+		return err
 	}
 
-	return server, nil
+	return msg.Write(conn)
 }
 
 // Listener returns the net.Listener of Server.
@@ -70,10 +176,7 @@ func (s *Server) Listener() net.Listener {
 
 // IsOnline checks if the specified user id is online.
 func (s *Server) IsOnline(id string) bool {
-	s.mux.RLock()
-	defer s.mux.RUnlock()
-
-	if !s.onlineMap[id] {
+	if _, ok := s.conns.Load(id); !ok {
 		return false
 	}
 
@@ -83,29 +186,23 @@ func (s *Server) IsOnline(id string) bool {
 // Add sets the user of the specified id to be online.
 func (s *Server) Add(id string) bool {
 	if id == "" {
-		logger.Debug("Add:", errIDNotExists)
 		return false
 	}
-
-	s.mux.Lock()
-	s.onlineMap[id] = true
-	s.mux.Unlock()
-
+	s.conns.Store(id, true)
 	return true
 }
 
 // Remove removes the user with the specified id from the online users.
 func (s *Server) Remove(id string) {
-	s.mux.Lock()
-	delete(s.onlineMap, id)
-	s.mux.Unlock()
+	s.conns.Delete(id)
 }
 
 // Counts represents the number of online users.
 func (s *Server) Counts() int32 {
-	s.mux.RLock()
-	c := len(s.onlineMap)
-	s.mux.RUnlock()
-
-	return int32(c)
+	var size int32
+	s.conns.Range(func(k, v interface{}) bool {
+		size++
+		return true
+	})
+	return size
 }

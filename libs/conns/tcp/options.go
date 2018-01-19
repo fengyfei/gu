@@ -24,55 +24,42 @@
 
 /*
  * Revision History:
- *     Initial: 2018/01/08        Feng Yifei
+ *     Initial: 2018/01/18        Jia Chenhui
  */
 
 package tcp
 
-import (
-	"net"
+var (
+	// DefaultWriteListLen is the default length of write.
+	DefaultWriteListLen = 16
+	// DefaultReadBufSize is the default size of read buf.
+	DefaultReadBufSize = 1 << 10
+	// DefaultReadBufMaxSize is the default max size of read buf.
+	DefaultReadBufMaxSize = 4 << 10
 )
 
-// Message is a general tcp message format.
-type Message struct {
-	len     int32
-	id      int32
-	payload []byte
+// Options represents the options used for net.Conn.
+type Options struct {
+	Address        string
+	Port           string
+	Handler        Handler
+	WriteBufSize   int
+	ReadBufSize    int
+	ReadBufMaxSize int
 }
 
-// NewMessage create a Message with capacity.
-func NewMessage(cap int) *Message {
-	return &Message{
-		len:     0,
-		id:      0,
-		payload: make([]byte, cap),
-	}
-}
-
-// Reset clean the Message.
-func (m *Message) Reset() {
-	m.len = 0
-	m.id = 0
-}
-
-// Read read from conn.
-func (m *Message) Read(conn net.Conn) error {
-	size, err := conn.Read(m.payload)
-	if err != nil {
-		return err
+// NewOpts create a new options and set some default value.
+func NewOpts(addr, port string, handler Handler) *Options {
+	if addr == "" || port == "" || handler == nil {
+		panic("empty address or handler")
 	}
 
-	m.len = size
-
-	return nil
-}
-
-// Write write to conn.
-func (m *Message) Write(conn net.Conn) error {
-	_, err := conn.Write(m.payload[:m.len])
-	if err != nil {
-		return err
+	return &Options{
+		Address:        addr,
+		Port:           port,
+		Handler:        handler,
+		WriteBufSize:   DefaultWriteListLen,
+		ReadBufSize:    DefaultReadBufSize,
+		ReadBufMaxSize: DefaultReadBufMaxSize,
 	}
-
-	return nil
 }
