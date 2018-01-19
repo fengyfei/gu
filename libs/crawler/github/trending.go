@@ -107,7 +107,6 @@ func (c *trendingCrawler) parseContent(_ int, s *goquery.Selection) {
 	}
 
 	DataPipe <- info
-
 }
 
 func star2Int(star string) int {
