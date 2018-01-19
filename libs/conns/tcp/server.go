@@ -160,13 +160,14 @@ func (s *Server) receive(conn net.Conn) {
 }
 
 // Send send a message to conn.
-func (s *Server) Send(payload []byte, conn net.Conn) error {
+func (s *Server) Send(payload []byte) error {
 	msg, err := decode(payload)
 	if err != nil {
 		return err
 	}
 
-	return msg.Write(conn)
+	s.sender <- msg
+	return nil
 }
 
 // Listener returns the net.Listener of Server.
