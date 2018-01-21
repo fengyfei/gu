@@ -1,7 +1,9 @@
 # editor
 .vscode
 .idea
-
+*/.idea
 *.log
 applications/beego/shop/shop
 applications/beego/shop/img
+.DS_Store
+*/.DS_Store
