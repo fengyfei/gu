@@ -49,11 +49,17 @@ type GoCN struct {
 	Content map[string]string `json:"content"`
 }
 
+type ok struct{}
+
 var (
+	counterURL int
 	invalidKey [10]string  = [10]string{"/", ".", "\"", "$", "*", "<", ">", ":", "|", "?"}
 	invalidLi  [5]string   = [5]string{"\nGopherChina2018来了！ https://www.bagevent.com/event/1086224\n", "GopherChina Telegram群现已上线 https://t.me/gopherchina ", " 微博", " QZONE", " 微信"}
+	errorPipe  chan error  = make(chan error)
 	urlPipe    chan string = make(chan string)
-	readyPipe  chan bool   = make(chan bool)
+	overURL    chan ok     = make(chan ok)
+	overNews   chan ok     = make(chan ok)
+	readyPipe  chan ok     = make(chan ok)
 	DataPipe   chan *GoCN  = make(chan *GoCN)
 )
 
@@ -72,43 +78,87 @@ func (c *gocnCrawler) Init() error {
 }
 
 func (c *gocnCrawler) Start() error {
+	go func() {
+		readyPipe <- ok{}
+	}()
+
+	go c.startURL()
+	go c.startNews()
+
+	for {
+		select {
+		case err := <-errorPipe:
+			if err != nil {
+				return err
+			}
+		case <-overNews:
+			return nil
+		}
+	}
+}
+
+func (c *gocnCrawler) startURL() {
 	var (
 		page int
 	)
-
-	go ready()
-	go c.startNews()
 
 	for {
 		select {
 		case <-readyPipe:
 			page++
-			err := c.collectorURL.Visit(fmt.Sprintf("https://gocn.io/sort_type-new__category-14__day-0__is_recommend-0__page-%d", page))
-			if err != nil {
-				return err
-			}
+			go func() {
+				err := c.collectorURL.Visit(fmt.Sprintf("https://gocn.io/sort_type-new__category-14__day-0__is_recommend-0__page-%d", page))
+				if err != nil {
+					errorPipe <- err
+				}
+			}()
+		case <-overURL:
+			goto EXIT
+		}
+	}
+
+EXIT:
+	overNews <- ok{}
+}
+
+func (c *gocnCrawler) parseURL(e *colly.HTMLElement) {
+	if strings.Contains(e.Text, "每日新闻") {
+		if e.Attr("href") == "https://gocn.io/explore/category-14" {
+			counterURL += 100
+		} else if strings.Contains(e.Attr("href"), "https://gocn.io/topic/") {
+			counterURL += 100
+		} else {
+			counterURL++
+			url := e.Attr("href")
+			urlPipe <- url
+		}
+
+		if counterURL > 200 {
+			counterURL = 0
+			readyPipe <- ok{}
+		} else if counterURL == 200 {
+			counterURL = 0
+			overURL <- ok{}
+		}
+	}
+}
+
+func (c *gocnCrawler) startNews() {
+	for {
+		select {
+		case url := <-urlPipe:
+			go func() {
+				err := c.collectorNews.Visit(url)
+				if err != nil {
+					errorPipe <- err
+				}
+			}()
 		case <-time.NewTimer(3 * time.Second).C:
 			goto EXIT
 		}
 	}
 
 EXIT:
-	return nil
-}
-
-func ready() {
-	for i := 0; i < 20; i++ {
-		readyPipe <- true
-	}
-}
-
-func (c *gocnCrawler) parseURL(e *colly.HTMLElement) {
-	if strings.Contains(e.Text, "每日新闻") {
-		if e.Attr("href") != "https://gocn.io/explore/category-14" && !strings.Contains(e.Attr("href"), "https://gocn.io/topic/") {
-			url := e.Attr("href")
-			urlPipe <- url
-		}
-	}
 }
 
 func (c *gocnCrawler) parseNews(e *colly.HTMLElement) {
@@ -170,25 +220,6 @@ func (data *GoCN) parseNews(query string, e *colly.HTMLElement) {
 			break
 		}
 	}
-}
-
-func (c *gocnCrawler) startNews() error {
-	for {
-		select {
-		case url := <-urlPipe:
-			go func() {
-				err := c.collectorNews.Visit(url)
-				if err != nil {
-					fmt.Println("news", err, url)
-				}
-			}()
-		case <-time.NewTimer(1 * time.Second).C:
-			goto EXIT
-		}
-	}
-
-EXIT:
-	return nil
 }
 
 func parseTitle(title string) string {
