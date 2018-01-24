@@ -32,6 +32,7 @@ package gocn
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/fengyfei/gu/libs/crawler"
 	"github.com/gocolly/colly"
@@ -49,8 +50,9 @@ type GoCN struct {
 
 var (
 	invalidKey [10]string  = [10]string{"/", ".", "\"", "$", "*", "<", ">", ":", "|", "?"}
+	invalidP               = []string{"活动预告", "编辑", "招聘信息", "订阅新闻", "GopherChina"}
 	urlPipe    chan string = make(chan string)
-	readyPipe  chan bool   = make(chan bool)
+	overPipe   chan bool   = make(chan bool)
 	DataPipe   chan *GoCN  = make(chan *GoCN)
 )
 
@@ -61,60 +63,87 @@ func NewGoCNCrawler() crawler.Crawler {
 }
 
 func (c *gocnCrawler) Init() error {
-	go func() {
-		urlPipe <- "https://gocn.io/sort_type-new__category-14__day-0__is_recommend-0__page-1"
-	}()
-	fmt.Println(123456)
+	c.collector.OnHTML("a", c.parseURL)
 	return nil
 }
 
 func (c *gocnCrawler) Start() error {
-	var page int
-	go func() {
-		for {
-			if url, ok := <-urlPipe; ok {
-				fmt.Println(url)
-				c.init(url)
+	var (
+		page int
+	)
 
-				if strings.Contains(url, "https://gocn.io/sort_type-new__category-14__day-0__is_recommend-0__page-") {
-					page++
-					urlPipe <- fmt.Sprintf("https://gocn.io/sort_type-new__category-14__day-0__is_recommend-0__page-%d", page)
-				}
-				go func() {
-					c.start(url)
-				}()
-			}
-		}
-	}()
+	go ready()
+	go c.startNews()
+
 	for {
-
+		select {
+		case <-overPipe:
+			page++
+			err := c.start(fmt.Sprintf("%s%d", "https://gocn.io/sort_type-new__category-14__day-0__is_recommend-0__page-", page))
+			if err != nil {
+				return err
+			}
+		case <-time.NewTimer(3 * time.Second).C:
+			goto AAA
+		}
 	}
-
+AAA:
+	fmt.Println("break")
 	return nil
+}
+
+func ready() {
+	for i := 0; i < 20; i++ {
+		overPipe <- true
+	}
 }
 
 func (c *gocnCrawler) parseURL(e *colly.HTMLElement) {
 	if strings.Contains(e.Text, "每日新闻") {
-		if e.Attr("href") != "https://gocn.io/explore/category-14" && e.Attr("href") != "https://gocn.io/topic/每日新闻" {
-			url := e.Text + "\t" + e.Attr("href")
+		if e.Attr("href") != "https://gocn.io/explore/category-14" && !strings.Contains(e.Attr("href"), "https://gocn.io/topic/") {
+			url := e.Attr("href")
 			urlPipe <- url
 		}
 	}
 }
 
 func (c *gocnCrawler) parseNews(e *colly.HTMLElement) {
-	var cn = &GoCN{
+	var data = &GoCN{
+		Time:    e.DOM.Find("p").Eq(0).Text(),
 		URL:     e.Request.URL.String(),
 		Content: make(map[string]string),
 	}
-	val, exists := e.DOM.Find("a").Attr("href")
-	if exists {
-		index := strings.Index(e.Text, "http://") + strings.Index(e.Text, "https://")
+	for i := 0; ; i++ {
+		var (
+			url  string
+			text string
+		)
+		url = e.DOM.Find("a").Eq(i).Text()
+		text = e.DOM.Find("p").Eq(i + 1).Text()
+		for _, value := range invalidP {
+			if strings.Contains(text, value) {
+				text = ""
+				break
+			}
+		}
+		if text == "" {
+			text = e.DOM.Find("li").Eq(i).Text()
+		}
+		index := strings.Index(text, "http://") + strings.Index(text, "https://")
 		if index > 0 {
-			cn.Content[validKey(string([]byte(e.Text)[:index]))] = val
+			text = string([]byte(text)[:index])
+		}
+		if url == "" || text == "" {
+			break
+		}
+		data.Content[validKey(text)] = url
+		if len(data.Content) == 5 {
+			break
 		}
 	}
-	DataPipe <- cn
+	sum++
+	fmt.Println("sum", sum, *data)
+	DataPipe <- data
 }
 
 func validKey(str string) string {
@@ -125,16 +154,30 @@ func validKey(str string) string {
 	return str
 }
 
-func (c *gocnCrawler) init(url string) {
-	if strings.Contains(url, "https://gocn.io/sort_type-new__category-14__day-0__is_recommend-0__page-") {
-		c.collector.OnHTML("a", c.parseURL)
-	} else if strings.Contains(url, "https://gocn.io/question/") {
-		c.collector.OnHTML("li", c.parseNews)
-	} else {
-		c.collector.OnHTML("p", c.parseNews)
-	}
-}
-
 func (c *gocnCrawler) start(url string) error {
 	return c.collector.Visit(url)
+}
+
+func (c *gocnCrawler) startNews() error {
+	for {
+		select {
+		case url := <-urlPipe:
+			c.startxx(url)
+		case <-time.NewTimer(3 * time.Second).C:
+			goto AAA
+		}
+	}
+AAA:
+	return nil
+}
+
+func (c *gocnCrawler) startxx(url string) (err error) {
+	c.collector.OnHTML("div.content", c.parseNews)
+	go func() {
+		err = c.start(url)
+		if err != nil {
+			return
+		}
+	}()
+	return nil
 }
