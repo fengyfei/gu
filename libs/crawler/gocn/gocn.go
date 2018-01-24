@@ -39,7 +39,8 @@ import (
 )
 
 type gocnCrawler struct {
-	collector *colly.Collector
+	collectorURL  *colly.Collector
+	collectorNews *colly.Collector
 }
 
 type GoCN struct {
@@ -50,20 +51,23 @@ type GoCN struct {
 
 var (
 	invalidKey [10]string  = [10]string{"/", ".", "\"", "$", "*", "<", ">", ":", "|", "?"}
-	invalidP               = []string{"活动预告", "编辑", "招聘信息", "订阅新闻", "GopherChina"}
+	invalidLi  [5]string   = [5]string{"\nGopherChina2018来了！ https://www.bagevent.com/event/1086224\n", "GopherChina Telegram群现已上线 https://t.me/gopherchina ", " 微博", " QZONE", " 微信"}
 	urlPipe    chan string = make(chan string)
-	overPipe   chan bool   = make(chan bool)
+	readyPipe  chan bool   = make(chan bool)
 	DataPipe   chan *GoCN  = make(chan *GoCN)
 )
 
 func NewGoCNCrawler() crawler.Crawler {
 	return &gocnCrawler{
-		collector: colly.NewCollector(),
+		collectorURL:  colly.NewCollector(),
+		collectorNews: colly.NewCollector(),
 	}
 }
 
 func (c *gocnCrawler) Init() error {
-	c.collector.OnHTML("a", c.parseURL)
+	c.collectorURL.OnHTML("a", c.parseURL)
+	c.collectorNews.OnHTML("div.aw-mod", c.parseNews)
+
 	return nil
 }
 
@@ -77,24 +81,24 @@ func (c *gocnCrawler) Start() error {
 
 	for {
 		select {
-		case <-overPipe:
+		case <-readyPipe:
 			page++
-			err := c.start(fmt.Sprintf("%s%d", "https://gocn.io/sort_type-new__category-14__day-0__is_recommend-0__page-", page))
+			err := c.collectorURL.Visit(fmt.Sprintf("https://gocn.io/sort_type-new__category-14__day-0__is_recommend-0__page-%d", page))
 			if err != nil {
 				return err
 			}
 		case <-time.NewTimer(3 * time.Second).C:
-			goto AAA
+			goto EXIT
 		}
 	}
-AAA:
-	fmt.Println("break")
+
+EXIT:
 	return nil
 }
 
 func ready() {
 	for i := 0; i < 20; i++ {
-		overPipe <- true
+		readyPipe <- true
 	}
 }
 
@@ -108,76 +112,92 @@ func (c *gocnCrawler) parseURL(e *colly.HTMLElement) {
 }
 
 func (c *gocnCrawler) parseNews(e *colly.HTMLElement) {
-	var data = &GoCN{
-		Time:    e.DOM.Find("p").Eq(0).Text(),
-		URL:     e.Request.URL.String(),
-		Content: make(map[string]string),
-	}
-	for i := 0; ; i++ {
-		var (
-			url  string
-			text string
-		)
-		url = e.DOM.Find("a").Eq(i).Text()
-		text = e.DOM.Find("p").Eq(i + 1).Text()
-		for _, value := range invalidP {
-			if strings.Contains(text, value) {
-				text = ""
+	if strings.Contains(e.Attr("class"), "aw-mod aw-question-detail") {
+		var data = &GoCN{
+			Time:    parseTitle(e.DOM.Find("h1").Text()),
+			URL:     e.Request.URL.String(),
+			Content: make(map[string]string),
+		}
+
+		for i := 0; ; i++ {
+			url, _ := e.DOM.Find("a").Eq(i).Attr("href")
+			text := e.DOM.Find("li").Eq(i).Text()
+
+			for _, value := range invalidLi {
+				if strings.Contains(text, value) {
+					text = ""
+					break
+				}
+			}
+			if text == "" {
+				text = e.DOM.Find("p").Eq(i + 1).Text()
+			}
+
+			index := strings.Index(text, "http://") + strings.Index(text, "https://") + 1
+			if index > 0 {
+				text = string([]byte(text)[:index])
+			}
+
+			if url == "" || text == "" {
+				data.parseNews("p", e)
+				if len(data.Content) != 5 {
+					data.parseNews("code", e)
+				}
+				break
+			}
+
+			data.Content[validKey(text)] = url
+			if len(data.Content) == 5 {
 				break
 			}
 		}
-		if text == "" {
-			text = e.DOM.Find("li").Eq(i).Text()
+
+		DataPipe <- data
+	}
+}
+
+func (data *GoCN) parseNews(query string, e *colly.HTMLElement) {
+	data.Content = make(map[string]string)
+	urls := strings.Split(e.DOM.Find("a").Text(), "http")
+	for k, v := range strings.Split(e.DOM.Find(query).Text(), "http") {
+		if strings.Contains(v, "每日新闻") {
+			data.Content[validKey(strings.Split(v, ")")[1])] = "http" + urls[k+1]
+		} else {
+			vs := strings.Split(v, "\n")
+			data.Content[validKey(vs[len(vs)-1])] = "http" + urls[k+1]
 		}
-		index := strings.Index(text, "http://") + strings.Index(text, "https://")
-		if index > 0 {
-			text = string([]byte(text)[:index])
-		}
-		if url == "" || text == "" {
-			break
-		}
-		data.Content[validKey(text)] = url
-		if len(data.Content) == 5 {
+		if k == 4 {
 			break
 		}
 	}
-	sum++
-	fmt.Println("sum", sum, *data)
-	DataPipe <- data
-}
-
-func validKey(str string) string {
-	for _, value := range invalidKey {
-		str = strings.Replace(str, value, "", -1)
-	}
-
-	return str
-}
-
-func (c *gocnCrawler) start(url string) error {
-	return c.collector.Visit(url)
 }
 
 func (c *gocnCrawler) startNews() error {
 	for {
 		select {
 		case url := <-urlPipe:
-			c.startxx(url)
-		case <-time.NewTimer(3 * time.Second).C:
-			goto AAA
+			go func() {
+				err := c.collectorNews.Visit(url)
+				if err != nil {
+					fmt.Println("news", err, url)
+				}
+			}()
+		case <-time.NewTimer(1 * time.Second).C:
+			goto EXIT
 		}
 	}
-AAA:
+
+EXIT:
 	return nil
 }
 
-func (c *gocnCrawler) startxx(url string) (err error) {
-	c.collector.OnHTML("div.content", c.parseNews)
-	go func() {
-		err = c.start(url)
-		if err != nil {
-			return
-		}
-	}()
-	return nil
+func parseTitle(title string) string {
+	return strings.Split(strings.Split(title, "(")[1], ")")[0]
+}
+
+func validKey(str string) string {
+	for _, value := range invalidKey {
+		str = strings.Replace(str, value, "", -1)
+	}
+	return str
 }
