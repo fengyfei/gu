@@ -40,6 +40,7 @@ import (
 	"strings"
 
 	"github.com/fengyfei/gu/libs/crawler"
+	"github.com/fengyfei/gu/libs/logger"
 )
 
 var DataPipe chan LagouResult = make(chan LagouResult)
@@ -54,65 +55,7 @@ const (
 	UserAgent  = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36"
 )
 
-type lagouObject struct {
-	Content lagouContent `json:"content"`
-}
-
-type lagouContent struct {
-	PositionResult lagouPositionResult `json:"positionResult"`
-}
-
-type lagouPositionResult struct {
-	Result []LagouResult `json:"result"`
-}
-
-// LagouResult used to store the  data.
-type LagouResult struct {
-	CompanyId             int         `json:"companyId"`
-	CompanyShortName      string      `json:"companyShortName"`
-	CreateTime            string      `json:"createTime"`
-	PositionId            int         `json:"positionId"`
-	Score                 int         `json:"score"`
-	PositionAdvantage     string      `json:"positionAdvantage"`
-	Salary                string      `json:"salary"`
-	WorkYear              string      `json:"workYear"`
-	Education             string      `json:"education"`
-	City                  string      `json:"city"`
-	PositionName          string      `json:"positionName"`
-	CompanyLogo           string      `json:"companyLogo"`
-	FinanceStage          string      `json:"financeStage"`
-	IndustryField         string      `json:"industryField"`
-	JobNature             string      `json:"jobNature"`
-	CompanySize           string      `json:"companySize"`
-	Approve               int         `json:"approve"`
-	CompanyLabelList      []string    `json:"companyLabelList"`
-	PublisherId           int         `json:"publisherId"`
-	District              interface{} `json:"district"`
-	PositionLabels        []string    `json:"positionLables"`
-	IndustryLabels        []string    `json:"industryLables"`
-	BusinessZones         interface{} `json:"businessZones"`
-	AdWord                int         `json:"adWord"`
-	Longitude             string      `json:"longitude"`
-	Latitude              string      `json:"latitude"`
-	ImState               string      `json:"imState"`
-	LastLogin             uint64      `json:"lastLogin"`
-	Explain               interface{} `json:"explain"`
-	Plus                  interface{} `json:"plus"`
-	PcShow                int         `json:"pcShow"`
-	AppShow               int         `json:"appShow"`
-	Deliver               int         `json:"deliver"`
-	GradeDescription      interface{} `json:"gradeDescription"`
-	PromotionScoreExplain interface{} `json:"promotionScoreExplain"`
-	FirstType             string      `json:"firstType"`
-	SecondType            string      `json:"secondType"`
-	IsSchoolJob           int         `json:"isSchoolJob"`
-	SubwayLine            string      `json:"subwayline"`
-	StationName           string      `json:"stationname"`
-	LineStation           string      `json:"linestaion"`
-	FormatCreateTime      string      `json:"formatCreateTime"`
-	CompanyFullName       string      `json:"companyFullName"`
-}
-
+// What kind of job do you want to crawl?
 type lagouClient struct {
 	job *string
 }
@@ -133,7 +76,7 @@ func (lc *lagouClient) Init() error {
 func (lc *lagouClient) Start() error {
 	var sum int
 	for i := 1; true; i++ {
-		urls := lc.getJobHttp(i)
+		urls, _ := lc.getJobHttp(i)
 		if len(urls) == 0 {
 			break
 		}
@@ -143,7 +86,7 @@ func (lc *lagouClient) Start() error {
 	return nil
 }
 
-func (lc *lagouClient) getJobHttp(pn int) []string {
+func (lc *lagouClient) getJobHttp(pn int) ([]string, error) {
 	hc := newClient()
 
 	data := url.Values{}
@@ -157,19 +100,21 @@ func (lc *lagouClient) getJobHttp(pn int) []string {
 
 	resp, err := hc.Do(req)
 	if err != nil {
-		log.Fatalln("error in doing a http request.", err)
+		logger.Error("error in doing a http request.", err)
+		return nil, err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalln("error in reading response body.", err)
+		logger.Error("error in reading response body.", err)
+		return nil, err
 	}
 
-	var object lagouObject
-
+	var object LagouObject
 	err = json.Unmarshal(body, &object)
 	if err != nil {
-		log.Fatalln("error in unmarshalling response body.", err)
+		logger.Error("error in unmarshalling response body.", err)
+		return nil, err
 	}
 
 	var urls = make([]string, 0)
@@ -182,7 +127,7 @@ func (lc *lagouClient) getJobHttp(pn int) []string {
 	for i := 0; i < len(urls); i++ {
 		DataPipe <- object.Content.PositionResult.Result[i]
 	}
-	return urls
+	return urls, nil
 }
 
 func chRoutine() {
