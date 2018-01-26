@@ -42,6 +42,10 @@ type Connection struct {
 	Name       string
 }
 
+func (conn *Connection) Collection() *mgo.Collection {
+	return conn.collection
+}
+
 // NewConnection creates a connection to MongoDB.
 func NewConnection(s *mgo.Session, db, cname string) *Connection {
 	return &Connection{

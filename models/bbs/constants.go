@@ -24,42 +24,13 @@
 
 /*
  * Revision History:
- *     Initial: 2018/01/21        Chen Yanchen
+ *     Initial: 2018/01/24        Tong Yuehong
  */
 
-package user
+package bbs
 
-import (
-	//"github.com/fengyfei/gu/applications/core"
-	//"github.com/fengyfei/gu/libs/constants"
-	"github.com/fengyfei/gu/libs/http/server"
-	//"github.com/fengyfei/gu/libs/logger"
-
-	//"github.com/fengyfei/gu/models/bbs/user"
+const (
+	// Database name.
+	Database = "bbs"
+	ListSize = 10
 )
-
-//
-//func Login(u *server.Context) error {
-//	var req struct {
-//		Name     string
-//		Password string
-//	}
-//
-//	if err := u.JSONBody(&req); err != nil {
-//		logger.Debug(err)
-//		return core.WriteStatusAndDataJSON(u, constants.ErrInvalidParam, nil)
-//	}
-//
-//	err := user.UserServer.Login(req.Name, req.Password)
-//	if err != nil {
-//		logger.Debug(err)
-//		return core.WriteStatusAndDataJSON(u, constants.ErrMysql, nil)
-//	}
-//
-//	return core.WriteStatusAndDataJSON(u, constants.ErrSucceed, nil)
-//	u.ServeJSON()
-//}
-
-func Register(u *server.Context)  {
-
-}

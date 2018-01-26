@@ -24,42 +24,39 @@
 
 /*
  * Revision History:
- *     Initial: 2018/01/21        Chen Yanchen
+ *     Initial: 2018/01/24        Tong Yuehong
  */
 
-package user
+package conf
 
-import (
-	//"github.com/fengyfei/gu/applications/core"
-	//"github.com/fengyfei/gu/libs/constants"
-	"github.com/fengyfei/gu/libs/http/server"
-	//"github.com/fengyfei/gu/libs/logger"
+import "github.com/spf13/viper"
 
-	//"github.com/fengyfei/gu/models/bbs/user"
+type BbsConfig struct {
+	Address   string
+	MongoURL  string
+	CorsHosts []string
+}
+
+var (
+	BBSConfig *BbsConfig
 )
 
-//
-//func Login(u *server.Context) error {
-//	var req struct {
-//		Name     string
-//		Password string
-//	}
-//
-//	if err := u.JSONBody(&req); err != nil {
-//		logger.Debug(err)
-//		return core.WriteStatusAndDataJSON(u, constants.ErrInvalidParam, nil)
-//	}
-//
-//	err := user.UserServer.Login(req.Name, req.Password)
-//	if err != nil {
-//		logger.Debug(err)
-//		return core.WriteStatusAndDataJSON(u, constants.ErrMysql, nil)
-//	}
-//
-//	return core.WriteStatusAndDataJSON(u, constants.ErrSucceed, nil)
-//	u.ServeJSON()
-//}
+func init() {
+	load()
+}
 
-func Register(u *server.Context)  {
+// load read config file.
+func load() {
+	viper.AddConfigPath("./conf")
+	viper.SetConfigName("config")
 
+	if err := viper.ReadInConfig(); err != nil {
+		panic(err)
+	}
+
+	BBSConfig = &BbsConfig{
+		Address:   viper.GetString("server.address"),
+		MongoURL:  viper.GetString("mongo.url"),
+		CorsHosts: viper.GetStringSlice("middleware.cors.hosts"),
+	}
 }

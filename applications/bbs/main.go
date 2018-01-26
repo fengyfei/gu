@@ -29,7 +29,42 @@
 
 package main
 
-func main() {
+import (
+	"github.com/fengyfei/gu/applications/bbs/conf"
+	"github.com/fengyfei/gu/applications/bbs/routers/user"
+	"github.com/fengyfei/gu/libs/http/server"
+	"github.com/fengyfei/gu/libs/http/server/middleware"
+	"github.com/fengyfei/gu/libs/logger"
+)
 
+func main() {
+	startServer()
 }
 
+var (
+	ep *server.Entrypoint
+)
+
+// startServer starts a HTTP server.
+func startServer() {
+	serverConfig := &server.Configuration{
+		Address: conf.BBSConfig.Address,
+	}
+
+	ep = server.NewEntrypoint(serverConfig, nil)
+
+	// add middlewares
+	ep.AttachMiddleware(middleware.NegroniRecoverHandler())
+	ep.AttachMiddleware(middleware.NegroniLoggerHandler())
+	ep.AttachMiddleware(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowedOrigins: conf.BBSConfig.CorsHosts,
+		AllowedMethods: []string{server.GET, server.POST},
+	}))
+
+	if err := ep.Start(user.Router.Handler()); err != nil {
+		logger.Error(err)
+		return
+	}
+
+	ep.Wait()
+}

@@ -32,15 +32,24 @@ package user
 import (
 	"github.com/fengyfei/gu/libs/http/server"
 
-	"github.com/fengyfei/gu/applications/bbs/handler/user"
+	"github.com/fengyfei/gu/applications/bbs/handler/article"
 )
 
-func InitRouter(u *server.Router)  {
+var (
+	Router *server.Router
+)
+
+func init() {
+	Router = server.NewRouter()
+	InitRouter(Router)
+}
+
+func InitRouter(u *server.Router) {
 	if u == nil {
 		panic("[InitRouter]: server couldn't be nil")
 	}
 
-	// User
-	u.Post("/api/v1/user/longin", user.Login)
-	u.Post("api/v1/user/register", user.Register)
+	u.Post("/article/insert", article.AddArticle)
+	u.Post("/module/insert", article.AddModule)
+	u.Post("/module/theme/insert", article.AddTheme)
 }
