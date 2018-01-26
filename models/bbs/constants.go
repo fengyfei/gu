@@ -33,4 +33,7 @@ const (
 	// Database name.
 	Database = "bbs"
 	ListSize = 10
+
+
+	// ErrNotFound - No result found
 )

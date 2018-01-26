@@ -30,6 +30,8 @@
 package article
 
 import (
+	"errors"
+
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
@@ -41,6 +43,7 @@ import (
 type moduleserviceProvider struct{}
 
 var (
+	ErrMDNotFound = errors.New("No result found")
 	// Service expose serviceProvider
 	ModuleService *moduleserviceProvider
 	modulesession *mongo.Connection
@@ -92,33 +95,33 @@ func init() {
 
 // GetModuleId gets moduleId by name
 func (sp *moduleserviceProvider) GetModuleID(name string) (bson.ObjectId, error) {
-	var moduleId Module
+	var module Module
 
 	conn := modulesession.Connect()
 	defer conn.Disconnect()
 
 	query := bson.M{"name": name}
 
-	err := conn.GetUniqueOne(query, &moduleId)
+	err := conn.GetUniqueOne(query, &module)
 
-	return moduleId.Id, err
+	return module.Id, err
 }
 
 // GetModuleId gets moduleId by name
 func (sp *moduleserviceProvider) GetThemeID(moduleName, themeName string) (string, error) {
-	var theme Module
+	var module Module
 
 	conn := modulesession.Connect()
 	defer conn.Disconnect()
 
 	query := bson.M{"name": moduleName, "themes.name": themeName}
 
-	err := conn.Collection().Find(query).Select(bson.M{"themes.$": 1}).One(&theme)
-	if len(theme.Themes) == 0 {
-		return "", err
+	err := conn.Collection().Find(query).Select(bson.M{"themes.$": 1}).One(&module)
+	if len(module.Themes) == 0 {
+		return "", ErrMDNotFound
 	}
 
-	return theme.Themes[0].Id.Hex(), err
+	return module.Themes[0].Id.Hex(), err
 }
 
 // add article

@@ -178,3 +178,16 @@ func (sp *articleserviceProvider) GetByTitle(title string) ([]Article, error) {
 
 	return list, err
 }
+
+func (sp *articleserviceProvider) GetArtId(title string) (bson.ObjectId, error){
+	var art Article
+
+	conn := modulesession.Connect()
+	defer conn.Disconnect()
+
+	query := bson.M{"title": title}
+
+	err := conn.GetUniqueOne(query, &art)
+
+	return art.Id, err
+}
