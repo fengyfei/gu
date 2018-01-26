@@ -43,6 +43,7 @@ import (
 type moduleserviceProvider struct{}
 
 var (
+	// ErrNotFound - No result found
 	ErrMDNotFound = errors.New("No result found")
 	// Service expose serviceProvider
 	ModuleService *moduleserviceProvider
@@ -179,7 +180,7 @@ func (sp *moduleserviceProvider) UpdateModuleView(num int64, module string) erro
 	if err != nil {
 		return err
 	}
-	updater := bson.M{"ModuleView": num}
+	updater := bson.M{"$set": bson.M{"ModuleView": num}}
 
 	conn := modulesession.Connect()
 	defer conn.Disconnect()

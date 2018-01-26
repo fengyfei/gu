@@ -71,7 +71,7 @@ func GetByModuleID(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	list, err := article.ArticleService.GetByMID(req.artId, req.moduleId)
+	list, err := article.ArticleService.GetByModuleID(req.artId, req.moduleId)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -91,11 +91,31 @@ func GetByThemeID(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	list, err := article.ArticleService.GetByMID(req.artId, req.ThemeId)
+	list, err := article.ArticleService.GetByModuleID(req.artId, req.ThemeId)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
+}
+
+// DeleteArt deletes article
+func DeleteArt(this *server.Context) error {
+	var title struct {
+		Title string
+	}
+
+	if err := this.JSONBody(&title); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	err := article.ArticleService.DeleteArt(title.Title)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, 0)
 }

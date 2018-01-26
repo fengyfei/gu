@@ -50,6 +50,7 @@ func InitRouter(u *server.Router) {
 	}
 
 	u.Post("/article/insert", article.AddArticle)
+	u.Post("/article/delete", article.DeleteArt)
 	u.Post("/module/insert", article.AddModule)
 	u.Post("/module/theme/insert", article.AddTheme)
 }

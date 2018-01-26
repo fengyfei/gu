@@ -38,6 +38,7 @@ import (
 	"github.com/fengyfei/gu/applications/bbs/conf"
 	"github.com/fengyfei/gu/libs/mongo"
 	"github.com/fengyfei/gu/models/bbs"
+	"fmt"
 )
 
 type articleserviceProvider struct{}
@@ -129,13 +130,13 @@ func (sp *articleserviceProvider) InsertArticle(article CreateArticle, userId ui
 }
 
 // GetByMID gets articles by moduleId.
-func (sp *articleserviceProvider) GetByMID(artId, moduleId string) ([]Article, error) {
+func (sp *articleserviceProvider) GetByModuleID(artId, moduleId string) ([]Article, error) {
 	var list []Article
 
 	conn := articlesession.Connect()
 	defer conn.Disconnect()
 
-	query := bson.M{"_id": bson.M{"$gt": bson.ObjectIdHex(artId)}, "moduleId": bson.ObjectIdHex(moduleId)}
+	query := bson.M{"moduleId": bson.ObjectIdHex(moduleId), "status": true}
 
 	sort := "-Created"
 	err := conn.GetLimitedRecords(query, bbs.ListSize, &list, sort)
@@ -158,7 +159,7 @@ func (sp *articleserviceProvider) GetByThemeID(artId, themeId string) ([]Article
 
 	sort := "-Created"
 
-	query = bson.M{"_id": bson.M{"$gt": bson.ObjectIdHex(artId)}, "moduleId": art.ModuleId, "themeId": bson.ObjectIdHex(themeId)}
+	query = bson.M{"moduleId": art.ModuleId, "themeId": bson.ObjectIdHex(themeId), "status": true}
 	err = conn.GetLimitedRecords(query, bbs.ListSize, &list, sort)
 
 	return list, err
@@ -173,16 +174,17 @@ func (sp *articleserviceProvider) GetByTitle(title string) ([]Article, error) {
 
 	sort := "-Created"
 
-	query := bson.M{"title": bson.M{"$like": title}}
+	query := bson.M{"title": bson.M{"$like": title}, "status": true}
 	err := conn.GetMany(query, &list, sort)
 
 	return list, err
 }
 
-func (sp *articleserviceProvider) GetArtId(title string) (bson.ObjectId, error){
+// GetArtId gets ArtId.
+func (sp *articleserviceProvider) GetArtId(title string) (bson.ObjectId, error) {
 	var art Article
 
-	conn := modulesession.Connect()
+	conn := articlesession.Connect()
 	defer conn.Disconnect()
 
 	query := bson.M{"title": title}
@@ -190,4 +192,21 @@ func (sp *articleserviceProvider) GetArtId(title string) (bson.ObjectId, error){
 	err := conn.GetUniqueOne(query, &art)
 
 	return art.Id, err
+}
+
+// DeleteArt deletes article
+func (sp *articleserviceProvider) DeleteArt(title string) error {
+	artId, err := sp.GetArtId(title)
+
+	if err != nil {
+		return err
+	}
+
+	conn := articlesession.Connect()
+	defer conn.Disconnect()
+
+	updater := bson.M{"$set": bson.M{"status": false}}
+	err = conn.Update(bson.M{"_id": artId}, updater)
+
+	return err
 }
