@@ -24,54 +24,28 @@
 
 /*
  * Revision History:
- *     Initial: 2018/01/24        Tong Yuehong
- *     Modify : 2018/01/27        Chen Yanchen
+ *     Initial: 2018/01/27        Chen Yanchen
  */
 
-package conf
+package initialize
 
-import "github.com/spf13/viper"
-
-type BbsConfig struct {
-	Address   string
-	Pages     int
-	MongoURL  string
-	CorsHosts []string
-
-	MysqlHost string
-	MysqlPort string
-	MysqlUser string
-	MysqlPass string
-	MysqlDb   string
-}
-
-var (
-	BBSConfig *BbsConfig
+import (
+	"github.com/fengyfei/gu/libs/orm/mysql"
 )
 
-func init() {
-	load()
-}
+const (
+	poolSize = 20
+)
 
-// load read config file.
-func load() {
-	viper.AddConfigPath("./conf")
-	viper.SetConfigName("config")
+var (
+	Pool *mysql.Pool
+)
 
-	if err := viper.ReadInConfig(); err != nil {
-		panic(err)
-	}
+// InitPool initialize the connection pool.
+func InitPool(db string) {
+	Pool = mysql.NewPool(db, poolSize)
 
-	BBSConfig = &BbsConfig{
-		Address: viper.GetString("server.address"),
-
-		MongoURL:  viper.GetString("mongo.url"),
-		CorsHosts: viper.GetStringSlice("middleware.cors.hosts"),
-		Pages:     viper.GetInt("pages"),
-		MysqlHost: viper.GetString("mysql.host"),
-		MysqlPort: viper.GetString("mysql.port"),
-		MysqlUser: viper.GetString("mysql.user"),
-		MysqlPass: viper.GetString("mysql.pass"),
-		MysqlDb:   viper.GetString("mysql.db"),
+	if Pool == nil {
+		panic("MySQL DB connection error.")
 	}
 }

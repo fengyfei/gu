@@ -120,7 +120,7 @@ func (this *UserServiceProvider) WechatLogin(conn orm.Connection, username, wech
 }
 
 // ChangeUsername
-func (this *UserServiceProvider) ChangeUsername(conn orm.Connection, UserId, newname *string) error {
+func (this *UserServiceProvider) ChangeUsername(conn orm.Connection, UserId uint64, newname *string) error {
 	db := conn.(*gorm.DB).Exec("USE user")
 	user := &User{}
 	return db.Where("id = ?", UserId).First(&user).Error

@@ -35,15 +35,16 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	jwtgo "github.com/dgrijalva/jwt-go"
+
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
-	"github.com/fengyfei/gu/libs/orm/mysql"
 
-	"github.com/fengyfei/gu/models/user"
-
+	"github.com/fengyfei/gu/applications/bbs/initialize"
 	"github.com/fengyfei/gu/applications/bbs/util"
+	"github.com/fengyfei/gu/models/user"
 )
 
 var (
@@ -80,7 +81,7 @@ func WechatLogin(this *server.Context) error {
 		token      string
 	)
 
-	conn, err := mysql.Pool{}.Get()
+	conn, err := initialize.Pool.Get()
 	if err != nil {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
 	}
@@ -124,20 +125,19 @@ func WechatLogin(this *server.Context) error {
 // ChangeUsername
 func ChangeUsername(this *server.Context) error {
 	var req struct {
-		UserId  string
+		UserId  uint64
 		NewName string `json:"newname" validate:"required,alphanum,min=6,max=30"`
 	}
-	conn, err := mysql.Pool{}.Get()
+	conn, err := initialize.Pool.Get()
 	if err != nil {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
 	}
-
+	req.UserId = this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(uint64)
 	if err = this.JSONBody(&req); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
-
-	err = user.UserServer.ChangeUsername(conn, &req.UserId, &req.NewName)
+	err = user.UserServer.ChangeUsername(conn, req.UserId, &req.NewName)
 	if err != nil {
 		logger.Error(err)
 		core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
@@ -151,6 +151,7 @@ func ChangeAvatar(this *server.Context) error {
 		UserId    uint64
 		NewAvatar string `json:"newname" validate:"required,alphanum,min=6,max=30"`
 	}
+	req.UserId = this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(uint64)
 
 	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)
