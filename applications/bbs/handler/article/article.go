@@ -51,7 +51,7 @@ func AddArticle(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	id, err := article.ArticleService.InsertArticle(reqAdd.Art, reqAdd.UserId)
+	id, err := article.ArticleService.Insert(reqAdd.Art, reqAdd.UserId)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -132,7 +132,7 @@ func DeleteArt(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	err := article.ArticleService.DeleteArt(title.Title)
+	err := article.ArticleService.Delete(title.Title)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)

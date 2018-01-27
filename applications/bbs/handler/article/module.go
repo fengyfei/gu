@@ -49,7 +49,7 @@ type (
 	}
 )
 
-// AddModule - add module
+// AddModule - add module.
 func AddModule(this *server.Context) error {
 	module := article.CreateModule{}
 
@@ -67,25 +67,7 @@ func AddModule(this *server.Context) error {
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, 0)
 }
 
-// UpdateArtNum updates ArtNum
-func UpdateArtNum(this *server.Context) error {
-	var module string
-
-	if err := this.JSONBody(&module); err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
-	}
-
-	err := article.ModuleService.UpdateArtNum(module)
-	if err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
-	}
-
-	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, 0)
-}
-
-// UpdateModuleView updates ModuleView
+// UpdateModuleView updates ModuleView.
 func UpdateModuleView(this *server.Context) error {
 	var moduleView moduleView
 
@@ -103,7 +85,7 @@ func UpdateModuleView(this *server.Context) error {
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, 0)
 }
 
-// AddTheme - add theme
+// AddTheme - add theme.
 func AddTheme(this *server.Context) error {
 	var createTheme createTheme
 

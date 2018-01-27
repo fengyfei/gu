@@ -40,14 +40,14 @@ import (
 	"github.com/fengyfei/gu/models/bbs"
 )
 
-type moduleserviceProvider struct{}
+type moduleServiceProvider struct{}
 
 var (
 	// ErrMDNotFound - No result found
 	ErrMDNotFound = errors.New("No result found")
 	// ModuleService expose serviceProvider
-	ModuleService *moduleserviceProvider
-	modulesession *mongo.Connection
+	ModuleService *moduleServiceProvider
+	moduleSession *mongo.Connection
 )
 
 // Theme represents the second category.
@@ -91,14 +91,14 @@ func init() {
 		Sparse:     true,
 	})
 
-	modulesession = mongo.NewConnection(s, bbs.Database, cname)
+	moduleSession = mongo.NewConnection(s, bbs.Database, cname)
 }
 
-// GetModuleID gets moduleId by name
-func (sp *moduleserviceProvider) GetModuleID(name string) (bson.ObjectId, error) {
+// GetModuleID gets moduleId by name.
+func (sp *moduleServiceProvider) GetModuleID(name string) (bson.ObjectId, error) {
 	var module Module
 
-	conn := modulesession.Connect()
+	conn := moduleSession.Connect()
 	defer conn.Disconnect()
 
 	query := bson.M{"name": name}
@@ -108,25 +108,27 @@ func (sp *moduleserviceProvider) GetModuleID(name string) (bson.ObjectId, error)
 	return module.Id, err
 }
 
-// GetThemeID gets moduleId by name
-func (sp *moduleserviceProvider) GetThemeID(moduleName, themeName string) (bson.ObjectId, error) {
+// GetThemeID gets moduleId by name.
+func (sp *moduleServiceProvider) GetThemeID(moduleName, themeName string) (bson.ObjectId, error) {
 	var module Module
 
-	conn := modulesession.Connect()
+	conn := moduleSession.Connect()
 	defer conn.Disconnect()
 
 	query := bson.M{"name": moduleName, "themes.name": themeName}
 
 	err := conn.Collection().Find(query).Select(bson.M{"themes.$": 1}).One(&module)
-	if len(module.Themes) == 0 {
+	if err != nil {
+		return "", err
+	} else if len(module.Themes) == 0 {
 		return "", ErrMDNotFound
 	}
 
 	return module.Themes[0].Id, err
 }
 
-// CreateModule add module
-func (sp *moduleserviceProvider) CreateModule(module CreateModule) error {
+// CreateModule add module.
+func (sp *moduleServiceProvider) CreateModule(module CreateModule) error {
 	mod := Module{
 		Id:         bson.NewObjectId(),
 		Name:       module.Name,
@@ -134,13 +136,15 @@ func (sp *moduleserviceProvider) CreateModule(module CreateModule) error {
 		ModuleView: 0,
 		Status:     true,
 	}
-	conn := modulesession.Connect()
+	conn := moduleSession.Connect()
+	defer conn.Disconnect()
+
 	err := conn.Insert(&mod)
 	return err
 }
 
-// CreateTheme add theme
-func (sp *moduleserviceProvider) CreateTheme(module, theme string) error {
+// CreateTheme add theme.
+func (sp *moduleServiceProvider) CreateTheme(module, theme string) error {
 	moduleId, err := sp.GetModuleID(module)
 
 	t := Theme{
@@ -150,41 +154,59 @@ func (sp *moduleserviceProvider) CreateTheme(module, theme string) error {
 
 	updater := bson.M{"$addToSet": bson.M{"themes": t}}
 
-	conn := modulesession.Connect()
+	conn := moduleSession.Connect()
 	defer conn.Disconnect()
 
 	err = conn.Update(bson.M{"_id": moduleId}, updater)
 	return err
 }
 
-// UpdateArtNum update the artNum of the module
-func (sp *moduleserviceProvider) UpdateArtNum(module string) error {
-	moduleId, err := sp.GetModuleID(module)
+// UpdateArtNum update the artNum of the module.
+func (sp *moduleServiceProvider) UpdateArtNum(module, sort string) error {
+	var updater interface{}
 
+	moduleId, err := sp.GetModuleID(module)
 	if err != nil {
 		return err
 	}
 
-	updater := bson.M{"$inc": bson.M{"ArtNum": 1}}
+	if sort == "add" {
+		updater = bson.M{"$inc": bson.M{"ArtNum": 1}}
+	} else {
+		updater = bson.M{"$inc": bson.M{"ArtNum": -1}}
+	}
 
-	conn := modulesession.Connect()
+	conn := moduleSession.Connect()
 	defer conn.Disconnect()
 
 	err = conn.Update(bson.M{"_id": moduleId}, updater)
 	return err
 }
 
-//  UpdateModuleView update ModuleView
-func (sp *moduleserviceProvider) UpdateModuleView(num int64, module string) error {
+//  UpdateModuleView update ModuleView.
+func (sp *moduleServiceProvider) UpdateModuleView(num int64, module string) error {
 	moduleId, err := sp.GetModuleID(module)
 	if err != nil {
 		return err
 	}
 	updater := bson.M{"$set": bson.M{"ModuleView": num}}
 
-	conn := modulesession.Connect()
+	conn := moduleSession.Connect()
 	defer conn.Disconnect()
 
 	err = conn.Update(bson.M{"_id": moduleId}, updater)
 	return err
+}
+
+// GetInfo gets module's information.
+func (sp *moduleServiceProvider) GetInfo(moduleId bson.ObjectId) (Module, error) {
+	var module Module
+
+	conn := moduleSession.Connect()
+	defer conn.Disconnect()
+
+	query := bson.M{"_id": moduleId}
+	err := conn.GetUniqueOne(query, &module)
+
+	return module, err
 }

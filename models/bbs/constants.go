@@ -32,5 +32,4 @@ package bbs
 const (
 	// Database name.
 	Database = "bbs"
-	ListSize = 10
 )

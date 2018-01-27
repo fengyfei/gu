@@ -43,14 +43,14 @@ import (
 type articleserviceProvider struct{}
 
 var (
-	// Service expose serviceProvider
+	// ArticleService expose serviceProvider.
 	ArticleService *articleserviceProvider
-	articlesession *mongo.Connection
+	articleSession *mongo.Connection
 )
 
 // Article represents the article information.
 type Article struct {
-	Id         bson.ObjectId `bson:"_id"         json:"id"`
+	Id         bson.ObjectId `bson:"_id,omitempty"         json:"id"`
 	Title      string        `bson:"title"       json:"title" validate:"required,max=12"`
 	UserId     uint64        `bson:"userId"      json:"userId"`
 	Content    string        `bson:"content"     json:"content"`
@@ -91,21 +91,22 @@ func init() {
 		Sparse:     true,
 	})
 
-	articlesession = mongo.NewConnection(s, bbs.Database, CollArticle)
+	articleSession = mongo.NewConnection(s, bbs.Database, CollArticle)
 }
 
-// InsertArticle - add article
-func (sp *articleserviceProvider) InsertArticle(article CreateArticle, userId uint64) (string, error) {
+// Insert - add article.
+func (sp *articleserviceProvider) Insert(article CreateArticle, userId uint64) (string, error) {
 	moduleId, err := ModuleService.GetModuleID(article.Module)
 	if err != nil {
 		return "", err
 	}
+
 	ThemeId, err := ModuleService.GetThemeID(article.Module, article.Theme)
 	if err != nil {
 		return "", err
 	}
+
 	art := Article{
-		Id:         bson.NewObjectId(),
 		Title:      article.Title,
 		UserId:     userId,
 		Content:    article.Content,
@@ -117,15 +118,19 @@ func (sp *articleserviceProvider) InsertArticle(article CreateArticle, userId ui
 		Image:      article.Image,
 		Status:     true,
 	}
-	conn := articlesession.Connect()
-	err = conn.Insert(&art)
 
+	conn := articleSession.Connect()
+	defer conn.Disconnect()
+
+	err = conn.Insert(&art)
 	if err != nil {
 		return "", err
 	}
 
-	err = ModuleService.UpdateArtNum(article.Module)
-	return art.Id.Hex(), err
+	artId, err := sp.GetId(art.Title)
+	err = ModuleService.UpdateArtNum(article.Module, "add")
+
+	return artId.Hex(), err
 }
 
 // GetByModuleID gets articles by moduleId.
@@ -137,7 +142,7 @@ func (sp *articleserviceProvider) GetByModuleID(page int, module string) ([]Arti
 		return list, err
 	}
 
-	conn := articlesession.Connect()
+	conn := articleSession.Connect()
 	defer conn.Disconnect()
 
 	query := bson.M{"moduleId": moduleId, "status": true}
@@ -155,12 +160,12 @@ func (sp *articleserviceProvider) GetByThemeID(page int, module, theme string) (
 		return list, err
 	}
 
-	themeId, err := ModuleService.GetThemeID(module,theme)
+	themeId, err := ModuleService.GetThemeID(module, theme)
 	if err != nil {
 		return list, err
 	}
 
-	conn := articlesession.Connect()
+	conn := articleSession.Connect()
 	defer conn.Disconnect()
 
 	query := bson.M{"moduleId": moduleId, "themeId": themeId, "status": true}
@@ -173,22 +178,22 @@ func (sp *articleserviceProvider) GetByThemeID(page int, module, theme string) (
 func (sp *articleserviceProvider) GetByTitle(title string) ([]Article, error) {
 	var list []Article
 
-	conn := articlesession.Connect()
+	conn := articleSession.Connect()
 	defer conn.Disconnect()
 
 	sort := "-Created"
 
-	query := bson.M{"title": bson.M{"$regex": title,"$options":"$i"}, "status":true}
+	query := bson.M{"title": bson.M{"$regex": title, "$options": "$i"}, "status": true}
 	err := conn.GetMany(query, &list, sort)
 
 	return list, err
 }
 
-// GetArtId gets ArtId.
-func (sp *articleserviceProvider) GetArtId(title string) (bson.ObjectId, error) {
+// GetId gets ArtId.
+func (sp *articleserviceProvider) GetId(title string) (bson.ObjectId, error) {
 	var art Article
 
-	conn := articlesession.Connect()
+	conn := articleSession.Connect()
 	defer conn.Disconnect()
 
 	query := bson.M{"title": title}
@@ -198,19 +203,45 @@ func (sp *articleserviceProvider) GetArtId(title string) (bson.ObjectId, error) 
 	return art.Id, err
 }
 
-// DeleteArt deletes article
-func (sp *articleserviceProvider) DeleteArt(title string) error {
-	artId, err := sp.GetArtId(title)
+// GetInfo gets article's information.
+func (sp *articleserviceProvider) GetInfo(artId bson.ObjectId) (Article, error) {
+	var article Article
 
+	conn := articleSession.Connect()
+	defer conn.Disconnect()
+
+	query := bson.M{"_id": artId}
+	err := conn.GetUniqueOne(query, &article)
+
+	return article, err
+}
+
+// Delete deletes article.
+func (sp *articleserviceProvider) Delete(title string) error {
+	artId, err := sp.GetId(title)
 	if err != nil {
 		return err
 	}
 
-	conn := articlesession.Connect()
+	conn := articleSession.Connect()
 	defer conn.Disconnect()
 
 	updater := bson.M{"$set": bson.M{"status": false}}
 	err = conn.Update(bson.M{"_id": artId}, updater)
+	if err != nil {
+		return nil
+	}
 
+	art, err := sp.GetInfo(artId)
+	if err != nil {
+		return err
+	}
+
+	module, err := ModuleService.GetInfo(art.ModuleId)
+	if err != nil {
+		return err
+	}
+
+	err = ModuleService.UpdateArtNum(module.Name, "sub")
 	return err
 }
