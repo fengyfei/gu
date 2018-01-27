@@ -29,20 +29,20 @@
 
 package lagou
 
-type LagouObject struct {
-	Content LagouContent `json:"content"`
+type Object struct {
+	Content Content `json:"content"`
 }
 
-type LagouContent struct {
-	PositionResult LagouPositionResult `json:"positionResult"`
+type Content struct {
+	PositionResult PositionResult `json:"positionResult"`
 }
 
-type LagouPositionResult struct {
-	Result []LagouResult `json:"result"`
+type PositionResult struct {
+	Result []Result `json:"result"`
 }
 
 // LagouResult used to store the  data.
-type LagouResult struct {
+type Result struct {
 	CompanyId             int         `json:"companyId"`
 	CompanyShortName      string      `json:"companyShortName"`
 	CreateTime            string      `json:"createTime"`
