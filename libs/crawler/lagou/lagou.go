@@ -43,7 +43,7 @@ import (
 	"github.com/fengyfei/gu/libs/logger"
 )
 
-var DataPipe chan LagouResult = make(chan LagouResult)
+var DataPipe chan Result = make(chan Result)
 
 const (
 	jobHtml = "https://www.lagou.com/jobs/%d.html"
@@ -87,7 +87,7 @@ func (lc *lagouClient) Start() error {
 }
 
 func (lc *lagouClient) getJobHttp(pn int) ([]string, error) {
-	hc := newClient()
+	hc := &http.Client{}
 
 	data := url.Values{}
 	data.Set("fires", "fasle")
@@ -110,7 +110,7 @@ func (lc *lagouClient) getJobHttp(pn int) ([]string, error) {
 		return nil, err
 	}
 
-	var object LagouObject
+	var object Object
 	err = json.Unmarshal(body, &object)
 	if err != nil {
 		logger.Error("error in unmarshalling response body.", err)
@@ -134,10 +134,6 @@ func chRoutine() {
 	for {
 		fmt.Println(<-DataPipe)
 	}
-}
-
-func newClient() *http.Client {
-	return &http.Client{}
 }
 
 func newRequest(method, url string, body io.Reader) *http.Request {
