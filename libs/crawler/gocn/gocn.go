@@ -34,8 +34,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/asciimoo/colly"
 	"github.com/fengyfei/gu/libs/crawler"
-	"github.com/gocolly/colly"
 )
 
 type gocnCrawler struct {
@@ -63,6 +63,7 @@ var (
 	DataPipe   chan *GoCN  = make(chan *GoCN)
 )
 
+// NewGoCNCrawler generates a crawler for gocn news.
 func NewGoCNCrawler() crawler.Crawler {
 	return &gocnCrawler{
 		collectorURL:  colly.NewCollector(),
@@ -70,6 +71,7 @@ func NewGoCNCrawler() crawler.Crawler {
 	}
 }
 
+// Crawler interface Init
 func (c *gocnCrawler) Init() error {
 	c.collectorURL.OnHTML("a", c.parseURL)
 	c.collectorNews.OnHTML("div.aw-mod", c.parseNews)
@@ -77,6 +79,7 @@ func (c *gocnCrawler) Init() error {
 	return nil
 }
 
+// Crawler interface Start
 func (c *gocnCrawler) Start() error {
 	go func() {
 		readyPipe <- ok{}
