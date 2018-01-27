@@ -58,13 +58,13 @@ type Theme struct {
 
 // Module represents the module information.
 type Module struct {
-	Id         bson.ObjectId `bson:"_id"         json:"id"`
-	Name       string        `bson:"name"        json:"name"`
-	ArtNum     int64         `bson:"artNum"      json:"artNum"`
-	ModuleView int64         `bson:"moduleView"  json:"moduleView"`
-	Recommand  int           `bson:"recommend"   json:"recommend"`
-	Themes     []Theme       `bson:"themes"      json:"themes"`
-	Status     bool          `bson:"status"      json:"status"`
+	Id         bson.ObjectId `bson:"_id,omitempty"   json:"id"`
+	Name       string        `bson:"name"            json:"name"`
+	ArtNum     int64         `bson:"artNum"          json:"artNum"`
+	ModuleView int64         `bson:"moduleView"      json:"moduleView"`
+	Recommand  int           `bson:"recommend"       json:"recommend"`
+	Themes     []Theme       `bson:"themes"          json:"themes"`
+	Status     bool          `bson:"status"          json:"status"`
 }
 
 // CreateModule represents the module information when created.
@@ -124,18 +124,18 @@ func (sp *moduleServiceProvider) GetThemeID(moduleName, themeName string) (bson.
 		return "", ErrMDNotFound
 	}
 
-	return module.Themes[0].Id, err
+	return module.Themes[0].Id, nil
 }
 
 // CreateModule add module.
 func (sp *moduleServiceProvider) CreateModule(module CreateModule) error {
 	mod := Module{
-		Id:         bson.NewObjectId(),
 		Name:       module.Name,
 		ArtNum:     0,
 		ModuleView: 0,
 		Status:     true,
 	}
+
 	conn := moduleSession.Connect()
 	defer conn.Disconnect()
 
@@ -189,6 +189,7 @@ func (sp *moduleServiceProvider) UpdateModuleView(num int64, module string) erro
 	if err != nil {
 		return err
 	}
+
 	updater := bson.M{"$set": bson.M{"ModuleView": num}}
 
 	conn := moduleSession.Connect()

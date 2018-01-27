@@ -40,27 +40,27 @@ import (
 	"github.com/fengyfei/gu/models/bbs"
 )
 
-type articleserviceProvider struct{}
+type articleServiceProvider struct{}
 
 var (
 	// ArticleService expose serviceProvider.
-	ArticleService *articleserviceProvider
+	ArticleService *articleServiceProvider
 	articleSession *mongo.Connection
 )
 
 // Article represents the article information.
 type Article struct {
-	Id         bson.ObjectId `bson:"_id,omitempty"         json:"id"`
-	Title      string        `bson:"title"       json:"title" validate:"required,max=12"`
-	UserId     uint64        `bson:"userId"      json:"userId"`
-	Content    string        `bson:"content"     json:"content"`
-	ModuleId   bson.ObjectId `bson:"moduleId"    json:"moduleId"`
-	ThemeId    bson.ObjectId `bson:"themeId"     json:"themeId"`
-	CommentNum int64         `bson:"commentNum"  json:"commentNum"`
-	Times      int64         `bson:"times"       json:"times"`
-	Created    time.Time     `bson:"created"     json:"created"`
-	Image      string        `bson:"image"       json:"image"`
-	Status     bool          `bson:"status"      json:"status"`
+	Id         bson.ObjectId `bson:"_id,omitempty"  json:"id"`
+	Title      string        `bson:"title"          json:"title" validate:"required,max=12"`
+	UserId     uint64        `bson:"userId"         json:"userId"`
+	Content    string        `bson:"content"        json:"content"`
+	ModuleId   bson.ObjectId `bson:"moduleId"       json:"moduleId"`
+	ThemeId    bson.ObjectId `bson:"themeId"        json:"themeId"`
+	CommentNum int64         `bson:"commentNum"     json:"commentNum"`
+	Times      int64         `bson:"times"          json:"times"`
+	Created    time.Time     `bson:"created"        json:"created"`
+	Image      string        `bson:"image"          json:"image"`
+	Status     bool          `bson:"status"         json:"status"`
 }
 
 // CreateArticle represents the article information when created.
@@ -95,7 +95,7 @@ func init() {
 }
 
 // Insert - add article.
-func (sp *articleserviceProvider) Insert(article CreateArticle, userId uint64) (string, error) {
+func (sp *articleServiceProvider) Insert(article CreateArticle, userId uint64) (string, error) {
 	moduleId, err := ModuleService.GetModuleID(article.Module)
 	if err != nil {
 		return "", err
@@ -134,7 +134,7 @@ func (sp *articleserviceProvider) Insert(article CreateArticle, userId uint64) (
 }
 
 // GetByModuleID gets articles by moduleId.
-func (sp *articleserviceProvider) GetByModuleID(page int, module string) ([]Article, error) {
+func (sp *articleServiceProvider) GetByModuleID(page int, module string) ([]Article, error) {
 	var list []Article
 
 	moduleId, err := ModuleService.GetModuleID(module)
@@ -152,7 +152,7 @@ func (sp *articleserviceProvider) GetByModuleID(page int, module string) ([]Arti
 }
 
 // GetByThemeID get articles by themeId.
-func (sp *articleserviceProvider) GetByThemeID(page int, module, theme string) ([]Article, error) {
+func (sp *articleServiceProvider) GetByThemeID(page int, module, theme string) ([]Article, error) {
 	var list []Article
 
 	moduleId, err := ModuleService.GetModuleID(module)
@@ -175,7 +175,7 @@ func (sp *articleserviceProvider) GetByThemeID(page int, module, theme string) (
 }
 
 // GetByTitle get articles by title.
-func (sp *articleserviceProvider) GetByTitle(title string) ([]Article, error) {
+func (sp *articleServiceProvider) GetByTitle(title string) ([]Article, error) {
 	var list []Article
 
 	conn := articleSession.Connect()
@@ -190,7 +190,7 @@ func (sp *articleserviceProvider) GetByTitle(title string) ([]Article, error) {
 }
 
 // GetId gets ArtId.
-func (sp *articleserviceProvider) GetId(title string) (bson.ObjectId, error) {
+func (sp *articleServiceProvider) GetId(title string) (bson.ObjectId, error) {
 	var art Article
 
 	conn := articleSession.Connect()
@@ -204,7 +204,7 @@ func (sp *articleserviceProvider) GetId(title string) (bson.ObjectId, error) {
 }
 
 // GetInfo gets article's information.
-func (sp *articleserviceProvider) GetInfo(artId bson.ObjectId) (Article, error) {
+func (sp *articleServiceProvider) GetInfo(artId bson.ObjectId) (Article, error) {
 	var article Article
 
 	conn := articleSession.Connect()
@@ -217,7 +217,7 @@ func (sp *articleserviceProvider) GetInfo(artId bson.ObjectId) (Article, error) 
 }
 
 // Delete deletes article.
-func (sp *articleserviceProvider) Delete(title string) error {
+func (sp *articleServiceProvider) Delete(title string) error {
 	artId, err := sp.GetId(title)
 	if err != nil {
 		return err

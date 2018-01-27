@@ -60,46 +60,65 @@ func AddArticle(this *server.Context) error {
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, id)
 }
 
-//
-//// GetByModuleID gets articles by ModuleId.
-//func GetByModuleID(this *server.Context) error {
-//	var req struct {
-//		artId    string
-//		moduleId string
-//	}
-//	if err := this.JSONBody(&req); err != nil {
-//		logger.Error(err)
-//		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
-//	}
-//
-//	list, err := article.ArticleService.GetByModuleID(req.artId, req.moduleId)
-//	if err != nil {
-//		logger.Error(err)
-//		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
-//	}
-//
-//	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
-//}
-//
-//// GetByThemeID - gets articles by ThemeId.
-//func GetByThemeID(this *server.Context) error {
-//	var req struct {
-//		artId   string
-//		ThemeId string
-//	}
-//	if err := this.JSONBody(&req); err != nil {
-//		logger.Error(err)
-//		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
-//	}
-//
-//	list, err := article.ArticleService.GetByModuleID(req.artId, req.ThemeId)
-//	if err != nil {
-//		logger.Error(err)
-//		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
-//	}
-//
-//	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
-//}
+// GetByModuleID gets articles by ModuleId.
+func GetByModuleID(this *server.Context) error {
+	var req struct {
+		Page    int
+		Module string
+	}
+	if err := this.JSONBody(&req); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	list, err := article.ArticleService.GetByModuleID(req.Page, req.Module)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
+}
+
+// GetByThemeID - gets articles by ThemeId.
+func GetByThemeID(this *server.Context) error {
+	var req struct {
+		Page    int
+		Module string
+		Theme string
+	}
+	if err := this.JSONBody(&req); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	list, err := article.ArticleService.GetByThemeID(req.Page, req.Module, req.Theme)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
+}
+
+// GetByThemeID - gets articles by ThemeId.
+func GetByTitle(this *server.Context) error {
+	var title struct {
+		Title string
+	}
+	if err := this.JSONBody(&title); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	list, err := article.ArticleService.GetByTitle(title.Title)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
+}
 
 // DeleteArt deletes article
 func DeleteArt(this *server.Context) error {
