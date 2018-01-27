@@ -33,6 +33,7 @@ import (
 	"github.com/fengyfei/gu/libs/http/server"
 
 	"github.com/fengyfei/gu/applications/bbs/handler/article"
+	"github.com/fengyfei/gu/applications/bbs/handler/user"
 )
 
 var (
@@ -48,6 +49,10 @@ func InitRouter(u *server.Router) {
 	if u == nil {
 		panic("[InitRouter]: server couldn't be nil")
 	}
+
+	u.Post("/user/wechatlogin", user.WechatLogin)
+	u.Post("/user/changeusername", user.ChangeUsername)
+	u.Post("/user/changeavatar", user.ChangeAvatar)
 
 	u.Post("/article/insert", article.AddArticle)
 	u.Post("/article/delete", article.DeleteArt)

@@ -31,36 +31,117 @@ package user
 
 import (
 	"time"
+
+	"github.com/jinzhu/gorm"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
+
+	"github.com/fengyfei/gu/applications/bbs/conf"
+	"github.com/fengyfei/gu/libs/mongo"
+	"github.com/fengyfei/gu/libs/orm"
 )
 
 type UserServiceProvider struct{}
 
-var UserServer *UserServiceProvider
-
-type (
-	User struct {
-		Id       uint64     `orm:"column(id);pk"`
-		UserName string     `orm:"column(name)";unique;	json:"user_name"`
-		Password string     `orm:"column(password)" 	json:"password"`
-		Phone    string     `orm:"column(phone)" 		json:"phone"`
-		Created  *time.Time `orm:"column(created)"`
-		Status   bool       `orm:"column(status)"`
-		// Validate uint       `orm:"column(validate)" 	json:"validate"`
-		ThemesNum  uint64 `orm:"column(themes)"`
-		ArticleNum uint64 `orm:"column(articles)"`
-		LastLogin  *time.Time
-	}
-
-	UserInfo struct {
-		Id     uint64 `orm:"column(id);pk"`
-		UserId uint64
-	}
-
-	R struct {
-		Id      uint64
-		UserId  uint64
-		ThemeId uint64
-		Type    uint8
-		Status  bool
-	}
+const (
+	Wechat = iota
+	Github
+	Mobile
 )
+
+var (
+	UserServer *UserServiceProvider
+	session    *mongo.Connection
+)
+
+func init() {
+	const collection = "avatar"
+	url := conf.BBSConfig.MongoURL + "/" + "bbs"
+	s, err := mgo.Dial(url)
+	if err != nil {
+		panic(err)
+	}
+
+	s.SetMode(mgo.Monotonic, true)
+
+	session = mongo.NewConnection(s, "bbs", collection)
+	UserServer = &UserServiceProvider{}
+}
+
+// User represents users information
+type User struct {
+	UserId     uint64     `gorm:"primary_key;auto_increment"`
+	WechatCode string     `gorm:"unique;type:varchar(128)"`
+	UnionId    string     `gorm:"unique;type:varchar(128)"`
+	Username   string     `gorm:"unique;size:16"`
+	AvatarId   string     `gorm:"type:varchar(32)"`
+	Created    *time.Time `gorm:"column:created"`
+	LastLogin  *time.Time `gorm:"column:lastlogin"`
+	Type       int        `grom:"column:type"`
+	Status     bool       `gorm:"not null;default:1"`
+	ThemeNum   int64      `gorm:"not null;default:0"`
+	ArticleNum int64      `gorm:"not null;default:0"`
+}
+
+// Avatar
+type Avatar struct {
+	AvatarId bson.ObjectId `bson:"_id,omitempty"`
+	UserId   uint64        `bson:"UserId"`
+	Avatar   string        `bson:"Avatar"`
+}
+
+// WechatLogin
+func (this *UserServiceProvider) WechatLogin(conn orm.Connection, username, wechatCode, unionId *string) (uint64, error) {
+
+	user := &User{}
+	res := &User{}
+	user.Username = *username
+	user.WechatCode = *wechatCode
+	user.UnionId = *unionId
+	user.Type = Wechat
+
+	db := conn.(*gorm.DB).Exec("USE user")
+
+	err := db.Where("union_id = ?", *unionId).First(&res).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			// not found, create new user
+			err = db.Model(&User{}).Create(&user).Error
+			// insert user's avatar
+			UserServer.ChangeAvatar(&res.UserId, &res.AvatarId)
+			if err != nil {
+				return 0, err
+			}
+			return user.UserId, nil
+		}
+		return 0, err
+	}
+	return res.UserId, nil
+}
+
+// ChangeUsername
+func (this *UserServiceProvider) ChangeUsername(conn orm.Connection, UserId, newname *string) error {
+	db := conn.(*gorm.DB).Exec("USE user")
+	user := &User{}
+	return db.Where("id = ?", UserId).First(&user).Error
+}
+
+// ChangeAvatar
+func (this *UserServiceProvider) ChangeAvatar(userId *uint64, avatar *string) (string, error) {
+	var res Avatar
+	updater := bson.M{"$set": bson.M{
+		"avatar": *avatar,
+	}}
+	conn := session.Connect()
+	defer conn.Disconnect()
+
+	err := conn.Update(bson.M{"_id": bson.ObjectId(*userId)}, updater)
+
+	if err != nil {
+		return "", nil
+	}
+
+	query := bson.M{"userId": userId}
+	err = conn.GetUniqueOne(query, &res)
+	return res.AvatarId.Hex(), err
+}
