@@ -30,36 +30,137 @@
 package user
 
 import (
-	//"github.com/fengyfei/gu/applications/core"
-	//"github.com/fengyfei/gu/libs/constants"
-	"github.com/fengyfei/gu/libs/http/server"
-	//"github.com/fengyfei/gu/libs/logger"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
 
-	//"github.com/fengyfei/gu/models/bbs/user"
+	"github.com/fengyfei/gu/applications/core"
+	"github.com/fengyfei/gu/libs/constants"
+	"github.com/fengyfei/gu/libs/http/server"
+	"github.com/fengyfei/gu/libs/logger"
+	"github.com/fengyfei/gu/libs/orm/mysql"
+
+	"github.com/fengyfei/gu/models/user"
+
+	"github.com/fengyfei/gu/applications/bbs/util"
 )
 
-//
-//func Login(u *server.Context) error {
-//	var req struct {
-//		Name     string
-//		Password string
-//	}
-//
-//	if err := u.JSONBody(&req); err != nil {
-//		logger.Debug(err)
-//		return core.WriteStatusAndDataJSON(u, constants.ErrInvalidParam, nil)
-//	}
-//
-//	err := user.UserServer.Login(req.Name, req.Password)
-//	if err != nil {
-//		logger.Debug(err)
-//		return core.WriteStatusAndDataJSON(u, constants.ErrMysql, nil)
-//	}
-//
-//	return core.WriteStatusAndDataJSON(u, constants.ErrSucceed, nil)
-//	u.ServeJSON()
-//}
+var (
+	APPID    = ""
+	SECRET   = ""
+	typeUser = false
+)
 
-func Register(u *server.Context)  {
+type (
+	WechatLoginReq struct {
+		UserName   string `json:"userName" validate:"required,alphanum,min=6,max=30"`
+		WechatCode string `json:"wechatCode" validate:"required"`
+	}
 
+	wechatLogin struct {
+		data wechatLoginData
+	}
+
+	wechatLoginData struct {
+		errmsg  string
+		unionid string
+	}
+)
+
+// WechatLogin
+func WechatLogin(this *server.Context) error {
+	var (
+		wechatUser WechatLoginReq
+		userId     uint64
+		url        string
+		wechatData wechatLogin
+		wechatRes  *http.Response
+		con        []byte
+		token      string
+	)
+
+	conn, err := mysql.Pool{}.Get()
+	if err != nil {
+		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
+	}
+
+	err = this.Validate(&wechatUser)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	url = fmt.Sprintf("https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code", APPID, SECRET, wechatUser.WechatCode)
+
+	wechatRes, err = http.Get(url)
+	if err != nil {
+		return core.WriteStatusAndDataJSON(this, constants.ErrWechatAuth, nil)
+	}
+
+	con, _ = ioutil.ReadAll(wechatRes.Body)
+	err = json.Unmarshal(con, &wechatData)
+	if err != nil {
+		return core.WriteStatusAndDataJSON(this, constants.ErrWechatAuth, nil)
+	}
+
+	if wechatData.data.errmsg != "" {
+		return core.WriteStatusAndDataJSON(this, constants.ErrWechatAuth, nil)
+	}
+
+	userId, err = user.UserServer.WechatLogin(conn, &wechatUser.UserName, &wechatUser.WechatCode, &wechatData.data.unionid)
+	if err != nil {
+		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
+	}
+
+	token, err = util.NewToken(userId, typeUser)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, token)
+}
+
+// ChangeUsername
+func ChangeUsername(this *server.Context) error {
+	var req struct {
+		UserId  string
+		NewName string `json:"newname" validate:"required,alphanum,min=6,max=30"`
+	}
+	conn, err := mysql.Pool{}.Get()
+	if err != nil {
+		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
+	}
+
+	if err = this.JSONBody(&req); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	err = user.UserServer.ChangeUsername(conn, &req.UserId, &req.NewName)
+	if err != nil {
+		logger.Error(err)
+		core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, nil)
+}
+
+// ChangeAvatar
+func ChangeAvatar(this *server.Context) error {
+	var req struct {
+		UserId    uint64
+		NewAvatar string `json:"newname" validate:"required,alphanum,min=6,max=30"`
+	}
+
+	if err := this.JSONBody(&req); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	avatarId, err := user.UserServer.ChangeAvatar(&req.UserId, &req.NewAvatar)
+	if err != nil {
+		logger.Error(err)
+		core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, avatarId)
 }
