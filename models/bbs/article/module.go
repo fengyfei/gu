@@ -43,9 +43,9 @@ import (
 type moduleserviceProvider struct{}
 
 var (
-	// ErrNotFound - No result found
+	// ErrMDNotFound - No result found
 	ErrMDNotFound = errors.New("No result found")
-	// Service expose serviceProvider
+	// ModuleService expose serviceProvider
 	ModuleService *moduleserviceProvider
 	modulesession *mongo.Connection
 )
@@ -94,7 +94,7 @@ func init() {
 	modulesession = mongo.NewConnection(s, bbs.Database, cname)
 }
 
-// GetModuleId gets moduleId by name
+// GetModuleID gets moduleId by name
 func (sp *moduleserviceProvider) GetModuleID(name string) (bson.ObjectId, error) {
 	var module Module
 
@@ -108,8 +108,8 @@ func (sp *moduleserviceProvider) GetModuleID(name string) (bson.ObjectId, error)
 	return module.Id, err
 }
 
-// GetModuleId gets moduleId by name
-func (sp *moduleserviceProvider) GetThemeID(moduleName, themeName string) (string, error) {
+// GetThemeID gets moduleId by name
+func (sp *moduleserviceProvider) GetThemeID(moduleName, themeName string) (bson.ObjectId, error) {
 	var module Module
 
 	conn := modulesession.Connect()
@@ -122,10 +122,10 @@ func (sp *moduleserviceProvider) GetThemeID(moduleName, themeName string) (strin
 		return "", ErrMDNotFound
 	}
 
-	return module.Themes[0].Id.Hex(), err
+	return module.Themes[0].Id, err
 }
 
-// add article
+// CreateModule add module
 func (sp *moduleserviceProvider) CreateModule(module CreateModule) error {
 	mod := Module{
 		Id:         bson.NewObjectId(),
@@ -139,7 +139,7 @@ func (sp *moduleserviceProvider) CreateModule(module CreateModule) error {
 	return err
 }
 
-// add module
+// CreateTheme add theme
 func (sp *moduleserviceProvider) CreateTheme(module, theme string) error {
 	moduleId, err := sp.GetModuleID(module)
 
@@ -157,7 +157,7 @@ func (sp *moduleserviceProvider) CreateTheme(module, theme string) error {
 	return err
 }
 
-// Update the artNum of the module
+// UpdateArtNum update the artNum of the module
 func (sp *moduleserviceProvider) UpdateArtNum(module string) error {
 	moduleId, err := sp.GetModuleID(module)
 
@@ -174,7 +174,7 @@ func (sp *moduleserviceProvider) UpdateArtNum(module string) error {
 	return err
 }
 
-// Update ModuleView
+//  UpdateModuleView update ModuleView
 func (sp *moduleserviceProvider) UpdateModuleView(num int64, module string) error {
 	moduleId, err := sp.GetModuleID(module)
 	if err != nil {

@@ -38,7 +38,6 @@ import (
 	"github.com/fengyfei/gu/applications/bbs/conf"
 	"github.com/fengyfei/gu/libs/mongo"
 	"github.com/fengyfei/gu/models/bbs"
-	"fmt"
 )
 
 type articleserviceProvider struct{}
@@ -111,7 +110,7 @@ func (sp *articleserviceProvider) InsertArticle(article CreateArticle, userId ui
 		UserId:     userId,
 		Content:    article.Content,
 		ModuleId:   moduleId,
-		ThemeId:    bson.ObjectIdHex(ThemeId),
+		ThemeId:    ThemeId,
 		CommentNum: 0,
 		Times:      0,
 		Created:    time.Now(),
@@ -129,38 +128,43 @@ func (sp *articleserviceProvider) InsertArticle(article CreateArticle, userId ui
 	return art.Id.Hex(), err
 }
 
-// GetByMID gets articles by moduleId.
-func (sp *articleserviceProvider) GetByModuleID(artId, moduleId string) ([]Article, error) {
+// GetByModuleID gets articles by moduleId.
+func (sp *articleserviceProvider) GetByModuleID(page int, module string) ([]Article, error) {
 	var list []Article
+
+	moduleId, err := ModuleService.GetModuleID(module)
+	if err != nil {
+		return list, err
+	}
 
 	conn := articlesession.Connect()
 	defer conn.Disconnect()
 
-	query := bson.M{"moduleId": bson.ObjectIdHex(moduleId), "status": true}
-
-	sort := "-Created"
-	err := conn.GetLimitedRecords(query, bbs.ListSize, &list, sort)
+	query := bson.M{"moduleId": moduleId, "status": true}
+	err = conn.Collection().Find(query).Limit(conf.BBSConfig.Pages).Skip(page * conf.BBSConfig.Pages).All(&list)
 
 	return list, err
 }
 
 // GetByThemeID get articles by themeId.
-func (sp *articleserviceProvider) GetByThemeID(artId, themeId string) ([]Article, error) {
-	var (
-		art  Article
-		list []Article
-	)
+func (sp *articleserviceProvider) GetByThemeID(page int, module, theme string) ([]Article, error) {
+	var list []Article
+
+	moduleId, err := ModuleService.GetModuleID(module)
+	if err != nil {
+		return list, err
+	}
+
+	themeId, err := ModuleService.GetThemeID(module,theme)
+	if err != nil {
+		return list, err
+	}
 
 	conn := articlesession.Connect()
 	defer conn.Disconnect()
 
-	query := bson.M{"_id": bson.ObjectIdHex(artId)}
-	err := conn.GetUniqueOne(query, &art)
-
-	sort := "-Created"
-
-	query = bson.M{"moduleId": art.ModuleId, "themeId": bson.ObjectIdHex(themeId), "status": true}
-	err = conn.GetLimitedRecords(query, bbs.ListSize, &list, sort)
+	query := bson.M{"moduleId": moduleId, "themeId": themeId, "status": true}
+	err = conn.Collection().Find(query).Limit(conf.BBSConfig.Pages).Skip(page * conf.BBSConfig.Pages).All(&list)
 
 	return list, err
 }
@@ -174,7 +178,7 @@ func (sp *articleserviceProvider) GetByTitle(title string) ([]Article, error) {
 
 	sort := "-Created"
 
-	query := bson.M{"title": bson.M{"$like": title}, "status": true}
+	query := bson.M{"title": bson.M{"$regex": title,"$options":"$i"}, "status":true}
 	err := conn.GetMany(query, &list, sort)
 
 	return list, err

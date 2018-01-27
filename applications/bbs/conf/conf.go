@@ -35,6 +35,7 @@ type BbsConfig struct {
 	Address   string
 	MongoURL  string
 	CorsHosts []string
+	Pages     int
 }
 
 var (
@@ -58,5 +59,6 @@ func load() {
 		Address:   viper.GetString("server.address"),
 		MongoURL:  viper.GetString("mongo.url"),
 		CorsHosts: viper.GetStringSlice("middleware.cors.hosts"),
+		Pages:     viper.GetInt("pages"),
 	}
 }
