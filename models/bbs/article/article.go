@@ -229,7 +229,7 @@ func (sp *articleServiceProvider) Delete(title string) error {
 	updater := bson.M{"$set": bson.M{"status": false}}
 	err = conn.Update(bson.M{"_id": artId}, updater)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	art, err := sp.GetInfo(artId)
@@ -243,5 +243,22 @@ func (sp *articleServiceProvider) Delete(title string) error {
 	}
 
 	err = ModuleService.UpdateArtNum(module.Name, "sub")
+	return err
+}
+
+// UpdateCommentNum update the commentNum
+func (sp *articleServiceProvider) UpdateCommentNum(artId bson.ObjectId, sort string) error {
+	var updater interface{}
+
+	if sort == "add" {
+		updater = bson.M{"$inc": bson.M{"ArtNum": 1}}
+	} else {
+		updater = bson.M{"$inc": bson.M{"ArtNum": -1}}
+	}
+
+	conn := moduleSession.Connect()
+	defer conn.Disconnect()
+
+	err := conn.Update(bson.M{"_id": artId}, updater)
 	return err
 }
