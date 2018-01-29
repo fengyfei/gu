@@ -36,11 +36,11 @@ import (
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/models/bbs/article"
 	"gopkg.in/mgo.v2/bson"
-)
+	)
 
-// Create add comment.
+// AddComment create comment.
 func AddComment(this *server.Context) error {
-	var req article.Comment
+	var req article.CreateComment
 
 	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)
@@ -56,22 +56,28 @@ func AddComment(this *server.Context) error {
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, 0)
 }
 
-// Delete delete comment.
+// DeleteComment delete comment.
 func DeleteComment(this *server.Context) error {
-	var comment struct {
-		CommentId string
-	}
+	 CommentId := this.FormValue("comment")
 
-	if err := this.JSONBody(&comment); err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
-	}
-
-	err := article.CommentService.Delete(bson.ObjectIdHex(comment.CommentId))
+	err := article.CommentService.Delete(bson.ObjectIdHex(CommentId))
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, 0)
+}
+
+// GetCommentInfo get comment's information
+func GetCommentInfo(this *server.Context) error {
+	CommentId := this.FormValue("comment")
+
+	list ,err := article.CommentService.GetInfo(bson.ObjectIdHex(CommentId))
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, list)
 }

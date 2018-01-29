@@ -48,6 +48,7 @@ var (
 	commentSession *mongo.Connection
 )
 
+// Comment represents the comment information.
 type Comment struct {
 	Id        bson.ObjectId `bson:"_id,omitempty"  json:"id"`
 	CreatedId uint64        `bson:"createdId"      json:"createdId"`
@@ -59,9 +60,18 @@ type Comment struct {
 	Status    bool          `bson:"status"         json:"status"`
 }
 
+// CreateComment represents the article information when created.
+type CreateComment struct {
+	CreatedId uint64        `json:"createdId"`
+	ReplyId   uint64        `json:"replyId"`
+	ParentId  string        `json:"parentId"`
+	ArtId     string        `json:"artId"`
+	Content   string        `json:"content"`
+}
+
 func init() {
 	const (
-		CollArticle = "article"
+		CollComment = "comment"
 	)
 
 	url := conf.BBSConfig.MongoURL + "/" + bbs.Database
@@ -71,29 +81,22 @@ func init() {
 	}
 
 	s.SetMode(mgo.Monotonic, true)
-	s.DB(bbs.Database).C(CollArticle).EnsureIndex(mgo.Index{
-		Key:        []string{"title"},
-		Unique:     true,
-		Background: true,
-		Sparse:     true,
-	})
-
-	articleSession = mongo.NewConnection(s, bbs.Database, CollArticle)
+	commentSession = mongo.NewConnection(s, bbs.Database, CollComment)
 }
 
-// Create - insert comment
-func (sp *commentServiceProvider) Create(comment Comment) error {
+// Create - insert comment.
+func (sp *commentServiceProvider) Create(comment CreateComment) error {
 	comm := Comment{
 		CreatedId: comment.CreatedId,
 		ReplyId:   comment.ReplyId,
-		ParentId:  comment.ParentId,
-		ArtId:     comment.ArtId,
+		ParentId:  bson.ObjectIdHex(comment.ParentId),
+		ArtId:     bson.ObjectIdHex(comment.ArtId),
 		Content:   comment.Content,
 		Created:   time.Now(),
 		Status:    true,
 	}
 
-	conn := articleSession.Connect()
+	conn := commentSession.Connect()
 	defer conn.Disconnect()
 
 	err := conn.Insert(&comm)
@@ -101,21 +104,39 @@ func (sp *commentServiceProvider) Create(comment Comment) error {
 		return err
 	}
 
-	err = ArticleService.UpdateCommentNum(comment.ArtId, "add")
+	err = ArticleService.UpdateCommentNum(comm.ArtId, "add")
 	return err
 }
 
-// Delete - delete comment
+// Delete - delete comment.
 func (sp *commentServiceProvider) Delete(commentId bson.ObjectId) error {
-	conn := articleSession.Connect()
+	conn := commentSession.Connect()
 	defer conn.Disconnect()
 
-	updater := bson.M{"$set": bson.M{"status": false}}
-	err := conn.Update(bson.M{"_id": commentId}, updater)
+	c ,err := sp.GetInfo(commentId)
 	if err != nil {
 		return err
 	}
 
-	err = ArticleService.UpdateCommentNum(commentId, "sub")
+	updater := bson.M{"$set": bson.M{"status": false}}
+	err = conn.Update(bson.M{"_id": commentId}, updater)
+	if err != nil {
+		return err
+	}
+
+	err = ArticleService.UpdateCommentNum(c.ArtId, "sub")
 	return err
+}
+
+// GetInfo get comment's information.
+func (sp *commentServiceProvider) GetInfo(commentId bson.ObjectId) (Comment, error) {
+	var comment Comment
+
+	conn := commentSession.Connect()
+	defer conn.Disconnect()
+
+	query := bson.M{"_id": commentId, "status":true}
+	err := conn.GetUniqueOne(query, &comment)
+
+	return comment, err
 }
