@@ -49,19 +49,17 @@ type Trending struct {
 	Today    int
 }
 
-var (
-	DataPipe chan *Trending = make(chan *Trending)
-)
-
 type trendingCrawler struct {
 	collector *colly.Collector
+	dataPipe  chan *Trending
 	topic     *string
 }
 
 // NewTrendingCrawler generates a crawler for github trending.
-func NewTrendingCrawler(tag string) crawler.Crawler {
+func NewTrendingCrawler(tag string, dataPipe chan *Trending) crawler.Crawler {
 	return &trendingCrawler{
 		collector: colly.NewCollector(),
+		dataPipe:  dataPipe,
 		topic:     &tag,
 	}
 }
@@ -106,7 +104,7 @@ func (c *trendingCrawler) parseContent(_ int, s *goquery.Selection) {
 		Today:    today,
 	}
 
-	DataPipe <- info
+	c.dataPipe <- info
 }
 
 func star2Int(star string) int {

@@ -46,6 +46,9 @@ const (
 	// ErrAccount - No This User or Password Error
 	ErrAccount = 422
 
+	// ErrSubNats - Subscribe to nats error
+	ErrSubNats = 423
+
 	// ErrInternalServerError - Internal error.
 	ErrInternalServerError = 500
 

@@ -29,13 +29,8 @@
 
 package nats
 
-const (
-	// The NATS subject of getting the trend of a language for the day.
-	SubjectTrending = "GitHubTrending"
-)
-
 // StartTrendingCrawler publish a message to the subscriber to start the
 // specified language crawler.
 func StartTrendingCrawler(lang *string) {
-	Conn.Publish(SubjectTrending, []byte(*lang))
+	Conn.Publish(*lang, []byte(*lang))
 }

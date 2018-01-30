@@ -40,40 +40,39 @@ import (
 )
 
 var (
-	// Subscriber represents the subscriber of subject SubjectTrending.
-	Subscriber *nc.Subscriber
-
 	// TrendingCache use to store the trending data of specified language.
 	TrendingCache *trendingCache
 )
 
 func init() {
 	TrendingCache = newTrendingCache()
-	subAndStartCrawler()
 }
 
-// subAndStartCrawler subscribe to SubjectTrending and begin to execute the
+// SubNatsWithSubject subscribe to subject and begin to execute the
 // crawler after receiving the specified language.
-func subAndStartCrawler() {
-	var err error
+func SubNatsWithSubject(subject *string) (*nc.Subscriber, error) {
+	var (
+		err        error
+		subscriber *nc.Subscriber
+	)
 
+	dataPipe := make(chan *github.Trending)
 	msgHandler := func(msg *gonc.Msg) {
-		go storeTrending()
-		startTrendingCrawler(string(msg.Data))
+		go storeTrending(dataPipe)
+		startTrendingCrawler(string(msg.Data), dataPipe)
 	}
 
-	Subscriber, err = nats.Conn.Subscribe(nats.SubjectTrending, msgHandler)
+	subscriber, err = nats.Conn.Subscribe(*subject, msgHandler)
 	if err != nil {
-		logger.Error(err)
-		panic(err)
+		return nil, err
 	}
 
-	logger.Info("Successfully subscribe to NATS subject:", nats.SubjectTrending)
+	return subscriber, nil
 }
 
 // storeTrending store it to TrendingCache and MongoDB when the trending
 // data is received.
-func storeTrending() {
+func storeTrending(dataPipe chan *github.Trending) {
 	var (
 		err   error
 		tInfo *github.Trending
@@ -81,7 +80,7 @@ func storeTrending() {
 
 	for {
 		select {
-		case tInfo = <-github.DataPipe:
+		case tInfo = <-dataPipe:
 			// write to cache
 			TrendingCache.Write(&tInfo.Lang, tInfo)
 
@@ -103,8 +102,8 @@ func storeTrending() {
 }
 
 // startTrendingCrawler start the crawler.
-func startTrendingCrawler(lang string) error {
-	c := github.NewTrendingCrawler(lang)
+func startTrendingCrawler(lang string, dataPipe chan *github.Trending) error {
+	c := github.NewTrendingCrawler(lang, dataPipe)
 
 	return crawler.StartCrawler(c)
 }

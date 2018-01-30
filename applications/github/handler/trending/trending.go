@@ -39,6 +39,7 @@ import (
 	"github.com/fengyfei/gu/libs/crawler/github"
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
+	nc "github.com/fengyfei/gu/libs/nats"
 )
 
 type (
@@ -66,6 +67,7 @@ func LangInfo(c *server.Context) error {
 		ok    bool
 		req   langReq
 		resp  []infoResp = make([]infoResp, 0)
+		sub   *nc.Subscriber
 		t     *github.Trending
 		tList []*github.Trending
 		info  infoResp
@@ -81,6 +83,12 @@ func LangInfo(c *server.Context) error {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
+
+	if sub, err = crawler.SubNatsWithSubject(req.Lang); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrSubNats, nil)
+	}
+	defer sub.Unsubscribe()
 
 readFromCache:
 	if tList, ok = crawler.TrendingCache.Read(req.Lang); !ok {
