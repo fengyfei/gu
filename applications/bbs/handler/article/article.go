@@ -37,14 +37,20 @@ import (
 	"github.com/fengyfei/gu/models/bbs/article"
 )
 
-type req struct {
-	Art    article.CreateArticle `json:"art"`
-	UserId uint64                `json:"userId"`
-}
+type (
+	reqAdd struct {
+		Art    article.CreateArticle `json:"art"`
+		UserId uint64                `json:"userId"`
+	}
+
+	title struct {
+		Title string `json:"title"`
+	}
+)
 
 // AddArticle - add article.
 func AddArticle(this *server.Context) error {
-	var reqAdd req
+	var reqAdd reqAdd
 
 	if err := this.JSONBody(&reqAdd); err != nil {
 		logger.Error(err)
@@ -63,7 +69,7 @@ func AddArticle(this *server.Context) error {
 // GetByModuleID gets articles by ModuleId.
 func GetByModuleID(this *server.Context) error {
 	var req struct {
-		Page    int
+		Page   int
 		Module string
 	}
 	if err := this.JSONBody(&req); err != nil {
@@ -83,9 +89,9 @@ func GetByModuleID(this *server.Context) error {
 // GetByThemeID - gets articles by ThemeId.
 func GetByThemeID(this *server.Context) error {
 	var req struct {
-		Page    int
+		Page   int
 		Module string
-		Theme string
+		Theme  string
 	}
 	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)
@@ -103,9 +109,7 @@ func GetByThemeID(this *server.Context) error {
 
 // GetByThemeID - gets articles by ThemeId.
 func GetByTitle(this *server.Context) error {
-	var title struct {
-		Title string
-	}
+	var title title
 	if err := this.JSONBody(&title); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
@@ -120,11 +124,28 @@ func GetByTitle(this *server.Context) error {
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
 }
 
+// GetByUserId - gets articles by ThemeId.
+func GetByUserId(this *server.Context) error {
+	var user struct {
+		UserId string
+	}
+	if err := this.JSONBody(&user); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	list, err := article.ArticleService.GetByTitle(user.UserId)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
+}
+
 // DeleteArt deletes article
 func DeleteArt(this *server.Context) error {
-	var title struct {
-		Title string
-	}
+	var title title
 
 	if err := this.JSONBody(&title); err != nil {
 		logger.Error(err)
@@ -132,6 +153,27 @@ func DeleteArt(this *server.Context) error {
 	}
 
 	err := article.ArticleService.Delete(title.Title)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, 0)
+}
+
+// UpdateArtView update times.
+func UpdateTimes(this *server.Context) error {
+	var times struct {
+		Num   int64
+		ArtId string
+	}
+
+	if err := this.JSONBody(&times); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	err := article.ArticleService.UpdateTimes(times.Num, times.ArtId)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)

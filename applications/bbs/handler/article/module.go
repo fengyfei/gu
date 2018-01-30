@@ -44,8 +44,8 @@ type (
 	}
 
 	createTheme struct {
-		Module string
-		Theme  string
+		Module string  `json:"module"`
+		Theme  string  `json:"theme"`
 	}
 )
 
@@ -101,4 +101,76 @@ func AddTheme(this *server.Context) error {
 	}
 
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, 0)
+}
+
+// DeleteModule - delete module.
+func DeleteModule(this *server.Context) error {
+	var module struct {
+		ModuleId string
+	}
+
+	if err := this.JSONBody(&module); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	err := article.ModuleService.DeleteModule(module.ModuleId)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, 0)
+}
+
+// DeleteTheme - delete theme.
+func DeleteTheme(this *server.Context) error {
+	var theme struct {
+		ModuleId string
+		ThemeId  string
+	}
+
+	if err := this.JSONBody(&theme); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	err := article.ModuleService.DeleteTheme(theme.ModuleId, theme.ThemeId)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, 0)
+}
+
+// GetInfo get module's information.
+func GetInfo(this *server.Context) error {
+	var module struct {
+		ModuleId string
+	}
+
+	if err := this.JSONBody(&module); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	list, err := article.ModuleService.GetInfo(module.ModuleId)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, list)
+}
+
+// GetAllModule get all modules.
+func GetAllModule(this *server.Context) error {
+	list, err := article.ModuleService.GetAllModule()
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, list)
 }

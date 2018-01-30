@@ -189,6 +189,21 @@ func (sp *articleServiceProvider) GetByTitle(title string) ([]Article, error) {
 	return list, err
 }
 
+// GetByUserId get articles by title.
+func (sp *articleServiceProvider) GetByUserId(userId string) ([]Article, error) {
+	var list []Article
+
+	conn := articleSession.Connect()
+	defer conn.Disconnect()
+
+	sort := "-Created"
+
+	query := bson.M{"_id": bson.ObjectIdHex(userId), "status": true}
+	err := conn.GetMany(query, &list, sort)
+
+	return list, err
+}
+
 // GetId gets ArtId.
 func (sp *articleServiceProvider) GetId(title string) (bson.ObjectId, error) {
 	var art Article
@@ -229,7 +244,7 @@ func (sp *articleServiceProvider) Delete(title string) error {
 	updater := bson.M{"$set": bson.M{"status": false}}
 	err = conn.Update(bson.M{"_id": artId}, updater)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	art, err := sp.GetInfo(artId)
@@ -237,11 +252,39 @@ func (sp *articleServiceProvider) Delete(title string) error {
 		return err
 	}
 
-	module, err := ModuleService.GetInfo(art.ModuleId)
+	module, err := ModuleService.GetInfo(art.ModuleId.Hex())
 	if err != nil {
 		return err
 	}
 
 	err = ModuleService.UpdateArtNum(module.Name, "sub")
+	return err
+}
+
+// UpdateCommentNum update the commentNum.
+func (sp *articleServiceProvider) UpdateCommentNum(artId bson.ObjectId, sort string) error {
+	var updater = bson.M{}
+
+	if sort == "add" {
+		updater = bson.M{"$inc": bson.M{"commentNum": 1}}
+	} else {
+		updater = bson.M{"$inc": bson.M{"commentNum": -1}}
+	}
+
+	conn := articleSession.Connect()
+	defer conn.Disconnect()
+
+	err := conn.Update(bson.M{"_id": artId}, updater)
+	return err
+}
+
+//  UpdateTimes update times.
+func (sp *articleServiceProvider) UpdateTimes(num int64, artId string) error {
+	updater := bson.M{"$set": bson.M{"times": num}}
+
+	conn := articleSession.Connect()
+	defer conn.Disconnect()
+
+	err := conn.Update(bson.M{"_id": bson.ObjectIdHex(artId), "status": true}, updater)
 	return err
 }
