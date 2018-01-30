@@ -24,7 +24,7 @@
 
 /*
  * Revision History:
- *     Initial: 2017/10/28        Feng Yifei
+ *     Initial: 2018/01/08        Jia Chenhui
  */
 
 package logger
