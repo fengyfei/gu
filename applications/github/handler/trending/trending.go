@@ -66,12 +66,12 @@ func LangInfo(c *server.Context) error {
 		err   error
 		ok    bool
 		req   langReq
-		resp  []infoResp = make([]infoResp, 0)
+		info  infoResp
 		sub   *nc.Subscriber
 		t     *github.Trending
 		tList []*github.Trending
-		info  infoResp
-		today string = time.Now().Format("20060102")
+		resp  []infoResp = make([]infoResp, 0)
+		today string     = time.Now().Format("20060102")
 	)
 
 	if err = c.JSONBody(&req); err != nil {
