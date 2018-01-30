@@ -36,7 +36,6 @@ import (
 
 	"github.com/asciimoo/colly"
 	"github.com/fengyfei/gu/libs/crawler"
-	"github.com/fengyfei/gu/libs/logger"
 )
 
 type gocnCrawler struct {
@@ -113,7 +112,6 @@ func (c *gocnCrawler) startURL() {
 			go func() {
 				err := c.collectorURL.Visit(fmt.Sprintf("https://gocn.io/sort_type-new__category-14__day-0__is_recommend-0__page-%d", page))
 				if err != nil {
-					logger.Error("error in crawling the URL")
 					errorPipe <- err
 				}
 			}()
@@ -155,7 +153,6 @@ func (c *gocnCrawler) startNews() {
 			go func() {
 				err := c.collectorNews.Visit(url)
 				if err != nil {
-					logger.Error("error in crawling the news")
 					errorPipe <- err
 				}
 			}()
