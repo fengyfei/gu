@@ -48,7 +48,7 @@ var (
 func LoginFilter(ctx *context.Context) {
 	if ctx.Request.RequestURI != loginURI {
 		uid, err := getUID(ctx)
-		if err != nil || uid == nil {
+		if err != nil || uid == invalidUID {
 			logger.Error(err)
 			ctx.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}, false, false)
 		}
@@ -65,12 +65,12 @@ func ActiveFilter(ctx *context.Context) {
 		}
 
 		uid, err := getUID(ctx)
-		if err != nil {
+		if err != nil || uid == invalidUID {
 			logger.Error(err)
 			ctx.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}, false, false)
 		}
 
-		ok, err := staff.Service.IsActive(conn, *uid)
+		ok, err := staff.Service.IsActive(conn, uid)
 		if err != nil {
 			logger.Error(err)
 			ctx.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}, false, false)
@@ -89,14 +89,14 @@ func PermissionFilter(ctx *context.Context) {
 	)
 
 	if ctx.Request.RequestURI != loginURI {
-		uid, _ := getUID(ctx)
-		if uid == nil {
+		uid, err := getUID(ctx)
+		if err != nil || uid == invalidUID {
 			ctx.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}, false, false)
 		}
 
 		permission := args.Permission{
 			URL: ctx.Request.RequestURI,
-			UID: *uid,
+			UID: uid,
 		}
 
 		rpcClient, err := auth.RPCClients.Get(auth.RPCAddress)
@@ -116,10 +116,10 @@ func PermissionFilter(ctx *context.Context) {
 func JWTFilter(ctx *context.Context) {
 	if ctx.Request.RequestURI != loginURI {
 		uid, err := getUID(ctx)
-		if err != nil {
+		if err != nil || uid == invalidUID {
 			ctx.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}, false, false)
 		}
 
-		bindUID(ctx, *uid)
+		bindUID(ctx, uid)
 	}
 }

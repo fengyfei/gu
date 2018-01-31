@@ -42,6 +42,8 @@ import (
 )
 
 const (
+	invalidUID = int32(-1)
+
 	tokenExpireInHour = 48
 
 	ClaimUID     = "uid"
@@ -75,16 +77,16 @@ func NewToken(uid int32) (string, string, error) {
 }
 
 // getUID check whether the token is valid, it returns user identity if valid.
-func getUID(ctx *beegoCtx.Context) (*int32, error) {
+func getUID(ctx *beegoCtx.Context) (int32, error) {
 	claims, err := checkJWT(ctx)
 	if err != nil {
-		return nil, err
+		return invalidUID, err
 	}
 
 	rawUID := claims[ClaimUID].(float64)
 	uid := int32(rawUID)
 
-	return &uid, nil
+	return uid, nil
 }
 
 // bindUID bind the uid to the context.
