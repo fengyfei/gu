@@ -52,7 +52,7 @@ var (
 	typeUser = false
 )
 
-// login by wechat
+// Login by wechat
 func WechatLogin(c *server.Context) error {
 	var (
 		wechatUser user.WechatLoginReq
@@ -113,7 +113,7 @@ func WechatLogin(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, token)
 }
 
-// register by phoneNumber
+// Register by phoneNumber
 func PhoneRegister(c *server.Context) error {
 	var (
 		req  user.PhoneRegister
@@ -148,7 +148,7 @@ func PhoneRegister(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
-// login by phone
+// Login by phone
 func PhoneLogin(c *server.Context) error {
 	var (
 		req   user.PhoneLogin
@@ -190,7 +190,7 @@ func PhoneLogin(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, token)
 }
 
-// change password
+// Change password
 func ChangePassword(c *server.Context) error {
 	var (
 		req    user.ChangePass

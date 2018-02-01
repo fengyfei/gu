@@ -100,7 +100,7 @@ func (User) TableName() string {
 	return "users"
 }
 
-// login by wechat
+// Login by wechat
 func (this *serviceProvider) WechatLogin(conn orm.Connection, nickName, unionId *string) (uint, error) {
 
 	user := &User{}
@@ -128,7 +128,7 @@ func (this *serviceProvider) WechatLogin(conn orm.Connection, nickName, unionId 
 	return res.ID, nil
 }
 
-// register by phoneNumber
+// Register by phoneNumber
 func (this *serviceProvider) PhoneRegister(conn orm.Connection, req *PhoneRegister) error {
 	salt, err := security.SaltHashGenerate(&req.Password)
 	if err != nil {
@@ -149,7 +149,7 @@ func (this *serviceProvider) PhoneRegister(conn orm.Connection, req *PhoneRegist
 	return db.Create(&user).Error
 }
 
-// login by phone
+// Login by phone
 func (this *serviceProvider) PhoneLogin(conn orm.Connection, req *PhoneLogin) (uint, error) {
 	var (
 		user User
@@ -169,7 +169,7 @@ func (this *serviceProvider) PhoneLogin(conn orm.Connection, req *PhoneLogin) (u
 	return user.ID, err
 }
 
-// change password
+// Change password
 func (this *serviceProvider) ChangePassword(conn orm.Connection, id uint, req *ChangePass) error {
 	var (
 		user User
@@ -196,7 +196,7 @@ func (this *serviceProvider) ChangePassword(conn orm.Connection, id uint, req *C
 	return db.Update(&user).Limit(1).Error
 }
 
-// get the user by ID
+// Get the user by ID
 func (this *serviceProvider) GetUserByID(conn orm.Connection, ID uint) (*User, error) {
 	db := conn.(*gorm.DB).Exec("USE shop")
 	user := &User{}
