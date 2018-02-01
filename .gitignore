@@ -7,3 +7,4 @@ applications/beego/shop/shop
 applications/beego/shop/img
 .DS_Store
 */.DS_Store
+applications/shop/shop

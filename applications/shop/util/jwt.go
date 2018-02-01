@@ -31,17 +31,22 @@ package util
 
 import (
 	"time"
-	"github.com/dgrijalva/jwt-go"
+
 	"github.com/astaxie/beego"
+	"github.com/dgrijalva/jwt-go"
+
+	libctx "context"
+	"strings"
 
 	"github.com/astaxie/beego/context"
-	"strings"
-	libctx "context"
 	"github.com/fengyfei/gu/libs/constants"
 )
 
-var (
+const (
 	tokenKey = "techcat_shop"
+)
+
+var (
 	wechatLoginUrl = "/shop/user/wechatlogin"
 	registerUrl    = "/shop/user/register"
 	loginUrl       = "/shop/user/login"

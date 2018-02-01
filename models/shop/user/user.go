@@ -25,12 +25,14 @@
 /*
  * Revision History:
  *     Initial: 2018/02/01        Shi Ruitao
+ *     Modify:  2018/02/01        Li Zebang
  */
 
 package user
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -41,22 +43,62 @@ import (
 
 type serviceProvider struct{}
 
+const (
+	typeWechat = "wechat"
+	typePhone  = "phone"
+)
+
 var (
-	Service        *serviceProvider
-	typeWechat     = "wechat"
-	typePhone      = "phone"
+	Service *serviceProvider
+
 	errLoginFailed = errors.New("invalid username or password.")
 	errPassword    = errors.New("invalid password.")
 )
 
-type User struct {
-	ID        uint   `sql:"primary_key;auto_increment"`
-	UserName  string `gorm:"column:username"`
-	NickName  string `gorm:"column:nickname"`
-	Phone     string
-	Type      string
-	Pass      string
-	CreatedAt *time.Time
+type (
+	User struct {
+		ID       uint      `sql:"primary_key;auto_increment"`
+		UserName string    `gorm:"column:username"`
+		NickName string    `gorm:"column:nickname"`
+		Phone    string    `gorm:"column:phone"`
+		Type     string    `gorm:"column:type"`
+		Password string    `gorm:"column:password"`
+		Created  time.Time `gorm:"column:created"`
+	}
+
+	WechatLoginReq struct {
+		UserName   string `json:"userName" validate:"required,alphanum,min=6,max=30"`
+		WechatCode string `json:"wechatCode" validate:"required"`
+	}
+
+	wechatLogin struct {
+		data wechatLoginData
+	}
+
+	wechatLoginData struct {
+		errmsg  string
+		unionid string
+	}
+
+	PhoneRegister struct {
+		Phone    string `json:"phone" validate:"required,alphanum,len=11"`
+		Password string `json:"password" validate:"required,min=6,max=30"`
+		NickName string `json:"name" validate:"required,alphaunicode,min=2,max=30"`
+	}
+
+	PhoneLogin struct {
+		Phone    string `json:"phone" validate:"required,alphanum,len=11"`
+		Password string `json:"password" validate:"required,min=6,max=30"`
+	}
+
+	ChangePass struct {
+		OldPass string `json:"oldPass" validate:"required,min=6,max=30"`
+		NewPass string `json:"newPass" validate:"required,min=6,max=30"`
+	}
+)
+
+func (User) TableName() string {
+	return "users"
 }
 
 func (this *serviceProvider) WechatLogin(conn orm.Connection, nickName, unionId *string) (uint, error) {
@@ -87,63 +129,72 @@ func (this *serviceProvider) WechatLogin(conn orm.Connection, nickName, unionId 
 }
 
 // register by phoneNumber
-func (this *serviceProvider) PhoneRegister(conn orm.Connection, phone, password, nickName *string) error {
-	salt, err := security.SaltHashGenerate(password)
+func (this *serviceProvider) PhoneRegister(conn orm.Connection, req *PhoneRegister) error {
+	salt, err := security.SaltHashGenerate(&req.Password)
 	if err != nil {
 		return err
 	}
 
-	now := time.Now()
+	user := User{
+		UserName: req.Phone,
+		Phone:    req.Phone,
+		Type:     typePhone,
+		NickName: req.NickName,
+		Password: string(salt),
+		Created:  time.Now(),
+	}
 
-	user := &User{}
-	user.UserName = *phone
-	user.Phone = *phone
-	user.Type = typePhone
-	user.NickName = *nickName
-	user.Pass = string(salt)
-	user.CreatedAt = &now
-
-	db := conn.(*gorm.DB).Exec("USE shop")
+	db := conn.(*gorm.DB)
 
 	return db.Create(&user).Error
 }
 
-func (this *serviceProvider) PhoneLogin(conn orm.Connection, phone, password *string) (uint, error) {
+func (this *serviceProvider) PhoneLogin(conn orm.Connection, req *PhoneLogin) (uint, error) {
+	var (
+		user User
+	)
 
-	db := conn.(*gorm.DB).Exec("USE shop")
-	user := &User{}
+	db := conn.(*gorm.DB)
 
-	err := db.Where("phone = ?", *phone).First(&user).Error
+	err := db.Where("phone = ?", req.Phone).First(&user).Error
 	if err == gorm.ErrRecordNotFound {
 		return 0, err
 	}
 
-	if !security.SaltHashCompare([]byte(user.Pass), password) {
+	if !security.SaltHashCompare([]byte(user.Password), &req.Password) {
 		return 0, errLoginFailed
 	}
 
 	return user.ID, err
 }
 
-func (this *serviceProvider) ChangePassword(conn orm.Connection, id uint, oldPass, newPass *string) error {
-	db := conn.(*gorm.DB).Exec("USE shop")
-	user := &User{}
+func (this *serviceProvider) ChangePassword(conn orm.Connection, id uint, req *ChangePass) error {
+	var (
+		user User
+	)
+
+	db := conn.(*gorm.DB)
 
 	err := db.Where("id = ?", id).First(&user).Error
 	if err == gorm.ErrRecordNotFound {
+		fmt.Println(111111)
 		return err
 	}
 
-	if !security.SaltHashCompare([]byte(user.Pass), oldPass) {
+	if !security.SaltHashCompare([]byte(user.Password), &req.OldPass) {
+		fmt.Println(222222)
 		return errPassword
 	}
 
-	salt, err := security.SaltHashGenerate(newPass)
+	salt, err := security.SaltHashGenerate(&req.NewPass)
 	if err != nil {
+		fmt.Println(33333)
 		return err
 	}
-	user.Pass = string(salt)
-	return db.Save(&user).Error
+
+	user.Password = string(salt)
+
+	return db.Update(&user).Limit(1).Error
 }
 
 func (this *serviceProvider) GetUserByID(conn orm.Connection, ID uint) (*User, error) {

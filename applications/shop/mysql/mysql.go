@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2018 SmartestEE Co., Ltd.
+ * Copyright (c) 2018 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,14 +25,17 @@
 /*
  * Revision History:
  *     Initial: 2017/02/01        Shi Ruitao
+ *     Modify:  2018/02/01        Li Zebang
  */
 
 package mysql
 
 import (
-	"github.com/fengyfei/gu/applications/shop/conf"
-	"github.com/fengyfei/gu/libs/orm/mysql"
 	"fmt"
+
+	"github.com/fengyfei/gu/applications/shop/conf"
+	"github.com/fengyfei/gu/libs/logger"
+	"github.com/fengyfei/gu/libs/orm/mysql"
 )
 
 const (
@@ -46,11 +49,12 @@ var (
 // InitPool initialize the connection pool.
 func InitPool() {
 	config := conf.ShopConfig
-	db := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", config.MysqlUser, config.MysqlPass, config.MysqlHost, config.MysqlPort, config.MysqlDb)
-	fmt.Println(db)
+	db := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local", config.MysqlUser, config.MysqlPass, config.MysqlHost, config.MysqlPort, config.MysqlDb)
 	Pool = mysql.NewPool(db, poolSize)
 
 	if Pool == nil {
 		panic("MySQL DB connection error.")
 	}
+
+	logger.Info("MySQL DB connection success.")
 }
