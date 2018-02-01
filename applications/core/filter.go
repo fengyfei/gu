@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd..
+ * Copyright (c) 2018 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,46 +24,29 @@
 
 /*
  * Revision History:
- *     Initial: 2017/11/17        Jia Chenhui
+ *     Initial: 2018/01/31        Jia Chenhui
  */
 
-package conf
+package core
 
 import (
-	"github.com/spf13/viper"
+	"github.com/fengyfei/gu/libs/constants"
+	"github.com/fengyfei/gu/libs/http/server"
 )
-
-// githubConfig represents the server config struct.
-type githubConfig struct {
-	Address   string
-	NatsURL   string
-	MongoURL  string
-	TokenKey  string
-	CorsHosts []string
-}
 
 var (
-	GithubConfig *githubConfig
+	loginURI = "/api/v1/office/staff/login"
 )
 
-func init() {
-	load()
-}
-
-// load read config file.
-func load() {
-	viper.AddConfigPath("./conf")
-	viper.SetConfigName("config")
-
-	if err := viper.ReadInConfig(); err != nil {
-		panic(err)
+// LoginFilter check if the user is logged in.
+func LoginFilter(c *server.Context) bool {
+	if c.Request().RequestURI != loginURI {
+		uid := GetUID(c)
+		if uid == invalidUID {
+			WriteStatusAndDataJSON(c, constants.ErrPermission, nil)
+			return false
+		}
 	}
 
-	GithubConfig = &githubConfig{
-		Address:   viper.GetString("server.address"),
-		NatsURL:   viper.GetString("server.natsurl"),
-		MongoURL:  viper.GetString("mongo.url"),
-		TokenKey:  viper.GetString("jwt.tokenkey"),
-		CorsHosts: viper.GetStringSlice("middleware.cors.hosts"),
-	}
+	return true
 }

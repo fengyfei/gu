@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd.
+ * Copyright (c) 2017 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,7 @@
 package router
 
 import (
+	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/applications/github/handler/article"
 	"github.com/fengyfei/gu/applications/github/handler/repos"
 	"github.com/fengyfei/gu/applications/github/handler/trending"
@@ -47,18 +48,18 @@ func init() {
 
 func register(r *server.Router) {
 	// Article
-	r.Post("/api/v1/techcats/article/create", article.Create)
-	r.Post("/api/v1/techcats/article/modify/active", article.ModifyActive)
-	r.Get("/api/v1/techcats/article/list", article.List)
-	r.Get("/api/v1/techcats/article/activelist", article.ActiveList)
-	r.Post("/api/v1/techcats/article/info", article.Info)
+	r.Post("/api/v1/techcats/article/create", article.Create, core.LoginFilter)
+	r.Post("/api/v1/techcats/article/modify/active", article.ModifyActive, core.LoginFilter)
+	r.Get("/api/v1/techcats/article/list", article.List, core.LoginFilter)
+	r.Get("/api/v1/techcats/article/activelist", article.ActiveList, core.LoginFilter)
+	r.Post("/api/v1/techcats/article/info", article.Info, core.LoginFilter)
 
 	// Repos
-	r.Post("/api/v1/techcats/repos/create", repos.Create)
-	r.Post("/api/v1/techcats/repos/modify/active", repos.ModifyActive)
-	r.Get("/api/v1/techcats/repos/list", repos.List)
-	r.Get("/api/v1/techcats/repos/activelist", repos.ActiveList)
-	r.Post("/api/v1/techcats/repos/info", repos.Info)
+	r.Post("/api/v1/techcats/repos/create", repos.Create, core.LoginFilter)
+	r.Post("/api/v1/techcats/repos/modify/active", repos.ModifyActive, core.LoginFilter)
+	r.Get("/api/v1/techcats/repos/list", repos.List, core.LoginFilter)
+	r.Get("/api/v1/techcats/repos/activelist", repos.ActiveList, core.LoginFilter)
+	r.Post("/api/v1/techcats/repos/info", repos.Info, core.LoginFilter)
 
 	// Trending
 	r.Post("/api/v1/techcats/trending/lang", trending.LangInfo)
