@@ -56,7 +56,7 @@ type User struct {
 	Phone     string
 	Type      string
 	Pass      string
-	CreatedAt *time.Time `gorm:"column:created"`
+	CreatedAt *time.Time
 }
 
 func (this *serviceProvider) WechatLogin(conn orm.Connection, nickName, unionId *string) (uint, error) {
@@ -69,7 +69,7 @@ func (this *serviceProvider) WechatLogin(conn orm.Connection, nickName, unionId 
 
 	db := conn.(*gorm.DB).Exec("USE shop")
 
-	err := db.Where("user_name = ?", *unionId).First(&res).Error
+	err := db.Where("username = ?", *unionId).First(&res).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			// not found, create new user
@@ -113,7 +113,7 @@ func (this *serviceProvider) PhoneLogin(conn orm.Connection, phone, password *st
 	db := conn.(*gorm.DB).Exec("USE shop")
 	user := &User{}
 
-	err := db.Where("user_name = ?", *phone).First(&user).Error
+	err := db.Where("phone = ?", *phone).First(&user).Error
 	if err == gorm.ErrRecordNotFound {
 		return 0, err
 	}

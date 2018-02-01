@@ -46,8 +46,8 @@ func init() {
 func register(r *server.Router) {
 	r.Post("/shop/user/wechatlogin", handler.WechatLogin)
 	r.Post("/shop/user/register", handler.PhoneRegister)
-	//r.Post("/shop/user/login",  "post:PhoneLogin")
-	//r.Post("/shop/user/changepass", "post:ChangePassword")
+	r.Post("/shop/user/phonelogin",  handler.PhoneLogin)
+	r.Post("/shop/user/changepass", handler.ChangePassword)
 
 	//r.Post("/shop/user/address/add", handler.AddAddress)
 	//r.Post("/shop/user/address/setdefault", "post:SetDefault")

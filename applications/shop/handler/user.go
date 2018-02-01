@@ -30,14 +30,14 @@
 package handler
 
 import (
-	"io/ioutil"
-	"fmt"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 
-	"github.com/fengyfei/gu/applications/shop/util"
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/applications/shop/mysql"
+	"github.com/fengyfei/gu/applications/shop/util"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
@@ -83,10 +83,8 @@ type (
 	}
 )
 
-
 func WechatLogin(c *server.Context) error {
-	var
-	(
+	var (
 		wechatUser WechatLoginReq
 		err        error
 		userId     uint
@@ -142,9 +140,8 @@ func WechatLogin(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, token)
 	//u.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed, constants.RespKeyToken: token}
-	return nil
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, token)
 }
 
 // Register by phoneNumber
@@ -177,99 +174,84 @@ func PhoneRegister(c *server.Context) error {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
-	core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
-	return nil
+
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
-//func (this *UserController) PhoneLogin() {
-//	var (
-//		loginReq phoneLoginReq
-//		err      error
-//		token    string
-//		uid      uint
-//	)
-//
-//	conn, err := mysql.Pool.Get()
-//	if err != nil {
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-//		goto finish
-//	}
-//
-//	err = json.Unmarshal(this.Ctx.Input.RequestBody, &loginReq)
-//	fmt.Println(loginReq)
-//	if err != nil {
-//		logger.Error(err)
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-//
-//		goto finish
-//	}
-//
-//	err = this.Validate(&loginReq)
-//	if err != nil {
-//		logger.Error(err)
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-//
-//		goto finish
-//	}
-//
-//	uid, err = user.Service.PhoneLogin(conn, &loginReq.Phone, &loginReq.Password)
-//	if err != nil {
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrAccount}
-//		goto finish
-//	}
-//
-//	token, err = util.NewToken(uid, typeUser)
-//	if err != nil {
-//		logger.Error(err)
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-//
-//		goto finish
-//	}
-//	this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed, constants.RespKeyToken: token}
-//
-//finish:
-//	this.ServeJSON(true)
-//}
-//
-//func (this *UserController) ChangePassword() {
-//	var (
-//		req    changePassReq
-//		userId uint
-//		conn   orm.Connection
-//		err    error
-//	)
-//
-//	userId = this.Ctx.Request.Context().Value("userId").(uint)
-//
-//	conn, err = mysql.Pool.Get()
-//	if err != nil {
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-//		goto finish
-//	}
-//
-//	err = json.Unmarshal(this.Ctx.Input.RequestBody, &req)
-//	if err != nil {
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-//		goto finish
-//	}
-//
-//	err = this.Validate(&req)
-//	if err != nil {
-//		logger.Error(err)
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-//
-//		goto finish
-//	}
-//
-//	err = user.Service.ChangePassword(conn, userId, &req.OldPass, &req.NewPass)
-//	if err != nil {
-//		logger.Error(err)
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-//		goto finish
-//	}
-//
-//	this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
-//
-//finish:
-//	this.ServeJSON(true)
-//}
+func PhoneLogin(c *server.Context) error {
+	var (
+		loginReq phoneLoginReq
+		err      error
+		token    string
+		uid      uint
+	)
+
+	conn, err := mysql.Pool.Get()
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	err = c.JSONBody(&loginReq)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	err = c.Validate(&loginReq)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	uid, err = user.Service.PhoneLogin(conn, &loginReq.Phone, &loginReq.Password)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrAccount, nil)
+	}
+
+	token, err = util.NewToken(uid, typeUser)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+	//this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed, constants.RespKeyToken: token}
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, token)
+}
+
+func ChangePassword(c *server.Context) error {
+	var (
+		req    changePassReq
+		userId uint
+		conn   orm.Connection
+		err    error
+	)
+
+	userId = c.Request().Context().Value("userId").(uint)
+
+	conn, err = mysql.Pool.Get()
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	c.JSONBody(&req)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	err = c.Validate(&req)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	err = user.Service.ChangePassword(conn, userId, &req.OldPass, &req.NewPass)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
+}
