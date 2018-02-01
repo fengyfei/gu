@@ -127,8 +127,7 @@ func panicHandler(c *server.Context) error {
 
 func loginFilter(c *server.Context) bool {
 	if c.Request().RequestURI != "/login" {
-		claims := c.Request().Context().Value(claimsKey)
-		uid := GetUserID(claims)
+		uid := getUID(c)
 
 		if uid != defaultUserID {
 			// must call ServeJSON
@@ -165,8 +164,7 @@ func login(c *server.Context) error {
 }
 
 func verifyJWT(c *server.Context) error {
-	claims := c.Request().Context().Value(claimsKey)
-	uid := GetUserID(claims)
+	uid := getUID(c)
 
 	if uid != defaultUserID {
 		logger.Debug("JWT verify failure...")
@@ -177,12 +175,13 @@ func verifyJWT(c *server.Context) error {
 	return c.ServeJSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed})
 }
 
-// GetUserID extract uid from context value
-func GetUserID(v interface{}) int32 {
-	claims := v.(jwtgo.MapClaims)
+// getUID extract uid from context value
+func getUID(c *server.Context) int32 {
+	rawclaims := c.Request().Context().Value(claimsKey)
+	claims := rawclaims.(jwtgo.MapClaims)
 
-	if id, ok := claims[claimUID].(float64); ok {
-		return int32(id)
+	if uid, ok := claims[claimUID].(float64); ok {
+		return int32(uid)
 	}
 
 	return invalidUID
