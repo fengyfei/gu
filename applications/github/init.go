@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd.
+ * Copyright (c) 2017 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,7 @@
 package main
 
 import (
+	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/applications/github/conf"
 	"github.com/fengyfei/gu/applications/github/router"
 	"github.com/fengyfei/gu/libs/http/server"
@@ -52,6 +53,11 @@ func startServer() {
 	// add middlewares
 	ep.AttachMiddleware(middleware.NegroniRecoverHandler())
 	ep.AttachMiddleware(middleware.NegroniLoggerHandler())
+	ep.AttachMiddleware(middleware.JWTWithConfig(middleware.JWTConfig{
+		Skipper:    core.CustomSkipper,
+		SigningKey: []byte(core.TokenHMACKey),
+		ContextKey: core.ClaimsKey,
+	}))
 	ep.AttachMiddleware(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowedOrigins: conf.GithubConfig.CorsHosts,
 		AllowedMethods: []string{server.GET, server.POST},

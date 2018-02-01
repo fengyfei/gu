@@ -66,11 +66,12 @@ func InitRouter(u *server.Router) {
 	u.Post("/module/theme/insert", article.AddTheme)
 	u.Post("/module/delete", article.DeleteModule)
 	u.Post("/module/theme/delete", article.DeleteTheme)
-	u.Post("/module/getinfo", article.GetInfo)
-	u.Get("/module/allmodule", article.GetAllModule)
+	u.Post("/module/listinfo", article.ModuleInfo)
+	u.Get("/module/allmodule", article.AllModules)
 	u.Post("/module/updateview", article.UpdateModuleView)
 
 	u.Post("/comment/insert", article.AddComment)
 	u.Post("/comment/delete", article.DeleteComment)
-	u.Get("/comment/getinfo", article.GetCommentInfo)
+	u.Post("/comment/listinfo", article.CommentInfo)
+	u.Post("/comment/userreply", article.UserReply)
 }

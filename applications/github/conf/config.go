@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd.
+ * Copyright (c) 2017 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,6 +38,7 @@ type githubConfig struct {
 	Address   string
 	NatsURL   string
 	MongoURL  string
+	TokenKey  string
 	CorsHosts []string
 }
 
@@ -62,6 +63,7 @@ func load() {
 		Address:   viper.GetString("server.address"),
 		NatsURL:   viper.GetString("server.natsurl"),
 		MongoURL:  viper.GetString("mongo.url"),
+		TokenKey:  viper.GetString("jwt.tokenkey"),
 		CorsHosts: viper.GetStringSlice("middleware.cors.hosts"),
 	}
 }

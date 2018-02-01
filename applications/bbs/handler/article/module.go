@@ -58,13 +58,18 @@ func AddModule(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
+	if err := this.Validate(&module); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
 	err := article.ModuleService.CreateModule(module)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, 0)
+	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, nil)
 }
 
 // UpdateModuleView updates ModuleView.
@@ -82,7 +87,7 @@ func UpdateModuleView(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, 0)
+	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, nil)
 }
 
 // AddTheme - add theme.
@@ -94,13 +99,18 @@ func AddTheme(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
+	if err := this.Validate(&createTheme); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
 	err := article.ModuleService.CreateTheme(createTheme.Module, createTheme.Theme)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, 0)
+	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, nil)
 }
 
 // DeleteModule - delete module.
@@ -120,7 +130,7 @@ func DeleteModule(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, 0)
+	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, nil)
 }
 
 // DeleteTheme - delete theme.
@@ -141,11 +151,11 @@ func DeleteTheme(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, 0)
+	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, nil)
 }
 
-// GetInfo get module's information.
-func GetInfo(this *server.Context) error {
+// ModuleInfo get module's information.
+func ModuleInfo(this *server.Context) error {
 	var module struct {
 		ModuleId string
 	}
@@ -155,7 +165,7 @@ func GetInfo(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	list, err := article.ModuleService.GetInfo(module.ModuleId)
+	list, err := article.ModuleService.ListInfo(module.ModuleId)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -164,9 +174,9 @@ func GetInfo(this *server.Context) error {
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, list)
 }
 
-// GetAllModule get all modules.
-func GetAllModule(this *server.Context) error {
-	list, err := article.ModuleService.GetAllModule()
+// AllModule get all modules.
+func AllModules(this *server.Context) error {
+	list, err := article.ModuleService.AllModules()
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)

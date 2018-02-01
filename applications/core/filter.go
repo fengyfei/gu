@@ -24,35 +24,29 @@
 
 /*
  * Revision History:
- *     Initial: 2018/01/27        Chen Yanchen
+ *     Initial: 2018/01/31        Jia Chenhui
  */
 
-package initialize
+package core
 
 import (
-	"github.com/fengyfei/gu/libs/orm/mysql"
-	"fmt"
-	"github.com/fengyfei/gu/applications/bbs/conf"
-)
-
-const (
-	poolSize = 20
+	"github.com/fengyfei/gu/libs/constants"
+	"github.com/fengyfei/gu/libs/http/server"
 )
 
 var (
-	Pool *mysql.Pool
+	loginURI = "/api/v1/office/staff/login"
 )
 
-func init() {
-	dataSource := fmt.Sprintf(conf.BBSConfig.MysqlUser + ":" + conf.BBSConfig.MysqlPass + "@" + "tcp(" + conf.BBSConfig.MysqlHost + ":" + conf.BBSConfig.MysqlPort + ")/" + conf.BBSConfig.MysqlDb + "?charset=utf8&parseTime=True&loc=Local")
-	InitPool(dataSource)
-}
-
-// InitPool initialize the connection pool.
-func InitPool(db string) {
-	Pool = mysql.NewPool(db, poolSize)
-
-	if Pool == nil {
-		panic("MySQL DB connection error.")
+// LoginFilter check if the user is logged in.
+func LoginFilter(c *server.Context) bool {
+	if c.Request().RequestURI != loginURI {
+		uid := GetUID(c)
+		if uid == invalidUID {
+			WriteStatusAndDataJSON(c, constants.ErrPermission, nil)
+			return false
+		}
 	}
+
+	return true
 }

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd.
+ * Copyright (c) 2017 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,6 +32,7 @@ package logger
 import (
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/fengyfei/gu/libs/logger/logs"
 )
 
@@ -53,6 +54,11 @@ func Warn(v ...interface{}) {
 // Error prints error.
 func Error(v ...interface{}) {
 	logs.Error(generateFmtStr(len(v)), v...)
+}
+
+// Dump prints values with more details.
+func Dump(v ...interface{}) {
+	spew.Dump(v...)
 }
 
 func generateFmtStr(n int) string {

@@ -24,35 +24,20 @@
 
 /*
  * Revision History:
- *     Initial: 2018/01/27        Chen Yanchen
+ *     Initial: 2018/02/01        Feng Yifei
  */
 
-package initialize
+package main
 
 import (
-	"github.com/fengyfei/gu/libs/orm/mysql"
-	"fmt"
-	"github.com/fengyfei/gu/applications/bbs/conf"
+	"github.com/fengyfei/gu/libs/logger"
 )
 
-const (
-	poolSize = 20
-)
-
-var (
-	Pool *mysql.Pool
-)
-
-func init() {
-	dataSource := fmt.Sprintf(conf.BBSConfig.MysqlUser + ":" + conf.BBSConfig.MysqlPass + "@" + "tcp(" + conf.BBSConfig.MysqlHost + ":" + conf.BBSConfig.MysqlPort + ")/" + conf.BBSConfig.MysqlDb + "?charset=utf8&parseTime=True&loc=Local")
-	InitPool(dataSource)
-}
-
-// InitPool initialize the connection pool.
-func InitPool(db string) {
-	Pool = mysql.NewPool(db, poolSize)
-
-	if Pool == nil {
-		panic("MySQL DB connection error.")
+func main() {
+	m := map[string]interface{}{
+		"name": "fengyfei",
+		"age":  33,
 	}
+
+	logger.Dump(m)
 }
