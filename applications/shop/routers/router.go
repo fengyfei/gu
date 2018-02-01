@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd.
+ * Copyright (c) 2018 SmartestEE Co., Ltd.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,69 +24,76 @@
 
 /*
  * Revision History:
- *     Initial: 2017/11/03        ShiChao
+ *     Initial: 2018/02/01        Shi Ruitao
  */
 
 package routers
 
 import (
-	"github.com/astaxie/beego"
-	"github.com/fengyfei/gu/applications/beego/shop/controllers"
-	"github.com/fengyfei/gu/applications/beego/shop/util"
+	"github.com/fengyfei/gu/applications/shop/handler"
+	"github.com/fengyfei/gu/libs/http/server"
+)
+
+var (
+	Router *server.Router
 )
 
 func init() {
-	beego.Router("/shop/user/wechatlogin", &controllers.UserController{}, "post:WechatLogin")
-	beego.Router("/shop/user/register", &controllers.UserController{}, "post:PhoneRegister")
-	beego.Router("/shop/user/login", &controllers.UserController{}, "post:PhoneLogin")
-	beego.Router("/shop/user/changepass", &controllers.UserController{}, "post:ChangePassword")
+	Router = server.NewRouter()
+	register(Router)
+}
 
-	beego.Router("/shop/user/address/add", &controllers.AddressController{}, "post:AddAddress")
-	beego.Router("/shop/user/address/setdefault", &controllers.AddressController{}, "post:SetDefault")
-	beego.Router("/shop/user/address/modify", &controllers.AddressController{}, "post:Modify")
+func register(r *server.Router) {
+	r.Post("/shop/user/wechatlogin", handler.WechatLogin)
+	r.Post("/shop/user/register", handler.PhoneRegister)
+	//r.Post("/shop/user/login",  "post:PhoneLogin")
+	//r.Post("/shop/user/changepass", "post:ChangePassword")
 
-	beego.Router("/shop/api/category/add", &controllers.CategoryController{}, "post:AddCategory")
-	beego.Router("/shop/category/getmainclass", &controllers.CategoryController{}, "get:GetMainCategories")
-	beego.Router("/shop/category/getsubclass", &controllers.CategoryController{}, "post:GetSubCategories")
+	//r.Post("/shop/user/address/add", handler.AddAddress)
+	//r.Post("/shop/user/address/setdefault", "post:SetDefault")
+	//r.Post("/shop/user/address/modify",  "post:Modify")
+	//
+	//r.Post("/shop/api/category/add", "post:AddCategory")
+	//r.Get("/shop/category/getmainclass",  "get:GetMainCategories")
+	//r.Post("/shop/category/getsubclass",  "post:GetSubCategories")
+	//
+	//// ware api for admin
+	//r.Post("/shop/api/ware/create",  "post:CreateWare")
+	//r.Get("/shop/api/ware/getall",  "get:GetAllWare")
+	//r.Post("/shop/api/ware/updateinfo",  "post:UpdateWithID")
+	//r.Post("/shop/api/ware/modifyprice",  "post:ModifyPrice")
+	//r.Post("/shop/api/ware/changestatus",  "post:ChangeStatus")
+	//
+	//// ware api for user
+	//r.Post("/shop/ware/getbycid", "post:GetWareByCategory")
+	//r.Get("/shop/ware/getpromotion",  "get:GetPromotion")
+	//r.Post("/shop/ware/homelist",  "post:HomePageList")
+	//r.Post("/shop/ware/recommend", "post:RecommendList")
+	//r.Post("/shop/ware/getdetail", "post:GetDetail")
+	//
+	//// cart api
+	//r.Post("/shop/cart/add", &controllers.CartController{}, "post:Add")
+	//r.Post("/shop/cart/remove", &controllers.CartController{}, "post:Remove")
+	//r.Post("/shop/cart/get", &controllers.CartController{}, "get:GetByUser")
+	//
+	//// order api for user
+	//r.Post("/shop/user/order/add", &controllers.OrderController{}, "post:CreateOrder")
+	//r.Post("/shop/user/order/get", &controllers.OrderController{}, "get:GetUserOrder")
+	//
+	//// order api for admin
+	//r.Post("/shop/api/order/confirm", &controllers.OrderController{}, "post:ConfirmOrder")
+	//
+	//// collection api for user
+	//r.Post("/shop/collection/get", &controllers.CollectionController{}, "get:GetByUserID")
+	//r.Post("/shop/collection/add", &controllers.CollectionController{}, "post:Add")
+	//r.Post("/shop/collection/remove", &controllers.CollectionController{}, "post:Remove")
+	//
+	//// panel api for admin
+	//r.Post("/shop/api/panel/create", &controllers.PanelController{}, "post:AddPanel")
+	//r.Post("/shop/api/panel/addpromotion", &controllers.PanelController{}, "post:AddPromotion")
+	//r.Post("/shop/api/panel/addrecommend", &controllers.PanelController{}, "post:AddRecommend")
+	//
+	//// panel api for user
+	//r.Post("/shop/panel/getpage", &controllers.PanelController{}, "get:GetPanelPage")
 
-	// ware api for admin
-	beego.Router("/shop/api/ware/create", &controllers.WareController{}, "post:CreateWare")
-	beego.Router("/shop/api/ware/getall", &controllers.WareController{}, "get:GetAllWare")
-	beego.Router("/shop/api/ware/updateinfo", &controllers.WareController{}, "post:UpdateWithID")
-	beego.Router("/shop/api/ware/modifyprice", &controllers.WareController{}, "post:ModifyPrice")
-	beego.Router("/shop/api/ware/changestatus", &controllers.WareController{}, "post:ChangeStatus")
-
-	// ware api for user
-	beego.Router("/shop/ware/getbycid", &controllers.WareController{}, "post:GetWareByCategory")
-	beego.Router("/shop/ware/getpromotion", &controllers.WareController{}, "get:GetPromotion")
-	beego.Router("/shop/ware/homelist", &controllers.WareController{}, "post:HomePageList")
-	beego.Router("/shop/ware/recommend", &controllers.WareController{}, "post:RecommendList")
-	beego.Router("/shop/ware/getdetail", &controllers.WareController{}, "post:GetDetail")
-
-	// cart api
-	beego.Router("/shop/cart/add", &controllers.CartController{}, "post:Add")
-	beego.Router("/shop/cart/remove", &controllers.CartController{}, "post:Remove")
-	beego.Router("/shop/cart/get", &controllers.CartController{}, "get:GetByUser")
-
-	// order api for user
-	beego.Router("/shop/user/order/add", &controllers.OrderController{}, "post:CreateOrder")
-	beego.Router("/shop/user/order/get", &controllers.OrderController{}, "get:GetUserOrder")
-
-	// order api for admin
-	beego.Router("/shop/api/order/confirm", &controllers.OrderController{}, "post:ConfirmOrder")
-
-	// collection api for user
-	beego.Router("/shop/collection/get", &controllers.CollectionController{}, "get:GetByUserID")
-	beego.Router("/shop/collection/add", &controllers.CollectionController{}, "post:Add")
-	beego.Router("/shop/collection/remove", &controllers.CollectionController{}, "post:Remove")
-
-	// panel api for admin
-	beego.Router("/shop/api/panel/create", &controllers.PanelController{}, "post:AddPanel")
-	beego.Router("/shop/api/panel/addpromotion", &controllers.PanelController{}, "post:AddPromotion")
-	beego.Router("/shop/api/panel/addrecommend", &controllers.PanelController{}, "post:AddRecommend")
-
-	// panel api for user
-	beego.Router("/shop/panel/getpage", &controllers.PanelController{}, "get:GetPanelPage")
-
-	beego.InsertFilter("/*", beego.BeforeExec, util.Jwt)
 }

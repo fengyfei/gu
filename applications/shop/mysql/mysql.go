@@ -30,7 +30,9 @@
 package mysql
 
 import (
+	"github.com/fengyfei/gu/applications/shop/conf"
 	"github.com/fengyfei/gu/libs/orm/mysql"
+	"fmt"
 )
 
 const (
@@ -42,7 +44,10 @@ var (
 )
 
 // InitPool initialize the connection pool.
-func InitPool(db string) {
+func InitPool() {
+	config := conf.ShopConfig
+	db := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", config.MysqlUser, config.MysqlPass, config.MysqlHost, config.MysqlPort, config.MysqlDb)
+	fmt.Println(db)
 	Pool = mysql.NewPool(db, poolSize)
 
 	if Pool == nil {

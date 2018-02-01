@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd.
+ * Copyright (c) 2018 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,90 +24,46 @@
 
 /*
  * Revision History:
- *     Initial: 2017/11/03        ShiChao
+ *     Initial: 2018/02/01        Shi Ruitao
  */
 
 package main
 
 import (
-	"fmt"
-	"github.com/astaxie/beego"
-	"github.com/fengyfei/gu/applications/beego/shop/mysql"
-	"github.com/jinzhu/gorm"
-	"github.com/fengyfei/gu/models/shop/user"
-	"github.com/fengyfei/gu/models/shop/category"
-	"github.com/fengyfei/gu/models/shop/ware"
-	"github.com/fengyfei/gu/models/shop/address"
-	"github.com/fengyfei/gu/models/shop/order"
-	"github.com/fengyfei/gu/models/shop/cart"
-	"github.com/fengyfei/gu/models/shop/panel"
+	"github.com/fengyfei/gu/applications/shop/conf"
+	"github.com/fengyfei/gu/applications/shop/routers"
+	"github.com/fengyfei/gu/libs/http/server"
+	"github.com/fengyfei/gu/libs/http/server/middleware"
+	"github.com/fengyfei/gu/libs/logger"
+	"github.com/fengyfei/gu/applications/shop/mysql"
 )
 
-func init() {
-	initMysql()
-	initTable()
-}
+var (
+	ep *server.Entrypoint
+)
 
-func initMysql() {
-	user := beego.AppConfig.String("mysqluser")
-	pass := beego.AppConfig.String("mysqlpass")
-	url := beego.AppConfig.String("mysqlurl")
-	port := beego.AppConfig.String("mysqlport")
-	sqlName := beego.AppConfig.String("mysqlname")
+// startServer starts a HTTP server.
+func startServer() {
+	serverConfig := &server.Configuration{
+		Address: conf.ShopConfig.Address,
+	}
 
-	dataSource := fmt.Sprintf(user + ":" + pass + "@" + "tcp(" + url + ":" + port + ")/" + sqlName + "?charset=utf8&parseTime=True&loc=Local")
+	mysql.InitPool()
 
-	mysql.InitPool(dataSource)
-}
+	ep = server.NewEntrypoint(serverConfig, nil)
 
-// initTable create the MySQL table. All MySQL tables need to be created here.
-func initTable() {
-	conn, err := mysql.Pool.Get()
-	if err != nil {
-		panic(err)
-	}
-	defer mysql.Pool.Release(conn)
+	// add middlewares
+	ep.AttachMiddleware(middleware.NegroniRecoverHandler())
+	ep.AttachMiddleware(middleware.NegroniLoggerHandler())
+	ep.AttachMiddleware(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowedOrigins: conf.ShopConfig.CorsHosts,
+		AllowedMethods: []string{server.GET, server.POST},
+	}))
 
-	db := conn.(*gorm.DB).Set("gorm:table_options", "ENGINE=InnoDB").Set("gorm:table_options", "CHARSET=utf8")
+	if err := ep.Start(routers.Router.Handler()); err != nil {
+		logger.Error(err)
+		return
+	}
 
-	if !conn.(*gorm.DB).HasTable("users") {
-		db.CreateTable(
-			&user.User{},
-		)
-	}
-	if !conn.(*gorm.DB).HasTable("categories") {
-		db.CreateTable(
-			&category.Category{},
-		)
-	}
-	if !conn.(*gorm.DB).HasTable("wares") {
-		db.CreateTable(
-			&ware.Ware{},
-		)
-	}
-	if !conn.(*gorm.DB).HasTable("addresses") {
-		db.CreateTable(
-			&address.Address{},
-		)
-	}
-	if !conn.(*gorm.DB).HasTable("orders") {
-		db.CreateTable(
-			&order.Order{},
-		)
-	}
-	if !conn.(*gorm.DB).HasTable("cart_items") {
-		db.CreateTable(
-			&cart.CartItem{},
-		)
-	}
-	if !conn.(*gorm.DB).HasTable("panels") {
-		db.CreateTable(
-			&panel.Panel{},
-		)
-	}
-	if !conn.(*gorm.DB).HasTable("details") {
-		db.CreateTable(
-			&panel.Detail{},
-		)
-	}
+	ep.Wait()
 }

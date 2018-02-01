@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd.
+ * Copyright (c) 2018 SmartestEE Co., Ltd.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,16 +24,18 @@
 
 /*
  * Revision History:
- *     Initial: 2017/11/18        ShiChao
+ *     Initial: 2018/02/01        Shi Ruitao
  */
 
 package user
 
 import (
-	"github.com/jinzhu/gorm"
 	"errors"
-	"github.com/fengyfei/gu/libs/orm"
 	"time"
+
+	"github.com/jinzhu/gorm"
+
+	"github.com/fengyfei/gu/libs/orm"
 	"github.com/fengyfei/gu/libs/security"
 )
 
@@ -48,13 +50,13 @@ var (
 )
 
 type User struct {
-	ID        uint   `gorm:"primary_key;auto_increment"`
-	UserName  string `gorm:"unique;type:varchar(128)"`
-	NickName  string `gorm:"type:varchar(30)"`
-	Phone     string `gorm:"unique;default:null"`
-	Type      string `gorm:"type:varchar(30)"`
-	Pass      string `gorm:"type:varchar(128)"`
-	CreatedAt *time.Time
+	ID        uint   `sql:"primary_key;auto_increment"`
+	UserName  string `gorm:"column:username"`
+	NickName  string `gorm:"column:nickname"`
+	Phone     string
+	Type      string
+	Pass      string
+	CreatedAt *time.Time `gorm:"column:created"`
 }
 
 func (this *serviceProvider) WechatLogin(conn orm.Connection, nickName, unionId *string) (uint, error) {
@@ -103,7 +105,7 @@ func (this *serviceProvider) PhoneRegister(conn orm.Connection, phone, password,
 
 	db := conn.(*gorm.DB).Exec("USE shop")
 
-	return db.Model(&User{}).Create(&user).Error
+	return db.Create(&user).Error
 }
 
 func (this *serviceProvider) PhoneLogin(conn orm.Connection, phone, password *string) (uint, error) {

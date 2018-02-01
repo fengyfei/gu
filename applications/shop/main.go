@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd.
+ * Copyright (c) 2018 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,44 +24,11 @@
 
 /*
  * Revision History:
- *     Initial: 2017/11/03        ShiChao
+ *     Initial: 2018/02/01        Shi Ruitao
  */
 
 package main
 
-import (
-	_ "github.com/fengyfei/gu/applications/beego/shop/routers"
-	"github.com/fengyfei/gu/applications/beego/shop/mysql"
-	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/toolbox"
-	"github.com/fengyfei/gu/libs/logger"
-	"github.com/fengyfei/gu/models/shop/order"
-)
-
 func main() {
-	if beego.BConfig.RunMode == "dev" {
-		beego.BConfig.WebConfig.DirectoryIndex = true
-		beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
-	}
-	initTask()
-	beego.Run()
-	defer toolbox.StopTask()
-}
-
-func initTask() {
-	clearOrder := toolbox.NewTask("clearOrder", "0 0 0 */1 * *  ", func() error {
-		conn, err := mysql.Pool.Get()
-		if err != nil {
-			return err
-		}
-
-		return order.Service.ClearUnpaidOrder(conn)
-	})
-
-	err := clearOrder.Run()
-	if err != nil {
-		logger.Error(err)
-	}
-	toolbox.AddTask("clearOrder", clearOrder)
-	toolbox.StartTask()
+	startServer()
 }
