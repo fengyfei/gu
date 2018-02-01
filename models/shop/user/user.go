@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2018 SmartestEE Co., Ltd.
+ * Copyright (c) 2018 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,6 @@ package user
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -71,13 +70,13 @@ type (
 		WechatCode string `json:"wechatCode" validate:"required"`
 	}
 
-	wechatLogin struct {
-		data wechatLoginData
+	WechatLogin struct {
+		Data WechatLoginData
 	}
 
-	wechatLoginData struct {
-		errmsg  string
-		unionid string
+	WechatLoginData struct {
+		Errmsg  string
+		Unionid string
 	}
 
 	PhoneRegister struct {
@@ -101,6 +100,7 @@ func (User) TableName() string {
 	return "users"
 }
 
+// login by wechat
 func (this *serviceProvider) WechatLogin(conn orm.Connection, nickName, unionId *string) (uint, error) {
 
 	user := &User{}
@@ -149,6 +149,7 @@ func (this *serviceProvider) PhoneRegister(conn orm.Connection, req *PhoneRegist
 	return db.Create(&user).Error
 }
 
+// login by phone
 func (this *serviceProvider) PhoneLogin(conn orm.Connection, req *PhoneLogin) (uint, error) {
 	var (
 		user User
@@ -168,6 +169,7 @@ func (this *serviceProvider) PhoneLogin(conn orm.Connection, req *PhoneLogin) (u
 	return user.ID, err
 }
 
+// change password
 func (this *serviceProvider) ChangePassword(conn orm.Connection, id uint, req *ChangePass) error {
 	var (
 		user User
@@ -177,18 +179,15 @@ func (this *serviceProvider) ChangePassword(conn orm.Connection, id uint, req *C
 
 	err := db.Where("id = ?", id).First(&user).Error
 	if err == gorm.ErrRecordNotFound {
-		fmt.Println(111111)
 		return err
 	}
 
 	if !security.SaltHashCompare([]byte(user.Password), &req.OldPass) {
-		fmt.Println(222222)
 		return errPassword
 	}
 
 	salt, err := security.SaltHashGenerate(&req.NewPass)
 	if err != nil {
-		fmt.Println(33333)
 		return err
 	}
 
@@ -197,6 +196,7 @@ func (this *serviceProvider) ChangePassword(conn orm.Connection, id uint, req *C
 	return db.Update(&user).Limit(1).Error
 }
 
+// get the user by ID
 func (this *serviceProvider) GetUserByID(conn orm.Connection, ID uint) (*User, error) {
 	db := conn.(*gorm.DB).Exec("USE shop")
 	user := &User{}
