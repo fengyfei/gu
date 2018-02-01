@@ -49,21 +49,27 @@ func init() {
 func register(r *server.Router) {
 
 	// JWT middleware does not affect these route.
+	core.URLMap["/api/v1/techcats/article/list"] = struct{}{}
+	core.URLMap["/api/v1/techcats/article/activelist"] = struct{}{}
+	core.URLMap["/api/v1/techcats/article/info"] = struct{}{}
+	core.URLMap["/api/v1/techcats/repos/list"] = struct{}{}
+	core.URLMap["/api/v1/techcats/repos/activelist"] = struct{}{}
+	core.URLMap["/api/v1/techcats/repos/info"] = struct{}{}
 	core.URLMap["/api/v1/techcats/trending/lang"] = struct{}{}
 
 	// Article
 	r.Post("/api/v1/techcats/article/create", article.Create, core.LoginFilter)
 	r.Post("/api/v1/techcats/article/modify/active", article.ModifyActive, core.LoginFilter)
-	r.Get("/api/v1/techcats/article/list", article.List, core.LoginFilter)
-	r.Get("/api/v1/techcats/article/activelist", article.ActiveList, core.LoginFilter)
-	r.Post("/api/v1/techcats/article/info", article.Info, core.LoginFilter)
+	r.Get("/api/v1/techcats/article/list", article.List)
+	r.Get("/api/v1/techcats/article/activelist", article.ActiveList)
+	r.Post("/api/v1/techcats/article/info", article.Info)
 
 	// Repos
 	r.Post("/api/v1/techcats/repos/create", repos.Create, core.LoginFilter)
 	r.Post("/api/v1/techcats/repos/modify/active", repos.ModifyActive, core.LoginFilter)
-	r.Get("/api/v1/techcats/repos/list", repos.List, core.LoginFilter)
-	r.Get("/api/v1/techcats/repos/activelist", repos.ActiveList, core.LoginFilter)
-	r.Post("/api/v1/techcats/repos/info", repos.Info, core.LoginFilter)
+	r.Get("/api/v1/techcats/repos/list", repos.List)
+	r.Get("/api/v1/techcats/repos/activelist", repos.ActiveList)
+	r.Post("/api/v1/techcats/repos/info", repos.Info)
 
 	// Trending
 	r.Post("/api/v1/techcats/trending/lang", trending.LangInfo)
