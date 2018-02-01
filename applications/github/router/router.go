@@ -47,6 +47,10 @@ func init() {
 }
 
 func register(r *server.Router) {
+
+	// JWT middleware does not affect these route.
+	core.URLMap["/api/v1/techcats/trending/lang"] = struct{}{}
+
 	// Article
 	r.Post("/api/v1/techcats/article/create", article.Create, core.LoginFilter)
 	r.Post("/api/v1/techcats/article/modify/active", article.ModifyActive, core.LoginFilter)
