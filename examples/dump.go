@@ -24,43 +24,20 @@
 
 /*
  * Revision History:
- *     Initial: 2018/01/08        Jia Chenhui
+ *     Initial: 2018/02/01        Jia Chenhui
  */
 
-package logger
+package main
 
 import (
-	"strings"
-
-	"github.com/davecgh/go-spew/spew"
-	"github.com/fengyfei/gu/libs/logger/logs"
+	"github.com/fengyfei/gu/libs/logger"
 )
 
-// Debug prints debug messages.
-func Debug(v ...interface{}) {
-	logs.Debug(generateFmtStr(len(v)), v...)
-}
+func main() {
+	m := map[string]interface{}{
+		"name": "fengyfei",
+		"age":  33,
+	}
 
-// Info prints normal messages.
-func Info(v ...interface{}) {
-	logs.Info(generateFmtStr(len(v)), v...)
-}
-
-// Warn prints warning messages.
-func Warn(v ...interface{}) {
-	logs.Warn(generateFmtStr(len(v)), v...)
-}
-
-// Error prints error.
-func Error(v ...interface{}) {
-	logs.Error(generateFmtStr(len(v)), v...)
-}
-
-// Dump prints values with more details.
-func Dump(v ...interface{}) {
-	spew.Dump(v...)
-}
-
-func generateFmtStr(n int) string {
-	return strings.Repeat("%v ", n)
+	logger.Dump(m)
 }
