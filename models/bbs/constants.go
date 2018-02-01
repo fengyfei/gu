@@ -29,7 +29,16 @@
 
 package bbs
 
+import "errors"
+
 const (
 	// Database name.
 	Database = "bbs"
+
+	// IncCount
+	IncCount = 1
+	DecCount = -1
 )
+
+// InvalidObjectId
+var InvalidObjectId = errors.New("invalid input to ObjectIdHex: ")

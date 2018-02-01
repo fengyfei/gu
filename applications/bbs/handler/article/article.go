@@ -57,6 +57,11 @@ func AddArticle(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
+	if err := this.Validate(&reqAdd); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
 	id, err := article.ArticleService.Insert(reqAdd.Art, reqAdd.UserId)
 	if err != nil {
 		logger.Error(err)
@@ -158,10 +163,10 @@ func DeleteArt(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, 0)
+	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, nil)
 }
 
-// UpdateArtView update times.
+// UpdateTimes update times.
 func UpdateTimes(this *server.Context) error {
 	var times struct {
 		Num   int64
@@ -179,5 +184,5 @@ func UpdateTimes(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, 0)
+	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, nil)
 }

@@ -30,6 +30,7 @@
 package main
 
 import (
+	_ "github.com/fengyfei/gu/applications/bbs/initialize"
 	"github.com/fengyfei/gu/applications/bbs/conf"
 	"github.com/fengyfei/gu/applications/bbs/routers/user"
 	"github.com/fengyfei/gu/libs/http/server"

@@ -10,5 +10,13 @@
   "mongo": {
     "url": "mongodb://127.0.0.1:27017"
   },
-  "pages": 3
+  "pages": 3,
+
+  "mysql": {
+    "host": "127.0.0.1",
+    "port": "3306",
+    "user": "root",
+    "pass": "111111",
+    "db": "user"
+  }
 }

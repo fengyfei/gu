@@ -25,6 +25,7 @@
 /*
  * Revision History:
  *     Initial: 2018/01/21        Chen Yanchen
+ *     Modify : 2018/01/31        Tong Yuehong
  */
 
 package user
@@ -144,4 +145,14 @@ func (this *UserServiceProvider) ChangeAvatar(userId *uint64, avatar *string) (s
 	query := bson.M{"userId": userId}
 	err = conn.GetUniqueOne(query, &res)
 	return res.AvatarId.Hex(), err
+}
+
+// GetUserByID gets user's information by userId.
+func (this *UserServiceProvider) GetUserByID(conn orm.Connection, userId uint64) (*User, error) {
+	db := conn.(*gorm.DB).Exec("USE user")
+	user := &User{}
+
+	err := db.Where("id = ?", userId).First(&user).Error
+
+	return user, err
 }
