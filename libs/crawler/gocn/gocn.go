@@ -24,7 +24,7 @@
 
 /*
  * Revision History:
- *     Initial: 2017/01/21        Li Zebang
+ *     Initial: 2018/01/21        Li Zebang
  */
 
 package gocn

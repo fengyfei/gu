@@ -24,7 +24,7 @@
 
 /*
  * Revision History:
- *     Initial: 2017/01/28        Li Zebang
+ *     Initial: 2018/01/28        Li Zebang
  */
 
 package segment
