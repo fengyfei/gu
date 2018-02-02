@@ -36,7 +36,6 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/fengyfei/gu/applications/bbs/conf"
-	"github.com/fengyfei/gu/applications/bbs/initialize"
 	"github.com/fengyfei/gu/libs/mongo"
 	"github.com/fengyfei/gu/models/bbs"
 	"github.com/fengyfei/gu/models/user"
@@ -121,9 +120,7 @@ func (sp *articleServiceProvider) Insert(article CreateArticle, userID uint64) (
 		return "", err
 	}
 
-	c, _ := initialize.Pool.Get()
-
-	userInfo, err := user.UserServer.GetUserByID(c, userID)
+	userInfo, err := user.UserServer.GetUserByID(userID)
 	if err != nil {
 		return "", err
 	}
@@ -138,7 +135,7 @@ func (sp *articleServiceProvider) Insert(article CreateArticle, userID uint64) (
 		ThemeID:     ThemeID,
 		CommentNum:  0,
 		Times:       0,
-		LastComment: userInfo.Username,
+		LastComment: userInfo.UserName,
 		Created:     time.Now(),
 		Image:       article.Image,
 		IsActive:      true,

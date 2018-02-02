@@ -36,9 +36,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/fengyfei/gu/applications/bbs/conf"
-	"github.com/fengyfei/gu/applications/bbs/initialize"
 	"github.com/fengyfei/gu/libs/mongo"
-	"github.com/fengyfei/gu/libs/orm"
 	"github.com/fengyfei/gu/models/bbs"
 	"github.com/fengyfei/gu/models/user"
 )
@@ -49,7 +47,6 @@ var (
 	// ArticleService expose serviceProvider.
 	CommentService *commentServiceProvider
 	commentSession *mongo.Connection
-	conn           orm.Connection
 )
 
 // Comment represents the comment information.
@@ -96,22 +93,21 @@ func init() {
 
 // Create insert comment.
 func (sp *commentServiceProvider) Create(comment CreateComment) error {
-	c, _ := initialize.Pool.Get()
-	creator, err := user.UserServer.GetUserByID(c, comment.CreatorID)
+	creator, err := user.UserServer.GetUserByID(comment.CreatorID)
 	if err != nil {
 		return err
 	}
 
-	replier, err := user.UserServer.GetUserByID(c, comment.CreatorID)
+	replier, err := user.UserServer.GetUserByID(comment.CreatorID)
 	if err != nil {
 		return err
 	}
 
 	comm := Comment{
 		CreatorID: comment.CreatorID,
-		Creator:   creator.Username,
+		Creator:   creator.UserName,
 		ReplierID: comment.ReplierID,
-		Replier:   replier.Username,
+		Replier:   replier.UserName,
 		ParentID:  bson.ObjectIdHex(comment.ParentID),
 		ArtID:     bson.ObjectIdHex(comment.ArtID),
 		Content:   comment.Content,
@@ -132,7 +128,7 @@ func (sp *commentServiceProvider) Create(comment CreateComment) error {
 		return err
 	}
 
-	return ArticleService.UpdateLastComment(comment.ArtID, creator.Username)
+	return ArticleService.UpdateLastComment(comment.ArtID, creator.UserName)
 }
 
 // Delete delete comment.

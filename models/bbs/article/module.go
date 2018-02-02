@@ -35,7 +35,6 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
-	"fmt"
 	"github.com/fengyfei/gu/applications/bbs/conf"
 	"github.com/fengyfei/gu/libs/mongo"
 	"github.com/fengyfei/gu/models/bbs"

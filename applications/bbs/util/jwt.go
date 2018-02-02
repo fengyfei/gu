@@ -35,7 +35,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-const tokenKey = "kdfghjksedr.sadf/agrqer'ae45r6ft7y.ubhd5rf6tg7yhgwiuosdv;lmfdbr6t7gybhu"
+const tokenKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
 
 var (
 	wechatLoginUrl = "/bbs/user/wechatlogin"

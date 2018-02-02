@@ -37,23 +37,25 @@ import (
 
 	jwtgo "github.com/dgrijalva/jwt-go"
 
+	"github.com/fengyfei/gu/applications/bbs/util"
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
-
-	"github.com/fengyfei/gu/applications/bbs/initialize"
-	"github.com/fengyfei/gu/applications/bbs/util"
 	"github.com/fengyfei/gu/models/user"
 )
 
 var (
+	// APPID
 	APPID    = ""
-	SECRET   = ""
+
+	// SECRET
+	SECRET   = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
 	typeUser = false
 )
 
 type (
+	// WechatLoginReq
 	WechatLoginReq struct {
 		UserName   string `json:"userName" validate:"required,alphanum,min=6,max=30"`
 		WechatCode string `json:"wechatCode" validate:"required"`
@@ -81,12 +83,12 @@ func WechatLogin(this *server.Context) error {
 		token      string
 	)
 
-	conn, err := initialize.Pool.Get()
-	if err != nil {
-		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
+	if err := this.JSONBody(&wechatUser); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	err = this.Validate(&wechatUser)
+	err := this.Validate(&wechatUser)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
@@ -109,7 +111,7 @@ func WechatLogin(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrWechatAuth, nil)
 	}
 
-	userId, err = user.UserServer.WechatLogin(conn, &wechatUser.UserName, &wechatUser.WechatCode, &wechatData.data.unionid)
+	userId, err = user.UserServer.WeChatLogin(&wechatUser.UserName, &wechatData.data.unionid)
 	if err != nil {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
 	}
@@ -122,22 +124,82 @@ func WechatLogin(this *server.Context) error {
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, token)
 }
 
+// PhoneRegister register by phoneNumber
+func PhoneRegister(c *server.Context) error {
+	var (
+		req user.PhoneRegister
+		err error
+	)
+
+	err = c.JSONBody(&req)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	err = c.Validate(&req)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	err = user.UserServer.PhoneRegister(&req)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
+}
+
+// PhoneLogin login by phone
+func PhoneLogin(c *server.Context) error {
+	var (
+		req   user.PhoneLogin
+		err   error
+		token string
+		uid   uint64
+	)
+
+	err = c.JSONBody(&req)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	err = c.Validate(&req)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	uid, err = user.UserServer.PhoneLogin(&req)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrAccount, nil)
+	}
+
+	token, err = util.NewToken(uid, typeUser)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, token)
+}
+
 // ChangeUsername
 func ChangeUsername(this *server.Context) error {
 	var req struct {
-		UserId  uint64
 		NewName string `json:"newname" validate:"required,alphanum,min=6,max=30"`
 	}
-	conn, err := initialize.Pool.Get()
-	if err != nil {
-		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
-	}
-	req.UserId = this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(uint64)
-	if err = this.JSONBody(&req); err != nil {
+
+	userID := this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(float64)
+	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
-	err = user.UserServer.ChangeUsername(conn, req.UserId, &req.NewName)
+	err := user.UserServer.ChangeName(uint64(userID), &req.NewName)
 	if err != nil {
 		logger.Error(err)
 		core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
@@ -148,17 +210,16 @@ func ChangeUsername(this *server.Context) error {
 // ChangeAvatar
 func ChangeAvatar(this *server.Context) error {
 	var req struct {
-		UserId    uint64
 		NewAvatar string `json:"newname" validate:"required,alphanum,min=6,max=30"`
 	}
-	req.UserId = this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(uint64)
+	userID := this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(float64)
 
 	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	avatarId, err := user.UserServer.ChangeAvatar(&req.UserId, &req.NewAvatar)
+	avatarId, err := user.UserServer.ChangeAvatar(uint64(userID), &req.NewAvatar)
 	if err != nil {
 		logger.Error(err)
 		core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)

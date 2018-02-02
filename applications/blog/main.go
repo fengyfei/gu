@@ -31,7 +31,7 @@ package main
 
 import (
 	"github.com/astaxie/beego"
-	_ "github.com/fengyfei/gu/applications/beego/blog/routers"
+	_ "github.com/fengyfei/gu/applications/blog/routers"
 )
 
 func main() {
