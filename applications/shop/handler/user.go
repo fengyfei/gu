@@ -31,6 +31,7 @@
 package handler
 
 import (
+	"github.com/dgrijalva/jwt-go"
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/applications/shop/mysql"
 	"github.com/fengyfei/gu/applications/shop/util"
@@ -186,10 +187,10 @@ func PhoneLogin(c *server.Context) error {
 
 func ChangePassword(c *server.Context) error {
 	var (
-		req    user.ChangePass
-		userID uint
-		conn   orm.Connection
-		err    error
+		req   user.ChangePass
+		token *jwt.Token
+		conn  orm.Connection
+		err   error
 	)
 
 	c.JSONBody(&req)
@@ -204,15 +205,22 @@ func ChangePassword(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	userID = c.Request().Context().Value("userid").(uint)
-
 	conn, err = mysql.Pool.Get()
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = user.Service.ChangePassword(conn, userID, &req)
+	token, err = util.Parse(c)
+	if err != nil {
+		logger.Error("Error in parsing token:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
+	}
+
+	claims := token.Claims.(jwt.MapClaims)
+	userid := uint(claims["userid"].(float64))
+
+	err = user.Service.ChangePassword(conn, userid, &req)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)

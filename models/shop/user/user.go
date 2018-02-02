@@ -32,7 +32,6 @@ package user
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -177,24 +176,21 @@ func (this *serviceProvider) ChangePassword(conn orm.Connection, id uint, req *C
 
 	err := db.Where("id = ?", id).First(&user).Error
 	if err == gorm.ErrRecordNotFound {
-		fmt.Println(111111)
 		return err
 	}
 
 	if !security.SaltHashCompare([]byte(user.Password), &req.OldPass) {
-		fmt.Println(222222)
 		return errPassword
 	}
 
 	salt, err := security.SaltHashGenerate(&req.NewPass)
 	if err != nil {
-		fmt.Println(33333)
 		return err
 	}
 
 	user.Password = string(salt)
 
-	return db.Update(&user).Limit(1).Error
+	return db.Save(&user).Error
 }
 
 func (this *serviceProvider) GetUserByID(conn orm.Connection, ID uint) (*User, error) {

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd.
+ * Copyright (c) 2018 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,22 +24,18 @@
 
 /*
  * Revision History:
- *     Initial: 2017/11/15        ShiChao
+ *     Initial: 2018/02/02        Li Zebang
  */
 
 package util
 
 import (
+	"errors"
+	"strings"
 	"time"
 
-	"github.com/astaxie/beego"
 	"github.com/dgrijalva/jwt-go"
-
-	libctx "context"
-	"strings"
-
-	"github.com/astaxie/beego/context"
-	"github.com/fengyfei/gu/libs/constants"
+	"github.com/fengyfei/gu/libs/http/server"
 )
 
 const (
@@ -62,54 +58,35 @@ func NewToken(userId uint, isAdmin bool) (string, error) {
 	return token.SignedString([]byte(tokenKey))
 }
 
-func Jwt(ctx *context.Context) {
+func Parse(ctx *server.Context) (*jwt.Token, error) {
 	var (
-		err         error
-		token       *jwt.Token
 		tokenString string
-		claims      jwt.MapClaims
-		ok          bool
-		c           libctx.Context
-		cc          libctx.Context
+		token       *jwt.Token
+		err         error
 	)
 
-	url := ctx.Request.URL.String()
+	url := ctx.Request().URL.String()
 	if url == wechatLoginUrl || url == loginUrl || url == registerUrl {
-		return
+		return nil, errors.New("don't use token on " + url)
 	}
 
-	authString := ctx.Input.Header("Authorization")
-	//beego.Debug("AuthString:", authString)
-
+	authString := ctx.Request().Header.Get("Authorization")
 	kv := strings.Split(authString, " ")
 	if len(kv) != 2 || kv[0] != "Bearer" {
-		beego.Error("AuthString invalid:", authString)
-		goto errFinish
+		return nil, errors.New("authString invalid " + authString)
 	}
-	tokenString = kv[1]
 
-	// Parse token
+	tokenString = kv[1]
 	token, err = jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return []byte(tokenKey), nil
 	})
 	if err != nil {
-		goto errFinish
+		return nil, err
 	}
+
 	if !token.Valid {
-		beego.Error("Token invalid:", tokenString)
-		goto errFinish
+		return nil, errors.New("token invalid " + tokenString)
 	}
 
-	claims, ok = token.Claims.(jwt.MapClaims)
-	if !ok {
-		goto errFinish
-	}
-
-	c = libctx.WithValue(libctx.Background(), "userId", int32(claims["userid"].(float64)))
-	cc = libctx.WithValue(c, "isAdmin", bool(claims["admin"].(bool)))
-	ctx.Request = ctx.Request.WithContext(cc)
-	return
-
-errFinish:
-	ctx.Output.JSON(map[string]interface{}{constants.RespKeyStatus: constants.ErrToken}, false, false)
+	return token, nil
 }
