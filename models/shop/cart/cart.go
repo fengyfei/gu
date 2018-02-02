@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd.
+ * Copyright (c) 2017 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,13 +25,14 @@
 /*
  * Revision History:
  *     Initial: 2017/11/30        ShiChao
+ *	   Modify: 2018/02/02         Shi Ruitao
  */
 
 package cart
 
 import (
-	"github.com/jinzhu/gorm"
 	"github.com/fengyfei/gu/libs/orm"
+	"github.com/jinzhu/gorm"
 	"time"
 )
 
@@ -41,13 +42,23 @@ var (
 	Service *serviceProvider
 )
 
-type CartItem struct {
-	ID        uint `gorm:"primary_key;auto_increment"`
-	UserId    uint `gorm:"not null"`
-	WareId    uint `gorm:"not null"`
-	Count     uint `gorm:"not null";default:0`
-	CreatedAt *time.Time
-}
+type (
+	CartItem struct {
+		ID        uint `gorm:"primary_key;auto_increment"`
+		UserId    uint `gorm:"not null"`
+		WareId    uint `gorm:"not null"`
+		Count     uint `gorm:"not null";default:0`
+		CreatedAt *time.Time
+	}
+	AddCartReq struct {
+		WareId uint `json:"wareId"`
+		Count  uint `json:"count"`
+	}
+
+	RemoveCartReq struct {
+		Id uint `json:"id"`
+	}
+)
 
 func (this *serviceProvider) Add(conn orm.Connection, userId, wareId, count uint) error {
 	db := conn.(*gorm.DB).Exec("USE shop")

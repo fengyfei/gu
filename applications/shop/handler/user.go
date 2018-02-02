@@ -31,6 +31,11 @@
 package handler
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/applications/shop/mysql"
@@ -48,66 +53,66 @@ var (
 	typeUser = false
 )
 
-// func WechatLogin(c *server.Context) error {
-// 	var (
-// 		wechatUser WechatLoginReq
-// 		err        error
-// 		userId     uint
-// 		url        string
-// 		wechatData wechatLogin
-// 		wechatRes  *http.Response
-// 		con        []byte
-// 		token      string
-// 	)
-// 	c.JSONBody(&wechatUser)
+// Login by wechat
+func WechatLogin(c *server.Context) error {
+	var (
+		wechatUser user.WechatLoginReq
+		err        error
+		userId     uint
+		url        string
+		wechatData user.WechatLogin
+		wechatRes  *http.Response
+		con        []byte
+		token      string
+	)
+	c.JSONBody(&wechatUser)
 
-// 	conn, err := mysql.Pool.Get()
-// 	if err != nil {
-// 		logger.Error(err)
-// 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-// 	}
+	conn, err := mysql.Pool.Get()
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
 
-// 	err = c.Validate(&wechatUser)
-// 	if err != nil {
-// 		logger.Error(err)
-// 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
-// 	}
+	err = c.Validate(&wechatUser)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
 
-// 	url = fmt.Sprintf("https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code", APPID, SECRET, wechatUser.WechatCode)
+	url = fmt.Sprintf("https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code", APPID, SECRET, wechatUser.WechatCode)
 
-// 	wechatRes, err = http.Get(url)
-// 	if err != nil {
-// 		logger.Error(err)
-// 		return core.WriteStatusAndDataJSON(c, constants.ErrWechatAuth, nil)
-// 	}
+	wechatRes, err = http.Get(url)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrWechatAuth, nil)
+	}
 
-// 	con, _ = ioutil.ReadAll(wechatRes.Body)
-// 	err = json.Unmarshal(con, &wechatData)
-// 	if err != nil {
-// 		logger.Error(err)
-// 		return core.WriteStatusAndDataJSON(c, constants.ErrWechatAuth, nil)
-// 	}
+	con, _ = ioutil.ReadAll(wechatRes.Body)
+	err = json.Unmarshal(con, &wechatData)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrWechatAuth, nil)
+	}
 
-// 	if wechatData.data.errmsg != "" {
-// 		logger.Error(err)
-// 		return core.WriteStatusAndDataJSON(c, constants.ErrWechatAuth, nil)
-// 	}
+	if wechatData.Data.Errmsg != "" {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrWechatAuth, nil)
+	}
 
-// 	userId, err = user.Service.WechatLogin(conn, &wechatUser.UserName, &wechatData.data.unionid)
-// 	if err != nil {
-// 		logger.Error(err)
-// 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-// 	}
+	userId, err = user.Service.WechatLogin(conn, &wechatUser.UserName, &wechatData.Data.Unionid)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
 
-// 	token, err = util.NewToken(userId, typeUser)
-// 	if err != nil {
-// 		logger.Error(err)
-// 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
-// 	}
+	token, err = util.NewToken(userId, typeUser)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
 
-// 	//u.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed, constants.RespKeyToken: token}
-// 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, token)
-// }
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, token)
+}
 
 // Register by phoneNumber
 func PhoneRegister(c *server.Context) error {
@@ -144,6 +149,7 @@ func PhoneRegister(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
+// Login by phone
 func PhoneLogin(c *server.Context) error {
 	var (
 		req   user.PhoneLogin
@@ -185,6 +191,7 @@ func PhoneLogin(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, token)
 }
 
+// Change password
 func ChangePassword(c *server.Context) error {
 	var (
 		req   user.ChangePass

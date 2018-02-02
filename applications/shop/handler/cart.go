@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd.
+ * Copyright (c) 2018 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,148 +24,108 @@
 
 /*
  * Revision History:
- *     Initial: 2017/11/30        ShiChao
+ *     Initial: 2018/02/01        Shi Ruitao
  */
 
 package handler
 
-//import (
-//	"github.com/fengyfei/gu/applications/beego/base"
-//	"github.com/fengyfei/gu/libs/constants"
-//	"encoding/json"
-//	"github.com/fengyfei/gu/libs/logger"
-//	"github.com/fengyfei/gu/applications/beego/shop/mysql"
-//	"github.com/fengyfei/gu/libs/orm"
-//	Cart "github.com/fengyfei/gu/models/shop/cart"
-//)
-//
-//type (
-//	CartController struct {
-//		base.Controller
-//	}
-//
-//	addCartReq struct {
-//		WareId uint `json:"wareId"`
-//		Count  uint `json:"count"`
-//	}
-//
-//	removeCartReq struct {
-//		Id uint `json:"id"`
-//	}
-//)
-//
-//func (this *CartController) Add() {
-//	var (
-//		req    addCartReq
-//		err    error
-//		userId uint
-//		conn   orm.Connection
-//	)
-//
-//	userId = this.Ctx.Request.Context().Value("userId").(uint)
-//
-//	conn, err = mysql.Pool.Get()
-//	if err != nil {
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-//		goto finish
-//	}
-//
-//	err = json.Unmarshal(this.Ctx.Input.RequestBody, &req)
-//	if err != nil {
-//		logger.Error(err)
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-//
-//		goto finish
-//	}
-//
-//	err = this.Validate(&req)
-//	if err != nil {
-//		logger.Error(err)
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-//
-//		goto finish
-//	}
-//
-//	err = Cart.Service.Add(conn, userId, req.WareId, req.Count)
-//	if err != nil {
-//		logger.Error(err)
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-//
-//		goto finish
-//	}
-//	this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
-//
-//finish:
-//	this.ServeJSON(true)
-//}
-//
-//func (this *CartController) GetByUser() {
-//	var (
-//		items  []Cart.CartItem
-//		err    error
-//		userId uint
-//		conn   orm.Connection
-//	)
-//
-//	userId = this.Ctx.Request.Context().Value("userId").(uint)
-//
-//	conn, err = mysql.Pool.Get()
-//	if err != nil {
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-//		goto finish
-//	}
-//
-//	items, err = Cart.Service.GetByUserID(conn, userId)
-//	if err != nil {
-//		logger.Error(err)
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-//
-//		goto finish
-//	}
-//	this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed, constants.RespKeyData: items}
-//
-//finish:
-//	this.ServeJSON(true)
-//}
-//
-//func (this *CartController) Remove() {
-//	var (
-//		req  removeCartReq
-//		err  error
-//		conn orm.Connection
-//	)
-//
-//	conn, err = mysql.Pool.Get()
-//	if err != nil {
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-//		goto finish
-//	}
-//
-//	err = json.Unmarshal(this.Ctx.Input.RequestBody, &req)
-//	if err != nil {
-//		logger.Error(err)
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-//
-//		goto finish
-//	}
-//
-//	err = this.Validate(&req)
-//	if err != nil {
-//		logger.Error(err)
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-//
-//		goto finish
-//	}
-//
-//	err = Cart.Service.RemoveById(conn, req.Id)
-//	if err != nil {
-//		logger.Error(err)
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-//
-//		goto finish
-//	}
-//	this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
-//
-//finish:
-//	this.ServeJSON(true)
-//}
+import (
+	"github.com/fengyfei/gu/libs/constants"
+	"github.com/fengyfei/gu/applications/shop/mysql"
+	"github.com/fengyfei/gu/libs/logger"
+	"github.com/fengyfei/gu/libs/orm"
+	Cart "github.com/fengyfei/gu/models/shop/cart"
+	"github.com/fengyfei/gu/libs/http/server"
+	"github.com/fengyfei/gu/applications/core"
+)
+
+func Add(c *server.Context) error {
+	var (
+		req    Cart.AddCartReq
+		err    error
+		userId uint
+		conn   orm.Connection
+	)
+
+	userId = c.Request().Context().Value("userId").(uint)
+
+	conn, err = mysql.Pool.Get()
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	err = c.JSONBody(&req)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	err = c.Validate(&req)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	err = Cart.Service.Add(conn, userId, req.WareId, req.Count)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
+}
+
+func GetByUser(c *server.Context) error {
+	var (
+		items  []Cart.CartItem
+		err    error
+		userId uint
+		conn   orm.Connection
+	)
+
+	userId = c.Request().Context().Value("userId").(uint)
+
+	conn, err = mysql.Pool.Get()
+	if err != nil {
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	items, err = Cart.Service.GetByUserID(conn, userId)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, items)
+}
+
+func Remove(c *server.Context) error {
+	var (
+		req  Cart.RemoveCartReq
+		err  error
+		conn orm.Connection
+	)
+
+	conn, err = mysql.Pool.Get()
+	if err != nil {
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	err = c.JSONBody(&req)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	err = c.Validate(&req)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	err = Cart.Service.RemoveById(conn, req.Id)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
+}

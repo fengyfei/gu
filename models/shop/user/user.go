@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2018 SmartestEE Co., Ltd.
+ * Copyright (c) 2018 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -70,13 +70,13 @@ type (
 		WechatCode string `json:"wechatCode" validate:"required"`
 	}
 
-	wechatLogin struct {
-		data wechatLoginData
+	WechatLogin struct {
+		Data WechatLoginData
 	}
 
-	wechatLoginData struct {
-		errmsg  string
-		unionid string
+	WechatLoginData struct {
+		Errmsg  string
+		Unionid string
 	}
 
 	PhoneRegister struct {
@@ -100,6 +100,7 @@ func (User) TableName() string {
 	return "users"
 }
 
+// Login by wechat
 func (this *serviceProvider) WechatLogin(conn orm.Connection, nickName, unionId *string) (uint, error) {
 
 	user := &User{}
@@ -127,7 +128,7 @@ func (this *serviceProvider) WechatLogin(conn orm.Connection, nickName, unionId 
 	return res.ID, nil
 }
 
-// register by phoneNumber
+// Register by phoneNumber
 func (this *serviceProvider) PhoneRegister(conn orm.Connection, req *PhoneRegister) error {
 	salt, err := security.SaltHashGenerate(&req.Password)
 	if err != nil {
@@ -148,6 +149,7 @@ func (this *serviceProvider) PhoneRegister(conn orm.Connection, req *PhoneRegist
 	return db.Create(&user).Error
 }
 
+// Login by phone
 func (this *serviceProvider) PhoneLogin(conn orm.Connection, req *PhoneLogin) (uint, error) {
 	var (
 		user User
@@ -167,6 +169,7 @@ func (this *serviceProvider) PhoneLogin(conn orm.Connection, req *PhoneLogin) (u
 	return user.ID, err
 }
 
+// Change password
 func (this *serviceProvider) ChangePassword(conn orm.Connection, id uint, req *ChangePass) error {
 	var (
 		user User
@@ -193,6 +196,7 @@ func (this *serviceProvider) ChangePassword(conn orm.Connection, id uint, req *C
 	return db.Save(&user).Error
 }
 
+// Get the user by ID
 func (this *serviceProvider) GetUserByID(conn orm.Connection, ID uint) (*User, error) {
 	db := conn.(*gorm.DB).Exec("USE shop")
 	user := &User{}
