@@ -24,51 +24,40 @@
 
 /*
  * Revision History:
- *     Initial: 2018/01/21        Yang Chenglong
+ *     Initial: 2018/02/02        Tong Yuehong
  */
 
-package main
+package conf
 
-import (
-	"github.com/fengyfei/gu/applications/bbs/conf"
-	_ "github.com/fengyfei/gu/applications/bbs/initialize"
-	"github.com/fengyfei/gu/applications/bbs/routers/user"
-	"github.com/fengyfei/gu/libs/http/server"
-	"github.com/fengyfei/gu/libs/http/server/middleware"
-	"github.com/fengyfei/gu/libs/logger"
-	"github.com/fengyfei/gu/models/bbs/article"
-)
+import "github.com/spf13/viper"
 
-func main() {
-	startServer()
+type BlogConfig struct {
+	Address   string
+	MongoURL  string
+	CorsHosts []string
 }
 
 var (
-	ep *server.Entrypoint
+	Config *BlogConfig
 )
 
-// startServer starts a HTTP server.
-func startServer() {
-	serverConfig := &server.Configuration{
-		Address: conf.BBSConfig.Address,
+func init() {
+	load()
+}
+
+// load read config file.
+func load() {
+	viper.AddConfigPath("./conf")
+	viper.SetConfigName("config")
+
+	if err := viper.ReadInConfig(); err != nil {
+		panic(err)
 	}
 
-	go article.Cron()
+	Config = &BlogConfig{
+		Address: viper.GetString("server.address"),
 
-	ep = server.NewEntrypoint(serverConfig, nil)
-
-	// add middlewares
-	ep.AttachMiddleware(middleware.NegroniRecoverHandler())
-	ep.AttachMiddleware(middleware.NegroniLoggerHandler())
-	ep.AttachMiddleware(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowedOrigins: conf.BBSConfig.CorsHosts,
-		AllowedMethods: []string{server.GET, server.POST},
-	}))
-
-	if err := ep.Start(user.Router.Handler()); err != nil {
-		logger.Error(err)
-		return
+		MongoURL:  viper.GetString("mongo.url"),
+		CorsHosts: viper.GetStringSlice("middleware.cors.hosts"),
 	}
-
-	ep.Wait()
 }

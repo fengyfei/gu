@@ -97,6 +97,7 @@ func init() {
 // Create insert comment.
 func (sp *commentServiceProvider) Create(comment CreateComment) error {
 	c, _ := initialize.Pool.Get()
+
 	creator, err := user.UserServer.GetUserByID(c, comment.CreatorID)
 	if err != nil {
 		return err

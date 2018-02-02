@@ -25,15 +25,43 @@
 /*
  * Revision History:
  *     Initial: 2017/10/24        Jia Chenhui
+ *     Modify : 2018/02/02        Tong Yuehong
  */
 
 package main
 
 import (
-	_ "github.com/fengyfei/gu/models/blog/article"
-	_ "github.com/fengyfei/gu/models/blog/tag"
+	"github.com/fengyfei/gu/applications/blog/conf"
+	"github.com/fengyfei/gu/applications/blog/routers"
+	"github.com/fengyfei/gu/libs/http/server"
+	"github.com/fengyfei/gu/libs/http/server/middleware"
+	"github.com/fengyfei/gu/libs/logger"
 )
 
-func init() {
+var (
+	ep *server.Entrypoint
+)
 
+// startServer starts a HTTP server.
+func startServer() {
+	serverConfig := &server.Configuration{
+		Address: conf.Config.Address,
+	}
+
+	ep = server.NewEntrypoint(serverConfig, nil)
+
+	// add middlewares
+	ep.AttachMiddleware(middleware.NegroniRecoverHandler())
+	ep.AttachMiddleware(middleware.NegroniLoggerHandler())
+	ep.AttachMiddleware(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowedOrigins: conf.Config.CorsHosts,
+		AllowedMethods: []string{server.GET, server.POST},
+	}))
+
+	if err := ep.Start(router.Router.Handler()); err != nil {
+		logger.Error(err)
+		return
+	}
+
+	ep.Wait()
 }

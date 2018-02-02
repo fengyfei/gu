@@ -1,0 +1,13 @@
+{
+  "server": {
+    "address": ":21001"
+  },
+  "middleware": {
+    "cors": {
+      "hosts": ["*"]
+    }
+  },
+  "mongo": {
+    "url": "mongodb://127.0.0.1:27017"
+  }
+}

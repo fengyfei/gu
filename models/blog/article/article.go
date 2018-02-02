@@ -153,7 +153,6 @@ func (sp *serviceProvider) Create(author, title, abstract, content *string, tag 
 		Author:    *author,
 		Title:     *title,
 		Content:   *content,
-		Abstract:  *abstract,
 		Tag:       *tag,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),

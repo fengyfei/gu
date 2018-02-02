@@ -29,11 +29,6 @@
 
 package main
 
-import (
-	"github.com/astaxie/beego"
-	_ "github.com/fengyfei/gu/applications/beego/blog/routers"
-)
-
 func main() {
-	beego.Run()
+	startServer()
 }
