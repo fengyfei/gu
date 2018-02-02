@@ -56,18 +56,21 @@ var (
 
 type (
 	User struct {
-		ID       uint      `sql:"primary_key;auto_increment"`
+		ID       uint      `sql:"primary_key;auto_increment" gorm:"column:id"`
 		UserName string    `gorm:"column:username"`
 		NickName string    `gorm:"column:nickname"`
 		Phone    string    `gorm:"column:phone"`
+		Sex      string    `gorm:"column:sex"`
+		Avatar   string    `gorm:"column:avatar"`
+		IsAdmin  bool      `gorm:"column:isadmin"`
 		Type     string    `gorm:"column:type"`
 		Password string    `gorm:"column:password"`
 		Created  time.Time `gorm:"column:created"`
 	}
 
 	WechatLoginReq struct {
-		UserName   string `json:"userName" validate:"required,alphanum,min=6,max=30"`
-		WechatCode string `json:"wechatCode" validate:"required"`
+		UserName   string `json:"username" validate:"required,alphanum,min=6,max=30"`
+		WechatCode string `json:"wechatcode" validate:"required"`
 	}
 
 	WechatLogin struct {
@@ -80,14 +83,23 @@ type (
 	}
 
 	PhoneRegister struct {
+		UserName string `json:"username" validate:"required,alphaunicode,min=2,max=30"`
 		Phone    string `json:"phone" validate:"required,alphanum,len=11"`
 		Password string `json:"password" validate:"required,min=6,max=30"`
-		NickName string `json:"name" validate:"required,alphaunicode,min=2,max=30"`
+		NickName string `json:"nickname" validate:"required,alphaunicode,min=2,max=30"`
+		Sex      string `json:"sex"`
+		Avatar   string `json:"avatar"`
 	}
 
 	PhoneLogin struct {
 		Phone    string `json:"phone" validate:"required,alphanum,len=11"`
 		Password string `json:"password" validate:"required,min=6,max=30"`
+	}
+
+	ChangeInfo struct {
+		NickName string `json:"name" validate:"required,alphaunicode,min=2,max=30"`
+		Sex      int    `json:"sex"`
+		Avatar   string `json:"avatar"`
 	}
 
 	ChangePass struct {
@@ -136,9 +148,12 @@ func (this *serviceProvider) PhoneRegister(conn orm.Connection, req *PhoneRegist
 	}
 
 	user := User{
-		UserName: req.Phone,
+		UserName: req.UserName,
 		Phone:    req.Phone,
 		Type:     typePhone,
+		IsAdmin:  false,
+		Avatar:   req.Avatar,
+		Sex:      req.Sex,
 		NickName: req.NickName,
 		Password: string(salt),
 		Created:  time.Now(),
@@ -173,11 +188,19 @@ func (this *serviceProvider) PhoneLogin(conn orm.Connection, req *PhoneLogin) (u
 func (this *serviceProvider) ChangePassword(conn orm.Connection, id uint, req *ChangePass) error {
 	var (
 		user User
+		err  error
 	)
 
-	db := conn.(*gorm.DB)
+	tx := conn.(*gorm.DB).Begin()
+	defer func() {
+		if err != nil {
+			err = tx.Rollback().Error
+		} else {
+			err = tx.Commit().Error
+		}
+	}()
 
-	err := db.Where("id = ?", id).First(&user).Error
+	err = tx.Where("id = ?", id).First(&user).Error
 	if err == gorm.ErrRecordNotFound {
 		return err
 	}
@@ -193,7 +216,20 @@ func (this *serviceProvider) ChangePassword(conn orm.Connection, id uint, req *C
 
 	user.Password = string(salt)
 
-	return db.Save(&user).Error
+	err = tx.Save(&user).Error
+	return err
+}
+
+// Change user infomation
+func (this *serviceProvider) ChangeInfo(conn orm.Connection, id uint) error {
+	var (
+		user User
+		err  error
+	)
+	db := conn.(*gorm.DB)
+
+	err = db.Where("id = ?", id).First(&user).Error
+	return err
 }
 
 // Get the user by ID

@@ -44,15 +44,8 @@ var (
 	typeAdmin = true
 )
 
-type (
-	loginReq struct {
-		Phone    string `json:"phone" validate:"required,alphanum,len=11"`
-		Password string `json:"password" validate:"required,min=6,max=30"`
-	}
-)
-
-// Login by phone
-func Login(c *server.Context) error {
+// Admin Login by phone
+func AdminLogin(c *server.Context) error {
 	var (
 		loginReq user.PhoneLogin
 		err      error

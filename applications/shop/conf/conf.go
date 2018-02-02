@@ -34,6 +34,7 @@ import "github.com/spf13/viper"
 type shopConfig struct {
 	Address   string
 	CorsHosts []string
+	MongoURL  string
 	MysqlHost string
 	MysqlPort string
 	MysqlUser string
@@ -61,6 +62,7 @@ func load() {
 	ShopConfig = &shopConfig{
 		Address:   viper.GetString("server.address"),
 		CorsHosts: viper.GetStringSlice("middleware.cors.hosts"),
+		MongoURL:  viper.GetString("mongo.url"),
 		MysqlHost: viper.GetString("mysql.url"),
 		MysqlPort: viper.GetString("mysql.port"),
 		MysqlUser: viper.GetString("mysql.user"),

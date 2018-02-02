@@ -107,6 +107,7 @@ func Remove(c *server.Context) error {
 
 	conn, err = mysql.Pool.Get()
 	if err != nil {
+		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 

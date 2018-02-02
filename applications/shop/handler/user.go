@@ -123,6 +123,8 @@ func PhoneRegister(c *server.Context) error {
 	)
 
 	err = c.JSONBody(&req)
+	fmt.Println("1", req)
+
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
@@ -187,7 +189,7 @@ func PhoneLogin(c *server.Context) error {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
-	//this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed, constants.RespKeyToken: token}
+
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, token)
 }
 
