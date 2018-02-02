@@ -39,6 +39,12 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+type (
+	commentID struct {
+		CommentID string `json:"commentID"`
+	}
+)
+
 // AddComment create comment.
 func AddComment(this *server.Context) error {
 	var req article.CreateComment
@@ -59,21 +65,19 @@ func AddComment(this *server.Context) error {
 
 // DeleteComment delete comment.
 func DeleteComment(this *server.Context) error {
-	var commentId struct {
-		CommentId string `json:"commentId"`
-	}
+	var commentID commentID
 
-	if err := this.JSONBody(&commentId); err != nil {
+	if err := this.JSONBody(&commentID); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	if !bson.IsObjectIdHex(commentId.CommentId) {
+	if !bson.IsObjectIdHex(commentID.CommentID) {
 		logger.Error(bbs.InvalidObjectId)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	err := article.CommentService.Delete(bson.ObjectIdHex(commentId.CommentId))
+	err := article.CommentService.Delete(bson.ObjectIdHex(commentID.CommentID))
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -82,18 +86,16 @@ func DeleteComment(this *server.Context) error {
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, nil)
 }
 
-// CommentInfo get comment's information
+// CommentInfo return comment's information
 func CommentInfo(this *server.Context) error {
-	var commentId struct {
-		CommentId string
-	}
+	var commentID commentID
 
-	if err := this.JSONBody(&commentId); err != nil {
+	if err := this.JSONBody(&commentID); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	list, err := article.CommentService.ListInfo(bson.ObjectIdHex(commentId.CommentId))
+	list, err := article.CommentService.ListInfo(bson.ObjectIdHex(commentID.CommentID))
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -102,10 +104,10 @@ func CommentInfo(this *server.Context) error {
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, list)
 }
 
-// // UserReply shows the information about someone's reply.
+// // UserReply return the information about someone's reply.
 func UserReply(this *server.Context) error {
 	var user struct {
-		UserId uint64
+		UserID uint64 `json:"userID"`
 	}
 
 	if err := this.JSONBody(&user); err != nil {
@@ -113,7 +115,7 @@ func UserReply(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	list, err := article.CommentService.UserReply(user.UserId)
+	list, err := article.CommentService.UserReply(user.UserID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)

@@ -35,10 +35,10 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
+	"fmt"
 	"github.com/fengyfei/gu/applications/bbs/conf"
 	"github.com/fengyfei/gu/libs/mongo"
 	"github.com/fengyfei/gu/models/bbs"
-	"fmt"
 )
 
 type moduleServiceProvider struct{}
@@ -53,9 +53,9 @@ var (
 
 // Theme represents the second category.
 type Theme struct {
-	Id     bson.ObjectId `bson:"id"         json:"id"`
-	Name   string        `bson:"name"       json:"name"  validate:"required"`
-	Status bool          `bson:"status"     json:"status"`
+	Id       bson.ObjectId `bson:"id"         json:"id"`
+	Name     string        `bson:"name"       json:"name"  validate:"required"`
+	IsActive bool          `bson:"isActive"     json:"isActive"`
 }
 
 // Module represents the module information.
@@ -66,7 +66,7 @@ type Module struct {
 	ModuleView int64         `bson:"moduleView"      json:"moduleView"`
 	Recommend  int           `bson:"recommend"       json:"recommend"`
 	Themes     []Theme       `bson:"themes"          json:"themes"`
-	Status     bool          `bson:"status"          json:"status"`
+	IsActive   bool          `bson:"isActive"        json:"isActive"`
 }
 
 // CreateModule represents the module information when created.
@@ -96,7 +96,7 @@ func init() {
 	moduleSession = mongo.NewConnection(s, bbs.Database, cname)
 }
 
-// GetModuleID gets moduleId by name.
+// GetModuleID return moduleID by name.
 func (sp *moduleServiceProvider) GetModuleID(name string) (bson.ObjectId, error) {
 	var module Module
 
@@ -110,7 +110,7 @@ func (sp *moduleServiceProvider) GetModuleID(name string) (bson.ObjectId, error)
 	return module.Id, err
 }
 
-// GetThemeID gets moduleId by name.
+// GetThemeID gets moduleID by name.
 func (sp *moduleServiceProvider) GetThemeID(moduleName, themeName string) (bson.ObjectId, error) {
 	var module Module
 
@@ -135,7 +135,7 @@ func (sp *moduleServiceProvider) CreateModule(module CreateModule) error {
 		Name:       module.Name,
 		ArtNum:     0,
 		ModuleView: 0,
-		Status:     true,
+		IsActive:     true,
 	}
 
 	conn := moduleSession.Connect()
@@ -146,7 +146,7 @@ func (sp *moduleServiceProvider) CreateModule(module CreateModule) error {
 
 // CreateTheme add theme.
 func (sp *moduleServiceProvider) CreateTheme(module, theme string) error {
-	moduleId, err := sp.GetModuleID(module)
+	moduleID, err := sp.GetModuleID(module)
 	if err != nil {
 		return err
 	}
@@ -154,7 +154,7 @@ func (sp *moduleServiceProvider) CreateTheme(module, theme string) error {
 	t := Theme{
 		Id:     bson.NewObjectId(),
 		Name:   theme,
-		Status: true,
+		IsActive: true,
 	}
 
 	updater := bson.M{"$addToSet": bson.M{"themes": t}}
@@ -162,30 +162,28 @@ func (sp *moduleServiceProvider) CreateTheme(module, theme string) error {
 	conn := moduleSession.Connect()
 	defer conn.Disconnect()
 
-	return conn.Update(bson.M{"_id": moduleId}, updater)
+	return conn.Update(bson.M{"_id": moduleID}, updater)
 }
 
 // UpdateArtNum update the artNum of the module.
 func (sp *moduleServiceProvider) UpdateArtNum(module string, sort int) error {
-	var updater interface{}
-
-	moduleId, err := sp.GetModuleID(module)
+	moduleID, err := sp.GetModuleID(module)
 	if err != nil {
 		return err
 	}
 
-	updater = bson.M{"$inc": bson.M{"artNum": sort}}
+	updater := bson.M{"$inc": bson.M{"artNum": sort}}
 
 	conn := moduleSession.Connect()
 	defer conn.Disconnect()
 
-	err = conn.Update(bson.M{"_id": moduleId}, updater)
+	err = conn.Update(bson.M{"_id": moduleID}, updater)
 	return err
 }
 
-//  UpdateModuleView update ModuleView.
+// UpdateModuleView update ModuleView.
 func (sp *moduleServiceProvider) UpdateModuleView(num int64, module string) error {
-	moduleId, err := sp.GetModuleID(module)
+	moduleID, err := sp.GetModuleID(module)
 	if err != nil {
 		return err
 	}
@@ -195,27 +193,26 @@ func (sp *moduleServiceProvider) UpdateModuleView(num int64, module string) erro
 	conn := moduleSession.Connect()
 	defer conn.Disconnect()
 
-	return conn.Update(bson.M{"_id": moduleId, "status": true}, updater)
+	return conn.Update(bson.M{"_id": moduleID, "isActive": true}, updater)
 }
 
-// ListInfo gets module's information.
-func (sp *moduleServiceProvider) ListInfo(moduleId string) (Module, error) {
+// ListInfo return module's information.
+func (sp *moduleServiceProvider) ListInfo(moduleID string) (*Module, error) {
 	var module Module
 
 	conn := moduleSession.Connect()
 	defer conn.Disconnect()
 
-	fmt.Println("aaaaa", moduleId)
-	query := bson.M{"_id": bson.ObjectIdHex(moduleId), "status": true}
+	query := bson.M{"_id": bson.ObjectIdHex(moduleID), "isActive": true}
 	err := conn.GetUniqueOne(query, &module)
 	if err != nil {
-		return Module{}, err
+		return nil, err
 	}
 
-	return module, err
+	return &module, nil
 }
 
-// AllModules gets all modules.
+// AllModules return all modules.
 func (sp *moduleServiceProvider) AllModules() ([]Module, error) {
 	var module []Module
 
@@ -224,39 +221,39 @@ func (sp *moduleServiceProvider) AllModules() ([]Module, error) {
 
 	sort := "-Created"
 
-	query := bson.M{"status": true}
+	query := bson.M{"isActive": true}
 	err := conn.GetMany(query, &module, sort)
 	if err != nil {
 		return nil, err
 	}
 
-	return module, err
+	return module, nil
 }
 
 // DeleteModule delete module.
-func (sp *moduleServiceProvider) DeleteModule(moduleId string) error {
+func (sp *moduleServiceProvider) DeleteModule(moduleID string) error {
 	conn := moduleSession.Connect()
 	defer conn.Disconnect()
 
-	updater := bson.M{"$set": bson.M{"status": false}}
-	err := conn.Update(bson.M{"_id": bson.ObjectIdHex(moduleId)}, updater)
+	updater := bson.M{"$set": bson.M{"isActive": false}}
+	err := conn.Update(bson.M{"_id": bson.ObjectIdHex(moduleID)}, updater)
 	if err != nil {
 		return err
 	}
 
-	return ArticleService.DeleteByModule(moduleId)
+	return ArticleService.DeleteByModule(moduleID)
 }
 
 // DeleteTheme delete theme.
-func (sp *moduleServiceProvider) DeleteTheme(moduleId, themeId string) error {
+func (sp *moduleServiceProvider) DeleteTheme(moduleID, themeID string) error {
 	conn := moduleSession.Connect()
 	defer conn.Disconnect()
 
-	updater := bson.M{"$set": bson.M{"themes.$.status": false}}
-	err := conn.Update(bson.M{"_id": bson.ObjectIdHex(moduleId), "themes.id": bson.ObjectIdHex(themeId)}, updater)
+	updater := bson.M{"$set": bson.M{"themes.$.isActive": false}}
+	err := conn.Update(bson.M{"_id": bson.ObjectIdHex(moduleID), "themes.id": bson.ObjectIdHex(themeID)}, updater)
 	if err != nil {
 		return err
 	}
 
-	return ArticleService.DeleteByTheme(moduleId, themeId)
+	return ArticleService.DeleteByTheme(moduleID, themeID)
 }

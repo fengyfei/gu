@@ -47,9 +47,12 @@ type (
 		Module string  `json:"module"`
 		Theme  string  `json:"theme"`
 	}
+	module struct {
+		ModuleID string
+	}
 )
 
-// AddModule - add module.
+// AddModule add module.
 func AddModule(this *server.Context) error {
 	module := article.CreateModule{}
 
@@ -90,7 +93,7 @@ func UpdateModuleView(this *server.Context) error {
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, nil)
 }
 
-// AddTheme - add theme.
+// AddTheme add theme.
 func AddTheme(this *server.Context) error {
 	var createTheme createTheme
 
@@ -113,18 +116,16 @@ func AddTheme(this *server.Context) error {
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, nil)
 }
 
-// DeleteModule - delete module.
+// DeleteModule delete module.
 func DeleteModule(this *server.Context) error {
-	var module struct {
-		ModuleId string
-	}
+	var module module
 
 	if err := this.JSONBody(&module); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	err := article.ModuleService.DeleteModule(module.ModuleId)
+	err := article.ModuleService.DeleteModule(module.ModuleID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -133,11 +134,11 @@ func DeleteModule(this *server.Context) error {
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, nil)
 }
 
-// DeleteTheme - delete theme.
+// DeleteTheme delete theme.
 func DeleteTheme(this *server.Context) error {
 	var theme struct {
-		ModuleId string
-		ThemeId  string
+		ModuleID string
+		ThemeID  string
 	}
 
 	if err := this.JSONBody(&theme); err != nil {
@@ -145,7 +146,7 @@ func DeleteTheme(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	err := article.ModuleService.DeleteTheme(theme.ModuleId, theme.ThemeId)
+	err := article.ModuleService.DeleteTheme(theme.ModuleID, theme.ThemeID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -154,18 +155,16 @@ func DeleteTheme(this *server.Context) error {
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, nil)
 }
 
-// ModuleInfo get module's information.
+// ModuleInfo return module's information.
 func ModuleInfo(this *server.Context) error {
-	var module struct {
-		ModuleId string
-	}
+	var module module
 
 	if err := this.JSONBody(&module); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	list, err := article.ModuleService.ListInfo(module.ModuleId)
+	list, err := article.ModuleService.ListInfo(module.ModuleID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -174,7 +173,7 @@ func ModuleInfo(this *server.Context) error {
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, list)
 }
 
-// AllModule get all modules.
+// AllModule returns all modules.
 func AllModules(this *server.Context) error {
 	list, err := article.ModuleService.AllModules()
 	if err != nil {

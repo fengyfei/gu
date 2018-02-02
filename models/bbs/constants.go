@@ -29,16 +29,21 @@
 
 package bbs
 
-import "errors"
+import (
+	"errors"
+)
 
 const (
 	// Database name.
 	Database = "bbs"
 
-	// IncCount
-	IncCount = 1
-	DecCount = -1
+	// Increase add 1.
+	Increase = 1
+	// Decrease submit 1
+	Decrease = -1
 )
 
 // InvalidObjectId
-var InvalidObjectId = errors.New("invalid input to ObjectIdHex: ")
+var (
+	InvalidObjectId = errors.New("invalid input to ObjectIdHex: ")
+)

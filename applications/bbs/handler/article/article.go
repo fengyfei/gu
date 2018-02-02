@@ -40,7 +40,7 @@ import (
 type (
 	reqAdd struct {
 		Art    article.CreateArticle `json:"art"`
-		UserId uint64                `json:"userId"`
+		UserID uint64                `json:"userID"`
 	}
 
 	title struct {
@@ -62,7 +62,7 @@ func AddArticle(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	id, err := article.ArticleService.Insert(reqAdd.Art, reqAdd.UserId)
+	id, err := article.ArticleService.Insert(reqAdd.Art, reqAdd.UserID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -71,11 +71,11 @@ func AddArticle(this *server.Context) error {
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, id)
 }
 
-// GetByModuleID gets articles by ModuleId.
+// GetByModuleID gets articles by ModuleID .
 func GetByModuleID(this *server.Context) error {
 	var req struct {
-		Page   int
-		Module string
+		Page   int    `json:"page"`
+		Module string `json:"module"`
 	}
 	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)
@@ -91,12 +91,12 @@ func GetByModuleID(this *server.Context) error {
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
 }
 
-// GetByThemeID - gets articles by ThemeId.
+// GetByThemeID - gets articles by ThemeID.
 func GetByThemeID(this *server.Context) error {
 	var req struct {
-		Page   int
-		Module string
-		Theme  string
+		Page   int    `json:"page"`
+		Module string `json:"module"`
+		Theme  string `json:"theme"`
 	}
 	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)
@@ -112,7 +112,7 @@ func GetByThemeID(this *server.Context) error {
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
 }
 
-// GetByThemeID - gets articles by ThemeId.
+// GetByThemeID - gets articles by ThemeID.
 func GetByTitle(this *server.Context) error {
 	var title title
 	if err := this.JSONBody(&title); err != nil {
@@ -129,17 +129,17 @@ func GetByTitle(this *server.Context) error {
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
 }
 
-// GetByUserId - gets articles by ThemeId.
-func GetByUserId(this *server.Context) error {
+// GetByUserID - gets articles by ThemeID.
+func GetByUserID(this *server.Context) error {
 	var user struct {
-		UserId string
+		UserID string `json:"userID"`
 	}
 	if err := this.JSONBody(&user); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	list, err := article.ArticleService.GetByTitle(user.UserId)
+	list, err := article.ArticleService.GetByTitle(user.UserID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -170,7 +170,7 @@ func DeleteArt(this *server.Context) error {
 func UpdateTimes(this *server.Context) error {
 	var times struct {
 		Num   int64
-		ArtId string
+		ArtID string
 	}
 
 	if err := this.JSONBody(&times); err != nil {
@@ -178,7 +178,7 @@ func UpdateTimes(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	err := article.ArticleService.UpdateTimes(times.Num, times.ArtId)
+	err := article.ArticleService.UpdateTimes(times.Num, times.ArtID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
