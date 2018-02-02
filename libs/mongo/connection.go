@@ -90,6 +90,24 @@ func (conn *Connection) GetMany(q interface{}, doc interface{}, fields ...string
 	return conn.collection.Find(q).Sort(fields...).All(doc)
 }
 
+// GetLimitN gets the specified number of records by query, and only retrieve the name field by selector,
+// If fields are provided, asks the database to order returned documents according to the
+// provided field names, then restricts the maximum number of documents retrieved to n.
+// For example:
+//		q := bson.M{"_id": bson.M{"$lt": id},"status": true}
+//		selector := bson.M{"title": 1, "_id": 1, "abstract": 1, "created": 1}
+//		n = 10
+//		fields := []string{"-$natural"}
+//		doc := []Article
+//		err := GetLimitN(q, selector, doc, n, fields)
+func (conn *Connection) GetLimitN(q, selector, doc interface{}, n int, fields ...string) error {
+	if len(fields) == 0 {
+		return conn.collection.Find(q).Select(selector).Limit(n).All(doc)
+	}
+
+	return conn.collection.Find(q).Sort(fields...).Select(selector).Limit(n).All(doc)
+}
+
 // Insert add new documents to a collection.
 func (conn *Connection) Insert(doc interface{}) error {
 	return conn.collection.Insert(doc)
