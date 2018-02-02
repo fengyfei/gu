@@ -75,28 +75,28 @@ func register(r *server.Router) {
 	//r.Post("/shop/ware/getdetail", "post:GetDetail")
 	//
 	//// cart api
-	//r.Post("/shop/cart/add", &controllers.CartController{}, "post:Add")
-	//r.Post("/shop/cart/remove", &controllers.CartController{}, "post:Remove")
-	//r.Post("/shop/cart/get", &controllers.CartController{}, "get:GetByUser")
+	//r.Post("/shop/cart/add", &handler.CartController{}, "post:Add")
+	//r.Post("/shop/cart/remove", &handler.CartController{}, "post:Remove")
+	//r.Post("/shop/cart/get", &handler.CartController{}, "get:GetByUser")
 	//
 	//// order api for user
-	//r.Post("/shop/user/order/add", &controllers.OrderController{}, "post:CreateOrder")
-	//r.Post("/shop/user/order/get", &controllers.OrderController{}, "get:GetUserOrder")
+	//r.Post("/shop/user/order/add", &handler.OrderController{}, "post:CreateOrder")
+	//r.Post("/shop/user/order/get", &handler.OrderController{}, "get:GetUserOrder")
 	//
 	//// order api for admin
-	//r.Post("/shop/api/order/confirm", &controllers.OrderController{}, "post:ConfirmOrder")
+	//r.Post("/shop/api/order/confirm", &handler.OrderController{}, "post:ConfirmOrder")
 	//
 	//// collection api for user
-	//r.Post("/shop/collection/get", &controllers.CollectionController{}, "get:GetByUserID")
-	//r.Post("/shop/collection/add", &controllers.CollectionController{}, "post:Add")
-	//r.Post("/shop/collection/remove", &controllers.CollectionController{}, "post:Remove")
+	//r.Post("/shop/collection/get", &handler.CollectionController{}, "get:GetByUserID")
+	//r.Post("/shop/collection/add", &handler.CollectionController{}, "post:Add")
+	//r.Post("/shop/collection/remove", &handler.CollectionController{}, "post:Remove")
 	//
 	//// panel api for admin
-	//r.Post("/shop/api/panel/create", &controllers.PanelController{}, "post:AddPanel")
-	//r.Post("/shop/api/panel/addpromotion", &controllers.PanelController{}, "post:AddPromotion")
-	//r.Post("/shop/api/panel/addrecommend", &controllers.PanelController{}, "post:AddRecommend")
+	//r.Post("/shop/api/panel/create", &handler.PanelController{}, "post:AddPanel")
+	//r.Post("/shop/api/panel/addpromotion", &handler.PanelController{}, "post:AddPromotion")
+	//r.Post("/shop/api/panel/addrecommend", &handler.PanelController{}, "post:AddRecommend")
 	//
 	//// panel api for user
-	//r.Post("/shop/panel/getpage", &controllers.PanelController{}, "get:GetPanelPage")
+	//r.Post("/shop/panel/getpage", &handler.PanelController{}, "get:GetPanelPage")
 
 }

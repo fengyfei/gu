@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd..
+ * Copyright (c) 2018 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,15 +24,40 @@
 
 /*
  * Revision History:
- *     Initial: 2017/10/22        Feng Yifei
+ *     Initial: 2018/02/02        Tong Yuehong
  */
 
-package main
+package conf
 
-import (
-	_ "github.com/fengyfei/gu/applications/blog/routers"
+import "github.com/spf13/viper"
+
+type BlogConfig struct {
+	Address   string
+	MongoURL  string
+	CorsHosts []string
+}
+
+var (
+	Config *BlogConfig
 )
 
-func main() {
-	startServer()
+func init() {
+	load()
+}
+
+// load read config file.
+func load() {
+	viper.AddConfigPath("./conf")
+	viper.SetConfigName("config")
+
+	if err := viper.ReadInConfig(); err != nil {
+		panic(err)
+	}
+
+	Config = &BlogConfig{
+		Address: viper.GetString("server.address"),
+
+		MongoURL:  viper.GetString("mongo.url"),
+		CorsHosts: viper.GetStringSlice("middleware.cors.hosts"),
+	}
 }

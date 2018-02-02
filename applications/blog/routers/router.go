@@ -25,28 +25,41 @@
 /*
  * Revision History:
  *     Initial: 2017/10/22        Feng Yifei
+ *     Modify : 2018/02/02        Tong Yuehong
  */
 
-package routers
+package router
 
 import (
-	"github.com/astaxie/beego"
-	"github.com/fengyfei/gu/applications/beego/blog/controllers"
+	"github.com/fengyfei/gu/applications/blog/handler"
+	"github.com/fengyfei/gu/libs/http/server"
+)
+
+var (
+	Router *server.Router
 )
 
 func init() {
-	// tag router
-	beego.Router("/blog/tag/list", &controllers.Tag{}, "get:List")
-	beego.Router("/blog/tag/activelist", &controllers.Tag{}, "get:ActiveList")
-	beego.Router("/blog/tag/info", &controllers.Tag{}, "post:Info")
-	beego.Router("/blog/tag/create", &controllers.Tag{}, "post:Create")
-	beego.Router("/blog/tag/modify", &controllers.Tag{}, "post:Modify")
+	Router = server.NewRouter()
+	InitRouter(Router)
+}
 
-	// article router
-	beego.Router("/blog/article/create", &controllers.Article{}, "post:Create")
-	beego.Router("/blog/article/list", &controllers.Article{}, "get:List")
-	beego.Router("/blog/article/activelist", &controllers.Article{}, "get:ActiveList")
-	beego.Router("/blog/article/getbytag", &controllers.Article{}, "post:GetByTag")
-	beego.Router("/blog/article/getbyid", &controllers.Article{}, "post:GetByID")
-	beego.Router("/blog/article/modify", &controllers.Article{}, "post:Modify")
+func InitRouter(u *server.Router) {
+	if u == nil {
+		panic("[InitRouter]: server couldn't be nil")
+	}
+
+	u.Post("/blog/tag/create", blog.CreateTag)
+	u.Post("/blog/tag/list", blog.ListTags)
+	u.Post("/blog/tag/activelist", blog.TagActiveList)
+	u.Post("/blog/tag/info", blog.TagInfo)
+	u.Post("/blog/tag/modify", blog.ModifyTag)
+
+	u.Post("/blog/article/create", blog.CreateArticle)
+	u.Post("/blog/article/list", blog.ListArticle)
+	u.Post("/blog/article/activelist", blog.ArticleActiveList)
+	u.Post("/blog/article/getbytag", blog.GetByTag)
+	u.Post("/blog/article/getbyid", blog.GetByID)
+
+	u.Post("/blog/article/modify", blog.ModifyArticle)
 }

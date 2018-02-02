@@ -31,11 +31,13 @@ package article
 
 import (
 	"errors"
+	"github.com/robfig/cron"
 
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/fengyfei/gu/applications/bbs/conf"
+	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/libs/mongo"
 	"github.com/fengyfei/gu/models/bbs"
 )
@@ -63,8 +65,8 @@ type Module struct {
 	Name       string        `bson:"name"            json:"name"`
 	ArtNum     int64         `bson:"artNum"          json:"artNum"`
 	ModuleView int64         `bson:"moduleView"      json:"moduleView"`
-	Recommend  int           `bson:"recommend"       json:"recommend"`
 	Themes     []Theme       `bson:"themes"          json:"themes"`
+	Recommend  int64         `bson:"recommend"       json:"recommend"`
 	IsActive   bool          `bson:"isActive"        json:"isActive"`
 }
 
@@ -134,7 +136,8 @@ func (sp *moduleServiceProvider) CreateModule(module CreateModule) error {
 		Name:       module.Name,
 		ArtNum:     0,
 		ModuleView: 0,
-		IsActive:     true,
+		Recommend:  0,
+		IsActive:   true,
 	}
 
 	conn := moduleSession.Connect()
@@ -151,8 +154,8 @@ func (sp *moduleServiceProvider) CreateTheme(module, theme string) error {
 	}
 
 	t := Theme{
-		Id:     bson.NewObjectId(),
-		Name:   theme,
+		Id:       bson.NewObjectId(),
+		Name:     theme,
 		IsActive: true,
 	}
 
@@ -255,4 +258,58 @@ func (sp *moduleServiceProvider) DeleteTheme(moduleID, themeID string) error {
 	}
 
 	return ArticleService.DeleteByTheme(moduleID, themeID)
+}
+
+type Job struct {
+}
+
+// UpdateRecommend update the recommend
+func UpdateRecommend() {
+	conn := moduleSession.Connect()
+	defer conn.Disconnect()
+
+	modules, err := ModuleService.AllModules()
+	if err != nil {
+		logger.Error(err)
+	}
+
+	for _, module := range modules {
+		if  module.ArtNum == 0 {
+			updater := bson.M{"recommend": 0}
+			err = conn.Update(bson.M{"_id": module.Id}, updater)
+			if err != nil {
+				logger.Error(err)
+			}
+			continue
+		}
+
+		recommend := module.ModuleView / module.ArtNum
+		updater := bson.M{"recommend": recommend}
+		err = conn.Update(bson.M{"_id": module.Id}, updater)
+		if err != nil {
+			logger.Error(err)
+		}
+	}
+}
+
+// ListRecommend return modules which are recommended.
+func (sp *moduleServiceProvider) ListRecommend() ([]Module, error) {
+	conn := moduleSession.Connect()
+	defer conn.Disconnect()
+
+	var list []Module
+	query := bson.M{}
+	err := conn.Collection().Find(query).Sort("-recommend").Limit(8).All(&list)
+	return list, err
+}
+
+// Cron execute UpdateCommend every two hours.
+func Cron() {
+	c := cron.New()
+	cronTime := "*/10 * * * * ?"
+
+	c.AddFunc(cronTime, UpdateRecommend)
+	c.Start()
+
+	select {}
 }

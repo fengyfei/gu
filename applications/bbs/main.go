@@ -36,6 +36,7 @@ import (
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/http/server/middleware"
 	"github.com/fengyfei/gu/libs/logger"
+	"github.com/fengyfei/gu/models/bbs/article"
 )
 
 func main() {
@@ -70,6 +71,8 @@ func startServer() {
 	serverConfig := &server.Configuration{
 		Address: conf.BBSConfig.Address,
 	}
+
+	go article.Cron()
 
 	ep = server.NewEntrypoint(serverConfig, nil)
 
