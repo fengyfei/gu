@@ -27,9 +27,10 @@
  *     Initial: 2018/01/31        Jia Chenhui
  */
 
-package core
+package filter
 
 import (
+	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/http/server"
 )
@@ -41,9 +42,9 @@ var (
 // LoginFilter check if the user is logged in.
 func LoginFilter(c *server.Context) bool {
 	if c.Request().RequestURI != loginURI {
-		uid := GetUID(c)
-		if uid == invalidUID {
-			WriteStatusAndDataJSON(c, constants.ErrPermission, nil)
+		uid := core.GetUID(c)
+		if uid == core.InvalidUID {
+			core.WriteStatusAndDataJSON(c, constants.ErrPermission, nil)
 			return false
 		}
 	}

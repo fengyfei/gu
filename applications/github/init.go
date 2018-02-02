@@ -44,6 +44,8 @@ var (
 
 // startServer starts a HTTP server.
 func startServer() {
+	core.InitHMACKey(conf.GithubConfig.TokenKey)
+
 	serverConfig := &server.Configuration{
 		Address: conf.GithubConfig.Address,
 	}

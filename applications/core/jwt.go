@@ -34,32 +34,39 @@ import (
 
 	jwtgo "github.com/dgrijalva/jwt-go"
 	"github.com/fengyfei/gu/libs/http/server"
-
-	"github.com/fengyfei/gu/applications/github/conf"
 )
 
 const (
-	invalidUID = int32(-1)
+	InvalidUID = int32(-1)
 
 	tokenExpireInHour = 48
 
 	claimUID     = "uid"
 	claimExpire  = "exp"
+	respTokenKey = "token"
 	ClaimsKey    = "user"
-	RespTokenKey = "token"
 )
 
 var (
+	// TokenHMACKey used to validate token.
+	// Note: This variable must be initialized before attach JWT middleware
+	// to HTTP Entrypoint.
 	TokenHMACKey string
-	URLMap       map[string]struct{}
+
+	// Defines a URL map to skip JWT validation on the specified route.
+	URLMap map[string]struct{}
 )
 
 func init() {
-	TokenHMACKey = conf.GithubConfig.TokenKey
 	URLMap = make(map[string]struct{})
 }
 
-// CustomSkipper used for custom skipper.
+// InitHMACKey initialize TokenHMACKey.
+func InitHMACKey(key string) {
+	TokenHMACKey = key
+}
+
+// CustomSkipper used for custom middleware skipper.
 func CustomSkipper(c *server.Context) bool {
 	if _, ok := URLMap[c.Request().RequestURI]; ok {
 		return true
@@ -77,7 +84,7 @@ func NewToken(uid int32) (string, string, error) {
 	claims[claimExpire] = time.Now().Add(time.Hour * tokenExpireInHour).Unix()
 
 	t, err := token.SignedString([]byte(TokenHMACKey))
-	return RespTokenKey, t, err
+	return respTokenKey, t, err
 }
 
 // GetUID extract uid from context.
@@ -89,5 +96,5 @@ func GetUID(c *server.Context) int32 {
 		return int32(rawUID)
 	}
 
-	return invalidUID
+	return InvalidUID
 }

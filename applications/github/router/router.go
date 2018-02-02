@@ -31,6 +31,7 @@ package router
 
 import (
 	"github.com/fengyfei/gu/applications/core"
+	"github.com/fengyfei/gu/applications/github/filter"
 	"github.com/fengyfei/gu/applications/github/handler/article"
 	"github.com/fengyfei/gu/applications/github/handler/repos"
 	"github.com/fengyfei/gu/applications/github/handler/trending"
@@ -58,15 +59,15 @@ func register(r *server.Router) {
 	core.URLMap["/api/v1/techcats/trending/lang"] = struct{}{}
 
 	// Article
-	r.Post("/api/v1/techcats/article/create", article.Create, core.LoginFilter)
-	r.Post("/api/v1/techcats/article/modify/active", article.ModifyActive, core.LoginFilter)
+	r.Post("/api/v1/techcats/article/create", article.Create, filter.LoginFilter)
+	r.Post("/api/v1/techcats/article/modify/active", article.ModifyActive, filter.LoginFilter)
 	r.Get("/api/v1/techcats/article/list", article.List)
 	r.Get("/api/v1/techcats/article/activelist", article.ActiveList)
 	r.Post("/api/v1/techcats/article/info", article.Info)
 
 	// Repos
-	r.Post("/api/v1/techcats/repos/create", repos.Create, core.LoginFilter)
-	r.Post("/api/v1/techcats/repos/modify/active", repos.ModifyActive, core.LoginFilter)
+	r.Post("/api/v1/techcats/repos/create", repos.Create, filter.LoginFilter)
+	r.Post("/api/v1/techcats/repos/modify/active", repos.ModifyActive, filter.LoginFilter)
 	r.Get("/api/v1/techcats/repos/list", repos.List)
 	r.Get("/api/v1/techcats/repos/activelist", repos.ActiveList)
 	r.Post("/api/v1/techcats/repos/info", repos.Info)
