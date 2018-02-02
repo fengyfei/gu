@@ -30,81 +30,112 @@
 package handler
 
 import (
-	"github.com/fengyfei/gu/libs/http/server"
-	"github.com/fengyfei/gu/models/shop/address"
-	"github.com/fengyfei/gu/libs/constants"
-	"github.com/fengyfei/gu/libs/orm"
-	"github.com/fengyfei/gu/libs/logger"
-	"github.com/fengyfei/gu/applications/shop/mysql"
+	"github.com/dgrijalva/jwt-go"
+
 	"github.com/fengyfei/gu/applications/core"
+	"github.com/fengyfei/gu/applications/shop/mysql"
+	"github.com/fengyfei/gu/applications/shop/util"
+	"github.com/fengyfei/gu/libs/constants"
+	"github.com/fengyfei/gu/libs/http/server"
+	"github.com/fengyfei/gu/libs/logger"
+	"github.com/fengyfei/gu/libs/orm"
+	"github.com/fengyfei/gu/models/shop/address"
 )
 
+// Add address
 func AddAddress(c *server.Context) error {
 	var (
-		err  error
-		req  address.AddReq
-		conn orm.Connection
+		err   error
+		req   address.AddReq
+		conn  orm.Connection
+		token *jwt.Token
+		addr  *[]address.Address
 	)
 
-	userId := c.Request().Context().Value("userId").(uint)
+	defer mysql.Pool.Release(conn)
+
+	token, err = util.Parse(c)
+	if err != nil {
+		logger.Error("Error in parsing token:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
+	}
+
+	claims := token.Claims.(jwt.MapClaims)
+	userId := uint(claims["userid"].(float64))
 
 	conn, err = mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("mysql.Pool.Get():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
 	err = c.JSONBody(&req)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("JSONBody():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
 	err = c.Validate(&req)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("Validate():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
 	err = address.Service.Add(conn, userId, &req)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("address.Service.Add():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
+	addr, err = address.Service.AddressRead(conn)
+	if err != nil {
+		logger.Error("address.Service.AddressRead():", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, addr)
 }
 
 func SetDefault(c *server.Context) error {
 	var (
-		err  error
-		req  address.SetDefaultReq
-		conn orm.Connection
+		err   error
+		req   address.SetDefaultReq
+		conn  orm.Connection
+		token *jwt.Token
 	)
 
-	userId := c.Request().Context().Value("userId").(uint)
+	token, err = util.Parse(c)
+	if err != nil {
+		logger.Error("Error in parsing token:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
+	}
+
+	claims := token.Claims.(jwt.MapClaims)
+	userId := uint(claims["userid"].(float64))
 
 	conn, err = mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("mysql.Pool.Get()", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
 	err = c.JSONBody(&req)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("JSONBody():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
 	err = c.Validate(&req)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("Validate():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
 	err = address.Service.SetDefault(conn, userId, req.Id)
+
 	if err != nil {
-		logger.Error(err)
+		logger.Error("address.Service.SetDefault", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
@@ -117,28 +148,28 @@ func Modify(c *server.Context) error {
 		req  address.ModifyReq
 		conn orm.Connection
 	)
-
 	conn, err = mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("mysql.Pool.Get()", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
 	err = c.JSONBody(&req)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("JSONBody():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
 	err = c.Validate(&req)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("Validate", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	err = address.Service.Modify(conn, req.Id, req.Address)
+	err = address.Service.Modify(conn, &req)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("address.Service.Modify():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 

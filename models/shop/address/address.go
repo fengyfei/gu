@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd..
+ * Copyright (c) 2018 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,15 +24,18 @@
 
 /*
  * Revision History:
- *     Initial: 2017/11/18        ShiChao
+ *     Initial: 2018/02/02        Shi Ruitao
  */
 
 package address
 
 import (
-	"github.com/fengyfei/gu/libs/orm"
+	"errors"
+
 	"github.com/jinzhu/gorm"
-	"fmt"
+
+	"github.com/fengyfei/gu/libs/logger"
+	"github.com/fengyfei/gu/libs/orm"
 )
 
 type serviceProvider struct{}
@@ -41,40 +44,88 @@ var (
 	Service *serviceProvider
 )
 
-type Address struct {
-	ID        uint   `gorm:"primary_key;auto_increment"`
-	UserId    uint   `gorm:"not null"`
-	Address   string `gorm:"type:varchar(128)"`
-	IsDefault bool   `gorm:"not null";default:"false"`
+type (
+	Address struct {
+		ID        uint   `gorm:"column:id;primary_key;auto_increment"`
+		UserId    uint   `gorm:"column:userid;not null"`
+		Address   string `gorm:"column:address;type:varchar(128)"`
+		IsDefault bool   `gorm:"column:isdefault;not null";default:"false"`
+		Phone     string `gorm:"column:phone;not null"`
+	}
+
+	AddReq struct {
+		Address   string `json:"address" validate:"max=128"`
+		Phone     string `json:"phone" validate:"len=11"`
+		IsDefault bool   `json:"isdefault"`
+	}
+
+	SetDefaultReq struct {
+		Id int `json:"id" validate:"required"`
+	}
+
+	ModifyReq struct {
+		Id        int    `json:"id" validate:"required"`
+		Address   string `json:"address" validate:"max=128"`
+		IsDefault bool   `json:"isdefault"`
+		Phone     string `json:"phone" validate:"len=11"`
+	}
+)
+
+func (Address) TableName() string {
+	return "address"
 }
 
-func (this *serviceProvider) Add(conn orm.Connection, userId uint, address string, isDefault bool) error {
+func (this *serviceProvider) Add(conn orm.Connection, userId uint, req *AddReq) error {
 	var (
-		err error
+		addr       Address
+		repetition Address
+		err        error
 	)
-	addr := &Address{}
-	addr.Address = address
+
+	addr.Address = req.Address
 	addr.UserId = userId
-	addr.IsDefault = isDefault
+	addr.IsDefault = req.IsDefault
+	addr.Phone = req.Phone
+
+	db := conn.(*gorm.DB)
+
+	err = db.Where("address = ? and phone = ?", req.Address, req.Phone).First(&repetition).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			if !req.IsDefault {
+				return db.Create(&addr).Error
+			}
+
+			another := Address{}
+			err = db.Find(&another, "userid = ? AND isdefault = ?", userId, true).Error
+			if err == gorm.ErrRecordNotFound {
+				return db.Create(&addr).Error
+			}
+
+			another.IsDefault = false
+			err = db.Save(&another).Error
+			if err != nil {
+				return err
+			}
+			return db.Create(&addr).Error
+		}
+	}
+	err = errors.New("Repeat the address")
+	return err
+}
+
+func (this *serviceProvider) AddressRead(conn orm.Connection) (*[]Address, error) {
+	var (
+		err     error
+		address []Address
+	)
 
 	db := conn.(*gorm.DB).Exec("USE shop")
-
-	if !isDefault {
-		return db.Model(&Address{}).Create(addr).Error
-	}
-
-	another := &Address{}
-	err = db.Find(&another, "user_id = ? AND is_default = ?", userId, true).Error
+	err = db.Find(&address).Error
 	if err == gorm.ErrRecordNotFound {
-		return db.Model(&Address{}).Create(addr).Error
+		err = nil
 	}
-
-	another.IsDefault = false
-	err = db.Save(&another).Error
-	if err != nil {
-		return err
-	}
-	return db.Model(&Address{}).Create(addr).Error
+	return &address, err
 }
 
 func (this *serviceProvider) SetDefault(conn orm.Connection, userId uint, id int) error {
@@ -83,42 +134,48 @@ func (this *serviceProvider) SetDefault(conn orm.Connection, userId uint, id int
 		addr    Address
 		another Address
 	)
+
 	db := conn.(*gorm.DB).Exec("USE shop")
 
-	err = db.Find(&addr, "id = ?", id).Error
+	err = db.Find(&addr, "userid = ? AND isdefault = true", userId).Error
+	if err == gorm.ErrRecordNotFound {
+		logger.Info("IsDefault is false")
+	}
+	addr.IsDefault = false
+
+	err = db.Find(&another, "id = ?", id).Error
 	if err != nil {
 		return err
 	}
 	if addr.IsDefault {
 		return nil
 	}
-	addr.IsDefault = true
-	err = db.Save(&addr).Error
-	if err != nil {
-		return err
-	}
 
-	err = db.Find(&another, "user_id = ? AND id <> ? AND is_default = true", userId, id).Error
-	if err == gorm.ErrRecordNotFound {
-		return nil
-	}
-	fmt.Println(err)
-	another.IsDefault = false
+	another.IsDefault = true
 	return db.Save(&another).Error
 }
 
-func (this *serviceProvider) Modify(conn orm.Connection, id int, address string) error {
+func (this *serviceProvider) Modify(conn orm.Connection, req *ModifyReq) error {
 	var (
-		err  error
-		addr Address
+		err        error
+		addr       Address
+		repetition Address
 	)
 
 	db := conn.(*gorm.DB).Exec("USE shop")
-	err = db.Find(&addr, "id = ?", id).Error
+	err = db.Find(&addr, "id = ?", req.Id).Error
 	if err != nil {
 		return err
 	}
 
-	addr.Address = address
-	return db.Save(&addr).Error
+	addr.Address = req.Address
+	addr.Phone = req.Phone
+	err = db.Where("address = ? and phone = ?", req.Address, req.Phone).First(&repetition).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return db.Save(&addr).Error
+		}
+	}
+	err = errors.New("Repeat the address")
+	return err
 }
