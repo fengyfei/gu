@@ -75,6 +75,7 @@ func (Address) TableName() string {
 	return "address"
 }
 
+// Add the address
 func (this *serviceProvider) Add(conn orm.Connection, userId uint, req *AddReq) error {
 	var (
 		addr       Address
@@ -110,24 +111,28 @@ func (this *serviceProvider) Add(conn orm.Connection, userId uint, req *AddReq) 
 			return db.Create(&addr).Error
 		}
 	}
+
 	err = errors.New("Repeat the address")
 	return err
 }
 
-func (this *serviceProvider) AddressRead(conn orm.Connection) (*[]Address, error) {
+// Read the address
+func (this *serviceProvider) AddressRead(conn orm.Connection, userId uint) (*[]Address, error) {
 	var (
 		err     error
 		address []Address
 	)
 
 	db := conn.(*gorm.DB).Exec("USE shop")
-	err = db.Find(&address).Error
+	err = db.Find(&address, "userid = ?", userId).Error
 	if err == gorm.ErrRecordNotFound {
 		err = nil
 	}
+
 	return &address, err
 }
 
+// Set default address
 func (this *serviceProvider) SetDefault(conn orm.Connection, userId uint, id int) error {
 	var (
 		err     error
@@ -140,7 +145,11 @@ func (this *serviceProvider) SetDefault(conn orm.Connection, userId uint, id int
 	err = db.Find(&addr, "userid = ? AND isdefault = true", userId).Error
 	if err == gorm.ErrRecordNotFound {
 		logger.Info("IsDefault is false")
+	} else {
+		logger.Error("db.Find():", err)
+		return err
 	}
+
 	addr.IsDefault = false
 
 	err = db.Find(&another, "id = ?", id).Error
@@ -155,6 +164,7 @@ func (this *serviceProvider) SetDefault(conn orm.Connection, userId uint, id int
 	return db.Save(&another).Error
 }
 
+// Modify address
 func (this *serviceProvider) Modify(conn orm.Connection, req *ModifyReq) error {
 	var (
 		err        error
