@@ -49,10 +49,7 @@ func AddAddress(c *server.Context) error {
 		req   address.AddReq
 		conn  orm.Connection
 		token *jwt.Token
-		addr  *[]address.Address
 	)
-
-	defer mysql.Pool.Release(conn)
 
 	token, err = util.Parse(c)
 	if err != nil {
@@ -88,7 +85,34 @@ func AddAddress(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	addr, err = address.Service.AddressRead(conn)
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
+}
+
+func AddressRead(c *server.Context) error {
+	var (
+		err   error
+		conn  orm.Connection
+		addr  *[]address.Address
+		token *jwt.Token
+	)
+
+	token, err = util.Parse(c)
+	if err != nil {
+		logger.Error("Error in parsing token:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
+	}
+
+	claims := token.Claims.(jwt.MapClaims)
+	userId := uint(claims["userid"].(float64))
+
+	conn, err = mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error("mysql.Pool.Get():", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	addr, err = address.Service.AddressRead(conn, userId)
 	if err != nil {
 		logger.Error("address.Service.AddressRead():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)

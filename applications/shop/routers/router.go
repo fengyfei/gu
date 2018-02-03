@@ -54,6 +54,7 @@ func register(r *server.Router) {
 	r.Post("/shop/user/address/add", handler.AddAddress)
 	r.Post("/shop/user/address/setdefault", handler.SetDefault)
 	r.Post("/shop/user/address/modify", handler.Modify)
+	r.Get("/shop/user/address/alladdress", handler.AddressRead)
 	//
 	//r.Post("/shop/api/category/add", "post:AddCategory")
 	//r.Get("/shop/category/getmainclass",  "get:GetMainCategories")
