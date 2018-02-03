@@ -40,66 +40,80 @@ import (
 	"github.com/fengyfei/gu/libs/security"
 )
 
-type serviceProvider struct{}
-
-const (
-	typeWechat = "wechat"
-	typePhone  = "phone"
-)
-
 var (
 	Service *serviceProvider
 
-	errLoginFailed = errors.New("invalid username or password.")
-	errPassword    = errors.New("invalid password.")
+	ErrPhoneNotEmpty = errors.New("phone number is not empty")
+	ErrLoginFailed   = errors.New("invalid username or password.")
+	ErrPassword      = errors.New("invalid password.")
 )
+
+type serviceProvider struct{}
 
 type (
 	User struct {
 		ID       uint      `sql:"primary_key;auto_increment" gorm:"column:id"`
+		OpenID   string    `gorm:"column:openid"`
+		UnionID  string    `gorm:"column:unionid"`
 		UserName string    `gorm:"column:username"`
-		NickName string    `gorm:"column:nickname"`
 		Phone    string    `gorm:"column:phone"`
-		Sex      string    `gorm:"column:sex"`
-		Avatar   string    `gorm:"column:avatar"`
-		IsAdmin  bool      `gorm:"column:isadmin"`
-		Type     string    `gorm:"column:type"`
 		Password string    `gorm:"column:password"`
+		Avatar   string    `gorm:"column:avatar"`
+		Sex      uint8     `gorm:"column:sex"`
+		IsAdmin  bool      `gorm:"column:isadmin"`
 		Created  time.Time `gorm:"column:created"`
 	}
 
-	WechatLoginReq struct {
-		UserName   string `json:"username" validate:"required,alphanum,min=6,max=30"`
-		WechatCode string `json:"wechatcode" validate:"required"`
+	UserData struct {
+		Token    string `json:"token"`
+		UserName string `json:"username"`
+		Phone    string `json:"phone"`
+		Avatar   string `json:"avatar"`
+		Sex      uint8  `json:"sex"`
+	}
+)
+
+type (
+	WechatCode struct {
+		Code string `json:"code" validate:"required"`
+	}
+
+	WechatData struct {
+		OpenID     string `json:"openid"`
+		SessionKey string `json:"session_key"`
+		UnionID    string `json:"unionid"`
+	}
+
+	WechatLoginErr struct {
+		Errcode string `json:"errcode"`
+		Errmsg  string `json:"errmsg"`
 	}
 
 	WechatLogin struct {
-		Data WechatLoginData
+		OpenID  string
+		UnionID string
 	}
 
-	WechatLoginData struct {
-		Errmsg  string
-		Unionid string
+	AddPhone struct {
+		Phone string `json:"phone" validate:"required,len=11"`
 	}
 
+	ChangeInfo struct {
+		Sex    uint8  `json:"sex"`
+		Avatar string `json:"avatar"`
+	}
+)
+
+type (
 	PhoneRegister struct {
 		UserName string `json:"username" validate:"required,alphaunicode,min=2,max=30"`
 		Phone    string `json:"phone" validate:"required,alphanum,len=11"`
 		Password string `json:"password" validate:"required,min=6,max=30"`
-		NickName string `json:"nickname" validate:"required,alphaunicode,min=2,max=30"`
-		Sex      string `json:"sex"`
-		Avatar   string `json:"avatar"`
 	}
 
 	PhoneLogin struct {
 		Phone    string `json:"phone" validate:"required,alphanum,len=11"`
 		Password string `json:"password" validate:"required,min=6,max=30"`
-	}
-
-	ChangeInfo struct {
-		NickName string `json:"name" validate:"required,alphaunicode,min=2,max=30"`
-		Sex      int    `json:"sex"`
-		Avatar   string `json:"avatar"`
 	}
 
 	ChangePass struct {
@@ -109,53 +123,101 @@ type (
 )
 
 func (User) TableName() string {
-	return "users"
+	return "user"
 }
 
 // Login by wechat
-func (this *serviceProvider) WechatLogin(conn orm.Connection, nickName, unionId *string) (uint, error) {
+func (this *serviceProvider) WechatLogin(conn orm.Connection, login *WechatLogin) (*User, error) {
+	var user User
 
-	user := &User{}
-	res := &User{}
-	user.UserName = *unionId
-	user.NickName = *nickName
-	user.Type = typeWechat
+	db := conn.(*gorm.DB)
 
-	db := conn.(*gorm.DB).Exec("USE shop")
-
-	err := db.Where("username = ?", *unionId).First(&res).Error
+	err := db.Where("openid = ? AND unionid = ?", login.OpenID, login.UnionID).First(&user).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			// not found, create new user
-			err = db.Model(&User{}).Create(&user).Error
+			user = User{
+				OpenID:  login.OpenID,
+				UnionID: login.UnionID,
+				IsAdmin: false,
+				Created: time.Now(),
+			}
+			err = db.Create(&user).Error
 			if err != nil {
-				return 0, err
+				return nil, err
 			}
 
-			return user.ID, nil
+			return &user, nil
 		}
-		return 0, err
+
+		return nil, err
 	}
 
-	return res.ID, nil
+	return &user, nil
 }
 
-// Register by phoneNumber
-func (this *serviceProvider) PhoneRegister(conn orm.Connection, req *PhoneRegister) error {
-	salt, err := security.SaltHashGenerate(&req.Password)
+// Add a phone number
+func (this *serviceProvider) AddPhone(conn orm.Connection, id uint, phone *AddPhone) error {
+	var (
+		user User
+		err  error
+	)
+
+	tx := conn.(*gorm.DB).Begin()
+	defer func() {
+		if err != nil {
+			err = tx.Rollback().Error
+		} else {
+			err = tx.Commit().Error
+		}
+	}()
+
+	err = tx.Where("id = ?", id).First(&user).Error
+	if err != nil {
+		return err
+	}
+
+	if user.Phone != "" {
+		err = ErrPhoneNotEmpty
+		return err
+	}
+
+	user.Phone = phone.Phone
+
+	err = tx.Save(&user).Error
+	return err
+}
+
+// Change information
+func (this *serviceProvider) ChangeInfo(conn orm.Connection, id uint, change *ChangeInfo) error {
+	var user User
+
+	db := conn.(*gorm.DB)
+
+	err := db.Where("id = ?", id).First(&user).Error
+	if err != nil {
+		return err
+	}
+
+	user.Avatar = change.Avatar
+	user.Sex = change.Sex
+
+	return db.Save(&user).Error
+}
+
+// Register by phone
+func (this *serviceProvider) PhoneRegister(conn orm.Connection, register *PhoneRegister) error {
+	salt, err := security.SaltHashGenerate(&register.Password)
 	if err != nil {
 		return err
 	}
 
 	user := User{
-		UserName: req.UserName,
-		Phone:    req.Phone,
-		Type:     typePhone,
-		IsAdmin:  false,
-		Avatar:   req.Avatar,
-		Sex:      req.Sex,
-		NickName: req.NickName,
+		OpenID:   "1234567890123456789012345678",
+		UnionID:  "12345678901234567890123456789",
+		UserName: register.UserName,
+		Phone:    register.Phone,
 		Password: string(salt),
+		IsAdmin:  false,
 		Created:  time.Now(),
 	}
 
@@ -165,27 +227,25 @@ func (this *serviceProvider) PhoneRegister(conn orm.Connection, req *PhoneRegist
 }
 
 // Login by phone
-func (this *serviceProvider) PhoneLogin(conn orm.Connection, req *PhoneLogin) (uint, error) {
-	var (
-		user User
-	)
+func (this *serviceProvider) PhoneLogin(conn orm.Connection, login *PhoneLogin) (*User, error) {
+	var user User
 
 	db := conn.(*gorm.DB)
 
-	err := db.Where("phone = ?", req.Phone).First(&user).Error
-	if err == gorm.ErrRecordNotFound {
-		return 0, err
+	err := db.Where("phone = ?", login.Phone).First(&user).Error
+	if err != nil {
+		return nil, err
 	}
 
-	if !security.SaltHashCompare([]byte(user.Password), &req.Password) {
-		return 0, errLoginFailed
+	if !security.SaltHashCompare([]byte(user.Password), &login.Password) {
+		return nil, ErrLoginFailed
 	}
 
-	return user.ID, err
+	return &user, nil
 }
 
 // Change password
-func (this *serviceProvider) ChangePassword(conn orm.Connection, id uint, req *ChangePass) error {
+func (this *serviceProvider) ChangePassword(conn orm.Connection, id uint, change *ChangePass) error {
 	var (
 		user User
 		err  error
@@ -205,11 +265,12 @@ func (this *serviceProvider) ChangePassword(conn orm.Connection, id uint, req *C
 		return err
 	}
 
-	if !security.SaltHashCompare([]byte(user.Password), &req.OldPass) {
-		return errPassword
+	if !security.SaltHashCompare([]byte(user.Password), &change.OldPass) {
+		err = ErrPassword
+		return err
 	}
 
-	salt, err := security.SaltHashGenerate(&req.NewPass)
+	salt, err := security.SaltHashGenerate(&change.NewPass)
 	if err != nil {
 		return err
 	}
@@ -220,24 +281,12 @@ func (this *serviceProvider) ChangePassword(conn orm.Connection, id uint, req *C
 	return err
 }
 
-// Change user infomation
-func (this *serviceProvider) ChangeInfo(conn orm.Connection, id uint) error {
-	var (
-		user User
-		err  error
-	)
-	db := conn.(*gorm.DB)
-
-	err = db.Where("id = ?", id).First(&user).Error
-	return err
-}
-
 // Get the user by ID
-func (this *serviceProvider) GetUserByID(conn orm.Connection, ID uint) (*User, error) {
+func (this *serviceProvider) GetUserByID(conn orm.Connection, id uint) (*User, error) {
 	db := conn.(*gorm.DB).Exec("USE shop")
 	user := &User{}
 
-	err := db.Where("id = ?", ID).First(&user).Error
+	err := db.Where("id = ?", id).First(&user).Error
 
 	return user, err
 }
