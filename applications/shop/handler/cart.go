@@ -24,52 +24,64 @@
 
 /*
  * Revision History:
- *     Initial: 2018/02/01        Shi Ruitao
+ *     Initial: 2018/02/03        Shi Ruitao
  */
 
 package handler
 
 import (
-	"github.com/fengyfei/gu/libs/constants"
+	"github.com/dgrijalva/jwt-go"
+
+	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/applications/shop/mysql"
+	"github.com/fengyfei/gu/applications/shop/util"
+	"github.com/fengyfei/gu/libs/constants"
+	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/libs/orm"
 	Cart "github.com/fengyfei/gu/models/shop/cart"
-	"github.com/fengyfei/gu/libs/http/server"
-	"github.com/fengyfei/gu/applications/core"
 )
 
+// Add commodity
 func Add(c *server.Context) error {
 	var (
-		req    Cart.AddCartReq
-		err    error
-		userId uint
-		conn   orm.Connection
+		req   Cart.AddCartReq
+		err   error
+		token *jwt.Token
+		conn  orm.Connection
 	)
 
-	userId = c.Request().Context().Value("userId").(uint)
+	token, err = util.Parse(c)
+	if err != nil {
+		logger.Error("Error in parsing token:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
+	}
+
+	claims := token.Claims.(jwt.MapClaims)
+	userId := uint64(claims[util.UserID].(float64))
 
 	conn, err = mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("mysql.Pool.Get()", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
 	err = c.JSONBody(&req)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("JSONBody():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
 	err = c.Validate(&req)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("Validate():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
 	err = Cart.Service.Add(conn, userId, req.WareId, req.Count)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("Cart.Service.Add():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
@@ -77,22 +89,31 @@ func Add(c *server.Context) error {
 
 func GetByUser(c *server.Context) error {
 	var (
-		items  []Cart.CartItem
-		err    error
-		userId uint
-		conn   orm.Connection
+		items []Cart.CartItem
+		err   error
+		conn  orm.Connection
+		token *jwt.Token
 	)
 
-	userId = c.Request().Context().Value("userId").(uint)
+	token, err = util.Parse(c)
+	if err != nil {
+		logger.Error("Error in parsing token:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
+	}
+
+	claims := token.Claims.(jwt.MapClaims)
+	userId := uint(claims[util.UserID].(float64))
 
 	conn, err = mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
 	if err != nil {
+		logger.Error("mysql.Pool.Get():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
 	items, err = Cart.Service.GetByUserID(conn, userId)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("Cart.Service.GetByUserID():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, items)
@@ -106,6 +127,7 @@ func Remove(c *server.Context) error {
 	)
 
 	conn, err = mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)

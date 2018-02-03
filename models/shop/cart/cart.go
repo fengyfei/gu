@@ -31,9 +31,11 @@
 package cart
 
 import (
-	"github.com/fengyfei/gu/libs/orm"
-	"github.com/jinzhu/gorm"
 	"time"
+
+	"github.com/jinzhu/gorm"
+
+	"github.com/fengyfei/gu/libs/orm"
 )
 
 type serviceProvider struct{}
@@ -44,23 +46,24 @@ var (
 
 type (
 	CartItem struct {
-		ID        uint `gorm:"primary_key;auto_increment"`
-		UserId    uint `gorm:"not null"`
-		WareId    uint `gorm:"not null"`
-		Count     uint `gorm:"not null";default:0`
-		CreatedAt *time.Time
+		ID        uint64     `gorm:"primary_key;auto_increment"`
+		UserId    uint64     `gorm:"not null"`
+		WareId    uint64     `gorm:"not null"`
+		Count     uint32     `gorm:"not null";default:0`
+		CreatedAt *time.Time `gorm:"column:created"`
 	}
+
 	AddCartReq struct {
-		WareId uint `json:"wareId"`
-		Count  uint `json:"count"`
+		WareId uint64 `json:"wareId"`
+		Count  uint32 `json:"count"`
 	}
 
 	RemoveCartReq struct {
-		Id uint `json:"id"`
+		Id uint64 `json:"id" validate:"required"`
 	}
 )
 
-func (this *serviceProvider) Add(conn orm.Connection, userId, wareId, count uint) error {
+func (this *serviceProvider) Add(conn orm.Connection, userId uint64, wareId uint64, count uint32) error {
 	db := conn.(*gorm.DB).Exec("USE shop")
 
 	item := &CartItem{}
@@ -87,12 +90,12 @@ func (this *serviceProvider) GetByUserID(conn orm.Connection, userId uint) ([]Ca
 	db := conn.(*gorm.DB).Exec("USE shop")
 	items := []CartItem{}
 
-	err := db.Where("user_id = ?", userId).Find(&items).Error
+	err := db.Where("userid = ?", userId).Find(&items).Error
 
 	return items, err
 }
 
-func (this *serviceProvider) RemoveById(conn orm.Connection, id uint) error {
+func (this *serviceProvider) RemoveById(conn orm.Connection, id uint64) error {
 	db := conn.(*gorm.DB).Exec("USE shop")
 	item := &CartItem{}
 	item.ID = id
@@ -100,7 +103,7 @@ func (this *serviceProvider) RemoveById(conn orm.Connection, id uint) error {
 	return db.Delete(&item).Error
 }
 
-func (this *serviceProvider) RemoveWhenOrder(tx *gorm.DB, userId uint, wareIdList []uint) error {
+func (this *serviceProvider) RemoveWhenOrder(tx *gorm.DB, userId uint, wareIdList []uint64) error {
 	for i := 0; i < len(wareIdList); i++ {
 		item := &CartItem{}
 		item.ID = wareIdList[i]
