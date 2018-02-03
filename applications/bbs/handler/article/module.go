@@ -44,9 +44,10 @@ type (
 	}
 
 	createTheme struct {
-		Module string  `json:"module"`
-		Theme  string  `json:"theme"`
+		Module string `json:"module"`
+		Theme  string `json:"theme"`
 	}
+
 	module struct {
 		ModuleID string
 	}
@@ -176,6 +177,17 @@ func ModuleInfo(this *server.Context) error {
 // AllModule returns all modules.
 func AllModules(this *server.Context) error {
 	list, err := article.ModuleService.AllModules()
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, list)
+}
+
+// ListRecommend return recommended module.
+func ListRecommend(this *server.Context) error {
+	list, err := article.ModuleService.ListRecommend()
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)

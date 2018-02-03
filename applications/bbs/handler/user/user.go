@@ -47,7 +47,7 @@ import (
 
 var (
 	// APPID
-	APPID    = ""
+	APPID = ""
 
 	// SECRET
 	SECRET   = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"

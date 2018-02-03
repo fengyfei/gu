@@ -109,7 +109,7 @@ func init() {
 }
 
 // Insert - add article.
-func (sp *articleServiceProvider) Insert(article CreateArticle, userID uint64) (string, error) {
+func (sp *articleServiceProvider) Insert(article CreateArticle, userID float64) (string, error) {
 	moduleID, err := ModuleService.GetModuleID(article.Module)
 	if err != nil {
 		return "", err
@@ -120,14 +120,14 @@ func (sp *articleServiceProvider) Insert(article CreateArticle, userID uint64) (
 		return "", err
 	}
 
-	userInfo, err := user.UserServer.GetUserByID(userID)
+	userInfo, err := user.UserServer.GetUserByID(uint64(userID))
 	if err != nil {
 		return "", err
 	}
 
 	art := Article{
 		Title:       article.Title,
-		UserID:      userID,
+		UserID:      uint64(userID),
 		Content:     article.Content,
 		Module:      article.Module,
 		Theme:       article.Theme,
@@ -138,7 +138,7 @@ func (sp *articleServiceProvider) Insert(article CreateArticle, userID uint64) (
 		LastComment: userInfo.UserName,
 		Created:     time.Now(),
 		Image:       article.Image,
-		IsActive:      true,
+		IsActive:    true,
 	}
 
 	conn := articleSession.Connect()

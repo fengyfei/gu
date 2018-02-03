@@ -112,7 +112,7 @@ func (sp *commentServiceProvider) Create(comment CreateComment) error {
 		ArtID:     bson.ObjectIdHex(comment.ArtID),
 		Content:   comment.Content,
 		Created:   time.Now(),
-		IsActive:    true,
+		IsActive:  true,
 	}
 
 	conn := commentSession.Connect()

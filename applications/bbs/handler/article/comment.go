@@ -30,6 +30,8 @@
 package article
 
 import (
+	jwtgo "github.com/dgrijalva/jwt-go"
+
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/http/server"
@@ -53,6 +55,9 @@ func AddComment(this *server.Context) error {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
+
+	userID := this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(float64)
+	req.CreatorID =uint64(userID)
 
 	err := article.CommentService.Create(req)
 	if err != nil {

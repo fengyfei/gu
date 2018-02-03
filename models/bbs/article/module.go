@@ -274,8 +274,8 @@ func UpdateRecommend() {
 	}
 
 	for _, module := range modules {
-		if  module.ArtNum == 0 {
-			updater := bson.M{"recommend": 0}
+		if module.ArtNum == 0 {
+			updater := bson.M{"$set": bson.M{"recommend": 0}}
 			err = conn.Update(bson.M{"_id": module.Id}, updater)
 			if err != nil {
 				logger.Error(err)
@@ -284,7 +284,7 @@ func UpdateRecommend() {
 		}
 
 		recommend := module.ModuleView / module.ArtNum
-		updater := bson.M{"recommend": recommend}
+		updater := bson.M{"$set": bson.M{"recommend": recommend}}
 		err = conn.Update(bson.M{"_id": module.Id}, updater)
 		if err != nil {
 			logger.Error(err)
@@ -299,14 +299,14 @@ func (sp *moduleServiceProvider) ListRecommend() ([]Module, error) {
 
 	var list []Module
 	query := bson.M{}
-	err := conn.Collection().Find(query).Sort("-recommend").Limit(8).All(&list)
+	err := conn.Collection().Find(query).Sort("-recommend").Limit(2).All(&list)
 	return list, err
 }
 
 // Cron execute UpdateCommend every two hours.
 func Cron() {
 	c := cron.New()
-	cronTime := "*/10 * * * * ?"
+	cronTime := "* * */2 * * ?"
 
 	c.AddFunc(cronTime, UpdateRecommend)
 	c.Start()

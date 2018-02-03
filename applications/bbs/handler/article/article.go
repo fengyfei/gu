@@ -30,6 +30,8 @@
 package article
 
 import (
+	jwtgo "github.com/dgrijalva/jwt-go"
+
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/http/server"
@@ -38,11 +40,6 @@ import (
 )
 
 type (
-	reqAdd struct {
-		Art    article.CreateArticle `json:"art"`
-		UserID uint64                `json:"userID"`
-	}
-
 	title struct {
 		Title string `json:"title"`
 	}
@@ -50,19 +47,20 @@ type (
 
 // AddArticle - add article.
 func AddArticle(this *server.Context) error {
-	var reqAdd reqAdd
+	var reqAdd article.CreateArticle
 
 	if err := this.JSONBody(&reqAdd); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
+	userID := this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(float64)
 	if err := this.Validate(&reqAdd); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	id, err := article.ArticleService.Insert(reqAdd.Art, reqAdd.UserID)
+	id, err := article.ArticleService.Insert(reqAdd, userID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -77,6 +75,7 @@ func GetByModuleID(this *server.Context) error {
 		Page   int    `json:"page"`
 		Module string `json:"module"`
 	}
+
 	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
@@ -98,6 +97,7 @@ func GetByThemeID(this *server.Context) error {
 		Module string `json:"module"`
 		Theme  string `json:"theme"`
 	}
+
 	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
@@ -115,6 +115,7 @@ func GetByThemeID(this *server.Context) error {
 // GetByThemeID - gets articles by ThemeID.
 func GetByTitle(this *server.Context) error {
 	var title title
+
 	if err := this.JSONBody(&title); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
@@ -134,6 +135,7 @@ func GetByUserID(this *server.Context) error {
 	var user struct {
 		UserID string `json:"userID"`
 	}
+
 	if err := this.JSONBody(&user); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)

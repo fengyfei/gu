@@ -68,8 +68,9 @@ func InitRouter(u *server.Router) {
 	u.Post("/bbs/module/theme/insert", article.AddTheme)
 	u.Post("/bbs/module/delete", article.DeleteModule)
 	u.Post("/bbs/module/theme/delete", article.DeleteTheme)
-	u.Post("/bbs/module/listinfo", article.ModuleInfo)
-	u.Get("/bbs/module/allmodule", article.AllModules)
+	u.Post("/bbs/module/oneinfo", article.ModuleInfo)
+	u.Get("/bbs/module/allinfo", article.AllModules)
+	u.Get("/bbs/module/recommend", article.ListRecommend)
 	u.Post("/bbs/module/updateview", article.UpdateModuleView)
 
 	u.Post("/bbs/comment/insert", article.AddComment)

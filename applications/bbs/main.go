@@ -45,6 +45,7 @@ func main() {
 
 func customSkipper(c *server.Context) bool {
 	URLMap["/user/phonelogin"] = struct{}{}
+	URLMap["/user/phoneregister"] = struct{}{}
 	if _, ok := URLMap[c.Request().RequestURI]; ok {
 		return true
 	}

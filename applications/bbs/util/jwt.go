@@ -37,12 +37,6 @@ import (
 
 const tokenKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
 
-var (
-	wechatLoginUrl = "/bbs/user/wechatlogin"
-	registerUrl    = "/bbs/user/register"
-	loginUrl       = "/bbs/user/login"
-)
-
 func NewToken(userId uint64, isAdmin bool) (string, error) {
 	claims := make(jwt.MapClaims)
 	claims["userid"] = userId
