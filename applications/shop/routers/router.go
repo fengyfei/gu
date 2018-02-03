@@ -52,13 +52,11 @@ func register(r *server.Router) {
 	r.Post("/shop/user/changepass", handler.ChangePassword)
 
 	r.Post("/shop/user/address/add", handler.AddAddress)
-	r.Post("/shop/user/address/setdefault", handler.SetDefault)
-	r.Post("/shop/user/address/modify", handler.Modify)
-	r.Get("/shop/user/address/alladdress", handler.AddressRead)
+	r.Post("/shop/user/address/setdefault", handler.SetDefaultAddress)
+	r.Post("/shop/user/address/modify", handler.ModifyAddress)
+	r.Get("/shop/user/address/alladdress", handler.GetAddress)
 
-	//r.Post("/shop/api/category/add", "post:AddCategory")
-	//r.Get("/shop/category/getmainclass",  "get:GetMainCategories")
-	//r.Post("/shop/category/getsubclass",  "post:GetSubCategories")
+	r.Post("/shop/api/category/add", handler.AddCategory)
 
 	// ware api for admin
 	//r.Post("/shop/api/ware/create",  "post:CreateWare")

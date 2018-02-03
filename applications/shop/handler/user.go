@@ -150,7 +150,7 @@ func AddPhone(c *server.Context) error {
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
-	userid := uint(claims[util.UserID].(float64))
+	userid := uint64(claims[util.UserID].(float64))
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
@@ -190,7 +190,7 @@ func ChangeInfo(c *server.Context) error {
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
-	userid := uint(claims[util.UserID].(float64))
+	userid := uint64(claims[util.UserID].(float64))
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
@@ -307,7 +307,7 @@ func ChangePassword(c *server.Context) error {
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
-	userid := uint(claims[util.UserID].(float64))
+	userid := uint64(claims[util.UserID].(float64))
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {

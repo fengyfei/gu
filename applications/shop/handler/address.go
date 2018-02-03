@@ -43,17 +43,17 @@ import (
 
 // Add address
 func AddAddress(c *server.Context) error {
-	var req models.AddReq
+	var add models.Add
 
-	err := c.JSONBody(&req)
+	err := c.JSONBody(&add)
 	if err != nil {
-		logger.Error("JSONBody():", err)
+		logger.Error("Error in JSONBody:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	err = c.Validate(&req)
-	if err != nil || !util.IsValidPhone(req.Phone) {
-		logger.Error("Validate():", err)
+	err = c.Validate(&add)
+	if err != nil || !util.IsValidPhone(add.Phone) {
+		logger.Error("Invalid parameters:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
@@ -64,36 +64,36 @@ func AddAddress(c *server.Context) error {
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
-	userID := uint(claims[util.UserID].(float64))
+	userID := uint64(claims[util.UserID].(float64))
 
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
-		logger.Error("mysql.Pool.Get():", err)
+		logger.Error("Can't get mysql connection:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = models.Service.Add(conn, userID, &req)
+	err = models.Service.Add(conn, userID, &add)
 	if err != nil {
-		logger.Error("address.Service.Add():", err)
+		logger.Error("Error in adding an address:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
-func SetDefault(c *server.Context) error {
-	var req models.SetDefaultReq
+func SetDefaultAddress(c *server.Context) error {
+	var set models.SetDefault
 
-	err := c.JSONBody(&req)
+	err := c.JSONBody(&set)
 	if err != nil {
-		logger.Error("JSONBody():", err)
+		logger.Error("Error in JSONBody:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	err = c.Validate(&req)
+	err = c.Validate(&set)
 	if err != nil {
-		logger.Error("Validate():", err)
+		logger.Error("Invalid parameters:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
@@ -109,31 +109,31 @@ func SetDefault(c *server.Context) error {
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
-		logger.Error("mysql.Pool.Get()", err)
+		logger.Error("Can't get mysql connection:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = models.Service.SetDefault(conn, userID, req.ID)
+	err = models.Service.SetDefault(conn, userID, set.ID)
 	if err != nil {
-		logger.Error("address.Service.SetDefault", err)
+		logger.Error("Error in setting the default address:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
-func Modify(c *server.Context) error {
-	var req models.ModifyReq
+func ModifyAddress(c *server.Context) error {
+	var modify models.Modify
 
-	err := c.JSONBody(&req)
+	err := c.JSONBody(&modify)
 	if err != nil {
-		logger.Error("JSONBody():", err)
+		logger.Error("Error in JSONBody:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	err = c.Validate(&req)
+	err = c.Validate(&modify)
 	if err != nil {
-		logger.Error("Validate", err)
+		logger.Error("Invalid parameters:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
@@ -149,20 +149,20 @@ func Modify(c *server.Context) error {
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
-		logger.Error("mysql.Pool.Get()", err)
+		logger.Error("Can't get mysql connection:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = models.Service.Modify(conn, userID, &req)
+	err = models.Service.Modify(conn, userID, &modify)
 	if err != nil {
-		logger.Error("address.Service.Modify():", err)
+		logger.Error("Error in modifying the address:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
-func AddressRead(c *server.Context) error {
+func GetAddress(c *server.Context) error {
 	token, err := util.Parse(c)
 	if err != nil {
 		logger.Error("Error in parsing token:", err)
@@ -175,14 +175,54 @@ func AddressRead(c *server.Context) error {
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
-		logger.Error("mysql.Pool.Get():", err)
+		logger.Error("Can't get mysql connection:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	addr, err := models.Service.AddressRead(conn, userID)
+	addr, err := models.Service.Get(conn, userID)
 	if err != nil {
-		logger.Error("address.Service.AddressRead():", err)
+		logger.Error("Error in getting addresses:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, addr)
+}
+
+func DeleteAddress(c *server.Context) error {
+	var delete models.Delete
+
+	err := c.JSONBody(&delete)
+	if err != nil {
+		logger.Error("Error in JSONBody:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	err = c.Validate(&delete)
+	if err != nil {
+		logger.Error("Invalid parameters:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	token, err := util.Parse(c)
+	if err != nil {
+		logger.Error("Error in parsing token:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
+	}
+
+	claims := token.Claims.(jwt.MapClaims)
+	userID := uint(claims[util.UserID].(float64))
+
+	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error("Can't get mysql connection:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	err = models.Service.Delete(conn, userID, delete.ID)
+	if err != nil {
+		logger.Error("Error in deleting:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }

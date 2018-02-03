@@ -52,7 +52,7 @@ var (
 	loginUrl       = "/shop/user/login"
 )
 
-func NewToken(userID uint, sessionKey string, isAdmin bool) (string, error) {
+func NewToken(userID uint64, sessionKey string, isAdmin bool) (string, error) {
 	claims := make(jwt.MapClaims)
 	claims[UserID] = userID
 	claims[SessionKey] = sessionKey

@@ -30,12 +30,11 @@
 package address
 
 import (
-	"github.com/jinzhu/gorm"
+	"time"
 
 	"github.com/fengyfei/gu/libs/orm"
+	"github.com/jinzhu/gorm"
 )
-
-type serviceProvider struct{}
 
 const (
 	DefaultAddress    = true
@@ -46,32 +45,48 @@ var (
 	Service *serviceProvider
 )
 
+type serviceProvider struct{}
+
 type (
 	Address struct {
-		ID        uint   `gorm:"column:id;primary_key;auto_increment"`
-		UserID    uint   `gorm:"column:userid;not null"`
-		Name      string `gorm:"column:name;not null"`
-		Phone     string `gorm:"column:phone;not null"`
-		Address   string `gorm:"column:address;type:varchar(128)"`
-		IsDefault bool   `gorm:"column:isdefault;not null;default:false"`
+		ID        uint64    `gorm:"column:id;primary_key;auto_increment"`
+		UserID    uint64    `gorm:"column:userid;not null"`
+		Name      string    `gorm:"column:name;not null"`
+		Phone     string    `gorm:"column:phone;not null"`
+		Address   string    `gorm:"column:address;type:varchar(128)"`
+		IsDefault bool      `gorm:"column:isdefault;not null;default:false"`
+		Created   time.Time `gorm:"column:created"`
 	}
 
-	AddReq struct {
+	AddressData struct {
+		Name      string `json:"name"`
+		Phone     string `json:"phone"`
+		Address   string `json:"address"`
+		IsDefault bool   `json:"isdefault"`
+	}
+)
+
+type (
+	Add struct {
 		Name      string `json:"name" validate:"required"`
 		Phone     string `json:"phone" validate:"required,len=11"`
 		Address   string `json:"address" validate:"required,max=128"`
 		IsDefault bool   `json:"isdefault"`
 	}
 
-	SetDefaultReq struct {
+	SetDefault struct {
 		ID uint `json:"id" validate:"required"`
 	}
 
-	ModifyReq struct {
-		ID      uint   `json:"id" validate:"required"`
+	Modify struct {
+		ID      uint64 `json:"id" validate:"required"`
 		Name    string `json:"name" validate:"required"`
 		Phone   string `json:"phone" validate:"required,len=11"`
 		Address string `json:"address" validate:"required,max=128"`
+	}
+
+	Delete struct {
+		ID uint64 `json:"id" validate:"required"`
 	}
 )
 
@@ -80,7 +95,7 @@ func (Address) TableName() string {
 }
 
 // Add the address
-func (this *serviceProvider) Add(conn orm.Connection, userID uint, req *AddReq) error {
+func (this *serviceProvider) Add(conn orm.Connection, userID uint64, add *Add) error {
 	var (
 		address Address
 		err     error
@@ -88,15 +103,15 @@ func (this *serviceProvider) Add(conn orm.Connection, userID uint, req *AddReq) 
 
 	addr := Address{
 		UserID:    userID,
-		Name:      req.Name,
-		Phone:     req.Phone,
-		Address:   req.Address,
-		IsDefault: req.IsDefault,
+		Name:      add.Name,
+		Phone:     add.Phone,
+		Address:   add.Address,
+		IsDefault: add.IsDefault,
 	}
 
 	db := conn.(*gorm.DB)
 
-	if req.IsDefault {
+	if add.IsDefault {
 		err = db.Where("userid = ? AND isdefault = ?", userID, DefaultAddress).First(&address).Error
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
@@ -117,12 +132,13 @@ func (this *serviceProvider) Add(conn orm.Connection, userID uint, req *AddReq) 
 }
 
 // Set default address
-func (this *serviceProvider) SetDefault(conn orm.Connection, userID uint, id uint) error {
+func (this *serviceProvider) SetDefault(conn orm.Connection, userID, id uint64) error {
 	var (
 		address Address
 		addr    Address
 		err     error
 	)
+
 	tx := conn.(*gorm.DB).Begin()
 	defer func() {
 		if err != nil {
@@ -161,24 +177,24 @@ func (this *serviceProvider) SetDefault(conn orm.Connection, userID uint, id uin
 }
 
 // Modify address
-func (this *serviceProvider) Modify(conn orm.Connection, userID uint, req *ModifyReq) error {
+func (this *serviceProvider) Modify(conn orm.Connection, userID uint64, modify *Modify) error {
 	var address Address
 
 	db := conn.(*gorm.DB)
 
-	err := db.Where("id = ? AND userid = ?", req.ID, userID).First(&address).Error
+	err := db.Where("id = ? AND userid = ?", modify.ID, userID).First(&address).Error
 	if err != nil {
 		return err
 	}
 
-	address.Name = req.Name
-	address.Phone = req.Phone
-	address.Address = req.Address
+	address.Name = modify.Name
+	address.Phone = modify.Phone
+	address.Address = modify.Address
 	return db.Save(&address).Error
 }
 
 // Read the address
-func (this *serviceProvider) AddressRead(conn orm.Connection, userID uint) (*[]Address, error) {
+func (this *serviceProvider) Get(conn orm.Connection, userID uint) (*[]Address, error) {
 	var (
 		address []Address
 	)
@@ -191,4 +207,10 @@ func (this *serviceProvider) AddressRead(conn orm.Connection, userID uint) (*[]A
 	}
 
 	return &address, err
+}
+
+func (this *serviceProvider) Delete(conn orm.Connection, userID, id uint64) error {
+	db := conn.(*gorm.DB)
+
+	return db.Where("id = ? AND userid = ?", id, userID).Delete(&Address{}).Error
 }

@@ -52,7 +52,7 @@ type serviceProvider struct{}
 
 type (
 	User struct {
-		ID       uint      `sql:"primary_key;auto_increment" gorm:"column:id"`
+		ID       uint64    `sql:"primary_key;auto_increment" gorm:"column:id"`
 		OpenID   string    `gorm:"column:openid"`
 		UnionID  string    `gorm:"column:unionid"`
 		UserName string    `gorm:"column:username"`
@@ -156,7 +156,7 @@ func (this *serviceProvider) WechatLogin(conn orm.Connection, login *WechatLogin
 }
 
 // Add a phone number
-func (this *serviceProvider) AddPhone(conn orm.Connection, id uint, phone *AddPhone) error {
+func (this *serviceProvider) AddPhone(conn orm.Connection, id uint64, phone *AddPhone) error {
 	var (
 		user User
 		err  error
@@ -188,7 +188,7 @@ func (this *serviceProvider) AddPhone(conn orm.Connection, id uint, phone *AddPh
 }
 
 // Change information
-func (this *serviceProvider) ChangeInfo(conn orm.Connection, id uint, change *ChangeInfo) error {
+func (this *serviceProvider) ChangeInfo(conn orm.Connection, id uint64, change *ChangeInfo) error {
 	var user User
 
 	db := conn.(*gorm.DB)
@@ -245,7 +245,7 @@ func (this *serviceProvider) PhoneLogin(conn orm.Connection, login *PhoneLogin) 
 }
 
 // Change password
-func (this *serviceProvider) ChangePassword(conn orm.Connection, id uint, change *ChangePass) error {
+func (this *serviceProvider) ChangePassword(conn orm.Connection, id uint64, change *ChangePass) error {
 	var (
 		user User
 		err  error
@@ -282,7 +282,7 @@ func (this *serviceProvider) ChangePassword(conn orm.Connection, id uint, change
 }
 
 // Get the user by ID
-func (this *serviceProvider) GetUserByID(conn orm.Connection, id uint) (*User, error) {
+func (this *serviceProvider) GetUserByID(conn orm.Connection, id uint64) (*User, error) {
 	db := conn.(*gorm.DB).Exec("USE shop")
 	user := &User{}
 
