@@ -55,48 +55,47 @@ func register(r *server.Router) {
 	r.Post("/shop/user/address/setdefault", handler.SetDefault)
 	r.Post("/shop/user/address/modify", handler.Modify)
 	r.Get("/shop/user/address/alladdress", handler.AddressRead)
-	//
+
 	//r.Post("/shop/api/category/add", "post:AddCategory")
 	//r.Get("/shop/category/getmainclass",  "get:GetMainCategories")
 	//r.Post("/shop/category/getsubclass",  "post:GetSubCategories")
-	//
-	//// ware api for admin
+
+	// ware api for admin
 	//r.Post("/shop/api/ware/create",  "post:CreateWare")
 	//r.Get("/shop/api/ware/getall",  "get:GetAllWare")
 	//r.Post("/shop/api/ware/updateinfo",  "post:UpdateWithID")
 	//r.Post("/shop/api/ware/modifyprice",  "post:ModifyPrice")
 	//r.Post("/shop/api/ware/changestatus",  "post:ChangeStatus")
-	//
-	//// ware api for user
+
+	// ware api for user
 	//r.Post("/shop/ware/getbycid", "post:GetWareByCategory")
 	//r.Get("/shop/ware/getpromotion",  "get:GetPromotion")
 	//r.Post("/shop/ware/homelist",  "post:HomePageList")
 	//r.Post("/shop/ware/recommend", "post:RecommendList")
 	//r.Post("/shop/ware/getdetail", "post:GetDetail")
-	//
-	//// cart api
+
+	// cart api
 	//r.Post("/shop/cart/add", &handler.CartController{}, "post:Add")
 	//r.Post("/shop/cart/remove", &handler.CartController{}, "post:Remove")
 	//r.Post("/shop/cart/get", &handler.CartController{}, "get:GetByUser")
-	//
-	//// order api for user
+
+	// order api for user
 	//r.Post("/shop/user/order/add", &handler.OrderController{}, "post:CreateOrder")
 	//r.Post("/shop/user/order/get", &handler.OrderController{}, "get:GetUserOrder")
-	//
-	//// order api for admin
+
+	// order api for admin
 	//r.Post("/shop/api/order/confirm", &handler.OrderController{}, "post:ConfirmOrder")
-	//
-	//// collection api for user
+
+	// collection api for user
 	//r.Post("/shop/collection/get", &handler.CollectionController{}, "get:GetByUserID")
 	//r.Post("/shop/collection/add", &handler.CollectionController{}, "post:Add")
 	//r.Post("/shop/collection/remove", &handler.CollectionController{}, "post:Remove")
-	//
-	//// panel api for admin
+
+	// panel api for admin
 	//r.Post("/shop/api/panel/create", &handler.PanelController{}, "post:AddPanel")
 	//r.Post("/shop/api/panel/addpromotion", &handler.PanelController{}, "post:AddPromotion")
 	//r.Post("/shop/api/panel/addrecommend", &handler.PanelController{}, "post:AddRecommend")
-	//
-	//// panel api for user
-	//r.Post("/shop/panel/getpage", &handler.PanelController{}, "get:GetPanelPage")
 
+	// panel api for user
+	//r.Post("/shop/panel/getpage", &handler.PanelController{}, "get:GetPanelPage")
 }

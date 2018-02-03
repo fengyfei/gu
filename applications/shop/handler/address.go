@@ -38,48 +38,42 @@ import (
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
-	"github.com/fengyfei/gu/libs/orm"
-	"github.com/fengyfei/gu/models/shop/address"
+	models "github.com/fengyfei/gu/models/shop/address"
 )
 
 // Add address
 func AddAddress(c *server.Context) error {
-	var (
-		err   error
-		req   address.AddReq
-		conn  orm.Connection
-		token *jwt.Token
-	)
+	var req models.AddReq
 
-	token, err = util.Parse(c)
-	if err != nil {
-		logger.Error("Error in parsing token:", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
-	}
-
-	claims := token.Claims.(jwt.MapClaims)
-	userId := uint(claims["userid"].(float64))
-
-	conn, err = mysql.Pool.Get()
-	defer mysql.Pool.Release(conn)
-	if err != nil {
-		logger.Error("mysql.Pool.Get():", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-	}
-
-	err = c.JSONBody(&req)
+	err := c.JSONBody(&req)
 	if err != nil {
 		logger.Error("JSONBody():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
 	err = c.Validate(&req)
-	if err != nil {
+	if err != nil || !util.IsValidPhone(req.Phone) {
 		logger.Error("Validate():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	err = address.Service.Add(conn, userId, &req)
+	token, err := util.Parse(c)
+	if err != nil {
+		logger.Error("Error in parsing token:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
+	}
+
+	claims := token.Claims.(jwt.MapClaims)
+	userID := uint(claims[util.UserID].(float64))
+
+	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error("mysql.Pool.Get():", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	err = models.Service.Add(conn, userID, &req)
 	if err != nil {
 		logger.Error("address.Service.Add():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -88,63 +82,10 @@ func AddAddress(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
-func AddressRead(c *server.Context) error {
-	var (
-		err   error
-		conn  orm.Connection
-		addr  *[]address.Address
-		token *jwt.Token
-	)
-
-	token, err = util.Parse(c)
-	if err != nil {
-		logger.Error("Error in parsing token:", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
-	}
-
-	claims := token.Claims.(jwt.MapClaims)
-	userId := uint(claims["userid"].(float64))
-
-	conn, err = mysql.Pool.Get()
-	defer mysql.Pool.Release(conn)
-	if err != nil {
-		logger.Error("mysql.Pool.Get():", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-	}
-
-	addr, err = address.Service.AddressRead(conn, userId)
-	if err != nil {
-		logger.Error("address.Service.AddressRead():", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-	}
-	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, addr)
-}
-
 func SetDefault(c *server.Context) error {
-	var (
-		err   error
-		req   address.SetDefaultReq
-		conn  orm.Connection
-		token *jwt.Token
-	)
+	var req models.SetDefaultReq
 
-	token, err = util.Parse(c)
-	if err != nil {
-		logger.Error("Error in parsing token:", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
-	}
-
-	claims := token.Claims.(jwt.MapClaims)
-	userId := uint(claims["userid"].(float64))
-
-	conn, err = mysql.Pool.Get()
-	defer mysql.Pool.Release(conn)
-	if err != nil {
-		logger.Error("mysql.Pool.Get()", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-	}
-
-	err = c.JSONBody(&req)
+	err := c.JSONBody(&req)
 	if err != nil {
 		logger.Error("JSONBody():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
@@ -156,8 +97,23 @@ func SetDefault(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	err = address.Service.SetDefault(conn, userId, req.Id)
+	token, err := util.Parse(c)
+	if err != nil {
+		logger.Error("Error in parsing token:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
+	}
 
+	claims := token.Claims.(jwt.MapClaims)
+	userID := uint(claims[util.UserID].(float64))
+
+	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error("mysql.Pool.Get()", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	err = models.Service.SetDefault(conn, userID, req.ID)
 	if err != nil {
 		logger.Error("address.Service.SetDefault", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -167,19 +123,9 @@ func SetDefault(c *server.Context) error {
 }
 
 func Modify(c *server.Context) error {
-	var (
-		err  error
-		req  address.ModifyReq
-		conn orm.Connection
-	)
-	conn, err = mysql.Pool.Get()
-	defer mysql.Pool.Release(conn)
-	if err != nil {
-		logger.Error("mysql.Pool.Get()", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-	}
+	var req models.ModifyReq
 
-	err = c.JSONBody(&req)
+	err := c.JSONBody(&req)
 	if err != nil {
 		logger.Error("JSONBody():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
@@ -191,11 +137,52 @@ func Modify(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	err = address.Service.Modify(conn, &req)
+	token, err := util.Parse(c)
+	if err != nil {
+		logger.Error("Error in parsing token:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
+	}
+
+	claims := token.Claims.(jwt.MapClaims)
+	userID := uint(claims[util.UserID].(float64))
+
+	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error("mysql.Pool.Get()", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	err = models.Service.Modify(conn, userID, &req)
 	if err != nil {
 		logger.Error("address.Service.Modify():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
+}
+
+func AddressRead(c *server.Context) error {
+	token, err := util.Parse(c)
+	if err != nil {
+		logger.Error("Error in parsing token:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
+	}
+
+	claims := token.Claims.(jwt.MapClaims)
+	userID := uint(claims[util.UserID].(float64))
+
+	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error("mysql.Pool.Get():", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	addr, err := models.Service.AddressRead(conn, userID)
+	if err != nil {
+		logger.Error("address.Service.AddressRead():", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, addr)
 }
