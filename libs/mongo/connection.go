@@ -90,7 +90,7 @@ func (conn *Connection) GetMany(q interface{}, doc interface{}, fields ...string
 	return conn.collection.Find(q).Sort(fields...).All(doc)
 }
 
-// GetLimitN gets the specified number of records by query, and only retrieve the name field by selector,
+// GetLimitN gets records by query, and only retrieve the name field by selector.
 // If fields are provided, asks the database to order returned documents according to the
 // provided field names, then restricts the maximum number of documents retrieved to n.
 // For example:
@@ -106,6 +106,17 @@ func (conn *Connection) GetLimitN(q, selector, doc interface{}, n int, fields ..
 	}
 
 	return conn.collection.Find(q).Sort(fields...).Select(selector).Limit(n).All(doc)
+}
+
+// GetLimitFields gets records by query, and only retrieve the name field by selector.
+// If fields are provided, asks the database to order returned documents according to the
+// provided field names.
+func (conn *Connection) GetLimitFields(q, selector, doc interface{}, fields ...string) error {
+	if len(fields) == 0 {
+		return conn.collection.Find(q).Select(selector).All(doc)
+	}
+
+	return conn.collection.Find(q).Sort(fields...).Select(selector).All(doc)
 }
 
 // Insert add new documents to a collection.
