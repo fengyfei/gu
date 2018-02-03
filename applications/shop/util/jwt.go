@@ -40,6 +40,10 @@ import (
 
 const (
 	tokenKey = "techcat_shop"
+
+	UserID     = "userid"
+	SessionKey = "session_key"
+	IsAdmin    = "is_admin"
 )
 
 var (
@@ -48,10 +52,11 @@ var (
 	loginUrl       = "/shop/user/login"
 )
 
-func NewToken(userId uint, isAdmin bool) (string, error) {
+func NewToken(userID uint, sessionKey string, isAdmin bool) (string, error) {
 	claims := make(jwt.MapClaims)
-	claims["userid"] = userId
-	claims["admin"] = isAdmin
+	claims[UserID] = userID
+	claims[SessionKey] = sessionKey
+	claims[IsAdmin] = isAdmin
 	claims["exp"] = time.Now().Add(time.Hour * 480).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
