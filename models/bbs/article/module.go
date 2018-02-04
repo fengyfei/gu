@@ -168,13 +168,13 @@ func (sp *moduleServiceProvider) CreateTheme(module, theme string) error {
 }
 
 // UpdateArtNum update the artNum of the module.
-func (sp *moduleServiceProvider) UpdateArtNum(module string, sort int) error {
+func (sp *moduleServiceProvider) UpdateArtNum(module string, operation int) error {
 	moduleID, err := sp.GetModuleID(module)
 	if err != nil {
 		return err
 	}
 
-	updater := bson.M{"$inc": bson.M{"artNum": sort}}
+	updater := bson.M{"$inc": bson.M{"artNum": operation}}
 
 	conn := moduleSession.Connect()
 	defer conn.Disconnect()

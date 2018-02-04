@@ -31,6 +31,7 @@ package article
 
 import (
 	jwtgo "github.com/dgrijalva/jwt-go"
+	"gopkg.in/mgo.v2/bson"
 
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/libs/constants"
@@ -38,7 +39,6 @@ import (
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/models/bbs"
 	"github.com/fengyfei/gu/models/bbs/article"
-	"gopkg.in/mgo.v2/bson"
 )
 
 type (

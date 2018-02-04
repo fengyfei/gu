@@ -85,10 +85,6 @@ func init() {
 
 	s.SetMode(mgo.Monotonic, true)
 	commentSession = mongo.NewConnection(s, bbs.Database, CollComment)
-
-	if err != nil {
-		panic(err)
-	}
 }
 
 // Create insert comment.

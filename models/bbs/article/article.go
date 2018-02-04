@@ -320,10 +320,10 @@ func (sp *articleServiceProvider) Delete(title string) error {
 }
 
 // UpdateCommentNum update the commentNum.
-func (sp *articleServiceProvider) UpdateCommentNum(artID bson.ObjectId, sort int) error {
+func (sp *articleServiceProvider) UpdateCommentNum(artID bson.ObjectId, operation int) error {
 	var updater = bson.M{}
 
-	updater = bson.M{"$inc": bson.M{"commentNum": sort}}
+	updater = bson.M{"$inc": bson.M{"commentNum": operation}}
 
 	conn := articleSession.Connect()
 	defer conn.Disconnect()
@@ -341,7 +341,7 @@ func (sp *articleServiceProvider) UpdateTimes(num int64, artID string) error {
 	return conn.Update(bson.M{"_id": bson.ObjectIdHex(artID), "isActive": true}, updater)
 }
 
-// DeleteByModule deletes articles by deleting module.
+// DeleteByModule delete the articles that belong to the deleted module.
 func (sp *articleServiceProvider) DeleteByModule(moduleID string) error {
 	updater := bson.M{"$set": bson.M{"isActive": false}}
 
@@ -352,7 +352,7 @@ func (sp *articleServiceProvider) DeleteByModule(moduleID string) error {
 	return err
 }
 
-// DeleteByTheme deletes articles by deleting themes.
+// DeleteByTheme deletes articles that belong to the deleted theme.
 func (sp *articleServiceProvider) DeleteByTheme(moduleID, themeID string) error {
 	updater := bson.M{"$set": bson.M{"isActive": false}}
 

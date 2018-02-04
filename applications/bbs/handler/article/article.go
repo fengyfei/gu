@@ -69,7 +69,7 @@ func AddArticle(this *server.Context) error {
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, id)
 }
 
-// GetByModuleID gets articles by ModuleID .
+// GetByModuleID gets articles by ModuleID.
 func GetByModuleID(this *server.Context) error {
 	var req struct {
 		Page   int    `json:"page"`
@@ -112,7 +112,7 @@ func GetByThemeID(this *server.Context) error {
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
 }
 
-// GetByThemeID - gets articles by ThemeID.
+// GetByTitle - gets articles by ThemeID.
 func GetByTitle(this *server.Context) error {
 	var title title
 

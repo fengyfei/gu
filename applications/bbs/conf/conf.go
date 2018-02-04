@@ -37,7 +37,6 @@ type BbsConfig struct {
 	Pages     int
 	MongoURL  string
 	CorsHosts []string
-
 	MysqlHost string
 	MysqlPort string
 	MysqlUser string
@@ -64,7 +63,6 @@ func load() {
 
 	BBSConfig = &BbsConfig{
 		Address: viper.GetString("server.address"),
-
 		MongoURL:  viper.GetString("mongo.url"),
 		CorsHosts: viper.GetStringSlice("middleware.cors.hosts"),
 		Pages:     viper.GetInt("pages"),

@@ -30,8 +30,9 @@
 package initialize
 
 import (
-	"github.com/fengyfei/gu/libs/orm/mysql"
 	"fmt"
+
+	"github.com/fengyfei/gu/libs/orm/mysql"
 	"github.com/fengyfei/gu/applications/bbs/conf"
 )
 
