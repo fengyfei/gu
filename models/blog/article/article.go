@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd.
+ * Copyright (c) 2018 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,7 @@
 /*
  * Revision History:
  *     Initial: 2017/10/24        Jia Chenhui
+ *     Modify : 2018/02/04        Tong Yuehong
  */
 
 package article
@@ -60,6 +61,7 @@ func init() {
 		panic(err)
 	}
 
+
 	s.SetMode(mgo.Monotonic, true)
 
 	s.DB(blog.Database).C(cname).EnsureIndex(mgo.Index{
@@ -75,88 +77,39 @@ func init() {
 
 // Article represents the article information.
 type Article struct {
-	ArticleID bson.ObjectId `bson:"_id,omitempty" json:"id" validate:"required"`
-	Author    string        `bson:"Author" json:"author"`
-	Title     string        `bson:"Title" json:"title"`
-	Content   string        `bson:"Content" json:"content"`
-	Abstract  string        `bson:"Abstract" json:"abstract"`
-	Tag       []string      `bson:"Tag" json:"tag"`
-	CreatedAt time.Time     `bson:"CreatedAt" json:"created_at"`
-	UpdatedAt time.Time     `bson:"UpdatedAt" json:"updated_at"`
-	Active    bool          `bson:"Active" json:"active"`
+	ID        bson.ObjectId `bson:"_id,omitempty" json:"id" validate:"required"`
+	AuthorID  bson.ObjectId `bson:"Author"        json:"authorID"`
+	Title     string        `bson:"Title"         json:"title"`
+	Content   string        `bson:"Content"       json:"content"`
+	Abstract  string        `bson:"Abstract"      json:"abstract"`
+	Tag       []string      `bson:"Tag"           json:"tag"`
+	AuditorID int32         `bson:"auditorID"     json:"auditorID"`
+	CreatedAt time.Time     `bson:"CreatedAt"     json:"created_at"`
+	UpdatedAt time.Time     `bson:"UpdatedAt"     json:"updated_at"`
+	Status    int8          `bson:"status"        json:"status"`
 }
 
-// List get all the articles.
-func (sp *serviceProvider) List() ([]Article, error) {
-	var (
-		articles []Article
-		err      error
-	)
-
-	conn := session.Connect()
-	defer conn.Disconnect()
-
-	err = conn.GetMany(nil, &articles)
-
-	return articles, err
-}
-
-// ActiveList get all the active articles.
-func (sp *serviceProvider) ActiveList() ([]Article, error) {
-	var (
-		articles []Article
-		err      error
-	)
-
-	conn := session.Connect()
-	defer conn.Disconnect()
-
-	err = conn.GetMany(bson.M{"Active": true}, &articles)
-
-	return articles, err
-}
-
-// GetByID get article based on article id.
-func (sp *serviceProvider) GetByID(id string) (Article, error) {
-	var (
-		article Article
-		err     error
-	)
-
-	conn := session.Connect()
-	defer conn.Disconnect()
-
-	err = conn.GetByID(bson.ObjectIdHex(id), &article)
-
-	return article, err
-}
-
-// GetByTags get articles based on tag id.
-func (sp *serviceProvider) GetByTags(tags *[]string) ([]Article, error) {
-	var (
-		articles []Article
-		err      error
-	)
-
-	conn := session.Connect()
-	defer conn.Disconnect()
-
-	err = conn.GetMany(bson.M{"Tag": bson.M{"$all": *tags}}, &articles)
-
-	return articles, err
+// CreateArticle represents the article information when created.
+type CreateArticle struct {
+	AuthorID string   `json:"authorID"`
+	Title    string   `json:"title"`
+	Content  string   `json:"content"`
+	Abstract string   `json:"abstract"`
+	Tag      []string `json:"tag"`
 }
 
 // Create create article.
-func (sp *serviceProvider) Create(author, title, abstract, content *string, tag *[]string) (string, error) {
+func (sp *serviceProvider) Create(article CreateArticle) (string, error) {
 	articleInfo := Article{
-		ArticleID: bson.NewObjectId(),
-		Author:    *author,
-		Title:     *title,
-		Content:   *content,
-		Tag:       *tag,
+		Title:     article.Title,
+		AuthorID:  bson.ObjectIdHex(article.AuthorID),
+		Content:   article.Content,
+		Abstract:  article.Abstract,
+		Tag:       article.Tag,
+		AuditorID: 0,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		Active:    true,
+		Status:    blog.Created,
 	}
 
 	conn := session.Connect()
@@ -167,37 +120,87 @@ func (sp *serviceProvider) Create(author, title, abstract, content *string, tag 
 		return "", err
 	}
 
-	return articleInfo.ArticleID.Hex(), nil
+	return articleInfo.ID.Hex(), nil
 }
 
-// Modify modify article information.
-func (sp *serviceProvider) Modify(id, title, content, abstract *string, active *bool) error {
-	updater := bson.M{"$set": bson.M{
-		"Title":     *title,
-		"Content":   *content,
-		"Abstract":  *abstract,
-		"Active":    *active,
-		"UpdatedAt": time.Now(),
-	}}
+// ListApproval returns the articles which are passed.
+func (sp *serviceProvider) ListApproval(page int) ([]Article, error) {
+	var articles []Article
 
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	return conn.Update(bson.M{"_id": bson.ObjectIdHex(*id)}, updater)
+	query := bson.M{"status": blog.Approval}
+	err := conn.Collection().Find(query).Limit(blog.Skip).Skip(page * blog.Skip).All(&articles)
+	if err != nil {
+		return nil, err
+	}
+
+	return articles, nil
 }
 
-// AddTags add tags to specified article.
-func (sp *serviceProvider) AddTags(articleID string, tags []string) error {
+// ListCreated return articles which are waiting for checking.
+func (sp *serviceProvider) ListCreated() ([]Article, error) {
+	var articles []Article
+
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	return conn.Update(bson.M{"_id": bson.ObjectIdHex(articleID)}, bson.M{"$pushAll": bson.M{"Tag": tags}})
+	query := bson.M{"status": blog.Created}
+	err := conn.GetMany(query, &articles)
+	if err != nil {
+		return nil,  err
+	}
+
+	return articles, nil
 }
 
-// RemoveTags remove tags from specified article.
-func (sp *serviceProvider) RemoveTags(articleID string, tags []string) error {
+// ModifyStatus modify the  article status.
+func (sp *serviceProvider) ModifyStatus(articleID string, status int8, staffID int32) error {
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	return conn.Update(bson.M{"_id": bson.ObjectIdHex(articleID)}, bson.M{"$pullAll": bson.M{"Tag": tags}})
+	updater := bson.M{"status": status, "AuditorID": staffID}
+	return conn.Connect().Update(bson.M{"_id": articleID}, updater)
 }
+
+//ListDenied return articles which are denied.
+func (sp *serviceProvider) ListDenied() ([]Article, error) {
+	var articles []Article
+	conn := session.Connect()
+	defer conn.Disconnect()
+
+	query := bson.M{"status": blog.NotApproval}
+	err := conn.Connect().GetMany(query, &articles)
+	if err != nil {
+		return nil, err
+	}
+
+	return articles, nil
+}
+
+// Delete delete article.
+func (sp *serviceProvider) Delete(articleID string) error {
+	conn := session.Connect()
+	defer conn.Disconnect()
+
+	updater := bson.M{"status": blog.Delete}
+	return conn.Connect().Update(bson.M{"_id": articleID}, updater)
+}
+
+// GetByID return the article's information.
+func (sp *serviceProvider) GetByID(articleID string) (*Article, error) {
+	var article Article
+
+	conn := session.Connect()
+	defer conn.Disconnect()
+
+	query := bson.M{"_id": bson.ObjectIdHex(articleID), "status": blog.Approval}
+	err := conn.Connect().GetUniqueOne(query, &article)
+	if err != nil {
+		return nil, err
+	}
+
+	return &article, nil
+}
+

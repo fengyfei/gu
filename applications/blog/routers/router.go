@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd..
+ * Copyright (c) 2018 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,8 @@
 package router
 
 import (
-	"github.com/fengyfei/gu/applications/blog/handler"
+	"github.com/fengyfei/gu/applications/blog/handler/article"
+	"github.com/fengyfei/gu/applications/blog/handler/staff"
 	"github.com/fengyfei/gu/libs/http/server"
 )
 
@@ -49,17 +50,18 @@ func InitRouter(u *server.Router) {
 		panic("[InitRouter]: server couldn't be nil")
 	}
 
-	u.Post("/blog/tag/create", blog.CreateTag)
-	u.Post("/blog/tag/list", blog.ListTags)
-	u.Post("/blog/tag/activelist", blog.TagActiveList)
-	u.Post("/blog/tag/info", blog.TagInfo)
-	u.Post("/blog/tag/modify", blog.ModifyTag)
+	//u.Post("/blog/tag/create", blog.CreateTag)
+	//u.Post("/blog/tag/list", blog.ListTags)
+	//u.Post("/blog/tag/activelist", blog.TagActiveList)
+	//u.Post("/blog/tag/info", blog.TagInfo)
+	//u.Post("/blog/tag/modify", blog.ModifyTag)
 
-	u.Post("/blog/article/create", blog.CreateArticle)
-	u.Post("/blog/article/list", blog.ListArticle)
-	u.Post("/blog/article/activelist", blog.ArticleActiveList)
-	u.Post("/blog/article/getbytag", blog.GetByTag)
-	u.Post("/blog/article/getbyid", blog.GetByID)
+	u.Post("/staff/login", staff.Login)
 
-	u.Post("/blog/article/modify", blog.ModifyArticle)
+	u.Post("/blog/article/getone", article.ArticleByID)
+	u.Post("/blog/article/create", article.CreateArticle)
+	u.Post("/blog/article/allapproval", article.ListApproval)
+	u.Post("/blog/article/modifystatus", article.ModifyStatus)
+	u.Post("/blog/article/allcreated", article.ListCreated)
+	u.Post("/blog/article/delete", article.Delete)
 }

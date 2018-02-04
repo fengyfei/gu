@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd..
+ * Copyright (c) 2018 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -40,7 +40,25 @@ import (
 
 var (
 	ep *server.Entrypoint
+	URLMap    = make(map[string]struct{})
+	claimsKey = "staff"
+	tokenHMACKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+	jwtConfig    = middleware.JWTConfig{
+		Skipper:    customSkipper,
+		SigningKey: []byte(tokenHMACKey),
+		// use to extract claims from context
+		ContextKey: claimsKey,
+	}
 )
+
+func customSkipper(c *server.Context) bool {
+	URLMap["/staff/login"] = struct{}{}
+	if _, ok := URLMap[c.Request().RequestURI]; ok {
+		return true
+	}
+
+	return false
+}
 
 // startServer starts a HTTP server.
 func startServer() {
@@ -51,12 +69,16 @@ func startServer() {
 	ep = server.NewEntrypoint(serverConfig, nil)
 
 	// add middlewares
+	jwtMiddleware := middleware.JWTWithConfig(jwtConfig)
+
 	ep.AttachMiddleware(middleware.NegroniRecoverHandler())
 	ep.AttachMiddleware(middleware.NegroniLoggerHandler())
 	ep.AttachMiddleware(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowedOrigins: conf.Config.CorsHosts,
 		AllowedMethods: []string{server.GET, server.POST},
 	}))
+
+	ep.AttachMiddleware(jwtMiddleware)
 
 	if err := ep.Start(router.Router.Handler()); err != nil {
 		logger.Error(err)

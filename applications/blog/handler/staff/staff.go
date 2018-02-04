@@ -24,22 +24,39 @@
 
 /*
  * Revision History:
- *     Initial: 2017/10/28        Feng Yifei
- *     Modify : 2018/02/04        Tong Yuehong
+ *     Initial: 2018/02/04        Tong Yuehong
  */
 
-package blog
+package staff
 
-const (
-	// Database name.
-	Database = "blog"
-
-	// Article Status
-	Created  = 0
-	Approval    = 1
-	NotApproval = -1
-	Delete  = -2
-
-	// Skip - numbers of articles.
-	Skip = 4
+import (
+	"github.com/fengyfei/gu/applications/core"
+	"github.com/fengyfei/gu/libs/constants"
+	"github.com/fengyfei/gu/libs/http/server"
+	"github.com/fengyfei/gu/libs/logger"
+	"github.com/fengyfei/gu/libs/orm"
+	"github.com/fengyfei/gu/models/staff"
 )
+
+var conn *orm.Connection
+
+// Login - staff login.
+func Login(this *server.Context) error {
+	var login struct {
+		Name string
+		Pass string
+	}
+
+	if err := this.JSONBody(&login); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	id, err := staff.Service.Login(conn, &login.Name, &login.Pass)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
+	}
+
+	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, id)
+}

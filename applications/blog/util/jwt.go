@@ -24,22 +24,24 @@
 
 /*
  * Revision History:
- *     Initial: 2017/10/28        Feng Yifei
- *     Modify : 2018/02/04        Tong Yuehong
+ *     Initial: 2018/02/04        Tong Yuehong
  */
 
-package blog
+package util
 
-const (
-	// Database name.
-	Database = "blog"
+import (
+	"time"
 
-	// Article Status
-	Created  = 0
-	Approval    = 1
-	NotApproval = -1
-	Delete  = -2
-
-	// Skip - numbers of articles.
-	Skip = 4
+	"github.com/dgrijalva/jwt-go"
 )
+
+const tokenKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+
+func NewToken(StaffId int32) (string, error) {
+	claims := make(jwt.MapClaims)
+	claims["staffid"] = StaffId
+	claims["exp"] =time.Now().Add(time.Hour * 480).Unix()
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	return token.SignedString([]byte(tokenKey))
+}
