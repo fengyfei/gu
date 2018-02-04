@@ -104,7 +104,7 @@ func SetDefaultAddress(c *server.Context) error {
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
-	userID := uint(claims[util.UserID].(float64))
+	userID := uint64(claims[util.UserID].(float64))
 
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
@@ -144,7 +144,7 @@ func ModifyAddress(c *server.Context) error {
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
-	userID := uint(claims[util.UserID].(float64))
+	userID := uint64(claims[util.UserID].(float64))
 
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
@@ -209,7 +209,7 @@ func DeleteAddress(c *server.Context) error {
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
-	userID := uint(claims[util.UserID].(float64))
+	userID := uint64(claims[util.UserID].(float64))
 
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)

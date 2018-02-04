@@ -32,8 +32,9 @@ package address
 import (
 	"time"
 
-	"github.com/fengyfei/gu/libs/orm"
 	"github.com/jinzhu/gorm"
+
+	"github.com/fengyfei/gu/libs/orm"
 )
 
 const (
@@ -75,7 +76,7 @@ type (
 	}
 
 	SetDefault struct {
-		ID uint `json:"id" validate:"required"`
+		ID uint64 `json:"id" validate:"required"`
 	}
 
 	Modify struct {
@@ -107,6 +108,7 @@ func (this *serviceProvider) Add(conn orm.Connection, userID uint64, add *Add) e
 		Phone:     add.Phone,
 		Address:   add.Address,
 		IsDefault: add.IsDefault,
+		Created:   time.Now(),
 	}
 
 	db := conn.(*gorm.DB)
@@ -212,5 +214,9 @@ func (this *serviceProvider) Get(conn orm.Connection, userID uint) (*[]Address, 
 func (this *serviceProvider) Delete(conn orm.Connection, userID, id uint64) error {
 	db := conn.(*gorm.DB)
 
-	return db.Where("id = ? AND userid = ?", id, userID).Delete(&Address{}).Error
+	address := Address{
+		ID: id,
+	}
+
+	return db.Where("userid = ?", userID).Delete(&address).Error
 }

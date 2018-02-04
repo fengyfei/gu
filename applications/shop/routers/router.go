@@ -54,6 +54,7 @@ func register(r *server.Router) {
 	r.Post("/shop/user/address/add", handler.AddAddress)
 	r.Post("/shop/user/address/setdefault", handler.SetDefaultAddress)
 	r.Post("/shop/user/address/modify", handler.ModifyAddress)
+	r.Post("/shop/user/address/delete", handler.DeleteAddress)
 	r.Get("/shop/user/address/alladdress", handler.GetAddress)
 
 	r.Post("/shop/api/category/add", handler.AddCategory)
@@ -75,7 +76,7 @@ func register(r *server.Router) {
 	// cart api
 	//r.Post("/shop/cart/add", &handler.CartController{}, "post:Add")
 	//r.Post("/shop/cart/remove", &handler.CartController{}, "post:Remove")
-	//r.Post("/shop/cart/get", &handler.CartController{}, "get:GetByUser")
+	r.Post("/shop/cart/get", handler.GetByUser)
 
 	// order api for user
 	//r.Post("/shop/user/order/add", &handler.OrderController{}, "post:CreateOrder")
