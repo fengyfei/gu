@@ -24,7 +24,7 @@
 
 /*
  * Revision History:
- *     Initial: 2018/02/03        Shi Ruitao
+ *     Initial: 2018/02/04        Shi Ruitao
  */
 
 package handler
@@ -38,26 +38,15 @@ import (
 	"github.com/fengyfei/gu/models/shop/category"
 )
 
-type (
-	categoryAddReq struct {
-		Name     string `json:"name" validate:"required,alphanumunicode,max=6"`
-		Desc     string `json:"desc" validate:"required,max=50"`
-		ParentID uint64 `json:"parentid" validate:"required"`
-	}
-
-	subCategoryReq struct {
-		PID uint64 `json:"pid" validate:"required"`
-	}
-)
-
 // add new category
 func AddCategory(c *server.Context) error {
 	var (
 		err    error
-		addReq categoryAddReq
+		addReq category.CategoryAddReq
 	)
 
 	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -93,6 +82,7 @@ func GetMainCategories(c *server.Context) error {
 	)
 
 	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
 	if err != nil {
 		logger.Error("mysql.Pool.Get()", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -111,11 +101,12 @@ func GetMainCategories(c *server.Context) error {
 func GetSubCategories(c *server.Context) error {
 	var (
 		err    error
-		pidReq subCategoryReq
+		pidReq category.SubCategoryReq
 		res    []category.Category
 	)
 
 	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
 	if err != nil {
 		logger.Error("mysql.Pool.Get():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -140,4 +131,39 @@ func GetSubCategories(c *server.Context) error {
 	}
 
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, res)
+}
+
+func ModifyCategory(c *server.Context) error {
+	var (
+		err error
+		res category.Modify
+	)
+
+	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error("mysql.Pool.Get():", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	err = c.JSONBody(&res)
+	if err != nil {
+		logger.Error("JSONBody():", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	err = c.Validate(res)
+	if err != nil {
+		logger.Error("Validate():", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	err = category.Service.ModifyCategory(conn, res.ID, res.Status)
+	if err != nil {
+		logger.Error("category.Service.ModifyCategory():", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
+
 }

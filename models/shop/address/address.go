@@ -76,18 +76,18 @@ type (
 	}
 
 	SetDefault struct {
-		ID uint64 `json:"id" validate:"required"`
+		ID uint64 `json:"id"`
 	}
 
 	Modify struct {
-		ID      uint64 `json:"id" validate:"required"`
+		ID      uint64 `json:"id"`
 		Name    string `json:"name" validate:"required"`
 		Phone   string `json:"phone" validate:"required,len=11"`
 		Address string `json:"address" validate:"required,max=128"`
 	}
 
 	Delete struct {
-		ID uint64 `json:"id" validate:"required"`
+		ID uint64 `json:"id"`
 	}
 )
 

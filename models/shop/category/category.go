@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd..
+ * Copyright (c) 2018 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,51 +24,84 @@
 
 /*
  * Revision History:
- *     Initial: 2017/11/13        Wang RiYu
+ *     Initial: 2018/02/04        Shi Ruitao
  */
 
 package category
 
 import (
-  "time"
-  "github.com/fengyfei/gu/libs/orm"
-  "github.com/jinzhu/gorm"
+	"time"
+
+	"github.com/jinzhu/gorm"
+
+	"github.com/fengyfei/gu/libs/orm"
 )
 
 type serviceProvider struct{}
 
-var (
-  Service *serviceProvider
+const (
+	trueCategory = 1
 )
 
-type Category struct {
-  ID        uint      `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
-  Name      string    `gorm:"type:varchar(50);not null"  json:"name"`
-  Desc      string    `gorm:"type:varchar(100);not null" json:"desc"`
-  ParentID  uint      `gorm:"not null" json:"parentId"`
-  Status    int       `gorm:"not null;default:1" json:"status"`
-  CreatedAt time.Time `json:"createdAt"`
-}
+var (
+	Service *serviceProvider
+)
+
+type (
+	Category struct {
+		ID        uint64    `gorm:"column:id"`
+		Name      string    `gorm:"column:name"`
+		Desc      string    `gorm:"column:desc"`
+		ParentID  uint64    `gorm:"column:parentid"`
+		Status    int       `gorm:"column:status"`
+		CreatedAt time.Time `gorm:"column:created"`
+	}
+
+	CategoryAddReq struct {
+		Name     string `json:"name" validate:"required,alphanumunicode,max=6"`
+		Desc     string `json:"desc" validate:"required,max=50"`
+		ParentID uint64 `json:"parentid"`
+	}
+
+	SubCategoryReq struct {
+		PID uint64 `json:"pid"`
+	}
+
+	Modify struct {
+		ID     uint64 `json:"id"`
+		Status int    `json:"status"`
+	}
+)
 
 // add new category - parentID = 0 -> main class, != 0 -> sub class
-func (sp *serviceProvider) AddCategory(conn orm.Connection, name *string, desc *string, parentID *uint) error {
-  category := &Category{}
-  category.Name = *name
-  category.Desc = *desc
-  category.ParentID = *parentID
+func (sp *serviceProvider) AddCategory(conn orm.Connection, name *string, desc *string, parentID *uint64) error {
+	category := &Category{}
+	category.Name = *name
+	category.Desc = *desc
+	category.Status = trueCategory
+	category.ParentID = *parentID
+	category.CreatedAt = time.Now()
 
-  db := conn.(*gorm.DB).Exec("USE shop")
-  err := db.Model(&Category{}).Create(category).Error
+	db := conn.(*gorm.DB).Exec("USE shop")
 
-  return err
+	return db.Model(&Category{}).Create(category).Error
 }
 
 // get categories by pid
-func (sp *serviceProvider) GetCategory(conn orm.Connection, pid uint) ([]Category, error) {
-  var list []Category
+func (sp *serviceProvider) GetCategory(conn orm.Connection, pid uint64) ([]Category, error) {
+	var list []Category
 
-  db := conn.(*gorm.DB).Exec("USE shop")
-  res := db.Table("categories").Where("status > ? AND parent_id = ?", 0, pid).Scan(&list)
+	db := conn.(*gorm.DB).Exec("USE shop")
+	res := db.Table("categories").Where("status > ? AND parentid = ?", 0, pid).Scan(&list)
 
-  return list, res.Error
+	return list, res.Error
+}
+
+// Modify category status
+func (sp *serviceProvider) ModifyCategory(conn orm.Connection, id uint64, status int) error {
+	var category Category
+
+	db := conn.(*gorm.DB)
+
+	return db.Model(&category).Where("id = ?", id).Update("status", status).Error
 }
