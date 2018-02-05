@@ -149,10 +149,10 @@ func CORSWithConfig(config CORSConfig) *CORS {
 	// Allowed Headers
 	if len(config.AllowedHeaders) == 0 {
 		// Use sensible defaults
-		c.allowedHeaders = []string{"Origin", "Accept", "Content-Type"}
+		c.allowedHeaders = []string{server.HeaderOrigin, server.HeaderAccept, server.HeaderContentType}
 	} else {
 		// Origin is always appended as some browsers will always request for this header at preflight
-		c.allowedHeaders = convert(append(config.AllowedHeaders, "Origin"), http.CanonicalHeaderKey)
+		c.allowedHeaders = convert(append(config.AllowedHeaders, server.HeaderOrigin), http.CanonicalHeaderKey)
 		for _, h := range config.AllowedHeaders {
 			if h == "*" {
 				c.allowedHeadersAll = true
@@ -165,7 +165,7 @@ func CORSWithConfig(config CORSConfig) *CORS {
 	// Allowed Methods
 	if len(config.AllowedMethods) == 0 {
 		// Default is spec's "simple" methods
-		c.allowedMethods = []string{"GET", "POST", "HEAD"}
+		c.allowedMethods = []string{server.GET, server.POST, server.HEAD}
 	} else {
 		c.allowedMethods = convert(config.AllowedMethods, strings.ToUpper)
 	}

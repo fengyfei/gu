@@ -64,6 +64,7 @@ const (
 
 	// Headers
 	HeaderOrigin        = "Origin"
+	HeaderAccept        = "Accept"
 	HeaderVary          = "Vary"
 	HeaderCookie        = "Cookie"
 	HeaderSetCookie     = "Set-Cookie"
