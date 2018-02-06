@@ -32,11 +32,11 @@ package gocn
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/asciimoo/colly"
 	"github.com/fengyfei/gu/libs/crawler"
 	"github.com/fengyfei/gu/libs/logger"
+	"golang.org/x/net/html"
 )
 
 type gocnCrawler struct {
@@ -54,14 +54,14 @@ type ok struct{}
 
 var (
 	counterURL int
-	invalidKey [10]string  = [10]string{"/", ".", "\"", "$", "*", "<", ">", ":", "|", "?"}
-	invalidLi  [5]string   = [5]string{"\nGopherChina2018来了！ https://www.bagevent.com/event/1086224\n", "GopherChina Telegram群现已上线 https://t.me/gopherchina ", " 微博", " QZONE", " 微信"}
-	errorPipe  chan error  = make(chan error)
-	urlPipe    chan string = make(chan string)
-	overURL    chan ok     = make(chan ok)
-	overNews   chan ok     = make(chan ok)
-	readyPipe  chan ok     = make(chan ok)
-	DataPipe   chan *GoCN  = make(chan *GoCN)
+	invalidKey [10]string = [10]string{"/", ".", "\"", "$", "*", "<", ">", ":", "|", "?"}
+	// invalidLi  [5]string   = [5]string{"\nGopherChina2018来了！ https://www.bagevent.com/event/1086224\n", "GopherChina Telegram群现已上线 https://t.me/gopherchina ", " 微博", " QZONE", " 微信"}
+	errorPipe chan error  = make(chan error)
+	urlPipe   chan string = make(chan string)
+	overURL   chan ok     = make(chan ok)
+	overNews  chan ok     = make(chan ok)
+	readyPipe chan ok     = make(chan ok)
+	DataPipe  chan *GoCN  = make(chan *GoCN)
 )
 
 // NewGoCNCrawler generates a crawler for gocn news.
@@ -75,7 +75,7 @@ func NewGoCNCrawler() crawler.Crawler {
 // Crawler interface Init
 func (c *gocnCrawler) Init() error {
 	c.collectorURL.OnHTML("a", c.parseURL)
-	c.collectorNews.OnHTML("div.aw-mod", c.parseNews)
+	c.collectorNews.OnHTML("div.aw-mod.aw-question-detail", c.parseNews)
 
 	return nil
 }
@@ -113,7 +113,7 @@ func (c *gocnCrawler) startURL() {
 			go func() {
 				err := c.collectorURL.Visit(fmt.Sprintf("https://gocn.io/sort_type-new__category-14__day-0__is_recommend-0__page-%d", page))
 				if err != nil {
-					logger.Error("error in crawling the URL")
+					logger.Error("error in crawling the URL", err)
 					errorPipe <- err
 				}
 			}()
@@ -149,83 +149,77 @@ func (c *gocnCrawler) parseURL(e *colly.HTMLElement) {
 }
 
 func (c *gocnCrawler) startNews() {
-	for {
-		select {
-		case url := <-urlPipe:
-			go func() {
-				err := c.collectorNews.Visit(url)
-				if err != nil {
-					logger.Error("error in crawling the news")
-					errorPipe <- err
-				}
-			}()
-		case <-time.NewTimer(3 * time.Second).C:
-			goto EXIT
-		}
+	for u := range urlPipe {
+		url := u
+		go func() {
+			err := c.collectorNews.Visit(url)
+			if err != nil {
+				logger.Error("error in crawling the news", err)
+				errorPipe <- err
+			}
+		}()
 	}
-
-EXIT:
 }
 
 func (c *gocnCrawler) parseNews(e *colly.HTMLElement) {
-	if strings.Contains(e.Attr("class"), "aw-mod aw-question-detail") {
-		var data = &GoCN{
-			Time:    parseTitle(e.DOM.Find("h1").Text()),
-			URL:     e.Request.URL.String(),
-			Content: make(map[string]string),
-		}
-
-		for i := 0; ; i++ {
-			url, _ := e.DOM.Find("a").Eq(i).Attr("href")
-			text := e.DOM.Find("li").Eq(i).Text()
-
-			for _, value := range invalidLi {
-				if strings.Contains(text, value) {
-					text = ""
-					break
-				}
-			}
-			if text == "" {
-				text = e.DOM.Find("p").Eq(i + 1).Text()
-			}
-
-			index := strings.Index(text, "http://") + strings.Index(text, "https://") + 1
-			if index > 0 {
-				text = string([]byte(text)[:index])
-			}
-
-			if url == "" || text == "" {
-				data.parseNews("p", e)
-				if len(data.Content) != 5 {
-					data.parseNews("code", e)
-				}
-				break
-			}
-
-			data.Content[validKey(text)] = url
-			if len(data.Content) == 5 {
-				break
-			}
-		}
-
-		DataPipe <- data
+	times := strings.SplitN(e.DOM.Find("h1").Text(), "-", 3)
+	data := GoCN{
+		Time:    fmt.Sprintf("%s-%s-%s", times[0][len(times[0])-4:], times[1], times[2][:2]),
+		URL:     e.Request.URL.String(),
+		Content: make(map[string]string),
 	}
+
+	s := data.parseNodes(e.DOM.Nodes)
+
+	for i := 0; i < 5; i++ {
+		data.Content[validKey(s[2*i])] = s[2*i+1]
+	}
+
+	DataPipe <- &data
 }
 
-func (data *GoCN) parseNews(query string, e *colly.HTMLElement) {
-	data.Content = make(map[string]string)
-	urls := strings.Split(e.DOM.Find("a").Text(), "http")
-	for k, v := range strings.Split(e.DOM.Find(query).Text(), "http") {
-		if strings.Contains(v, "每日新闻") {
-			data.Content[validKey(strings.Split(v, ")")[1])] = "http" + urls[k+1]
-		} else {
-			vs := strings.Split(v, "\n")
-			data.Content[validKey(vs[len(vs)-1])] = "http" + urls[k+1]
+func (g *GoCN) parseNodes(s []*html.Node) []string {
+	var (
+		f          func(*html.Node)
+		stringPipe = make(chan string)
+		news       []string
+	)
+
+	f = func(n *html.Node) {
+		if n.Type == html.ElementNode {
+			for _, v := range n.Attr {
+				if v.Key == "href" {
+					stringPipe <- v.Val
+				}
+			}
 		}
-		if k == 4 {
+
+		if n.Type == html.TextNode {
+			text := n.Data
+			if strings.Count(text, string(byte(9)))+strings.Count(text, string(byte(10)))+strings.Count(text, string(byte(32))) != len(text) && !strings.Contains(text, "每日新闻") && !strings.Contains(text, "http://") && !strings.Contains(text, "https://") {
+				stringPipe <- text
+			}
+		}
+
+		if n.FirstChild != nil {
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				f(c)
+			}
+		}
+	}
+
+	for _, n := range s {
+		go f(n)
+	}
+
+	for s := range stringPipe {
+		news = append(news, s)
+		if len(news) > 9 {
 			break
 		}
 	}
+
+	return news
 }
 
 func parseTitle(title string) string {

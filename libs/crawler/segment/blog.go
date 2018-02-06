@@ -35,7 +35,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/fengyfei/gu/libs/logger"
 )
@@ -53,19 +52,14 @@ var (
 
 func (c *segmentCrawler) startBlog() {
 	for {
-		select {
-		case url := <-c.urlPipe:
+		if url, ok := <-c.urlPipe; ok {
 			err := c.getBlog(url)
 			if err != nil {
 				errorPipe <- err
 			}
 			c.overBlog <- done{}
-		case <-time.NewTimer(3 * time.Second).C:
-			goto EXIT
 		}
 	}
-
-EXIT:
 }
 
 func (c *segmentCrawler) getBlog(url *string) error {
@@ -89,7 +83,7 @@ func (c *segmentCrawler) getBlog(url *string) error {
 		return err
 	}
 
-	fmt.Println(*url)
+	logger.Info(*url)
 	b := &Blog{}
 	b.parseBlog(string(data))
 
@@ -104,7 +98,6 @@ func (b *Blog) parseBlog(s string) {
 	b.parseTop(data[0])
 	b.parseBody(data[1])
 
-	fmt.Println(b.Title)
 	f, _ := os.OpenFile("./blog/"+b.Title+".md", os.O_CREATE|os.O_RDWR, 0644)
 	f.Write([]byte(b.Blog))
 }
