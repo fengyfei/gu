@@ -31,11 +31,12 @@
 package main
 
 import (
-	"github.com/fengyfei/gu/applications/blog/conf"
+
 	"github.com/fengyfei/gu/applications/blog/routers"
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/http/server/middleware"
 	"github.com/fengyfei/gu/libs/logger"
+	"github.com/fengyfei/gu/applications/blog/conf"
 )
 
 var (
@@ -53,6 +54,9 @@ var (
 
 func customSkipper(c *server.Context) bool {
 	URLMap["/staff/login"] = struct{}{}
+	URLMap["/blog/article/allapproval"] = struct{}{}
+	URLMap["/blog/article/getone"] = struct{}{}
+	URLMap["/blog/article/updateview"] = struct{}{}
 	if _, ok := URLMap[c.Request().RequestURI]; ok {
 		return true
 	}

@@ -24,47 +24,36 @@
 
 /*
  * Revision History:
- *     Initial: 2018/02/04        Tong Yuehong
+ *     Initial: 2018/02/06        Tong Yuehong
  */
 
-package staff
+package mysql
 
 import (
-	"github.com/fengyfei/gu/applications/core"
-	"github.com/fengyfei/gu/libs/constants"
-	"github.com/fengyfei/gu/libs/http/server"
-	"github.com/fengyfei/gu/libs/logger"
-	"github.com/fengyfei/gu/models/staff"
-	"github.com/fengyfei/gu/applications/blog/mysql"
-	"github.com/fengyfei/gu/applications/blog/util"
 	"fmt"
+
+	"github.com/fengyfei/gu/libs/orm/mysql"
+	"github.com/fengyfei/gu/applications/blog/conf"
 )
 
-// Login - staff login.
-func Login(this *server.Context) error {
-	var login struct {
-		Name string `json:"name"`
-		Pass string `json:"pass"`
-	}
+var Pool *mysql.Pool
 
-	if err := this.JSONBody(&login); err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
-	}
+func InitMysql() {
+	user := conf.Config.MysqlUser
+	pass := conf.Config.MysqlPass
+	url := conf.Config.MysqlHost
+	port := conf.Config.MysqlPort
+	sqlName := conf.Config.MysqlDb
 
-	fmt.Println(login)
-	conn, err := mysql.Pool.Get()
-	id, err := staff.Service.Login(conn, &login.Name, &login.Pass)
-	if err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
-	}
+	dataSource := fmt.Sprintf(user + ":" + pass + "@" + "tcp(" + url + port + ")/" + sqlName + "?charset=utf8&parseTime=True&loc=Local")
+	go InitPool(dataSource)
+}
 
-	token, err := util.NewToken(id)
-	if err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
-	}
+// InitPool initialize the connection pool.
+func InitPool(db string) {
+	Pool = mysql.NewPool(db, 20)
 
-	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, token)
+	if Pool == nil {
+		panic("MySQL DB connection error.")
+	}
 }

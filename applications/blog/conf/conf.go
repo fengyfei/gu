@@ -35,6 +35,11 @@ type BlogConfig struct {
 	Address   string
 	MongoURL  string
 	CorsHosts []string
+	MysqlHost string
+	MysqlPort string
+	MysqlUser string
+	MysqlPass string
+	MysqlDb   string
 }
 
 var (
@@ -59,5 +64,10 @@ func load() {
 
 		MongoURL:  viper.GetString("mongo.url"),
 		CorsHosts: viper.GetStringSlice("middleware.cors.hosts"),
+		MysqlHost: viper.GetString("mysql.host"),
+		MysqlPort: viper.GetString("mysql.port"),
+		MysqlUser: viper.GetString("mysql.user"),
+		MysqlPass: viper.GetString("mysql.pass"),
+		MysqlDb:   viper.GetString("mysql.db"),
 	}
 }

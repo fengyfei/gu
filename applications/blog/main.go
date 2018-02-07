@@ -31,8 +31,10 @@ package main
 
 import (
 	_ "github.com/fengyfei/gu/applications/blog/routers"
+	"github.com/fengyfei/gu/applications/blog/mysql"
 )
 
 func main() {
+	mysql.InitMysql()
 	startServer()
 }

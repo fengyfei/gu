@@ -39,14 +39,15 @@ import (
 
 	"github.com/fengyfei/gu/libs/mongo"
 	"github.com/fengyfei/gu/models/blog"
+	"github.com/fengyfei/gu/models/blog/tag"
 )
 
-type serviceProvider struct{}
+type articleServiceProvider struct{}
 
 var (
-	// Service expose serviceProvider
-	Service *serviceProvider
-	session *mongo.Connection
+	// ArticleService expose articleServiceProvider
+	ArticleService *articleServiceProvider
+	session        *mongo.Connection
 )
 
 func init() {
@@ -61,37 +62,37 @@ func init() {
 		panic(err)
 	}
 
-
 	s.SetMode(mgo.Monotonic, true)
 
 	s.DB(blog.Database).C(cname).EnsureIndex(mgo.Index{
-		Key:        []string{"title"},
+		Key:        []string{"Title"},
 		Unique:     true,
 		Background: true,
 		Sparse:     true,
 	})
 
 	session = mongo.NewConnection(s, blog.Database, cname)
-	Service = &serviceProvider{}
+	ArticleService = &articleServiceProvider{}
 }
 
 // Article represents the article information.
 type Article struct {
-	ID        bson.ObjectId `bson:"_id,omitempty" json:"id" validate:"required"`
-	AuthorID  bson.ObjectId `bson:"Author"        json:"authorID"`
-	Title     string        `bson:"Title"         json:"title"`
-	Content   string        `bson:"Content"       json:"content"`
-	Abstract  string        `bson:"Abstract"      json:"abstract"`
-	Tag       []string      `bson:"Tag"           json:"tag"`
-	AuditorID int32         `bson:"auditorID"     json:"auditorID"`
-	CreatedAt time.Time     `bson:"CreatedAt"     json:"created_at"`
-	UpdatedAt time.Time     `bson:"UpdatedAt"     json:"updated_at"`
-	Status    int8          `bson:"status"        json:"status"`
+	ID        bson.ObjectId   `bson:"_id,omitempty" json:"id" validate:"required"`
+	AuthorID  int32           `bson:"AuthorID"      json:"authorID"`
+	Title     string          `bson:"Title"         json:"title"`
+	Content   string          `bson:"Content"       json:"content"`
+	Abstract  string          `bson:"Abstract"      json:"abstract"`
+	TagsID    []bson.ObjectId `bson:"Tag"           json:"tag"`
+	AuditorID int32           `bson:"auditorID"     json:"auditorID"`
+	View      int32           `bson:"view"          json:"view"`
+	CreatedAt time.Time       `bson:"CreatedAt"     json:"created_at"`
+	UpdatedAt time.Time       `bson:"UpdatedAt"     json:"updated_at"`
+	Status    int8            `bson:"status"        json:"status"`
 }
 
 // CreateArticle represents the article information when created.
 type CreateArticle struct {
-	AuthorID string   `json:"authorID"`
+	AuthorID int32    `json:"authorID"`
 	Title    string   `json:"title"`
 	Content  string   `json:"content"`
 	Abstract string   `json:"abstract"`
@@ -99,14 +100,25 @@ type CreateArticle struct {
 }
 
 // Create create article.
-func (sp *serviceProvider) Create(article CreateArticle) (string, error) {
+func (sp *articleServiceProvider) Create(article CreateArticle) (string, error) {
+	var tagIDs = make([]bson.ObjectId, len(article.Tag))
+	for i, tags := range article.Tag {
+		tagID, err := tag.TagService.GetID(tags)
+		if err != nil {
+			return "", err
+		}
+
+		tagIDs[i] = tagID
+	}
+
 	articleInfo := Article{
 		Title:     article.Title,
-		AuthorID:  bson.ObjectIdHex(article.AuthorID),
+		AuthorID:  article.AuthorID,
 		Content:   article.Content,
 		Abstract:  article.Abstract,
-		Tag:       article.Tag,
+		TagsID:    tagIDs,
 		AuditorID: 0,
+		View:      0,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 		Status:    blog.Created,
@@ -124,7 +136,7 @@ func (sp *serviceProvider) Create(article CreateArticle) (string, error) {
 }
 
 // ListApproval returns the articles which are passed.
-func (sp *serviceProvider) ListApproval(page int) ([]Article, error) {
+func (sp *articleServiceProvider) ListApproval(page int) ([]Article, error) {
 	var articles []Article
 
 	conn := session.Connect()
@@ -140,7 +152,7 @@ func (sp *serviceProvider) ListApproval(page int) ([]Article, error) {
 }
 
 // ListCreated return articles which are waiting for checking.
-func (sp *serviceProvider) ListCreated() ([]Article, error) {
+func (sp *articleServiceProvider) ListCreated() ([]Article, error) {
 	var articles []Article
 
 	conn := session.Connect()
@@ -149,29 +161,38 @@ func (sp *serviceProvider) ListCreated() ([]Article, error) {
 	query := bson.M{"status": blog.Created}
 	err := conn.GetMany(query, &articles)
 	if err != nil {
-		return nil,  err
+		return nil, err
 	}
 
 	return articles, nil
 }
 
 // ModifyStatus modify the  article status.
-func (sp *serviceProvider) ModifyStatus(articleID string, status int8, staffID int32) error {
+func (sp *articleServiceProvider) ModifyStatus(articleID string, status int8, staffID int32) error {
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	updater := bson.M{"status": status, "AuditorID": staffID}
-	return conn.Connect().Update(bson.M{"_id": articleID}, updater)
+	updater := bson.M{"$set": bson.M{"status": status, "AuditorID": staffID}}
+	return conn.Update(bson.M{"_id": bson.ObjectIdHex(articleID)}, updater)
+}
+
+// Delete deletes article.
+func (sp *articleServiceProvider) Delete(articleID string, staffID int32) error {
+	conn := session.Connect()
+	defer conn.Disconnect()
+
+	updater := bson.M{"status": blog.Delete}
+	return conn.Update(bson.M{"_id": bson.ObjectIdHex(articleID)}, updater)
 }
 
 //ListDenied return articles which are denied.
-func (sp *serviceProvider) ListDenied() ([]Article, error) {
+func (sp *articleServiceProvider) ListDenied() ([]Article, error) {
 	var articles []Article
 	conn := session.Connect()
 	defer conn.Disconnect()
 
 	query := bson.M{"status": blog.NotApproval}
-	err := conn.Connect().GetMany(query, &articles)
+	err := conn.GetMany(query, &articles)
 	if err != nil {
 		return nil, err
 	}
@@ -179,24 +200,15 @@ func (sp *serviceProvider) ListDenied() ([]Article, error) {
 	return articles, nil
 }
 
-// Delete delete article.
-func (sp *serviceProvider) Delete(articleID string) error {
-	conn := session.Connect()
-	defer conn.Disconnect()
-
-	updater := bson.M{"status": blog.Delete}
-	return conn.Connect().Update(bson.M{"_id": articleID}, updater)
-}
-
 // GetByID return the article's information.
-func (sp *serviceProvider) GetByID(articleID string) (*Article, error) {
+func (sp *articleServiceProvider) GetByID(articleID string) (*Article, error) {
 	var article Article
 
 	conn := session.Connect()
 	defer conn.Disconnect()
 
 	query := bson.M{"_id": bson.ObjectIdHex(articleID), "status": blog.Approval}
-	err := conn.Connect().GetUniqueOne(query, &article)
+	err := conn.GetUniqueOne(query, &article)
 	if err != nil {
 		return nil, err
 	}
@@ -204,3 +216,51 @@ func (sp *serviceProvider) GetByID(articleID string) (*Article, error) {
 	return &article, nil
 }
 
+// AddTags add tags to specified article.
+func (sp *articleServiceProvider) AddTags(articleID string, tags []string) error {
+	conn := session.Connect()
+	defer conn.Disconnect()
+
+	return conn.Update(bson.M{"_id": bson.ObjectIdHex(articleID)}, bson.M{"$pushAll": bson.M{"Tag": tags}})
+}
+
+// RemoveTags remove tags from specified article.
+func (sp *articleServiceProvider) RemoveTags(articleID string, tags []string) error {
+	conn := session.Connect()
+	defer conn.Disconnect()
+
+	return conn.Update(bson.M{"_id": bson.ObjectIdHex(articleID)}, bson.M{"$pullAll": bson.M{"Tag": tags}})
+}
+
+// ModifyArticle update article.
+func (sp *articleServiceProvider) ModifyArticle(articleID string, article CreateArticle) error {
+	conn := session.Connect()
+	defer conn.Disconnect()
+
+	var tagIDs = make([]bson.ObjectId, len(article.Tag))
+	for i, tags := range article.Tag {
+		tagID, err := tag.TagService.GetID(tags)
+		if err != nil {
+			return err
+		}
+
+		tagIDs[i] = tagID
+	}
+
+	updater := bson.M{"$set": bson.M{
+		"title":    article.Title,
+		"content":  article.Content,
+		"abstract": article.Abstract,
+		"tag":      tagIDs,
+	}}
+	return conn.Update(bson.M{"_id": bson.ObjectIdHex(articleID)}, updater)
+}
+
+// UpdateView update view of article.
+func (sp *articleServiceProvider) UpdateView(articleID *string, num int32) error {
+	conn := session.Connect()
+	defer conn.Disconnect()
+
+	updater := bson.M{"$set": bson.M{"view": num}}
+	return conn.Update(bson.M{"_id": bson.ObjectIdHex(*articleID)}, updater)
+}

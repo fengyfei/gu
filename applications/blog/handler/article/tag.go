@@ -57,13 +57,13 @@ type createTagReq struct {
 // modifyTagReq - the request struct that modify the tag information.
 type modifyTagReq struct {
 	TagID  string `json:"tagID" validate:"required,alphanum,len=24"`
-	Tag    string `json:"tag" validate:"required,alphaunicode,min=2,max=6"`
-	Active *bool  `json:"active" validate:"required"`
+	Tag    string `json:"tag"`
+	Active *bool  `json:"active"`
 }
 
 // ListTags all tags.
 func ListTags(this *server.Context) error {
-	tagList, err := tag.Service.GetList()
+	tagList, err := tag.TagService.GetList()
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -74,7 +74,7 @@ func ListTags(this *server.Context) error {
 
 // TagActiveList returns all active tags.
 func TagActiveList(this *server.Context) error {
-	tagList, err := tag.Service.GetActiveList()
+	tagList, err := tag.TagService.GetActiveList()
 
 	if err != nil {
 		logger.Error(err)
@@ -84,7 +84,7 @@ func TagActiveList(this *server.Context) error {
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, tagList)
 }
 
-// TagInfo return the tag's information.
+// TagInfo return the tag's information by id.
 func TagInfo(this *server.Context) error {
 	var (
 		req  tagInfoReq
@@ -101,7 +101,7 @@ func TagInfo(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	resp, err := tag.Service.GetByID(&req.TagID)
+	resp, err := tag.TagService.GetByID(&req.TagID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -126,7 +126,7 @@ func CreateTag(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	resp, err := tag.Service.Create(&req.Tag)
+	resp, err := tag.TagService.Create(&req.Tag)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -149,7 +149,7 @@ func ModifyTag(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	err := tag.Service.Modify(&req.TagID, &req.Tag, req.Active)
+	err := tag.TagService.Modify(&req.TagID, &req.Tag, req.Active)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)

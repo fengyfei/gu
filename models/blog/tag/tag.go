@@ -25,6 +25,7 @@
 /*
  * Revision History:
  *     Initial: 2017/10/25        Jia Chenhui
+ *     Modify : 2018/02/05        Tong Yuehong
  */
 
 package tag
@@ -38,12 +39,12 @@ import (
 	"github.com/fengyfei/gu/models/blog"
 )
 
-type serviceProvider struct{}
+type tagServiceProvider struct{}
 
 var (
-	// Service expose serviceProvider
-	Service *serviceProvider
-	session *mongo.Connection
+	// TagService expose tagServiceProvider
+	TagService *tagServiceProvider
+	session    *mongo.Connection
 )
 
 func init() {
@@ -68,18 +69,18 @@ func init() {
 	})
 
 	session = mongo.NewConnection(s, blog.Database, cname)
-	Service = &serviceProvider{}
+	TagService = &tagServiceProvider{}
 }
 
 // Tag represents the tag information.
 type Tag struct {
 	TagID  bson.ObjectId `bson:"_id,omitempty" json:"id"`
-	Tag    string        `bson:"Tag" json:"tag"`
-	Active bool          `bson:"Active" json:"active"`
+	Tag    string        `bson:"Tag"           json:"tag"`
+	Active bool          `bson:"Active"        json:"active"`
 }
 
 // GetList get all the tags.
-func (sp *serviceProvider) GetList() ([]Tag, error) {
+func (sp *tagServiceProvider) GetList() ([]Tag, error) {
 	var (
 		tags []Tag
 		err  error
@@ -94,7 +95,7 @@ func (sp *serviceProvider) GetList() ([]Tag, error) {
 }
 
 // GetActiveList get all the active tags.
-func (sp *serviceProvider) GetActiveList() ([]Tag, error) {
+func (sp *tagServiceProvider) GetActiveList() ([]Tag, error) {
 	var (
 		tags []Tag
 		err  error
@@ -109,7 +110,7 @@ func (sp *serviceProvider) GetActiveList() ([]Tag, error) {
 }
 
 // GetByID get tag based on article id.
-func (sp *serviceProvider) GetByID(id *string) (Tag, error) {
+func (sp *tagServiceProvider) GetByID(id *string) (Tag, error) {
 	var (
 		tag Tag
 		err error
@@ -124,9 +125,8 @@ func (sp *serviceProvider) GetByID(id *string) (Tag, error) {
 }
 
 // Create create tag.
-func (sp *serviceProvider) Create(tag *string) (string, error) {
+func (sp *tagServiceProvider) Create(tag *string) (string, error) {
 	tagInfo := Tag{
-		TagID:  bson.NewObjectId(),
 		Tag:    *tag,
 		Active: true,
 	}
@@ -143,12 +143,33 @@ func (sp *serviceProvider) Create(tag *string) (string, error) {
 }
 
 // Modify modify tag information.
-func (sp *serviceProvider) Modify(id, tag *string, active *bool) error {
+func (sp *tagServiceProvider) Modify(id, tag *string, active *bool) error {
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	return conn.Update(bson.M{"_id": bson.ObjectIdHex(*id)}, bson.M{"$set": bson.M{
-		"Tag":    *tag,
-		"Active": *active,
-	}})
+	updater := bson.M{}
+	if tag != nil {
+		updater["Tag"] = *tag
+	}
+
+	if active != nil {
+		updater["Active"] = *active
+	}
+
+	return conn.Update(bson.M{"_id": bson.ObjectIdHex(*id)}, updater)
+}
+
+// GetID return tag's id.
+func (sp *tagServiceProvider) GetID(tag string) (bson.ObjectId, error) {
+	var tagInfo Tag
+	conn := session.Connect()
+	defer conn.Disconnect()
+
+	query := bson.M{"Tag": tag, "Active": true}
+	err := conn.GetUniqueOne(query, &tagInfo)
+	if err != nil {
+		return "", err
+	}
+
+	return tagInfo.TagID, nil
 }

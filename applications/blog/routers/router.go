@@ -50,18 +50,20 @@ func InitRouter(u *server.Router) {
 		panic("[InitRouter]: server couldn't be nil")
 	}
 
-	//u.Post("/blog/tag/create", blog.CreateTag)
-	//u.Post("/blog/tag/list", blog.ListTags)
-	//u.Post("/blog/tag/activelist", blog.TagActiveList)
-	//u.Post("/blog/tag/info", blog.TagInfo)
-	//u.Post("/blog/tag/modify", blog.ModifyTag)
+	u.Post("/blog/tag/create", article.CreateTag)
+	u.Post("/blog/tag/list", article.ListTags)
+	u.Post("/blog/tag/activelist", article.TagActiveList)
+	u.Post("/blog/tag/info", article.TagInfo)
+	u.Post("/blog/tag/modify", article.ModifyTag)
 
 	u.Post("/staff/login", staff.Login)
 
 	u.Post("/blog/article/getone", article.ArticleByID)
+	u.Post("/blog/article/delete", article.Delete)
 	u.Post("/blog/article/create", article.CreateArticle)
 	u.Post("/blog/article/allapproval", article.ListApproval)
 	u.Post("/blog/article/modifystatus", article.ModifyStatus)
 	u.Post("/blog/article/allcreated", article.ListCreated)
-	u.Post("/blog/article/delete", article.Delete)
+	u.Post("/blog/article/updateview", article.UpdateView)
+	u.Post("/blog/article/modifyarticle", article.ModifyArticle)
 }
