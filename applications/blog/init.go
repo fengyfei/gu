@@ -31,7 +31,6 @@
 package main
 
 import (
-
 	"github.com/fengyfei/gu/applications/blog/routers"
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/http/server/middleware"

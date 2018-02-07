@@ -37,7 +37,6 @@ import (
 	"github.com/fengyfei/gu/models/staff"
 	"github.com/fengyfei/gu/applications/blog/mysql"
 	"github.com/fengyfei/gu/applications/blog/util"
-	"fmt"
 )
 
 // Login - staff login.
@@ -52,7 +51,6 @@ func Login(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	fmt.Println(login)
 	conn, err := mysql.Pool.Get()
 	id, err := staff.Service.Login(conn, &login.Name, &login.Pass)
 	if err != nil {

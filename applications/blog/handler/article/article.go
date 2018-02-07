@@ -44,7 +44,7 @@ type getByIdReq struct {
 	ID string `json:"id" validate:"required,alphanum,len=24"`
 }
 
-// Create - insert article.
+// CreateArticle - insert article.
 func CreateArticle(this *server.Context) error {
 	var articleInfo article.CreateArticle
 
