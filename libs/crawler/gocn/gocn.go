@@ -35,8 +35,11 @@ import (
 	"time"
 
 	"github.com/asciimoo/colly"
+	"github.com/dgraph-io/badger"
+	"github.com/dgraph-io/badger/options"
 	"github.com/fengyfei/gu/libs/crawler"
 	"github.com/fengyfei/gu/libs/logger"
+	store "github.com/fengyfei/gu/libs/store/badger"
 	"golang.org/x/net/html"
 )
 
@@ -51,13 +54,18 @@ type ok struct{}
 type gocnCrawler struct {
 	collectorURL  *colly.Collector
 	collectorNews *colly.Collector
-	urlCollector  int
 	errCh         chan error
 	urlCh         chan *string
-	urlOver       chan ok
+	urlFinish     chan ok
 	readyCh       chan ok
 	newsCh        chan *GoCN
+	oldIncr       string
+	newIncr       string
 }
+
+const (
+	noneBadger = "none badger"
+)
 
 var (
 	invalidKey = []string{"/", ".", "\"", "$", "*", "<", ">", ":", "|", "?"}
@@ -70,7 +78,7 @@ func NewGoCNCrawler(ch chan *GoCN) crawler.Crawler {
 		collectorNews: colly.NewCollector(),
 		errCh:         make(chan error),
 		urlCh:         make(chan *string),
-		urlOver:       make(chan ok),
+		urlFinish:     make(chan ok),
 		readyCh:       make(chan ok),
 		newsCh:        ch,
 	}
@@ -78,7 +86,7 @@ func NewGoCNCrawler(ch chan *GoCN) crawler.Crawler {
 
 // Crawler interface Init
 func (c *gocnCrawler) Init() error {
-	c.collectorURL.OnHTML("a", c.parseURL)
+	c.collectorURL.OnHTML("div.aw-common-list", c.parseURL)
 	c.collectorNews.OnHTML("div.aw-mod.aw-question-detail", c.parseNews)
 
 	return nil
@@ -86,6 +94,12 @@ func (c *gocnCrawler) Init() error {
 
 // Crawler interface Start
 func (c *gocnCrawler) Start() error {
+	err := c.prepare()
+	if err != nil {
+		logger.Error("Error in preparing to start:", err)
+		return err
+	}
+
 	go func() {
 		c.readyCh <- ok{}
 	}()
@@ -95,14 +109,47 @@ func (c *gocnCrawler) Start() error {
 
 	for {
 		select {
-		case err := <-c.errCh:
+		case err = <-c.errCh:
 			if err != nil {
 				return err
 			}
 		case <-time.NewTimer(10 * time.Second).C:
+			err = c.finish()
+			if err != nil {
+				logger.Error("Error in the end:", err)
+			}
 			return nil
 		}
 	}
+}
+
+func (c *gocnCrawler) prepare() error {
+	db, err := store.NewBadgerDB(options.FileIO, "./gocn-news-badger", true)
+	if err != nil {
+		return err
+	}
+
+	value, err := db.Get([]byte("increment-key"))
+	if len(value) != 0 && err == nil {
+		c.oldIncr = string(value)
+		return nil
+	}
+
+	if err != badger.ErrKeyNotFound {
+		return err
+	}
+
+	c.oldIncr = noneBadger
+	return nil
+}
+
+func (c *gocnCrawler) finish() error {
+	db, err := store.NewBadgerDB(options.FileIO, "./gocn-news-badger", true)
+	if err != nil {
+		return err
+	}
+
+	return db.Set([]byte("increment-key"), []byte(c.newIncr))
 }
 
 func (c *gocnCrawler) startURL() {
@@ -121,7 +168,7 @@ func (c *gocnCrawler) startURL() {
 					c.errCh <- err
 				}
 			}()
-		case <-c.urlOver:
+		case <-c.urlFinish:
 			goto EXIT
 		}
 	}
@@ -130,25 +177,26 @@ EXIT:
 }
 
 func (c *gocnCrawler) parseURL(e *colly.HTMLElement) {
-	if strings.Contains(e.Text, "每日新闻") {
-		if e.Attr("href") == "https://gocn.io/explore/category-14" {
-			c.urlCollector += 100
-		} else if strings.Contains(e.Attr("href"), "https://gocn.io/topic/") {
-			c.urlCollector += 100
-		} else {
-			c.urlCollector++
-			url := e.Attr("href")
-			c.urlCh <- &url
-		}
-
-		if c.urlCollector > 200 {
-			c.urlCollector = 0
-			c.readyCh <- ok{}
-		} else if c.urlCollector == 200 {
-			c.urlCollector = 0
-			c.urlOver <- ok{}
-		}
+	if e.Request.URL.String() == "https://gocn.io/sort_type-new__category-14__day-0__is_recommend-0__page-1" {
+		url, _ := e.DOM.Find("div.aw-question-content").Eq(0).Find("a").Attr("href")
+		c.newIncr = url
 	}
+	if e.DOM.Find("div.aw-question-content").Eq(0).Find("a").Text() == "" {
+		c.urlFinish <- ok{}
+	}
+	for i := 0; ; i++ {
+		url, b := e.DOM.Find("div.aw-question-content").Eq(i).Find("a").Attr("href")
+		if url == c.oldIncr {
+			c.urlFinish <- ok{}
+		}
+		if b && !strings.Contains(e.DOM.Find("div.aw-question-content").Eq(i).Find("a").Text(), "每日新闻") {
+			continue
+		} else if !b {
+			break
+		}
+		c.urlCh <- &url
+	}
+	c.readyCh <- ok{}
 }
 
 func (c *gocnCrawler) startNews() {
