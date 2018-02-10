@@ -32,6 +32,7 @@ package gocn
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/asciimoo/colly"
 	"github.com/fengyfei/gu/libs/crawler"
@@ -39,36 +40,39 @@ import (
 	"golang.org/x/net/html"
 )
 
-type gocnCrawler struct {
-	collectorURL  *colly.Collector
-	collectorNews *colly.Collector
-}
-
 type GoCN struct {
-	Time    string            `json:"time"`
+	Date    string            `json:"time"`
 	URL     string            `json:"url"`
 	Content map[string]string `json:"content"`
 }
 
 type ok struct{}
 
+type gocnCrawler struct {
+	collectorURL  *colly.Collector
+	collectorNews *colly.Collector
+	urlCollector  int
+	errCh         chan error
+	urlCh         chan *string
+	urlOver       chan ok
+	readyCh       chan ok
+	newsCh        chan *GoCN
+}
+
 var (
-	counterURL int
-	invalidKey [10]string = [10]string{"/", ".", "\"", "$", "*", "<", ">", ":", "|", "?"}
-	// invalidLi  [5]string   = [5]string{"\nGopherChina2018来了！ https://www.bagevent.com/event/1086224\n", "GopherChina Telegram群现已上线 https://t.me/gopherchina ", " 微博", " QZONE", " 微信"}
-	errorPipe chan error  = make(chan error)
-	urlPipe   chan string = make(chan string)
-	overURL   chan ok     = make(chan ok)
-	overNews  chan ok     = make(chan ok)
-	readyPipe chan ok     = make(chan ok)
-	DataPipe  chan *GoCN  = make(chan *GoCN)
+	invalidKey = []string{"/", ".", "\"", "$", "*", "<", ">", ":", "|", "?"}
 )
 
 // NewGoCNCrawler generates a crawler for gocn news.
-func NewGoCNCrawler() crawler.Crawler {
+func NewGoCNCrawler(ch chan *GoCN) crawler.Crawler {
 	return &gocnCrawler{
 		collectorURL:  colly.NewCollector(),
 		collectorNews: colly.NewCollector(),
+		errCh:         make(chan error),
+		urlCh:         make(chan *string),
+		urlOver:       make(chan ok),
+		readyCh:       make(chan ok),
+		newsCh:        ch,
 	}
 }
 
@@ -83,7 +87,7 @@ func (c *gocnCrawler) Init() error {
 // Crawler interface Start
 func (c *gocnCrawler) Start() error {
 	go func() {
-		readyPipe <- ok{}
+		c.readyCh <- ok{}
 	}()
 
 	go c.startURL()
@@ -91,11 +95,11 @@ func (c *gocnCrawler) Start() error {
 
 	for {
 		select {
-		case err := <-errorPipe:
+		case err := <-c.errCh:
 			if err != nil {
 				return err
 			}
-		case <-overNews:
+		case <-time.NewTimer(10 * time.Second).C:
 			return nil
 		}
 	}
@@ -108,54 +112,53 @@ func (c *gocnCrawler) startURL() {
 
 	for {
 		select {
-		case <-readyPipe:
+		case <-c.readyCh:
 			page++
 			go func() {
 				err := c.collectorURL.Visit(fmt.Sprintf("https://gocn.io/sort_type-new__category-14__day-0__is_recommend-0__page-%d", page))
 				if err != nil {
 					logger.Error("error in crawling the URL", err)
-					errorPipe <- err
+					c.errCh <- err
 				}
 			}()
-		case <-overURL:
+		case <-c.urlOver:
 			goto EXIT
 		}
 	}
 
 EXIT:
-	overNews <- ok{}
 }
 
 func (c *gocnCrawler) parseURL(e *colly.HTMLElement) {
 	if strings.Contains(e.Text, "每日新闻") {
 		if e.Attr("href") == "https://gocn.io/explore/category-14" {
-			counterURL += 100
+			c.urlCollector += 100
 		} else if strings.Contains(e.Attr("href"), "https://gocn.io/topic/") {
-			counterURL += 100
+			c.urlCollector += 100
 		} else {
-			counterURL++
+			c.urlCollector++
 			url := e.Attr("href")
-			urlPipe <- url
+			c.urlCh <- &url
 		}
 
-		if counterURL > 200 {
-			counterURL = 0
-			readyPipe <- ok{}
-		} else if counterURL == 200 {
-			counterURL = 0
-			overURL <- ok{}
+		if c.urlCollector > 200 {
+			c.urlCollector = 0
+			c.readyCh <- ok{}
+		} else if c.urlCollector == 200 {
+			c.urlCollector = 0
+			c.urlOver <- ok{}
 		}
 	}
 }
 
 func (c *gocnCrawler) startNews() {
-	for u := range urlPipe {
+	for u := range c.urlCh {
 		url := u
 		go func() {
-			err := c.collectorNews.Visit(url)
+			err := c.collectorNews.Visit(*url)
 			if err != nil {
 				logger.Error("error in crawling the news", err)
-				errorPipe <- err
+				c.errCh <- err
 			}
 		}()
 	}
@@ -164,7 +167,7 @@ func (c *gocnCrawler) startNews() {
 func (c *gocnCrawler) parseNews(e *colly.HTMLElement) {
 	times := strings.SplitN(e.DOM.Find("h1").Text(), "-", 3)
 	data := GoCN{
-		Time:    fmt.Sprintf("%s-%s-%s", times[0][len(times[0])-4:], times[1], times[2][:2]),
+		Date:    fmt.Sprintf("%s-%s-%s", times[0][len(times[0])-4:], times[1], times[2][:2]),
 		URL:     e.Request.URL.String(),
 		Content: make(map[string]string),
 	}
@@ -175,7 +178,7 @@ func (c *gocnCrawler) parseNews(e *colly.HTMLElement) {
 		data.Content[validKey(s[2*i])] = s[2*i+1]
 	}
 
-	DataPipe <- &data
+	c.newsCh <- &data
 }
 
 func (g *GoCN) parseNodes(s []*html.Node) []string {
@@ -220,10 +223,6 @@ func (g *GoCN) parseNodes(s []*html.Node) []string {
 	}
 
 	return news
-}
-
-func parseTitle(title string) string {
-	return strings.Split(strings.Split(title, "(")[1], ")")[0]
 }
 
 func validKey(str string) string {

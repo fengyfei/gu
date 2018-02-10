@@ -33,46 +33,48 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/asciimoo/colly"
 	"github.com/fengyfei/gu/libs/crawler"
 	"github.com/fengyfei/gu/libs/logger"
-	"github.com/gocolly/colly"
 )
 
 type segmentCrawler struct {
 	collector *colly.Collector
-	urlPipe   chan *string
-	overURL   chan done
-	overBlog  chan done
+	urlCh     chan *string
+	urlOver   chan done
+	blogOver  chan done
+	errCh     chan error
 }
 
 type done struct{}
-
-var errorPipe = make(chan error)
 
 const (
 	site = "https://segment.com"
 )
 
+// NewSegmentCrawler generates a crawler for Segment blogs.
 func NewSegmentCrawler() crawler.Crawler {
 	return &segmentCrawler{
 		collector: colly.NewCollector(),
-		urlPipe:   make(chan *string),
-		overURL:   make(chan done),
-		overBlog:  make(chan done),
+		urlCh:     make(chan *string),
+		urlOver:   make(chan done),
+		blogOver:  make(chan done),
 	}
 }
 
+// Crawler interface Init
 func (c *segmentCrawler) Init() error {
 	c.collector.OnHTML("a.Link--primary.Link--animatedHover.ArticleInList-readMoreLink", c.parseURL)
 	return os.MkdirAll("blog", 0755)
 }
 
+// Crawler interface Start
 func (c *segmentCrawler) Start() error {
 	go c.startBlog()
 	go c.startURL()
 
 	for {
-		if err, ok := <-errorPipe; ok {
+		if err, ok := <-c.errCh; ok {
 			return err
 		}
 	}
@@ -80,8 +82,8 @@ func (c *segmentCrawler) Start() error {
 
 func (c *segmentCrawler) parseURL(e *colly.HTMLElement) {
 	url := site + e.Attr("href")
-	c.urlPipe <- &url
-	<-c.overBlog
+	c.urlCh <- &url
+	<-c.blogOver
 }
 
 func (c *segmentCrawler) startURL() {
@@ -100,7 +102,7 @@ func (c *segmentCrawler) startURL() {
 		err := c.collector.Visit(url)
 		if err != nil {
 			logger.Error("error in getting blog url", err)
-			errorPipe <- err
+			c.errCh <- err
 		}
 	}
 }

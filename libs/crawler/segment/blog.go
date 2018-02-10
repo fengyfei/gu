@@ -52,12 +52,12 @@ var (
 
 func (c *segmentCrawler) startBlog() {
 	for {
-		if url, ok := <-c.urlPipe; ok {
+		if url, ok := <-c.urlCh; ok {
 			err := c.getBlog(url)
 			if err != nil {
-				errorPipe <- err
+				c.errCh <- err
 			}
-			c.overBlog <- done{}
+			c.blogOver <- done{}
 		}
 	}
 }

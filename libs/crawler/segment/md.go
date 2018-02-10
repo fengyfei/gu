@@ -33,8 +33,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-
-	"github.com/fengyfei/gu/libs/logger"
 )
 
 func parseMD(s string) string {
@@ -221,11 +219,7 @@ func mdfigure(s string) string {
 func mdh(s string) string {
 	var header = "\n#"
 	text := strings.SplitN(s, "</h", 2)
-	h, err := strconv.Atoi(text[0][:1])
-	if err != nil {
-		logger.Error("error in parsing <h>", err)
-		errorPipe <- err
-	}
+	h, _ := strconv.Atoi(text[0][:1])
 	for len(header) < h {
 		header += "#"
 	}
