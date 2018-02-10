@@ -25,145 +25,180 @@
 /*
  * Revision History:
  *     Initial: 2018/02/04        Shi Ruitao
+ *     Modify:  2018/02/05        Li Zebang
  */
 
 package handler
 
 import (
+	"errors"
+
+	"github.com/dgrijalva/jwt-go"
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/applications/shop/mysql"
+	"github.com/fengyfei/gu/applications/shop/util"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
-	"github.com/fengyfei/gu/models/shop/category"
+	models "github.com/fengyfei/gu/models/shop/category"
 )
 
-// add new category
+var (
+	ErrNotAdmin = errors.New("non-administrators can not operate.")
+)
+
+// Add a category
 func AddCategory(c *server.Context) error {
-	var (
-		err    error
-		addReq category.CategoryAddReq
-	)
+	var add models.Add
+
+	token, err := util.Parse(c)
+	if err != nil {
+		logger.Error("Error in parsing token:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
+	}
+
+	claims := token.Claims.(jwt.MapClaims)
+	isAdmin := claims[util.IsAdmin].(bool)
+
+	if !isAdmin {
+		logger.Error("Permission denied:", ErrNotAdmin)
+		return core.WriteStatusAndDataJSON(c, constants.ErrPermission, ErrNotAdmin)
+	}
+
+	err = c.JSONBody(&add)
+	if err != nil {
+		logger.Error("Error in JSONBody:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	err = c.Validate(&add)
+	if err != nil {
+		logger.Error("Invalid parameters:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
 
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("Can't get mysql connection:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = c.JSONBody(&addReq)
+	err = models.Service.Add(conn, &add)
 	if err != nil {
-		logger.Error("JSONBody():", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
-	}
-
-	err = c.Validate(addReq)
-	if err != nil {
-		logger.Error("Validate():", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
-	}
-
-	err = category.Service.AddCategory(conn, &addReq.Name, &addReq.Desc, &addReq.ParentID)
-	if err != nil {
-		logger.Error("category.Service.AddCategory():", err)
+		logger.Error("Error in add a category:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
-}
-
-// get all parent categories
-func GetMainCategories(c *server.Context) error {
-	var (
-		pid uint64 = 0
-		err error
-		res []category.Category
-	)
-
-	conn, err := mysql.Pool.Get()
-	defer mysql.Pool.Release(conn)
-	if err != nil {
-		logger.Error("mysql.Pool.Get()", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-	}
-
-	res, err = category.Service.GetCategory(conn, pid)
-	if err != nil {
-		logger.Error("category.Service.GetCategory()", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-	}
-
-	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, res)
-}
-
-// get categories of the specified pid
-func GetSubCategories(c *server.Context) error {
-	var (
-		err    error
-		pidReq category.SubCategoryReq
-		res    []category.Category
-	)
-
-	conn, err := mysql.Pool.Get()
-	defer mysql.Pool.Release(conn)
-	if err != nil {
-		logger.Error("mysql.Pool.Get():", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-	}
-
-	err = c.JSONBody(&pidReq)
-	if err != nil {
-		logger.Error("JSONBody():", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
-	}
-
-	err = c.Validate(pidReq)
-	if err != nil {
-		logger.Error("Validate():", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
-	}
-
-	res, err = category.Service.GetCategory(conn, pidReq.PID)
-	if err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-	}
-
-	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, res)
 }
 
 func ModifyCategory(c *server.Context) error {
-	var (
-		err error
-		res category.Modify
-	)
+	var modify models.Modify
+
+	token, err := util.Parse(c)
+	if err != nil {
+		logger.Error("Error in parsing token:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
+	}
+
+	claims := token.Claims.(jwt.MapClaims)
+	isAdmin := claims[util.IsAdmin].(bool)
+
+	if !isAdmin {
+		logger.Error("Permission denied:", ErrNotAdmin)
+		return core.WriteStatusAndDataJSON(c, constants.ErrPermission, ErrNotAdmin)
+	}
+
+	err = c.JSONBody(&modify)
+	if err != nil {
+		logger.Error("Error in parsing token:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	err = c.Validate(&modify)
+	if err != nil {
+		logger.Error("Permission denied:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
 
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
-		logger.Error("mysql.Pool.Get():", err)
+		logger.Error("Can't get mysql connection:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = c.JSONBody(&res)
+	err = models.Service.Modify(conn, &modify)
 	if err != nil {
-		logger.Error("JSONBody():", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
-	}
-
-	err = c.Validate(res)
-	if err != nil {
-		logger.Error("Validate():", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
-	}
-
-	err = category.Service.ModifyCategory(conn, res.ID, res.Status)
-	if err != nil {
-		logger.Error("category.Service.ModifyCategory():", err)
+		logger.Error("Error in modifying the category:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
+}
+
+func GetCategory(c *server.Context) error {
+	var get models.Get
 
 }
+
+// // get all parent categories
+// func GetMainCategories(c *server.Context) error {
+// 	var (
+// 		pid uint64 = 0
+// 		err error
+// 		res []category.Category
+// 	)
+
+// 	conn, err := mysql.Pool.Get()
+// 	defer mysql.Pool.Release(conn)
+// 	if err != nil {
+// 		logger.Error("mysql.Pool.Get()", err)
+// 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+// 	}
+
+// 	res, err = category.Service.GetCategory(conn, pid)
+// 	if err != nil {
+// 		logger.Error("category.Service.GetCategory()", err)
+// 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+// 	}
+
+// 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, res)
+// }
+
+// // get categories of the specified pid
+// func GetSubCategories(c *server.Context) error {
+// 	var (
+// 		err    error
+// 		pidReq category.SubCategoryReq
+// 		res    []category.Category
+// 	)
+
+// 	conn, err := mysql.Pool.Get()
+// 	defer mysql.Pool.Release(conn)
+// 	if err != nil {
+// 		logger.Error("mysql.Pool.Get():", err)
+// 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+// 	}
+
+// 	err = c.JSONBody(&pidReq)
+// 	if err != nil {
+// 		logger.Error("JSONBody():", err)
+// 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+// 	}
+
+// 	err = c.Validate(pidReq)
+// 	if err != nil {
+// 		logger.Error("Validate():", err)
+// 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+// 	}
+
+// 	res, err = category.Service.GetCategory(conn, pidReq.PID)
+// 	if err != nil {
+// 		logger.Error(err)
+// 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+// 	}
+
+// 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, res)
+// }

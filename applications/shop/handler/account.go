@@ -43,7 +43,7 @@ import (
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
-	models "github.com/fengyfei/gu/models/shop/user"
+	models "github.com/fengyfei/gu/models/shop/account"
 )
 
 const (

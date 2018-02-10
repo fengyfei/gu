@@ -28,7 +28,7 @@
  *     Modify:  2018/02/01        Li Zebang
  */
 
-package user
+package account
 
 import (
 	"errors"
@@ -43,7 +43,7 @@ import (
 var (
 	Service *serviceProvider
 
-	ErrPhoneNotEmpty = errors.New("phone number is not empty")
+	ErrPhoneNotEmpty = errors.New("phone number is not empty.")
 	ErrLoginFailed   = errors.New("invalid username or password.")
 	ErrPassword      = errors.New("invalid password.")
 )
@@ -52,16 +52,17 @@ type serviceProvider struct{}
 
 type (
 	User struct {
-		ID       uint64    `sql:"primary_key;auto_increment" gorm:"column:id"`
-		OpenID   string    `gorm:"column:openid"`
-		UnionID  string    `gorm:"column:unionid"`
-		UserName string    `gorm:"column:username"`
-		Phone    string    `gorm:"column:phone"`
-		Password string    `gorm:"column:password"`
-		Avatar   string    `gorm:"column:avatar"`
-		Sex      uint8     `gorm:"column:sex"`
-		IsAdmin  bool      `gorm:"column:isadmin"`
-		Created  time.Time `gorm:"column:created"`
+		ID       uint64 `sql:"primary_key;auto_increment" gorm:"column:id"`
+		OpenID   string `gorm:"column:openid"`
+		UnionID  string `gorm:"column:unionid"`
+		UserName string `gorm:"column:username"`
+		Phone    string `gorm:"column:phone"`
+		Password string `gorm:"column:password"`
+		Avatar   string `gorm:"column:avatar"`
+		Sex      uint8  `gorm:"column:sex"`
+		IsAdmin  bool   `gorm:"column:isadmin"`
+		// Status   bool      `gorm:"column:status"`
+		Created time.Time `gorm:"column:created"`
 	}
 
 	UserData struct {

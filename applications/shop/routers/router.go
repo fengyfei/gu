@@ -44,22 +44,22 @@ func init() {
 }
 
 func register(r *server.Router) {
-	r.Post("/shop/user/wechatlogin", handler.WechatLogin)
-	r.Post("/shop/user/addphone", handler.AddPhone)
-	r.Post("/shop/user/changeinfo", handler.ChangeInfo)
-	r.Post("/shop/user/register", handler.PhoneRegister)
-	r.Post("/shop/user/phonelogin", handler.PhoneLogin)
-	r.Post("/shop/user/changepass", handler.ChangePassword)
+	r.Post("/shop/account/wechatlogin", handler.WechatLogin)
+	r.Post("/shop/account/addphone", handler.AddPhone)
+	r.Post("/shop/account/changeinfo", handler.ChangeInfo)
+	r.Post("/shop/account/register", handler.PhoneRegister)
+	r.Post("/shop/account/phonelogin", handler.PhoneLogin)
+	r.Post("/shop/account/changepass", handler.ChangePassword)
 
-	r.Post("/shop/user/address/add", handler.AddAddress)
-	r.Post("/shop/user/address/setdefault", handler.SetDefaultAddress)
-	r.Post("/shop/user/address/modify", handler.ModifyAddress)
-	r.Post("/shop/user/address/delete", handler.DeleteAddress)
-	r.Get("/shop/user/address/alladdress", handler.GetAddress)
+	r.Post("/shop/address/add", handler.AddAddress)
+	r.Post("/shop/address/setdefault", handler.SetDefaultAddress)
+	r.Post("/shop/address/modify", handler.ModifyAddress)
+	r.Post("/shop/address/delete", handler.DeleteAddress)
+	r.Get("/shop/address/get", handler.GetAddress)
 
-	// category api for admin
 	r.Post("/shop/category/add", handler.AddCategory)
 	r.Post("/shop/category/modify", handler.ModifyCategory)
+	r.Post("/shop/category/get", handler.GetCategory)
 
 	// ware api for admin
 	//r.Post("/shop/api/ware/create",  "post:CreateWare")

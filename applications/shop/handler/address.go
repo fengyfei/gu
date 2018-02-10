@@ -31,7 +31,6 @@ package handler
 
 import (
 	"github.com/dgrijalva/jwt-go"
-
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/applications/shop/mysql"
 	"github.com/fengyfei/gu/applications/shop/util"
@@ -41,7 +40,7 @@ import (
 	models "github.com/fengyfei/gu/models/shop/address"
 )
 
-// Add address
+// Add an address
 func AddAddress(c *server.Context) error {
 	var add models.Add
 
@@ -82,6 +81,7 @@ func AddAddress(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
+// Set an address as the default address
 func SetDefaultAddress(c *server.Context) error {
 	var set models.SetDefault
 
@@ -122,6 +122,7 @@ func SetDefaultAddress(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
+// Modify an address
 func ModifyAddress(c *server.Context) error {
 	var modify models.Modify
 
@@ -162,6 +163,7 @@ func ModifyAddress(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
+// Get all address by userid
 func GetAddress(c *server.Context) error {
 	token, err := util.Parse(c)
 	if err != nil {
@@ -187,6 +189,7 @@ func GetAddress(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, addr)
 }
 
+// Delete an address
 func DeleteAddress(c *server.Context) error {
 	var delete models.Delete
 
@@ -220,7 +223,7 @@ func DeleteAddress(c *server.Context) error {
 
 	err = models.Service.Delete(conn, userID, delete.ID)
 	if err != nil {
-		logger.Error("Error in deleting:", err)
+		logger.Error("Error in deleting the address:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 

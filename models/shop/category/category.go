@@ -40,7 +40,8 @@ import (
 type serviceProvider struct{}
 
 const (
-	trueCategory = 1
+	Unused = 1
+	InUse  = 2
 )
 
 var (
@@ -49,45 +50,60 @@ var (
 
 type (
 	Category struct {
-		ID        uint64    `gorm:"column:id"`
-		Name      string    `gorm:"column:name"`
-		Desc      string    `gorm:"column:desc"`
-		ParentID  uint64    `gorm:"column:parentid"`
-		Status    int       `gorm:"column:status"`
-		CreatedAt time.Time `gorm:"column:created"`
+		ID          uint64    `gorm:"column:id"`
+		Category    string    `gorm:"column:category"`
+		Description string    `gorm:"column:description"`
+		ParentID    uint64    `gorm:"column:parentid"`
+		Status      uint8     `gorm:"column:status"`
+		Created     time.Time `gorm:"column:created"`
 	}
 
-	CategoryAddReq struct {
-		Name     string `json:"name" validate:"required,alphanumunicode,max=6"`
-		Desc     string `json:"desc" validate:"required,max=50"`
-		ParentID uint64 `json:"parentid"`
-	}
-
-	SubCategoryReq struct {
-		PID uint64 `json:"pid"`
-	}
-
-	Modify struct {
-		ID     uint64 `json:"id"`
-		Status int    `json:"status"`
+	CategoryData struct {
+		ID          uint64    `gorm:"column:id"`
+		Category    string    `gorm:"column:category"`
+		Description string    `gorm:"column:description"`
+		ParentID    uint64    `gorm:"column:parentid"`
+		Status      uint8     `gorm:"column:status"`
+		Created     time.Time `gorm:"column:created"`
 	}
 )
 
-// add new category - parentID = 0 -> main class, != 0 -> sub class
-func (sp *serviceProvider) AddCategory(conn orm.Connection, name *string, desc *string, parentID *uint64) error {
-	category := &Category{}
-	category.Name = *name
-	category.Desc = *desc
-	category.Status = trueCategory
-	category.ParentID = *parentID
-	category.CreatedAt = time.Now()
+type (
+	Add struct {
+		Category    string `json:"category" validate:"required,alphanumunicode,max=12"`
+		Description string `json:"description" validate:"required,max=50"`
+		Status      uint8  `json:"status"`
+		ParentID    uint64 `json:"parentid"`
+	}
 
-	db := conn.(*gorm.DB).Exec("USE shop")
+	Modify struct {
+		ID          uint64 `json:"id"`
+		Category    string `json:"category" validate:"required,alphanumunicode,max=12"`
+		Description string `json:"description" validate:"required,max=50"`
+		Status      uint8  `json:"status"`
+		ParentID    uint64 `json:"parentid"`
+	}
+)
 
-	return db.Model(&Category{}).Create(category).Error
+func (Category) TableName() string {
+	return "category"
 }
 
-// get categories by pid
+// Add a category
+func (sp *serviceProvider) Add(conn orm.Connection, add *Add) error {
+	category := Category{
+		Category:    add.Category,
+		Description: add.Description,
+		ParentID:    add.ParentID,
+		Status:      add.Status,
+		Created:     time.Now(),
+	}
+
+	db := conn.(*gorm.DB)
+
+	return db.Create(&category).Error
+}
+
 func (sp *serviceProvider) GetCategory(conn orm.Connection, pid uint64) ([]Category, error) {
 	var list []Category
 
@@ -97,11 +113,21 @@ func (sp *serviceProvider) GetCategory(conn orm.Connection, pid uint64) ([]Categ
 	return list, res.Error
 }
 
-// Modify category status
-func (sp *serviceProvider) ModifyCategory(conn orm.Connection, id uint64, status int) error {
+// Modify the category
+func (sp *serviceProvider) Modify(conn orm.Connection, modify *Modify) error {
 	var category Category
 
 	db := conn.(*gorm.DB)
 
-	return db.Model(&category).Where("id = ?", id).Update("status", status).Error
+	err := db.Where("id = ?", modify.ID).First(&category).Error
+	if err != nil {
+		return err
+	}
+
+	category.Category = modify.Category
+	category.Description = modify.Description
+	category.ParentID = modify.ParentID
+	category.Status = modify.Status
+
+	return db.Save(&category).Error
 }
