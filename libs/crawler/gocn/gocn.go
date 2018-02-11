@@ -59,6 +59,8 @@ type gocnCrawler struct {
 	urlFinish     chan ok
 	readyCh       chan ok
 	newsCh        chan *GoCN
+	endCh         chan bool
+	db            *store.BadgerDB
 	oldIncr       string
 	newIncr       string
 }
@@ -68,11 +70,11 @@ const (
 )
 
 var (
-	invalidKey = []string{"/", ".", "\"", "$", "*", "<", ">", ":", "|", "?"}
+	invalidKey = []string{"/", "\"", "$", "*", "<", ">", ":", "|", "?"}
 )
 
 // NewGoCNCrawler generates a crawler for gocn news.
-func NewGoCNCrawler(ch chan *GoCN) crawler.Crawler {
+func NewGoCNCrawler(ch chan *GoCN, end chan bool) crawler.Crawler {
 	return &gocnCrawler{
 		collectorURL:  colly.NewCollector(),
 		collectorNews: colly.NewCollector(),
@@ -81,6 +83,7 @@ func NewGoCNCrawler(ch chan *GoCN) crawler.Crawler {
 		urlFinish:     make(chan ok),
 		readyCh:       make(chan ok),
 		newsCh:        ch,
+		endCh:         end,
 	}
 }
 
@@ -118,6 +121,7 @@ func (c *gocnCrawler) Start() error {
 			if err != nil {
 				logger.Error("Error in the end:", err)
 			}
+			c.endCh <- true
 			return nil
 		}
 	}
@@ -128,8 +132,9 @@ func (c *gocnCrawler) prepare() error {
 	if err != nil {
 		return err
 	}
+	c.db = db
 
-	value, err := db.Get([]byte("increment-key"))
+	value, err := c.db.Get([]byte("increment-key"))
 	if len(value) != 0 && err == nil {
 		c.oldIncr = string(value)
 		return nil
@@ -144,18 +149,11 @@ func (c *gocnCrawler) prepare() error {
 }
 
 func (c *gocnCrawler) finish() error {
-	db, err := store.NewBadgerDB(options.FileIO, "./gocn-news-badger", true)
-	if err != nil {
-		return err
-	}
-
-	return db.Set([]byte("increment-key"), []byte(c.newIncr))
+	return c.db.Set([]byte("increment-key"), []byte(c.newIncr))
 }
 
 func (c *gocnCrawler) startURL() {
-	var (
-		page int
-	)
+	var page int
 
 	for {
 		select {
@@ -169,11 +167,9 @@ func (c *gocnCrawler) startURL() {
 				}
 			}()
 		case <-c.urlFinish:
-			goto EXIT
+			return
 		}
 	}
-
-EXIT:
 }
 
 func (c *gocnCrawler) parseURL(e *colly.HTMLElement) {
@@ -181,13 +177,17 @@ func (c *gocnCrawler) parseURL(e *colly.HTMLElement) {
 		url, _ := e.DOM.Find("div.aw-question-content").Eq(0).Find("a").Attr("href")
 		c.newIncr = url
 	}
+
 	if e.DOM.Find("div.aw-question-content").Eq(0).Find("a").Text() == "" {
 		c.urlFinish <- ok{}
 	}
+
 	for i := 0; ; i++ {
 		url, b := e.DOM.Find("div.aw-question-content").Eq(i).Find("a").Attr("href")
 		if url == c.oldIncr {
+			c.newIncr = c.oldIncr
 			c.urlFinish <- ok{}
+			return
 		}
 		if b && !strings.Contains(e.DOM.Find("div.aw-question-content").Eq(i).Find("a").Text(), "每日新闻") {
 			continue
@@ -220,27 +220,34 @@ func (c *gocnCrawler) parseNews(e *colly.HTMLElement) {
 		Content: make(map[string]string),
 	}
 
-	s := data.parseNodes(e.DOM.Nodes)
-
+	element, text := data.parseNodes(e.DOM.Nodes)
 	for i := 0; i < 5; i++ {
-		data.Content[validKey(s[2*i])] = s[2*i+1]
+		if i > len(text)-1 {
+			break
+		} else if i > len(element)-1 {
+			data.Content[text[i]] = ""
+		} else {
+			data.Content[text[i]] = element[i]
+		}
 	}
 
 	c.newsCh <- &data
 }
 
-func (g *GoCN) parseNodes(s []*html.Node) []string {
+func (g *GoCN) parseNodes(s []*html.Node) ([]string, []string) {
 	var (
-		f          func(*html.Node)
-		stringPipe = make(chan string)
-		news       []string
+		f           func(*html.Node)
+		elementPipe = make(chan string)
+		textPipe    = make(chan string)
+		element     []string
+		text        []string
 	)
 
 	f = func(n *html.Node) {
 		if n.Type == html.ElementNode {
 			for _, v := range n.Attr {
 				if v.Key == "href" {
-					stringPipe <- v.Val
+					elementPipe <- v.Val
 				}
 			}
 		}
@@ -248,7 +255,7 @@ func (g *GoCN) parseNodes(s []*html.Node) []string {
 		if n.Type == html.TextNode {
 			text := n.Data
 			if strings.Count(text, string(byte(9)))+strings.Count(text, string(byte(10)))+strings.Count(text, string(byte(32))) != len(text) && !strings.Contains(text, "每日新闻") && !strings.Contains(text, "http://") && !strings.Contains(text, "https://") {
-				stringPipe <- text
+				textPipe <- text
 			}
 		}
 
@@ -263,19 +270,30 @@ func (g *GoCN) parseNodes(s []*html.Node) []string {
 		go f(n)
 	}
 
-	for s := range stringPipe {
-		news = append(news, s)
-		if len(news) > 9 {
-			break
+	for {
+		select {
+		case e := <-elementPipe:
+			element = append(element, e)
+			if len(element)+len(text) > 9 {
+				return element, text
+			}
+		case t := <-textPipe:
+			text = append(text, t)
+			if len(element)+len(text) > 9 {
+				return element, text
+			}
 		}
 	}
-
-	return news
 }
 
 func validKey(str string) string {
 	for _, value := range invalidKey {
 		str = strings.Replace(str, value, "", -1)
 	}
+
+	if strings.Count(str, ".") != -1 {
+		str = str[2:]
+	}
+
 	return str
 }
