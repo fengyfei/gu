@@ -30,6 +30,10 @@
 package vuejs
 
 import (
+	"fmt"
+	"net/http"
+	"strconv"
+
 	"github.com/asciimoo/colly"
 	"github.com/dgraph-io/badger"
 	"github.com/dgraph-io/badger/options"
@@ -38,10 +42,18 @@ import (
 	store "github.com/fengyfei/gu/libs/store/badger"
 )
 
+type ok struct{}
+
 type vuejsCrawler struct {
-	collector *colly.Collector
-	increment string
-	newsCh    chan *News
+	collector  *colly.Collector
+	ready      bool
+	readyCh    chan ok
+	newsFinish chan ok
+	newsCh     chan *News
+	endCh      chan bool
+	db         *store.BadgerDB
+	oldIncr    string
+	newIncr    string
 }
 
 type News struct {
@@ -61,13 +73,17 @@ type Content struct {
 
 const (
 	noneBadger = "none badger"
+	site       = "https://news.vuejs.org/issues/"
 )
 
 // NewVuejsCrawler generates a crawler for vuejs news.
-func NewVuejsCrawler(ch chan *News) crawler.Crawler {
+func NewVuejsCrawler(ch chan *News, end chan bool) crawler.Crawler {
 	return &vuejsCrawler{
-		collector: colly.NewCollector(),
-		newsCh:    ch,
+		collector:  colly.NewCollector(),
+		readyCh:    make(chan ok),
+		newsFinish: make(chan ok),
+		newsCh:     ch,
+		endCh:      end,
 	}
 }
 
@@ -79,28 +95,86 @@ func (c *vuejsCrawler) Init() error {
 
 // Crawler interface Start
 func (c *vuejsCrawler) Start() error {
-	c.collector.Visit("https://news.vuejs.org/issues/73")
+	var incr int
+	err := c.prepare()
+	if err != nil {
+		logger.Error("Error in preparing to start:", err)
+		return err
+	}
+	if c.oldIncr != noneBadger && c.oldIncr != "" {
+		incr, err = strconv.Atoi(c.oldIncr)
+		if err != nil {
+			logger.Error("Error in converting string to int:", err)
+			return err
+		}
+	}
+
+	go func() {
+		c.readyCh <- ok{}
+	}()
+
+	for {
+		select {
+		case <-c.readyCh:
+			go func() {
+				err := c.collector.Visit(fmt.Sprintf("%s%d", site, incr))
+				if err != nil {
+					if c.ready && err.Error() == http.StatusText(http.StatusNotFound) {
+						c.newsFinish <- ok{}
+						return
+					} else if err.Error() != http.StatusText(http.StatusNotFound) {
+						logger.Error("Error in crawling the news:", err)
+					}
+				}
+
+				if !c.ready {
+					c.readyCh <- ok{}
+				}
+				incr++
+			}()
+		case <-c.newsFinish:
+			err = c.finish()
+			if err != nil {
+				logger.Error("Error in the end:", err)
+			}
+			c.endCh <- true
+			return nil
+		}
+	}
+}
+
+func (c *vuejsCrawler) prepare() error {
+	db, err := store.NewBadgerDB(options.FileIO, "./vuejs-news-badger", true)
+	if err != nil {
+		return err
+	}
+	c.db = db
+
+	value, err := db.Get([]byte("increment-key"))
+	if len(value) != 0 && err == nil {
+		c.oldIncr = string(value)
+		return nil
+	}
+
+	if err != badger.ErrKeyNotFound {
+		return err
+	}
+
+	c.oldIncr = noneBadger
 	return nil
 }
 
-func prepare() (string, error) {
-	db, err := store.NewBadgerDB(options.FileIO, "./vuejs-news-badger", true)
-	if err != nil {
-		logger.Error("Error in opening badger database:", err)
-		return "", err
-	}
-	value, err := db.Get([]byte("increment-key"))
-	if len(value) != 0 && err == nil {
-		return string(value), nil
-	}
-	if err != badger.ErrKeyNotFound {
-		logger.Error("Error in getting the badger key:", err)
-		return "", err
-	}
-	return noneBadger, nil
+func (c *vuejsCrawler) finish() error {
+	return c.db.Set([]byte("increment-key"), []byte(c.newIncr))
 }
 
 func (c *vuejsCrawler) parse(e *colly.HTMLElement) {
+	c.ready = true
+	c.newIncr = e.Request.URL.String()[30:]
+	if c.oldIncr == c.newIncr {
+		c.newsFinish <- ok{}
+		return
+	}
 	news := News{
 		Title:       e.DOM.Find("div.issue-title").Text(),
 		Date:        e.DOM.Find("span.issue-date").Text(),
@@ -125,4 +199,5 @@ func (c *vuejsCrawler) parse(e *colly.HTMLElement) {
 		}
 	}
 	c.newsCh <- &news
+	c.readyCh <- ok{}
 }

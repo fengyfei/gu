@@ -24,28 +24,17 @@
 
 /*
  * Revision History:
- *     Initial: 2018/02/07        Li Zebang
+ *     Initial: 2018/02/10        Li Zebang
  */
 
 package slack
 
 import (
-	"io/ioutil"
-	"os"
-
 	"github.com/nlopes/slack"
 )
 
 type SlackClient struct {
 	client *slack.Client
-}
-
-type Data struct {
-	Username string
-	Channel  string
-	Text     string
-	Filetype string
-	File     string
 }
 
 func NewClient(token string) *SlackClient {
@@ -54,28 +43,19 @@ func NewClient(token string) *SlackClient {
 	}
 }
 
-func (sc *SlackClient) PostMessage(data *Data) error {
+func (sc *SlackClient) PostMessage(channel, text string) error {
 	params := slack.NewPostMessageParameters()
-	params.Username = data.Username
-	_, _, err := sc.client.PostMessage(data.Channel, data.Text, params)
+	_, _, err := sc.client.PostMessage(channel, text, params)
 	return err
 }
 
-func (sc *SlackClient) UploadFile(data *Data) error {
-	f, err := os.Open(data.File)
-	if err != nil {
-		return err
-	}
-	b, err := ioutil.ReadAll(f)
-	if err != nil {
-		return err
-	}
+func (sc *SlackClient) UploadFile(channel, title, filetype, content string) error {
 	params := slack.FileUploadParameters{
-		Title:    data.Text,
-		Filetype: data.Filetype,
-		Content:  string(b),
-		Channels: []string{data.Channel},
+		Title:    title,
+		Filetype: filetype,
+		Content:  content,
+		Channels: []string{channel},
 	}
-	_, err = sc.client.UploadFile(params)
+	_, err := sc.client.UploadFile(params)
 	return err
 }

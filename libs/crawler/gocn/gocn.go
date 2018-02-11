@@ -43,12 +43,6 @@ import (
 	"golang.org/x/net/html"
 )
 
-type GoCN struct {
-	Date    string            `json:"time"`
-	URL     string            `json:"url"`
-	Content map[string]string `json:"content"`
-}
-
 type ok struct{}
 
 type gocnCrawler struct {
@@ -56,17 +50,23 @@ type gocnCrawler struct {
 	collectorNews *colly.Collector
 	errCh         chan error
 	urlCh         chan *string
-	urlFinish     chan ok
 	readyCh       chan ok
+	urlFinish     chan ok
+	newsFinish    chan ok
 	newsCh        chan *GoCN
-	endCh         chan bool
 	db            *store.BadgerDB
 	oldIncr       string
 	newIncr       string
 }
 
+type GoCN struct {
+	Date    string            `json:"time"`
+	URL     string            `json:"url"`
+	Content map[string]string `json:"content"`
+}
+
 const (
-	noneBadger = "none badger"
+	defaultOldIncr = "https://gocn.io/question/731"
 )
 
 var (
@@ -74,16 +74,16 @@ var (
 )
 
 // NewGoCNCrawler generates a crawler for gocn news.
-func NewGoCNCrawler(ch chan *GoCN, end chan bool) crawler.Crawler {
+func NewGoCNCrawler(ch chan *GoCN) crawler.Crawler {
 	return &gocnCrawler{
 		collectorURL:  colly.NewCollector(),
 		collectorNews: colly.NewCollector(),
 		errCh:         make(chan error),
 		urlCh:         make(chan *string),
-		urlFinish:     make(chan ok),
 		readyCh:       make(chan ok),
+		urlFinish:     make(chan ok),
+		newsFinish:    make(chan ok),
 		newsCh:        ch,
-		endCh:         end,
 	}
 }
 
@@ -116,19 +116,19 @@ func (c *gocnCrawler) Start() error {
 			if err != nil {
 				return err
 			}
-		case <-time.NewTimer(10 * time.Second).C:
+		case <-c.newsFinish:
+			time.Sleep(time.Second)
 			err = c.finish()
 			if err != nil {
 				logger.Error("Error in the end:", err)
 			}
-			c.endCh <- true
 			return nil
 		}
 	}
 }
 
 func (c *gocnCrawler) prepare() error {
-	db, err := store.NewBadgerDB(options.FileIO, "./gocn-news-badger", true)
+	db, err := store.NewBadgerDB(options.FileIO, "gocn-news-badger", true)
 	if err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func (c *gocnCrawler) prepare() error {
 		return err
 	}
 
-	c.oldIncr = noneBadger
+	c.oldIncr = defaultOldIncr
 	return nil
 }
 
@@ -162,7 +162,7 @@ func (c *gocnCrawler) startURL() {
 			go func() {
 				err := c.collectorURL.Visit(fmt.Sprintf("https://gocn.io/sort_type-new__category-14__day-0__is_recommend-0__page-%d", page))
 				if err != nil {
-					logger.Error("error in crawling the URL", err)
+					logger.Error("Error in crawling the URL", err)
 					c.errCh <- err
 				}
 			}()
@@ -184,17 +184,16 @@ func (c *gocnCrawler) parseURL(e *colly.HTMLElement) {
 
 	for i := 0; ; i++ {
 		url, b := e.DOM.Find("div.aw-question-content").Eq(i).Find("a").Attr("href")
-		if url == c.oldIncr {
-			c.newIncr = c.oldIncr
-			c.urlFinish <- ok{}
-			return
-		}
 		if b && !strings.Contains(e.DOM.Find("div.aw-question-content").Eq(i).Find("a").Text(), "每日新闻") {
 			continue
 		} else if !b {
 			break
 		}
 		c.urlCh <- &url
+		if url == c.oldIncr {
+			c.urlFinish <- ok{}
+			return
+		}
 	}
 	c.readyCh <- ok{}
 }
@@ -205,7 +204,7 @@ func (c *gocnCrawler) startNews() {
 		go func() {
 			err := c.collectorNews.Visit(*url)
 			if err != nil {
-				logger.Error("error in crawling the news", err)
+				logger.Error("Error in crawling the news", err)
 				c.errCh <- err
 			}
 		}()
@@ -213,6 +212,13 @@ func (c *gocnCrawler) startNews() {
 }
 
 func (c *gocnCrawler) parseNews(e *colly.HTMLElement) {
+	if c.oldIncr == e.Request.URL.String() && c.oldIncr == defaultOldIncr {
+		c.newsFinish <- ok{}
+	} else if c.oldIncr == e.Request.URL.String() {
+		c.newsFinish <- ok{}
+		return
+	}
+
 	times := strings.SplitN(e.DOM.Find("h1").Text(), "-", 3)
 	data := GoCN{
 		Date:    fmt.Sprintf("%s-%s-%s", times[0][len(times[0])-4:], times[1], times[2][:2]),

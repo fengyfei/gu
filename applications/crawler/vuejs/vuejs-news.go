@@ -34,7 +34,7 @@ import (
 	"time"
 
 	"github.com/fengyfei/gu/libs/crawler"
-	"github.com/fengyfei/gu/libs/crawler/gocn"
+	"github.com/fengyfei/gu/libs/crawler/vuejs"
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/libs/social/slack"
 	mgo "gopkg.in/mgo.v2"
@@ -58,14 +58,15 @@ func init() {
 }
 
 func main() {
-	var newsCh = make(chan *gocn.GoCN)
+	var (
+		newsCh = make(chan *vuejs.News)
+		endCh  = make(chan bool)
+	)
 
-	c := gocn.NewGoCNCrawler(newsCh)
+	c := vuejs.NewVuejsCrawler(newsCh, endCh)
 	go func() {
 		err := crawler.StartCrawler(c)
-		if err != nil {
-			logger.Error("Error in running the crawler:", err)
-		}
+		logger.Error("Error in running the crawler:", err)
 		return
 	}()
 
@@ -74,21 +75,21 @@ func main() {
 		case news := <-newsCh:
 			err := store(news)
 			if err != nil {
-				logger.Error("Error in storing the GoCN Daily News:", err)
+				logger.Error("Error in storing the Vuejs News:", err)
 			}
 			err = release(news)
 			if err != nil {
-				logger.Error("Error in releasing the GoCN Daily News to slack:", err)
+				logger.Error("Error in releasing the Vuejs News to slack:", err)
 			}
-			logger.Info("Success the GoCN Daily News:", news.Date)
-		case <-time.NewTimer(time.Second).C:
+			logger.Info("Success the Vuejs News:", news.Date)
+		case <-endCh:
 			return
 		}
 	}
 }
 
-func store(news *gocn.GoCN) error {
-	c := session.DB("crawler").C("GoCN Daily News")
+func store(news *vuejs.News) error {
+	c := session.DB("crawler").C("Vuejs News")
 
 	err := c.Insert(news)
 	session.Refresh()
@@ -96,14 +97,17 @@ func store(news *gocn.GoCN) error {
 	return err
 }
 
-func release(news *gocn.GoCN) error {
+func release(news *vuejs.News) error {
 	// If you don't have a custom bot, you can add one through
 	// https://<your-workspace>.slack.com/services/new/bot
 	cli := slack.NewClient("your custom bot token")
 
-	text := fmt.Sprintf("source: GoCN Daily News\ndate: %s\nurl: %s\n", news.Date, news.URL)
+	text := fmt.Sprintf("source: Vuejs News\ndate: %s\nurl: %s\ntitle: %s\ndescription: %s\ncontent:\n", news.Date, news.URL, news.Title, news.Description)
 	for k, v := range news.Content {
-		text += fmt.Sprintf("%s: %s\n", k, v)
+		text += fmt.Sprintf("%s\n", k)
+		for i, c := range v {
+			text += fmt.Sprintf("%d. %s\n%s\n%s\n", i+1, c.Title, c.URL, c.Description)
+		}
 	}
 
 	return cli.PostMessage("your channel", text)
