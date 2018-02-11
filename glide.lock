@@ -1,5 +1,5 @@
-hash: 224607395d0c55fc6c3e611f82a60d86d51ac11010c1fcff5121a9ff05652c4d
-updated: 2018-01-07T15:41:34.934675+08:00
+hash: ed3127422dc2a50ea5c5f495123afd0d9af07ec031d46558bdfca51bc21d260a
+updated: 2018-02-11T17:47:19.152199+08:00
 imports:
 - name: github.com/allegro/bigcache
   version: aa76879d59fa5d93c43680238227dbf7a53f5c28
@@ -23,20 +23,6 @@ imports:
   - session
   - toolbox
   - utils
-- name: github.com/chanxuehong/rand
-  version: b54bf7f93440da0b6c81b05276d69cdcbf32c918
-- name: github.com/chanxuehong/util
-  version: 00a36f7ea8773cee5da9389513bf78bbcbdb09ed
-  subpackages:
-  - security
-- name: github.com/chanxuehong/wechat.v2
-  version: c000758dbfd1894160907ffa320d01a10925dbdf
-  subpackages:
-  - internal/debug/mch/api
-  - internal/debug/mch/callback
-  - mch/core
-  - mch/pay
-  - util
 - name: github.com/davecgh/go-spew
   version: 346938d642f2ec3594ed81d874461961cd0faa76
   subpackages:
@@ -84,7 +70,7 @@ imports:
   - proto
   - protoc-gen-gogo/descriptor
 - name: github.com/golang/protobuf
-  version: 1e59b77b52bf8e4b449a57e6f79f21226d571845
+  version: 925541529c1fa6821df4e44ce2723319eb2be768
   subpackages:
   - proto
   - protoc-gen-go/descriptor
@@ -104,6 +90,8 @@ imports:
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
   version: 7f08801859139f86dfafd1c296e2cba9a80d292e
+- name: github.com/gorilla/websocket
+  version: 4ac909741dfa57448bfadfdbca0cf7eeaa68f0e2
 - name: github.com/grpc-ecosystem/go-grpc-middleware
   version: 967bee733a734780623ac3d7c8e9216e4372ea62
   subpackages:
@@ -133,20 +121,8 @@ imports:
   version: b338075a0fc6e1a0683dbf03d09b4957a289e26f
   subpackages:
   - '...'
-  - middleware
-- name: github.com/labstack/gommon
-  version: 57409ada9da0f2afad6664c49502f8c50fbd8476
-  subpackages:
-  - bytes
-  - color
-  - log
-  - random
 - name: github.com/magiconair/properties
   version: 49d762b9817ba1c2e9d0c69183c2b4a8b8f1d934
-- name: github.com/mattn/go-colorable
-  version: 586e6dcca296d085100876beb6dbf02287a247f7
-- name: github.com/mattn/go-isatty
-  version: 6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c
 - name: github.com/minio/minio-go
   version: 06dcf064d9e3b1dfd21b9a01a822da7665a9c971
   subpackages:
@@ -171,6 +147,8 @@ imports:
   - pb
 - name: github.com/nats-io/nuid
   version: 33c603157d6fd1b0ac2599bcc4a286b36479a06d
+- name: github.com/nlopes/slack
+  version: 8ab4d0b364ef1e9af5d102531da20d5ec902b6c4
 - name: github.com/nsqio/go-nsq
   version: eee57a3ac4174c55924125bb15eeeda8cffb6e6f
 - name: github.com/op/go-logging
@@ -180,7 +158,9 @@ imports:
 - name: github.com/pkg/errors
   version: e881fd58d78e04cf6d0de1217f8707c8cc2249bc
 - name: github.com/PuerkitoBio/goquery
-  version: 1a71cc719d0d5b9e4f14ae072bef08b576b0bab5
+  version: 09540e565986583836b5fc792fe951ec5fd201dd
+- name: github.com/robfig/cron
+  version: b024fc5ea0e34bc3f83d9941c8d60b0622bfaca4
 - name: github.com/spf13/afero
   version: 57afd63c68602b63ed976de00dd066ccb3c319db
   subpackages:
@@ -216,17 +196,11 @@ imports:
   version: 9e4646fa705336d5b2fa9dddfafbe0a1a965acd7
 - name: github.com/urfave/negroni
   version: 5dbbc83f748fc3ad38585842b0aedab546d0ea1e
-- name: github.com/valyala/bytebufferpool
-  version: e746df99fe4a3986f4d4f79e13c1e0117ce9c2f7
-- name: github.com/valyala/fasttemplate
-  version: dcecefd839c4193db0d35b88ec65b4c12d360ab0
 - name: go.uber.org/multierr
   version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
 - name: golang.org/x/crypto
   version: 0fcca4842a8d74bfddc2c96a073bd2a4d2a7a2e8
   subpackages:
-  - acme
-  - acme/autocert
   - bcrypt
   - blowfish
 - name: golang.org/x/net
@@ -297,7 +271,7 @@ imports:
   - tap
   - transport
 - name: gopkg.in/go-playground/validator.v9
-  version: 230db62e071d40171640c9deb875d46a3858d9dd
+  version: 3620d3c0694119b61c72071ff5a05a976e97b05a
 - name: gopkg.in/mgo.v2
   version: 3f83fa5005286a7fe593b055f0d7771a7dce4655
   subpackages:
@@ -308,24 +282,11 @@ imports:
 - name: gopkg.in/yaml.v2
   version: 287cf08546ab5e7e37d55a84f7ed3fd1db036de5
 testImports:
-- name: github.com/gopherjs/gopherjs
-  version: a0a7cfed7b2a54080888fd2b3d4a3ec14562c86c
-  subpackages:
-  - js
-- name: github.com/jtolds/gls
-  version: 77f18212c9c7edc9bd6a33d383a7b545ce62f064
 - name: github.com/pmezard/go-difflib
   version: 792786c7400a136282c1664665ae0a8db921c6c2
   subpackages:
   - difflib
-- name: github.com/smartystreets/assertions
-  version: 0b37b35ec7434b77e77a4bb29b79677cced992ea
-  subpackages:
-  - internal/go-render/render
-  - internal/oglematchers
 - name: github.com/smartystreets/goconvey
   version: 9e8dc3f972df6c8fcc0375ef492c24d0bb204857
   subpackages:
   - convey
-  - convey/gotest
-  - convey/reporting

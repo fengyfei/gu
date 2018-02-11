@@ -57,6 +57,8 @@ import:
 - package: google.golang.org/genproto
 - package: github.com/op/go-logging
   version: ^1.0.0
+- package: github.com/nlopes/slack
+  version: ^0.2.0
 testImport:
 - package: github.com/smartystreets/goconvey
   version: 1.6.3
