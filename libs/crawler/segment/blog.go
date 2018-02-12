@@ -33,7 +33,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/fengyfei/gu/libs/logger"
@@ -41,8 +40,9 @@ import (
 
 type Blog struct {
 	Title string
+	URL   string
+	Date  string
 	Blog  string
-	Label []string
 }
 
 var (
@@ -52,12 +52,12 @@ var (
 
 func (c *segmentCrawler) startBlog() {
 	for {
-		if url, ok := <-c.urlCh; ok {
+		if url, ready := <-c.urlCh; ready {
 			err := c.getBlog(url)
 			if err != nil {
 				c.errCh <- err
 			}
-			c.blogOver <- done{}
+			c.blogFinish <- ok{}
 		}
 	}
 }
@@ -76,6 +76,7 @@ func (c *segmentCrawler) getBlog(url *string) error {
 		logger.Error("error in getting blog", err)
 		return err
 	}
+	defer resp.Body.Close()
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -83,23 +84,24 @@ func (c *segmentCrawler) getBlog(url *string) error {
 		return err
 	}
 
-	logger.Info(*url)
-	b := &Blog{}
+	b := &Blog{URL: *url}
 	b.parseBlog(string(data))
-
+	c.blogCh <- b
 	return nil
 }
 
 func (b *Blog) parseBlog(s string) {
+	defer func() {
+		if err := recover(); err != nil {
+			logger.Error(err, b.URL)
+		}
+	}()
 	s = strings.SplitN(s, "<h1 class=\"Article-title\" data-reactid=\"39\">", 2)[1]
 	s = strings.SplitN(s, "<footer class=\"Article-footer\" data-reactid=\"", 2)[0]
 	data := strings.SplitN(s, "<div class=\"Article-body Content\" data-swiftype-name=\"body\" data-swiftype-type=\"text\" data-reactid=", 2)
 
 	b.parseTop(data[0])
 	b.parseBody(data[1])
-
-	f, _ := os.OpenFile("./blog/"+b.Title+".md", os.O_CREATE|os.O_RDWR, 0644)
-	f.Write([]byte(b.Blog))
 }
 
 func (b *Blog) parseTop(s string) {
@@ -126,8 +128,8 @@ func (b *Blog) parseTop(s string) {
 
 	text = strings.SplitN(text[1], "<!-- /react-text -->", 3)
 	text = strings.SplitN(text[1], "-->", 2)
-	date := text[1]
-	b.Blog = fmt.Sprintf("%s on %s\n", b.Blog, date)
+	b.Date = text[1]
+	b.Blog = fmt.Sprintf("%s on %s\n", b.Blog, b.Date)
 }
 
 func (b *Blog) parseBody(s string) {

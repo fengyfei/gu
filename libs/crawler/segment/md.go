@@ -190,7 +190,7 @@ func mdu(s string) string {
 	if len(text) == 1 {
 		return "<u>" + text[0] + "</u>"
 	}
-	return "<u>" + parseMD(text[0]) + "</u>\n" + parseMD(text[1])
+	return "<u>" + parseMD(text[0]) + "</u>" + parseMD(text[1])
 }
 
 // ~~text~~

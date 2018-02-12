@@ -72,8 +72,8 @@ type Content struct {
 }
 
 const (
-	noneBadger = "none badger"
-	site       = "https://news.vuejs.org/issues/"
+	defaultOldIncr = "0"
+	site           = "https://news.vuejs.org/issues/"
 )
 
 // NewVuejsCrawler generates a crawler for vuejs news.
@@ -90,18 +90,22 @@ func NewVuejsCrawler(ch chan *News, end chan bool) crawler.Crawler {
 // Crawler interface Init
 func (c *vuejsCrawler) Init() error {
 	c.collector.OnHTML("article.issue", c.parse)
-	return nil
-}
-
-// Crawler interface Start
-func (c *vuejsCrawler) Start() error {
-	var incr int
 	err := c.prepare()
 	if err != nil {
 		logger.Error("Error in preparing to start:", err)
 		return err
 	}
-	if c.oldIncr != noneBadger && c.oldIncr != "" {
+	return nil
+}
+
+// Crawler interface Start
+func (c *vuejsCrawler) Start() error {
+	var (
+		incr int
+		err  error
+	)
+
+	if c.oldIncr != "" {
 		incr, err = strconv.Atoi(c.oldIncr)
 		if err != nil {
 			logger.Error("Error in converting string to int:", err)
@@ -133,7 +137,7 @@ func (c *vuejsCrawler) Start() error {
 				incr++
 			}()
 		case <-c.newsFinish:
-			err = c.finish()
+			err := c.finish()
 			if err != nil {
 				logger.Error("Error in the end:", err)
 			}
@@ -144,7 +148,7 @@ func (c *vuejsCrawler) Start() error {
 }
 
 func (c *vuejsCrawler) prepare() error {
-	db, err := store.NewBadgerDB(options.FileIO, "./vuejs-news-badger", true)
+	db, err := store.NewBadgerDB(options.FileIO, "vuejs-news-badger", true)
 	if err != nil {
 		return err
 	}
@@ -160,7 +164,7 @@ func (c *vuejsCrawler) prepare() error {
 		return err
 	}
 
-	c.oldIncr = noneBadger
+	c.oldIncr = defaultOldIncr
 	return nil
 }
 

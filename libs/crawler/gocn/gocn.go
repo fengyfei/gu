@@ -92,17 +92,16 @@ func (c *gocnCrawler) Init() error {
 	c.collectorURL.OnHTML("div.aw-common-list", c.parseURL)
 	c.collectorNews.OnHTML("div.aw-mod.aw-question-detail", c.parseNews)
 
-	return nil
-}
-
-// Crawler interface Start
-func (c *gocnCrawler) Start() error {
 	err := c.prepare()
 	if err != nil {
 		logger.Error("Error in preparing to start:", err)
 		return err
 	}
+	return nil
+}
 
+// Crawler interface Start
+func (c *gocnCrawler) Start() error {
 	go func() {
 		c.readyCh <- ok{}
 	}()
@@ -112,13 +111,13 @@ func (c *gocnCrawler) Start() error {
 
 	for {
 		select {
-		case err = <-c.errCh:
+		case err := <-c.errCh:
 			if err != nil {
 				return err
 			}
 		case <-c.newsFinish:
 			time.Sleep(time.Second)
-			err = c.finish()
+			err := c.finish()
 			if err != nil {
 				logger.Error("Error in the end:", err)
 			}
