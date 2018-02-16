@@ -80,7 +80,6 @@ func (ar *AuthRPC) verifier(url *string, uid int32) error {
 	if err != nil {
 		return err
 	}
-	defer ar.pool.Release(conn)
 
 	urlRoles, err := staff.Service.URLPermissions(conn, url)
 	if err != nil {
