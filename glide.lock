@@ -1,5 +1,5 @@
-hash: c41a5aaed1ae544215d04f3471c6b2e1ec2d88554cba60c561edb1da22a2cff6
-updated: 2018-02-22T16:45:38.672549+08:00
+hash: 59532ee2caf35f28208b7f401905c010d25745f3e3b61c186633f296a2d9f258
+updated: 2018-02-22T18:13:56.251999+08:00
 imports:
 - name: github.com/allegro/bigcache
   version: aa76879d59fa5d93c43680238227dbf7a53f5c28
@@ -181,6 +181,8 @@ imports:
   version: a22138067af1c4942683050411a841ade67fe1eb
 - name: github.com/PuerkitoBio/goquery
   version: bc4e06eb0792d1a14661d19dd7822163c25bb6bd
+- name: github.com/RoaringBitmap/roaring
+  version: 579959187317130bda443ec40f81c914e24b1396
 - name: github.com/robfig/cron
   version: b024fc5ea0e34bc3f83d9941c8d60b0622bfaca4
 - name: github.com/spf13/afero
