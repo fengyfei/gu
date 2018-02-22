@@ -52,7 +52,7 @@ type serviceProvider struct{}
 
 type (
 	User struct {
-		ID       uint64 `sql:"primary_key;auto_increment" gorm:"column:id"`
+		ID       uint32 `sql:"primary_key;auto_increment" gorm:"column:id"`
 		OpenID   string `gorm:"column:openid"`
 		UnionID  string `gorm:"column:unionid"`
 		UserName string `gorm:"column:username"`

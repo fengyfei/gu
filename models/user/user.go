@@ -76,16 +76,16 @@ type ChangePass struct {
 
 var (
 	// UserServer
-	UserServer     *UserServiceProvider
-	session        *mongo.Connection
+	UserServer *UserServiceProvider
+	session    *mongo.Connection
 	// DefaultImage
-	DefaultImage   = ""
+	DefaultImage = ""
 	// ErrInvalidUser
 	ErrInvalidUser = errors.New("User doesn't exists.")
 	// ErrInvalidPass
 	ErrInvalidPass = errors.New("the password error.")
 	// ErrUserExists
-	ErrUserExists  = errors.New("User already exists.")
+	ErrUserExists = errors.New("User already exists.")
 )
 
 func init() {
@@ -104,7 +104,7 @@ func init() {
 
 // User represents users information
 type User struct {
-	UserID     uint64    `gorm:"column:id;primary_key;auto_increment" json:"userID"`
+	UserID     uint32    `gorm:"column:id;primary_key;auto_increment" json:"userID"`
 	UserName   string    `gorm:"column:UserName;size:16"`
 	Password   string    `gorm:"column:Password;type:varchar(128)" json:"password" validate:"required,alphanum,min=6,max=30"`
 	Phone      string    `gorm:"type:varchar(16)" json:"phone" validate:"required,numeric,len=11"`
