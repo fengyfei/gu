@@ -157,10 +157,9 @@ func (this *serviceProvider) WechatLogin(conn orm.Connection, login *WechatLogin
 }
 
 // Add a phone number
-func (this *serviceProvider) AddPhone(conn orm.Connection, id uint64, phone *AddPhone) error {
+func (this *serviceProvider) AddPhone(conn orm.Connection, id uint64, phone *AddPhone) (err error) {
 	var (
 		user User
-		err  error
 	)
 
 	tx := conn.(*gorm.DB).Begin()
