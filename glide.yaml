@@ -59,6 +59,7 @@ import:
   version: ^1.0.0
 - package: github.com/nlopes/slack
   version: ^0.2.0
+- package: github.com/dgryski/go-farm
 testImport:
 - package: github.com/smartystreets/goconvey
   version: 1.6.3

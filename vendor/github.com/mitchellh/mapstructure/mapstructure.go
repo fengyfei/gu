@@ -686,11 +686,7 @@ func (d *Decoder) decodeStruct(name string, data interface{}, val reflect.Value)
 
 	// Compile the list of all the fields that we're going to be decoding
 	// from all the structs.
-	type field struct {
-		field reflect.StructField
-		val   reflect.Value
-	}
-	fields := []field{}
+	fields := make(map[*reflect.StructField]reflect.Value)
 	for len(structs) > 0 {
 		structVal := structs[0]
 		structs = structs[1:]
@@ -722,16 +718,14 @@ func (d *Decoder) decodeStruct(name string, data interface{}, val reflect.Value)
 			}
 
 			// Normal struct field, store it away
-			fields = append(fields, field{fieldType, structVal.Field(i)})
+			fields[&fieldType] = structVal.Field(i)
 		}
 	}
 
-	// for fieldType, field := range fields {
-	for _, f := range fields {
-		field, fieldValue := f.field, f.val
-		fieldName := field.Name
+	for fieldType, field := range fields {
+		fieldName := fieldType.Name
 
-		tagValue := field.Tag.Get(d.config.TagName)
+		tagValue := fieldType.Tag.Get(d.config.TagName)
 		tagValue = strings.SplitN(tagValue, ",", 2)[0]
 		if tagValue != "" {
 			fieldName = tagValue
@@ -766,14 +760,14 @@ func (d *Decoder) decodeStruct(name string, data interface{}, val reflect.Value)
 		// Delete the key we're using from the unused map so we stop tracking
 		delete(dataValKeysUnused, rawMapKey.Interface())
 
-		if !fieldValue.IsValid() {
+		if !field.IsValid() {
 			// This should never happen
 			panic("field is not valid")
 		}
 
 		// If we can't set the field, then it is unexported or something,
 		// and we just continue onwards.
-		if !fieldValue.CanSet() {
+		if !field.CanSet() {
 			continue
 		}
 
@@ -783,7 +777,7 @@ func (d *Decoder) decodeStruct(name string, data interface{}, val reflect.Value)
 			fieldName = fmt.Sprintf("%s.%s", name, fieldName)
 		}
 
-		if err := d.decode(fieldName, rawMapVal.Interface(), fieldValue); err != nil {
+		if err := d.decode(fieldName, rawMapVal.Interface(), field); err != nil {
 			errors = appendErrors(errors, err)
 		}
 	}
