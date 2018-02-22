@@ -1,5 +1,5 @@
-hash: cd7ca7301a3e460e920087d3812b3ab0608174d4c77d202522281f241458d08e
-updated: 2018-02-22T16:28:30.592186+08:00
+hash: c41a5aaed1ae544215d04f3471c6b2e1ec2d88554cba60c561edb1da22a2cff6
+updated: 2018-02-22T16:45:38.672549+08:00
 imports:
 - name: github.com/allegro/bigcache
   version: aa76879d59fa5d93c43680238227dbf7a53f5c28
@@ -23,6 +23,8 @@ imports:
   - session
   - toolbox
   - utils
+- name: github.com/cespare/xxhash
+  version: 5c37fe3735342a2e0d01c87a907579987c8936cc
 - name: github.com/chanxuehong/rand
   version: b54bf7f93440da0b6c81b05276d69cdcbf32c918
 - name: github.com/chanxuehong/util
