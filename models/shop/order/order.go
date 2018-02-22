@@ -33,7 +33,7 @@ import (
 	"time"
 	"github.com/fengyfei/gu/libs/orm"
 	"github.com/jinzhu/gorm"
-	"github.com/fengyfei/gu/applications/beego/shop/util/wechatPay"
+	// "github.com/fengyfei/gu/applications/beego/shop/util/wechatPay"
 	//User "github.com/fengyfei/gu/models/shop/user"
 	Cart "github.com/fengyfei/gu/models/shop/cart"
 	"fmt"

@@ -34,7 +34,7 @@ import (
   "github.com/fengyfei/gu/libs/orm"
   "github.com/jinzhu/gorm"
   "github.com/fengyfei/gu/libs/logger"
-  "github.com/fengyfei/gu/applications/beego/shop/util"
+  // "github.com/fengyfei/gu/applications/beego/shop/util"
 )
 
 type serviceProvider struct{}
