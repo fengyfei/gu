@@ -1,5 +1,5 @@
-hash: 59532ee2caf35f28208b7f401905c010d25745f3e3b61c186633f296a2d9f258
-updated: 2018-02-22T18:13:56.251999+08:00
+hash: 9f750c6d6d3751d98e039f3c76d7bbb1f9d6f50fd9fc820ffeff2e8d83632a48
+updated: 2018-02-23T10:57:51.051375+08:00
 imports:
 - name: github.com/allegro/bigcache
   version: aa76879d59fa5d93c43680238227dbf7a53f5c28
@@ -220,6 +220,8 @@ imports:
   version: 9e4646fa705336d5b2fa9dddfafbe0a1a965acd7
 - name: github.com/urfave/negroni
   version: 5dbbc83f748fc3ad38585842b0aedab546d0ea1e
+- name: go.uber.org/atomic
+  version: 8474b86a5a6f79c443ce4b2992817ff32cf208b8
 - name: go.uber.org/multierr
   version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
 - name: golang.org/x/crypto
