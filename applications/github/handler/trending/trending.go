@@ -70,8 +70,8 @@ func LangInfo(c *server.Context) error {
 		sub   *nc.Subscriber
 		t     *github.Trending
 		tList []*github.Trending
-		resp  []infoResp = make([]infoResp, 0)
-		today string     = time.Now().Format("20060102")
+		resp  = make([]infoResp, 0)
+		today = time.Now().Format("20060102")
 	)
 
 	if err = c.JSONBody(&req); err != nil {

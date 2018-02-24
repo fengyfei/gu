@@ -129,7 +129,7 @@ func ModifyActive(c *server.Context) error {
 
 // List - Get all the articles.
 func List(c *server.Context) error {
-	var resp []infoResp = make([]infoResp, 0)
+	var resp = make([]infoResp, 0)
 
 	alist, err := article.Service.List()
 	if err != nil {
@@ -159,7 +159,7 @@ func List(c *server.Context) error {
 
 // ActiveList - Get all the active articles.
 func ActiveList(c *server.Context) error {
-	var resp []infoResp = make([]infoResp, 0)
+	var resp = make([]infoResp, 0)
 
 	alist, err := article.Service.ActiveList()
 	if err != nil {
@@ -192,7 +192,7 @@ func Info(c *server.Context) error {
 	var (
 		err  error
 		req  infoReq
-		resp []infoResp = make([]infoResp, 0)
+		resp = make([]infoResp, 0)
 	)
 
 	if err = c.JSONBody(&req); err != nil {
