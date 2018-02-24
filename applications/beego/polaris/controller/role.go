@@ -178,7 +178,7 @@ func (r *Role) ModifyActive() {
 func (r *Role) List() {
 	var (
 		err  error
-		resp []roleInfoResp = make([]roleInfoResp, 0)
+		resp = make([]roleInfoResp, 0)
 	)
 
 	conn, err := mysql.Pool.Get()

@@ -130,7 +130,7 @@ func (p *Permission) Remove() {
 func (p *Permission) List() {
 	var (
 		err  error
-		resp []pmsInfoResp = make([]pmsInfoResp, 0)
+		resp = make([]pmsInfoResp, 0)
 	)
 
 	conn, err := mysql.Pool.Get()

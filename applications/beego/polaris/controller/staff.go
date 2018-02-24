@@ -389,7 +389,7 @@ func (s *Staff) Dismiss() {
 func (s *Staff) List() {
 	var (
 		err  error
-		resp []staffInfoResp = make([]staffInfoResp, 0)
+		resp = make([]staffInfoResp, 0)
 	)
 
 	conn, err := mysql.Pool.Get()
@@ -531,7 +531,7 @@ func (s *Staff) RoleList() {
 	var (
 		err  error
 		req  roleListReq
-		resp []roleListResp = make([]roleListResp, 0)
+		resp = make([]roleListResp, 0)
 	)
 
 	if err = json.Unmarshal(s.Ctx.Input.RequestBody, &req); err != nil {
