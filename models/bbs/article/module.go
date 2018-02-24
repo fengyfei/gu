@@ -260,9 +260,6 @@ func (sp *moduleServiceProvider) DeleteTheme(moduleID, themeID string) error {
 	return ArticleService.DeleteByTheme(moduleID, themeID)
 }
 
-type Job struct {
-}
-
 // UpdateRecommend update the recommend
 func UpdateRecommend() {
 	conn := moduleSession.Connect()

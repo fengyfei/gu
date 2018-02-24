@@ -62,7 +62,7 @@ func load() {
 	}
 
 	BBSConfig = &BbsConfig{
-		Address: viper.GetString("server.address"),
+		Address:   viper.GetString("server.address"),
 		MongoURL:  viper.GetString("mongo.url"),
 		CorsHosts: viper.GetStringSlice("middleware.cors.hosts"),
 		Pages:     viper.GetInt("pages"),
