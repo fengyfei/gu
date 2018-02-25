@@ -1,5 +1,5 @@
-hash: 9f750c6d6d3751d98e039f3c76d7bbb1f9d6f50fd9fc820ffeff2e8d83632a48
-updated: 2018-02-23T10:57:51.051375+08:00
+hash: bc31df4d119bd8c8e298c7fb72908fe2e28ea996eb742ea3788bdf5d7c76723d
+updated: 2018-02-25T10:15:55.329937+08:00
 imports:
 - name: github.com/allegro/bigcache
   version: aa76879d59fa5d93c43680238227dbf7a53f5c28
@@ -116,6 +116,8 @@ imports:
   version: d0c54e68681ec7999ac17864470f3bee6521ba2b
   subpackages:
   - recovery
+- name: github.com/hashicorp/golang-lru
+  version: a0d98a5f288019575c6d1f4bb1573fef2d1fcdc4
 - name: github.com/hashicorp/hcl
   version: 392dba7d905ed5d04a5794ba89f558b27e2ba1ca
   subpackages:
