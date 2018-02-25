@@ -31,17 +31,16 @@ package main
 
 import (
 	"github.com/fengyfei/gu/libs/events"
-	"fmt"
 )
 
 func main() {
 	a := events.NewChannel(9)
 	a.Done()
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 80; i++ {
 		var event interface{}
 		event = i
-		fmt.Println(event)
 		a.Send(event)
 	}
 	a.Close()
+	a.Send(5)
 }

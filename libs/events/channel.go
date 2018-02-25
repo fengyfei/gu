@@ -32,7 +32,6 @@ package events
 
 import (
 	"fmt"
-	"github.com/fengyfei/gu/libs/logger"
 	"sync"
 )
 
@@ -60,7 +59,7 @@ func (ch *Channel) Done() chan struct{} {
 			case c := <-ch.Ch:
 				fmt.Println(c)
 			case <-ch.closed:
-				break
+				return
 			}
 		}
 	}()
@@ -69,11 +68,6 @@ func (ch *Channel) Done() chan struct{} {
 
 // Send - send event to channel.
 func (ch *Channel) Send(ev Event) error {
-	if len(ch.Ch) == cap(ch.Ch) {
-		logger.Error(ErrFull)
-		return ErrFull
-	}
-
 	ch.Ch <- ev
 	return nil
 }
