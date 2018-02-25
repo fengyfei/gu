@@ -72,13 +72,13 @@ func main() {
 
 				for site, siteDepth := range sitesDepth {
 					depth := strings.Count(path, "/") - strings.Count(vendorPath, "/") - 1
-					if strings.Contains(path, site) {
+					if strings.Contains(path, site) && info.IsDir() {
 						if depth == siteDepth {
 							fmt.Println(path)
 							return nil
 						}
 					} else {
-						if depth == defaultDepth {
+						if depth == defaultDepth && info.IsDir() {
 							fmt.Println(path)
 							return nil
 						}
