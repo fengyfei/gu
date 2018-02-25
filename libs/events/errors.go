@@ -25,6 +25,7 @@
 /*
  * Revision History:
  *     Initial: 2018/02/24        Feng Yifei
+ *     Modify : 2018/02/25        Tong Yuehong
  */
 
 package events
@@ -36,4 +37,6 @@ import (
 var (
 	// ErrClosed is returned if a event is sent to a closed sink.
 	ErrClosed = fmt.Errorf("events: sink closed")
+	// ErrFull is returned if channel is full.
+	ErrFull   = fmt.Errorf("events: channel is full")
 )

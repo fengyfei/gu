@@ -24,65 +24,24 @@
 
 /*
  * Revision History:
- *     Initial: 2018/02/24        Feng Yifei
- *     Modify : 2018/02/25        Tong Yuehong
+ *     Initial: 2018/02/25        Tong Yuehong
  */
 
-package events
+package main
 
 import (
+	"github.com/fengyfei/gu/libs/events"
 	"fmt"
-	"github.com/fengyfei/gu/libs/logger"
-	"sync"
 )
 
-// Channel represents a serial events queue.
-type Channel struct {
-	Ch     chan Event
-	closed chan struct{}
-	once   sync.Once
-}
-
-// NewChannel - new a channel.
-func NewChannel(size int) *Channel {
-	return &Channel{
-		Ch:     make(chan Event, size),
-		closed: make(chan struct{}),
-		once:   sync.Once{},
+func main() {
+	a := events.NewChannel(9)
+	a.Done()
+	for i := 0; i < 10; i++ {
+		var event interface{}
+		event = i
+		fmt.Println(event)
+		a.Send(event)
 	}
-}
-
-// Done - handle event.
-func (ch *Channel) Done() chan struct{} {
-	go func() {
-		for {
-			select {
-			case c := <-ch.Ch:
-				fmt.Println(c)
-			case <-ch.closed:
-				break
-			}
-		}
-	}()
-	return ch.closed
-}
-
-// Send - send event to channel.
-func (ch *Channel) Send(ev Event) error {
-	if len(ch.Ch) == cap(ch.Ch) {
-		logger.Error(ErrFull)
-		return ErrFull
-	}
-
-	ch.Ch <- ev
-	return nil
-}
-
-// Close - close channel.
-func (ch *Channel) Close() error {
-	ch.once.Do(func() {
-		close(ch.closed)
-	})
-
-	return nil
+	a.Close()
 }
