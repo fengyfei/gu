@@ -25,6 +25,7 @@
 /*
  * Revision History:
  *     Initial: 2018/02/25        Feng Yifei
+ *     Modify:  2018/02/25        Li Zebang
  */
 
 package main
@@ -39,5 +40,6 @@ var (
 		"golang.org":        2,
 		"gopkg.in":          2,
 		"google.golang.org": 1,
+		"go.uber.org":       1,
 	}
 )

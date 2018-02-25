@@ -25,10 +25,89 @@
 /*
  * Revision History:
  *     Initial: 2018/02/25        Feng Yifei
+ *     Modify:  2018/02/25        Li Zebang
  */
 
 package main
 
-func main() {
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 
+	"github.com/fengyfei/gu/libs/logger"
+)
+
+const (
+	vendor = "vendor"
+)
+
+func main() {
+	if contains(os.Args[1:], "-h") || len(os.Args) > 2 {
+		fmt.Fprintf(os.Stderr, `Usage:
+  %s [pathname]
+`, os.Args[0])
+		os.Exit(1)
+	}
+
+	var dir string
+	if len(os.Args) == 1 {
+		dir = "."
+	} else {
+		dir = os.Args[1]
+	}
+
+	err := filepath.Walk(dir, func(vendorPath string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() && info.Name() == vendor {
+			fmt.Printf("----------%s----------\n", vendorPath)
+			err := filepath.Walk(vendorPath, func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+
+				for site, siteDepth := range sitesDepth {
+					depth := strings.Count(path, "/") - strings.Count(vendorPath, "/") - 1
+					if strings.Contains(path, site) {
+						if depth == siteDepth {
+							fmt.Println(path)
+							return nil
+						}
+					} else {
+						if depth == defaultDepth {
+							fmt.Println(path)
+							return nil
+						}
+					}
+				}
+
+				return nil
+			})
+
+			if err != nil {
+				logger.Error("error in walking the file tree rooted at", vendorPath, err)
+				return err
+			}
+
+			return nil
+		}
+		return nil
+	})
+
+	if err != nil {
+		logger.Error("error in walking the file tree rooted at", dir, err)
+	}
+}
+
+func contains(ss []string, s string) bool {
+	for _, s1 := range ss {
+		if s1 == s {
+			return true
+		}
+	}
+	return false
 }
