@@ -31,7 +31,6 @@
 package events
 
 import (
-	"fmt"
 	"sync"
 )
 
@@ -44,6 +43,10 @@ type Channel struct {
 
 // NewChannel - new a channel.
 func NewChannel(size int) *Channel {
+	if size <= 0 {
+		size = 10
+	}
+
 	return &Channel{
 		Ch:     make(chan Event, size),
 		closed: make(chan struct{}),
@@ -53,23 +56,17 @@ func NewChannel(size int) *Channel {
 
 // Done - handle event.
 func (ch *Channel) Done() chan struct{} {
-	go func() {
-		for {
-			select {
-			case c := <-ch.Ch:
-				fmt.Println(c)
-			case <-ch.closed:
-				return
-			}
-		}
-	}()
 	return ch.closed
 }
 
-// Send - send event to channel.
+// Send - send a event.
 func (ch *Channel) Send(ev Event) error {
-	ch.Ch <- ev
-	return nil
+	select {
+	case ch.Ch <- ev:
+		return nil
+	case <-ch.closed:
+		return ErrClosed
+	}
 }
 
 // Close - close channel.
