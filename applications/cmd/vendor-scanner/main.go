@@ -44,7 +44,7 @@ const (
 )
 
 func main() {
-	if contains(os.Args[1:], "-h") || len(os.Args) > 2 {
+	if sliceContains(os.Args[1:], "-h") || len(os.Args) > 2 {
 		fmt.Fprintf(os.Stderr, `Usage:
   %s [pathname]
 `, os.Args[0])
@@ -65,22 +65,24 @@ func main() {
 
 		if info.IsDir() && info.Name() == vendor {
 			fmt.Printf("----------%s----------\n", vendorPath)
+
+			var paths []string
 			err := filepath.Walk(vendorPath, func(path string, info os.FileInfo, err error) error {
 				if err != nil {
 					return err
 				}
 
-				for site, siteDepth := range sitesDepth {
-					depth := strings.Count(path, "/") - strings.Count(vendorPath, "/") - 1
-					if strings.Contains(path, site) && info.IsDir() {
-						if depth == siteDepth {
-							fmt.Println(path)
-							return nil
-						}
+				depth := strings.Count(path, "/") - strings.Count(vendorPath, "/") - 1
+				siteDepth := mapContains(sitesDepth, path)
+				if depth == siteDepth {
+					if info.IsDir() {
+						paths = append(paths, path)
+						fmt.Println(path)
 					} else {
-						if depth == defaultDepth && info.IsDir() {
+						path = path[:strings.LastIndex(path, "/")]
+						if !sliceContains(paths, path) {
+							paths = append(paths, path)
 							fmt.Println(path)
-							return nil
 						}
 					}
 				}
@@ -101,13 +103,24 @@ func main() {
 	if err != nil {
 		logger.Error("error in walking the file tree rooted at", dir, err)
 	}
+
 }
 
-func contains(ss []string, s string) bool {
-	for _, s1 := range ss {
-		if s1 == s {
+func sliceContains(slice []string, str string) bool {
+	for _, s := range slice {
+		if str == s {
 			return true
 		}
 	}
 	return false
+}
+
+func mapContains(m map[string]int, str string) int {
+	str = strings.Split(str[strings.Index(str, vendor+"/")+7:], "/")[0]
+	for k, v := range m {
+		if str == k {
+			return v
+		}
+	}
+	return defaultDepth
 }
