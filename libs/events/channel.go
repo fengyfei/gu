@@ -54,7 +54,7 @@ func NewChannel(size int) *Channel {
 	}
 }
 
-// Done - handle event.
+// Done - a channel about getting the state of the Ch channel.
 func (ch *Channel) Done() chan struct{} {
 	return ch.closed
 }
