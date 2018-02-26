@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd..
+ * Copyright (c) 2018 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,51 +24,22 @@
 
 /*
  * Revision History:
- *     Initial: 2018/01/08        Jia Chenhui
+ *     Initial: 2018/02/26        Feng Yifei
  */
 
 package logger
 
 import (
-	"strings"
-
-	"github.com/davecgh/go-spew/spew"
-	"github.com/fengyfei/gu/libs/logger/logs"
-	"github.com/go-stack/stack"
+	"testing"
 )
 
-// Debug prints debug messages.
-func Debug(v ...interface{}) {
-	logs.Debug(generateFmtStr(len(v)), v...)
-}
+func TestStack(t *testing.T) {
+	fn := func() {
+		func() {
+			Stack(1)
+		}()
+	}
 
-// Info prints normal messages.
-func Info(v ...interface{}) {
-	logs.Info(generateFmtStr(len(v)), v...)
-}
-
-// Warn prints warning messages.
-func Warn(v ...interface{}) {
-	logs.Warn(generateFmtStr(len(v)), v...)
-}
-
-// Error prints error.
-func Error(v ...interface{}) {
-	logs.Error(generateFmtStr(len(v)), v...)
-}
-
-// Dump prints values with more details.
-func Dump(v ...interface{}) {
-	spew.Dump(v...)
-}
-
-// Stack prints the call stack.
-func Stack(skip int) {
-	call := stack.Caller(skip)
-	s := stack.Trace().TrimBelow(call).TrimRuntime()
-	Info(s.String())
-}
-
-func generateFmtStr(n int) string {
-	return strings.Repeat("%v ", n)
+	Stack(1)
+	fn()
 }
