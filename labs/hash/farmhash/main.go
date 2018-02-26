@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	farm "github.com/shiruitao/go-farm"
+	farm "github.com/dgryski/go-farm"
 )
 
 var res32 uint32
