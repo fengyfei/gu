@@ -1,5 +1,5 @@
-hash: 1a9517f49e8867a37ec9f662f664130cd0b4adf1829efba02e93ca99a0f176bf
-updated: 2018-02-26T15:09:49.148041+08:00
+hash: 674c3d8564f9f7f6e9eb5f5e4b668427cc267a7ec5f4b8186e69a9e4cb3698ca
+updated: 2018-02-26T15:55:56.518232+08:00
 imports:
 - name: github.com/allegro/bigcache
   version: aa76879d59fa5d93c43680238227dbf7a53f5c28
@@ -23,8 +23,6 @@ imports:
   - session
   - toolbox
   - utils
-- name: github.com/boltdb/bolt
-  version: 2f1ce7a837dcb8da3ec595b1dac9d0632f0f99e8
 - name: github.com/cespare/xxhash
   version: 5c37fe3735342a2e0d01c87a907579987c8936cc
 - name: github.com/chanxuehong/rand
@@ -41,6 +39,8 @@ imports:
   - mch/core
   - mch/pay
   - util
+- name: github.com/coreos/bbolt
+  version: 48ea1b39c25fc1bab3506fbc712ecbaa842c4d2d
 - name: github.com/davecgh/go-spew
   version: 346938d642f2ec3594ed81d874461961cd0faa76
   subpackages:
