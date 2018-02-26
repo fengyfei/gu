@@ -30,17 +30,49 @@
 package main
 
 import (
+	"fmt"
 	"github.com/fengyfei/gu/libs/events"
+	"sync"
+	"time"
 )
 
 func main() {
 	a := events.NewChannel(9)
-	a.Done()
-	for i := 0; i < 80; i++ {
-		var event interface{}
-		event = i
-		a.Send(event)
-	}
-	a.Close()
-	a.Send(5)
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+	go func() {
+		t1 := time.NewTimer(time.Second * 5)
+		flag := false
+		for {
+			select {
+			case c := <-a.Ch:
+				fmt.Println(c)
+				if !flag {
+					t1.Reset(time.Second * 5)
+				}
+			case <-a.Done():
+				flag = true
+				break
+			case <-t1.C:
+				wg.Done()
+				fmt.Println("finish")
+				return
+			}
+		}
+	}()
+
+	go func() {
+		for i := 0; i <= 20; i++ {
+			time.Sleep(500 * time.Millisecond)
+			var event interface{} = i
+			err := a.Send(event)
+			if err == events.ErrClosed {
+				break
+			}
+		}
+		wg.Done()
+		defer a.Close()
+	}()
+
+	wg.Wait()
 }
