@@ -1,5 +1,5 @@
-hash: bc31df4d119bd8c8e298c7fb72908fe2e28ea996eb742ea3788bdf5d7c76723d
-updated: 2018-02-25T10:15:55.329937+08:00
+hash: 1a9517f49e8867a37ec9f662f664130cd0b4adf1829efba02e93ca99a0f176bf
+updated: 2018-02-26T15:09:49.148041+08:00
 imports:
 - name: github.com/allegro/bigcache
   version: aa76879d59fa5d93c43680238227dbf7a53f5c28
@@ -23,6 +23,8 @@ imports:
   - session
   - toolbox
   - utils
+- name: github.com/boltdb/bolt
+  version: 2f1ce7a837dcb8da3ec595b1dac9d0632f0f99e8
 - name: github.com/cespare/xxhash
   version: 5c37fe3735342a2e0d01c87a907579987c8936cc
 - name: github.com/chanxuehong/rand
@@ -118,6 +120,8 @@ imports:
   - recovery
 - name: github.com/hashicorp/golang-lru
   version: a0d98a5f288019575c6d1f4bb1573fef2d1fcdc4
+  subpackages:
+  - simplelru
 - name: github.com/hashicorp/hcl
   version: 392dba7d905ed5d04a5794ba89f558b27e2ba1ca
   subpackages:
