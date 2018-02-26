@@ -55,3 +55,14 @@ func ReadDirNoStat(dirname string) ([]string, error) {
 
 	return f.Readdirnames(-1)
 }
+
+// IsDir returns true is given path is a diretory.
+func IsDir(dir string) bool {
+	f, err := os.Stat(dir)
+
+	if err != nil {
+		return false
+	}
+
+	return f.IsDir()
+}
