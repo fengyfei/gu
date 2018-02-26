@@ -35,8 +35,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/fengyfei/gu/libs/logger"
 )
 
 const (
@@ -64,7 +62,8 @@ func main() {
 		}
 
 		if info.IsDir() && info.Name() == vendor {
-			fmt.Printf("----------%s----------\n", vendorPath)
+			vendorPath, _ = filepath.Abs(vendorPath)
+			fmt.Printf("---%s---\n", vendorPath[:len(vendorPath)-7])
 
 			var paths []string
 			err := filepath.Walk(vendorPath, func(path string, info os.FileInfo, err error) error {
@@ -77,12 +76,12 @@ func main() {
 				if depth == siteDepth {
 					if info.IsDir() {
 						paths = append(paths, path)
-						fmt.Println(path)
+						fmt.Println(strings.SplitN(path, "/"+vendor+"/", 2)[1])
 					} else {
 						path = path[:strings.LastIndex(path, "/")]
 						if !sliceContains(paths, path) {
 							paths = append(paths, path)
-							fmt.Println(path)
+							fmt.Println(strings.SplitN(path, "/"+vendor+"/", 2)[1])
 						}
 					}
 				}
@@ -91,8 +90,11 @@ func main() {
 			})
 
 			if err != nil {
-				logger.Error("error in walking the file tree rooted at", vendorPath, err)
-				return err
+				fmt.Fprintf(os.Stderr, `Usage:
+  %s [pathname]
+Error in walking the file tree : %s
+`, os.Args[0], err)
+				os.Exit(1)
 			}
 
 			return nil
@@ -101,9 +103,12 @@ func main() {
 	})
 
 	if err != nil {
-		logger.Error("error in walking the file tree rooted at", dir, err)
+		fmt.Fprintf(os.Stderr, `Usage:
+  %s [pathname]
+Error in walking the file tree : %s
+`, os.Args[0], err)
+		os.Exit(1)
 	}
-
 }
 
 func sliceContains(slice []string, str string) bool {
@@ -116,7 +121,7 @@ func sliceContains(slice []string, str string) bool {
 }
 
 func mapContains(m map[string]int, str string) int {
-	str = strings.Split(str[strings.Index(str, vendor+"/")+7:], "/")[0]
+	str = strings.Split(str[strings.Index(str, "/"+vendor+"/")+8:], "/")[0]
 	for k, v := range m {
 		if str == k {
 			return v
