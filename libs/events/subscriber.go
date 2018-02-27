@@ -24,13 +24,13 @@
 
 /*
  * Revision History:
- *     Initial: 2018/02/24        Feng Yifei
+ *     Initial: 2018/02/27        Feng Yifei
  */
 
 package events
 
-// Event is an empty interface.
-type Event interface{}
+// EventHandler -
+type EventHandler func(v interface{})
 
-// EventType -
-type EventType int16
+// Subscriber -
+type Subscriber chan interface{}

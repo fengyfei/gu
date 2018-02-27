@@ -24,13 +24,48 @@
 
 /*
  * Revision History:
- *     Initial: 2018/02/24        Feng Yifei
+ *     Initial: 2018/02/27        Feng Yifei
  */
 
 package events
 
-// Event is an empty interface.
-type Event interface{}
+import (
+	"sync"
+)
 
-// EventType -
-type EventType int16
+// Subscription -
+type Subscription struct {
+	mu          sync.RWMutex
+	subscribers map[EventType]map[Subscriber]EventHandler
+}
+
+// NewSubscription -
+func NewSubscription() *Subscription {
+	return &Subscription{
+		subscribers: make(map[EventType]map[Subscriber]EventHandler),
+	}
+}
+
+// Subscribe -
+func (s *Subscription) Subscribe(etype EventType, h EventHandler) Subscriber {
+	return nil
+}
+
+// Unsubscribe -
+func (s *Subscription) Unsubscribe(etype EventType, subscriber Subscriber) error {
+	return nil
+}
+
+// Notify -
+func (s *Subscription) Notify(etype EventType, val interface{}) error {
+	return nil
+}
+
+// NofityAll -
+func (s *Subscription) NofityAll() []error {
+	var (
+		errs []error
+	)
+
+	return errs
+}
