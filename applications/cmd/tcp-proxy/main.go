@@ -29,6 +29,65 @@
 
 package main
 
+//
+//import (
+//	"flag"
+//	"log"
+//	"net"
+//	"time"
+//
+//	"github.com/fengyfei/gu/libs/network/proxy"
+//)
+//
+//var chConnL = make(chan *net.Conn)
+//var chConnR = make(chan *net.Conn)
+//
+//func main() {
+//	conn1 := flag.String("l", "", "Listen on addr")
+//	conn2 := flag.String("r", "", "Agency addr")
+//	flag.Parse()
+//
+//	if *conn1 == "" || *conn2 == "" {
+//		log.Println("-l or -r can't be empty")
+//		return
+//	}
+//	go func() {
+//		dst := <-chConnL
+//		src := <-chConnR
+//		proxy.ProxyTCP(*dst, *src, 20*time.Second, 2*time.Second)
+//	}()
+//	go client(*conn1)
+//	go server(*conn2)
+//	time.Sleep(1e9 * 200)
+//}
+//
+//func client(conn string) {
+//	listener, err := net.Listen("tcp", conn)
+//	if err != nil {
+//		log.Println("Listen Error: ", err)
+//		return
+//	}
+//	for {
+//		conn, err := listener.Accept()
+//		if err != nil {
+//			log.Println("Accept Error: ", err)
+//			return
+//		}
+//
+//		chConnL <- &conn
+//	}
+//}
+//
+//func server(connection string) {
+//	conn, err := net.Dial("tcp", connection)
+//	if err != nil {
+//		log.Println("Dial Error: ", err)
+//		return
+//	}
+//
+//	chConnR <- &conn
+//}
+
 import (
 	"flag"
 	"log"
@@ -38,51 +97,29 @@ import (
 	"github.com/fengyfei/gu/libs/network/proxy"
 )
 
-var chConnL = make(chan *net.Conn)
-var chConnR = make(chan *net.Conn)
-
 func main() {
-	conn1 := flag.String("l", "", "Listen on addr")
-	conn2 := flag.String("r", "", "Agency addr")
+	localAddr := flag.String("l", "", "local address")
+	remoteAddr := flag.String("r", "", "remote address")
 	flag.Parse()
 
-	if *conn1 == "" || *conn2 == "" {
-		log.Println("-l or -r can't be empty")
-		return
-	}
-	go func() {
-		dst := <-chConnL
-		src := <-chConnR
-		proxy.ProxyTCP(*dst, *src, 20*time.Second, 2*time.Second)
-	}()
-	go client(*conn1)
-	go server(*conn2)
-	time.Sleep(1e9 * 200)
-}
+	log.Printf("local address: %s, remote address: %s\n", *localAddr, *remoteAddr)
 
-func client(conn string) {
-	listener, err := net.Listen("tcp", conn)
+	listener, err := net.Listen("tcp", *localAddr)
 	if err != nil {
-		log.Println("Listen Error: ", err)
-		return
+		log.Fatalln("local listen error:", err)
 	}
+
 	for {
-		conn, err := listener.Accept()
+		localConn, err := listener.Accept()
 		if err != nil {
-			log.Println("Accept Error: ", err)
-			return
+			log.Fatalln("local accept error:", err)
 		}
 
-		chConnL <- &conn
-	}
-}
+		remoteConn, err := net.Dial("tcp", *remoteAddr)
+		if err != nil {
+			log.Fatalln("remote dial error:", err)
+		}
 
-func server(connection string) {
-	conn, err := net.Dial("tcp", connection)
-	if err != nil {
-		log.Println("Dial Error: ", err)
-		return
+		go proxy.ProxyTCP(localConn, remoteConn, 10*time.Second, 10*time.Second)
 	}
-
-	chConnR <- &conn
 }
