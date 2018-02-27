@@ -25,11 +25,48 @@
 /*
  * Revision History:
  *     Initial: 2018/02/26        Feng Yifei
+ *     Modify : 2018/02/26        Tong Yuehong
  */
 
 package boltdb
 
+import (
+	"github.com/coreos/bbolt"
+)
+
 // Writer handles write operations on a bolt DB.
 type Writer struct {
 	store *Store
+}
+
+//CommonPut put key-value into db, can't be used in multiple goroutines.
+func (wr *Writer) CommonPut(bucket string, key []byte, value []byte) error {
+	return wr.store.db.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists([]byte(bucket))
+		if err != nil {
+			return err
+		}
+
+		if err := b.Put(key, value); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+//MultiplePut only useful when there are multiple goroutines putting key-value to db.
+func (wr *Writer) MultiplePut(bucket string, key []byte, value []byte) error {
+	return wr.store.db.Batch(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists([]byte(bucket))
+		if err != nil {
+			return err
+		}
+
+		if err := b.Put(key, value); err != nil {
+			return err
+		}
+
+		return nil
+	})
 }

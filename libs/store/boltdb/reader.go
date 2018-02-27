@@ -77,3 +77,12 @@ func (r *Reader) Get(key []byte) ([]byte, error) {
 func (r *Reader) Close() error {
 	return r.tx.Rollback()
 }
+
+// ForEach
+func (r *Reader) ForEach(fn func(k, v []byte) error) error {
+	if r.bucket == nil {
+		return errNoBucket
+	}
+
+	return r.bucket.ForEach(fn)
+}

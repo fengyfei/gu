@@ -24,7 +24,7 @@
 
 /*
  * Revision History:
- *     Initial: 2018/02/25        Tong Yuehong
+ *     Initial: 2018/02/26        Tong Yuehong
  */
 
 package main
@@ -32,48 +32,49 @@ package main
 import (
 	"fmt"
 	"sync"
-	"time"
 
-	"github.com/fengyfei/gu/libs/events"
+	bolt "github.com/fengyfei/gu/libs/store/boltdb"
+	"time"
 )
 
 func main() {
-	a := events.NewChannel(9)
-	wg := &sync.WaitGroup{}
-	wg.Add(2)
-	go func() {
-		t1 := time.NewTimer(time.Second * 5)
-		flag := false
-		for {
-			select {
-			case c := <-a.Ch:
-				fmt.Println(c)
-				if !flag {
-					t1.Reset(time.Second * 5)
-				}
-			case <-a.Done():
-				flag = true
-				break
-			case <-t1.C:
-				wg.Done()
-				fmt.Println("finish")
-				return
-			}
-		}
-	}()
+	kv, err := bolt.NewStore("./user.db")
 
-	go func() {
-		for i := 0; i <= 20; i++ {
-			time.Sleep(500 * time.Millisecond)
-			var event interface{} = i
-			err := a.Send(event)
-			if err == events.ErrClosed {
-				break
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	kv.Writer().CommonPut("user", []byte("1234"), []byte("1234"))
+
+	wg := &sync.WaitGroup{}
+	wg.Add(6)
+	for i := 0; i < 6; i++ {
+		go func(i int) {
+			err := kv.Writer().MultiplePut("user", []byte(fmt.Sprintf("%d", i)), []byte(fmt.Sprintf("%d", i)))
+
+			if err != nil {
+				fmt.Println(err)
 			}
-		}
-		wg.Done()
-		defer a.Close()
-	}()
+			wg.Done()
+		}(i)
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	reader, err := kv.Reader()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	v, err := reader.Switch("user").Get([]byte("2"))
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("gh", string(v))
+
+	reader.ForEach(func(k, v []byte) error {
+		fmt.Printf("key=%s, value=%s\n", k, v)
+		return nil
+	})
 
 	wg.Wait()
 }
