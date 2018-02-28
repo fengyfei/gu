@@ -62,7 +62,7 @@ func (m *Message) Read(conn net.Conn) error {
 		return err
 	}
 
-	m.len = size
+	m.len = int32(size)
 
 	return nil
 }
