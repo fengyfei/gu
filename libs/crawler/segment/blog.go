@@ -35,15 +35,11 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/fengyfei/gu/libs/crawler"
 	"github.com/fengyfei/gu/libs/logger"
 )
 
-type Blog struct {
-	Title string
-	URL   string
-	Date  string
-	Blog  string
-}
+type parser struct{}
 
 var (
 	topMap  = map[string]string{"&amp;": "&", "&#x27;": "'", "\n": ""}
@@ -52,12 +48,12 @@ var (
 
 func (c *segmentCrawler) startBlog() {
 	for {
-		if url, ready := <-c.urlCh; ready {
+		if url, ready := <-c.blogURL; ready {
 			err := c.getBlog(url)
 			if err != nil {
 				c.errCh <- err
 			}
-			c.blogFinish <- ok{}
+			c.crawlerFinish <- struct{}{}
 		}
 	}
 }
@@ -78,44 +74,53 @@ func (c *segmentCrawler) getBlog(url *string) error {
 	}
 	defer resp.Body.Close()
 
-	data, err := ioutil.ReadAll(resp.Body)
+	d, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		logger.Error("error in getting blog", err)
 		return err
 	}
 
-	b := &Blog{URL: *url}
-	b.parseBlog(string(data))
-	c.blogCh <- b
+	data := &crawler.Data{
+		Source:   "Segment Blog",
+		URL:      *url,
+		FileType: "markdown",
+	}
+
+	var parser = &parser{}
+	parser.parseBlog(data, string(d))
+
+	c.dataCh <- data
+
 	return nil
 }
 
-func (b *Blog) parseBlog(s string) {
+func (p *parser) parseBlog(d *crawler.Data, s string) {
 	defer func() {
 		if err := recover(); err != nil {
-			logger.Error(err, b.URL)
+			logger.Error(err, d.URL)
 		}
 	}()
+
 	s = strings.SplitN(s, "<h1 class=\"Article-title\" data-reactid=\"39\">", 2)[1]
 	s = strings.SplitN(s, "<footer class=\"Article-footer\" data-reactid=\"", 2)[0]
 	data := strings.SplitN(s, "<div class=\"Article-body Content\" data-swiftype-name=\"body\" data-swiftype-type=\"text\" data-reactid=", 2)
 
-	b.parseTop(data[0])
-	b.parseBody(data[1])
+	p.parseTop(d, data[0])
+	p.parseBody(d, data[1])
 }
 
-func (b *Blog) parseTop(s string) {
+func (p *parser) parseTop(d *crawler.Data, s string) {
 	text := strings.SplitN(s, "</h1>", 2)
-	b.Title = text[0]
+	d.Title = text[0]
 	for k, v := range topMap {
-		b.Title = strings.Replace(b.Title, k, v, -1)
+		d.Title = strings.Replace(d.Title, k, v, -1)
 	}
-	b.Blog += "# " + b.Title + "\n\n"
+	d.Text += "# " + d.Title + "\n\n"
 
 	count := strings.Count(text[1], "<a class=\"Author-name\" href=\"")
 	for i := 0; i < count; i++ {
 		if i != 0 {
-			b.Blog += " and "
+			d.Text += " and "
 		}
 		text = strings.SplitN(text[1], "<a class=\"Author-name\" href=\"", 2)
 		text = strings.SplitN(text[1], "\"", 2)
@@ -123,16 +128,16 @@ func (b *Blog) parseTop(s string) {
 		text = strings.SplitN(text[1], ">", 2)
 		text = strings.SplitN(text[1], "<", 2)
 		name := text[0]
-		b.Blog = fmt.Sprintf("%s[%s](%s)", b.Blog, name, url)
+		d.Text = fmt.Sprintf("%s[%s](%s)", d.Text, name, url)
 	}
 
 	text = strings.SplitN(text[1], "<!-- /react-text -->", 3)
 	text = strings.SplitN(text[1], "-->", 2)
-	b.Date = text[1]
-	b.Blog = fmt.Sprintf("%s on %s\n", b.Blog, b.Date)
+	d.Date = text[1]
+	d.Text = fmt.Sprintf("%s on %s\n", d.Text, d.Date)
 }
 
-func (b *Blog) parseBody(s string) {
+func (p *parser) parseBody(d *crawler.Data, s string) {
 	s = s[5 : len(s)-6]
 	s = strings.Replace(s, "<hr/>", "\n---\n\n", -1)
 	s = strings.Replace(s, "<br/>", "\n", -1)
@@ -140,5 +145,5 @@ func (b *Blog) parseBody(s string) {
 	for k, v := range bodyMap {
 		s = strings.Replace(s, k, v, -1)
 	}
-	b.Blog += s
+	d.Text += s
 }

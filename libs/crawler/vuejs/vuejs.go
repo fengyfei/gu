@@ -42,33 +42,19 @@ import (
 	store "github.com/fengyfei/gu/libs/store/badger"
 )
 
-type ok struct{}
-
 type vuejsCrawler struct {
-	collector  *colly.Collector
-	ready      bool
-	readyCh    chan ok
-	newsFinish chan ok
-	newsCh     chan *News
-	endCh      chan bool
-	db         *store.BadgerDB
-	oldIncr    string
-	newIncr    string
-}
+	collector *colly.Collector
 
-type News struct {
-	Title       string
-	Date        string
-	Description string
-	URL         string
-	Content     map[string][]Content
-}
+	dataCh   chan *crawler.Data
+	finishCh chan struct{}
 
-type Content struct {
-	Class       string
-	URL         string
-	Title       string
-	Description string
+	ready          bool
+	visitSiteReady chan struct{}
+	crawlerFinish  chan struct{}
+
+	db      *store.BadgerDB
+	oldIncr string
+	newIncr string
 }
 
 const (
@@ -77,19 +63,21 @@ const (
 )
 
 // NewVuejsCrawler generates a crawler for vuejs news.
-func NewVuejsCrawler(ch chan *News, end chan bool) crawler.Crawler {
+func NewVuejsCrawler(dataCh chan *crawler.Data, finishCh chan struct{}) crawler.Crawler {
 	return &vuejsCrawler{
-		collector:  colly.NewCollector(),
-		readyCh:    make(chan ok),
-		newsFinish: make(chan ok),
-		newsCh:     ch,
-		endCh:      end,
+		collector: colly.NewCollector(),
+		dataCh:    dataCh,
+		finishCh:  finishCh,
+
+		visitSiteReady: make(chan struct{}),
+		crawlerFinish:  make(chan struct{}),
 	}
 }
 
 // Crawler interface Init
 func (c *vuejsCrawler) Init() error {
 	c.collector.OnHTML("article.issue", c.parse)
+
 	err := c.prepare()
 	if err != nil {
 		logger.Error("Error in preparing to start:", err)
@@ -100,31 +88,20 @@ func (c *vuejsCrawler) Init() error {
 
 // Crawler interface Start
 func (c *vuejsCrawler) Start() error {
-	var (
-		incr int
-		err  error
-	)
-
-	if c.oldIncr != "" {
-		incr, err = strconv.Atoi(c.oldIncr)
-		if err != nil {
-			logger.Error("Error in converting string to int:", err)
-			return err
-		}
-	}
-
 	go func() {
-		c.readyCh <- ok{}
+		c.visitSiteReady <- struct{}{}
 	}()
+
+	incr, _ := strconv.Atoi(c.oldIncr)
 
 	for {
 		select {
-		case <-c.readyCh:
+		case <-c.visitSiteReady:
 			go func() {
 				err := c.collector.Visit(fmt.Sprintf("%s%d", site, incr))
 				if err != nil {
 					if c.ready && err.Error() == http.StatusText(http.StatusNotFound) {
-						c.newsFinish <- ok{}
+						c.crawlerFinish <- struct{}{}
 						return
 					} else if err.Error() != http.StatusText(http.StatusNotFound) {
 						logger.Error("Error in crawling the news:", err)
@@ -132,16 +109,16 @@ func (c *vuejsCrawler) Start() error {
 				}
 
 				if !c.ready {
-					c.readyCh <- ok{}
+					c.visitSiteReady <- struct{}{}
 				}
 				incr++
 			}()
-		case <-c.newsFinish:
+		case <-c.crawlerFinish:
 			err := c.finish()
 			if err != nil {
 				logger.Error("Error in the end:", err)
 			}
-			c.endCh <- true
+			c.finishCh <- struct{}{}
 			return nil
 		}
 	}
@@ -174,34 +151,40 @@ func (c *vuejsCrawler) finish() error {
 
 func (c *vuejsCrawler) parse(e *colly.HTMLElement) {
 	c.ready = true
-	c.newIncr = e.Request.URL.String()[30:]
+	c.newIncr = e.Request.URL.String()[len(site):]
 	if c.oldIncr == c.newIncr {
-		c.newsFinish <- ok{}
+		c.crawlerFinish <- struct{}{}
 		return
 	}
-	news := News{
-		Title:       e.DOM.Find("div.issue-title").Text(),
-		Date:        e.DOM.Find("span.issue-date").Text(),
-		Description: e.DOM.Find("p.issue-description").Text(),
-		URL:         e.Request.URL.String(),
-		Content:     make(map[string][]Content),
+
+	data := crawler.Data{
+		Source: "Vuejs News",
+		Date:   e.DOM.Find("span.issue-date").Text(),
+		Title:  e.DOM.Find("div.issue-title").Text(),
+		URL:    e.Request.URL.String(),
+		Text:   "Description: " + e.DOM.Find("p.issue-description").Text() + "\nContent:\n",
 	}
+
+	data.Text += "Story\n"
 	for i := 0; ; i++ {
-		s := e.DOM.Find("div").Eq(i)
-		class, _ := s.Attr("class")
-		if class == "story" || class == "library" {
-			url, _ := s.Find("a").Attr("href")
-			content := Content{
-				Class:       class,
-				URL:         url,
-				Title:       s.Find("h1").Text(),
-				Description: s.Find("p").Text(),
-			}
-			news.Content[class] = append(news.Content[class], content)
-		} else if class == "" {
+		s := e.DOM.Find("div.story").Eq(i)
+		url, _ := s.Find("a").Attr("href")
+		if url == "" {
 			break
 		}
+		data.Text += fmt.Sprintf("%d. %s\n%s\n%s\n", i+1, s.Find("h1").Text(), url, s.Find("p").Text())
 	}
-	c.newsCh <- &news
-	c.readyCh <- ok{}
+
+	data.Text += "Library\n"
+	for i := 0; ; i++ {
+		s := e.DOM.Find("div.library").Eq(i)
+		url, _ := s.Find("a").Attr("href")
+		if url == "" {
+			break
+		}
+		data.Text += fmt.Sprintf("%d. %s\n%s\n%s\n", i+1, s.Find("h1").Text(), url, s.Find("p").Text())
+	}
+
+	c.dataCh <- &data
+	c.visitSiteReady <- struct{}{}
 }

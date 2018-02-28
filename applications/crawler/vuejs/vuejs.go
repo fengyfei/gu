@@ -27,16 +27,16 @@
  *     Initial: 2018/02/10        Li Zebang
  */
 
-package gocn
+package vuejs
 
 import (
 	"github.com/fengyfei/gu/applications/crawler/client"
 	"github.com/fengyfei/gu/libs/crawler"
-	"github.com/fengyfei/gu/libs/crawler/gocn"
+	"github.com/fengyfei/gu/libs/crawler/vuejs"
 )
 
 const (
-	GoCN = "gocn"
+	Vuejs = "vuejs"
 )
 
 func init() {
@@ -45,17 +45,17 @@ func init() {
 		finishCh = make(chan struct{})
 	)
 
-	crawler := gocn.NewGoCNCrawler(dataCh, finishCh)
+	crawler := vuejs.NewVuejsCrawler(dataCh, finishCh)
 
 	cli := &client.Client{
 		Crawler:   crawler,
 		DataCh:    &dataCh,
 		FinishCh:  &finishCh,
 		DB:        "Crawler",
-		C:         "GoCN Daily News",
+		C:         "Vuejs News",
 		BotsToken: "xoxb-312476598064-97wqE4OJeqhv4mTX1g2c9LZs",
 		Channel:   "C97LN9DGF",
 	}
 
-	client.Clients[GoCN] = cli
+	client.Clients[Vuejs] = cli
 }

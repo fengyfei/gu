@@ -41,35 +41,43 @@ import (
 	store "github.com/fengyfei/gu/libs/store/badger"
 )
 
-type ok struct{}
-
 type segmentCrawler struct {
-	collector  *colly.Collector
-	errCh      chan error
-	urlCh      chan *string
-	urlReady   chan ok
-	urlFinish  chan ok
-	blogFinish chan ok
-	blogCh     chan *Blog
-	db         *store.BadgerDB
-	oldIncr    string
-	newIncr    string
+	collector *colly.Collector
+
+	dataCh   chan *crawler.Data
+	finishCh chan struct{}
+
+	errCh   chan error
+	blogURL chan *string
+
+	visitSiteReady  chan struct{}
+	visitSiteFinish chan struct{}
+	crawlerFinish   chan struct{}
+
+	db      *store.BadgerDB
+	oldIncr string
+	newIncr string
 }
 
 const (
-	defaultOldIncr = "default-old-increment"
 	site           = "https://segment.com"
+	defaultOldIncr = "default-old-increment"
 )
 
 // NewSegmentCrawler generates a crawler for Segment blogs.
-func NewSegmentCrawler(ch chan *Blog) crawler.Crawler {
+func NewSegmentCrawler(dataCh chan *crawler.Data, finishCh chan struct{}) crawler.Crawler {
 	return &segmentCrawler{
-		collector:  colly.NewCollector(),
-		urlCh:      make(chan *string),
-		urlReady:   make(chan ok),
-		urlFinish:  make(chan ok),
-		blogFinish: make(chan ok),
-		blogCh:     ch,
+		collector: colly.NewCollector(),
+
+		dataCh:   dataCh,
+		finishCh: finishCh,
+
+		errCh:   make(chan error),
+		blogURL: make(chan *string),
+
+		visitSiteReady:  make(chan struct{}),
+		visitSiteFinish: make(chan struct{}),
+		crawlerFinish:   make(chan struct{}),
 	}
 }
 
@@ -87,22 +95,18 @@ func (c *segmentCrawler) Init() error {
 
 // Crawler interface Start
 func (c *segmentCrawler) Start() error {
-	var (
-		page int
-		url  string
-	)
 
 	go func() {
-		c.urlReady <- ok{}
+		c.visitSiteReady <- struct{}{}
 	}()
 
 	go c.startBlog()
 
+	var page int
 	for {
 		select {
-		case <-c.urlFinish:
-			return nil
-		case <-c.urlReady:
+		case <-c.visitSiteReady:
+			var url string
 			page++
 			if page == 1 {
 				url = site + "/blog/"
@@ -116,6 +120,7 @@ func (c *segmentCrawler) Start() error {
 					if err != nil {
 						logger.Error("Error in the end:", err)
 					}
+					c.finishCh <- struct{}{}
 					return nil
 				}
 				logger.Error("Error in getting blog url", err)
@@ -123,6 +128,8 @@ func (c *segmentCrawler) Start() error {
 			}
 		case err := <-c.errCh:
 			return err
+		case <-c.visitSiteFinish:
+			return nil
 		}
 	}
 }
@@ -159,11 +166,11 @@ func (c *segmentCrawler) parseURL(e *colly.HTMLElement) {
 	}
 
 	if _, ready := e.DOM.Find("a.Link--primary.Link--animatedHover.ArticleInList-readMoreLink").Eq(0).Attr("href"); !ready {
-		c.urlFinish <- ok{}
+		c.visitSiteFinish <- struct{}{}
 	}
 
 	go func() {
-		c.urlReady <- ok{}
+		c.visitSiteReady <- struct{}{}
 	}()
 
 	for i := 0; ; i++ {
@@ -179,10 +186,10 @@ func (c *segmentCrawler) parseURL(e *colly.HTMLElement) {
 				c.errCh <- err
 				return
 			}
-			c.urlFinish <- ok{}
+			c.visitSiteFinish <- struct{}{}
 			return
 		}
-		c.urlCh <- &url
-		<-c.blogFinish
+		c.blogURL <- &url
+		<-c.crawlerFinish
 	}
 }

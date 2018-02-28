@@ -24,38 +24,16 @@
 
 /*
  * Revision History:
- *     Initial: 2018/02/10        Li Zebang
+ *     Initial: 2018/02/28        Li Zebang
  */
 
-package gocn
+package crawler
 
-import (
-	"github.com/fengyfei/gu/applications/crawler/client"
-	"github.com/fengyfei/gu/libs/crawler"
-	"github.com/fengyfei/gu/libs/crawler/gocn"
-)
-
-const (
-	GoCN = "gocn"
-)
-
-func init() {
-	var (
-		dataCh   = make(chan *crawler.Data)
-		finishCh = make(chan struct{})
-	)
-
-	crawler := gocn.NewGoCNCrawler(dataCh, finishCh)
-
-	cli := &client.Client{
-		Crawler:   crawler,
-		DataCh:    &dataCh,
-		FinishCh:  &finishCh,
-		DB:        "Crawler",
-		C:         "GoCN Daily News",
-		BotsToken: "xoxb-312476598064-97wqE4OJeqhv4mTX1g2c9LZs",
-		Channel:   "C97LN9DGF",
-	}
-
-	client.Clients[GoCN] = cli
+type Data struct {
+	Source   string
+	Date     string
+	Title    string
+	URL      string
+	Text     string
+	FileType string
 }

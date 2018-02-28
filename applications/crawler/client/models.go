@@ -24,19 +24,15 @@
 
 /*
  * Revision History:
- *     Initial: 2018/02/12        Li Zebang
+ *     Initial: 2018/02/25        Li Zebang
  */
 
-package main
+package client
 
 import (
-	"fmt"
 	"time"
 
-	"github.com/fengyfei/gu/libs/crawler"
-	"github.com/fengyfei/gu/libs/crawler/segment"
 	"github.com/fengyfei/gu/libs/logger"
-	"github.com/fengyfei/gu/libs/social/slack"
 	mgo "gopkg.in/mgo.v2"
 )
 
@@ -55,56 +51,4 @@ func init() {
 	session.SetMode(mgo.Monotonic, true)
 
 	logger.Info("The mongoDB is connected!")
-}
-
-func main() {
-	var blogCh = make(chan *segment.Blog)
-
-	c := segment.NewSegmentCrawler(blogCh)
-	go func() {
-		err := crawler.StartCrawler(c)
-		logger.Error("Error in running the crawler:", err)
-		return
-	}()
-
-	for {
-		select {
-		case blog := <-blogCh:
-			err := store(blog)
-			if err != nil {
-				logger.Error("Error in storing the Segment blog:", err)
-			}
-			err = release(blog)
-			if err != nil {
-				logger.Error("Error in releasing the Segment blog to slack:", err)
-			}
-			logger.Info("Success the Segment blog:", blog.Date)
-		case <-time.NewTimer(3 * time.Second).C:
-			return
-		}
-	}
-}
-
-func store(blog *segment.Blog) error {
-	c := session.DB("crawler").C("Segment blog")
-
-	err := c.Insert(blog)
-	session.Refresh()
-
-	return err
-}
-
-func release(blog *segment.Blog) error {
-	// If you don't have a custom bot, you can add one through
-	// https://<your-workspace>.slack.com/services/new/bot
-	cli := slack.NewClient("your custom bot token")
-
-	text := fmt.Sprintf("source: Segment blog\ntitle: %s\ndate: %s\nurl: %s\n", blog.Title, blog.Date, blog.URL)
-
-	err := cli.PostMessage("your channel", text)
-	if err != nil {
-		return err
-	}
-
-	return cli.UploadFile("your channel", text, "markdown", blog.Blog)
 }
