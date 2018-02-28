@@ -32,9 +32,9 @@ package main
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	bolt "github.com/fengyfei/gu/libs/store/boltdb"
-	"time"
 )
 
 func main() {
@@ -44,13 +44,15 @@ func main() {
 		fmt.Println(err)
 	}
 
-	kv.Writer().CommonPut("user", []byte("1234"), []byte("1234"))
-
 	wg := &sync.WaitGroup{}
 	wg.Add(6)
 	for i := 0; i < 6; i++ {
 		go func(i int) {
-			err := kv.Writer().MultiplePut("user", []byte(fmt.Sprintf("%d", i)), []byte(fmt.Sprintf("%d", i)))
+			err := kv.Writer().MultiplePut(bolt.Param{
+				Bucket:"user",
+				Key: [][]byte{[]byte("one"), []byte("two")},
+				Value: [][]byte{[]byte("one"), []byte("two")},
+			})
 
 			if err != nil {
 				fmt.Println(err)
@@ -65,11 +67,11 @@ func main() {
 		fmt.Println(err)
 	}
 
-	v, err := reader.Switch("user").Get([]byte("2"))
+	v, err := reader.Switch("user").Get([]byte("one"))
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println("gh", string(v))
+	fmt.Println("v", string(v))
 
 	reader.ForEach(func(k, v []byte) error {
 		fmt.Printf("key=%s, value=%s\n", k, v)

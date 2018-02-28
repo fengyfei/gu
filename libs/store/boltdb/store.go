@@ -37,7 +37,8 @@ import (
 )
 
 var (
-	errEmptyPath = errors.New("boltdb: empty path")
+	ErrEmptyPath = errors.New("boltdb: empty path")
+	ErrInvalidParam = errors.New("Invalid Param")
 )
 
 // Store represents a general bolt db.
@@ -49,7 +50,7 @@ type Store struct {
 // NewStore create/open a bolt database.
 func NewStore(path string) (*Store, error) {
 	if path == "" {
-		return nil, errEmptyPath
+		return nil, ErrEmptyPath
 	}
 
 	db, err := bolt.Open(path, 0600, &bolt.Options{Timeout: 3 * time.Second})

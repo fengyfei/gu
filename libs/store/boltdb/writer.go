@@ -39,34 +39,62 @@ type Writer struct {
 	store *Store
 }
 
-//CommonPut put key-value into db, can't be used in multiple goroutines.
-func (wr *Writer) CommonPut(bucket string, key []byte, value []byte) error {
+type Param struct {
+	Bucket string
+	Key    [][]byte
+	Value  [][]byte
+}
+
+//CommPut put key-value into db, can't be used in multiple goroutines.
+func (wr *Writer) CommPut(p ...Param) error {
 	return wr.store.db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte(bucket))
-		if err != nil {
-			return err
-		}
+		for _, bucket := range p {
+			if len(bucket.Key) != len(bucket.Value) {
+				return ErrInvalidParam
+			}
 
-		if err := b.Put(key, value); err != nil {
-			return err
-		}
+			b, err := tx.CreateBucketIfNotExists([]byte(bucket.Bucket))
+			if err != nil {
+				return err
+			}
 
+			if len(bucket.Key) == 0 {
+				continue
+			}
+
+			for i := 0; i < len(bucket.Key); i++ {
+				if err := b.Put(bucket.Key[i], bucket.Value[i]); err != nil {
+					return err
+				}
+			}
+		}
 		return nil
 	})
 }
 
-//MultiplePut only useful when there are multiple goroutines putting key-value to db.
-func (wr *Writer) MultiplePut(bucket string, key []byte, value []byte) error {
-	return wr.store.db.Batch(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte(bucket))
-		if err != nil {
-			return err
-		}
+//MultiplePut only useful when there are multiple goroutines putting Key-Value to db.
+func (wr *Writer) MultiplePut(p ...Param) error {
+		return wr.store.db.Batch(func(tx *bolt.Tx) error {
+			for _, bucket := range p {
+				if len(bucket.Key) != len(bucket.Value) {
+					return ErrInvalidParam
+				}
 
-		if err := b.Put(key, value); err != nil {
-			return err
-		}
+				b, err := tx.CreateBucketIfNotExists([]byte(bucket.Bucket))
+				if err != nil {
+					return err
+				}
 
-		return nil
-	})
+				if len(bucket.Key) == 0 {
+					continue
+				}
+
+				for i := 0; i < len(bucket.Key); i++ {
+					if err := b.Put(bucket.Key[i], bucket.Value[i]); err != nil {
+						return err
+					}
+				}
+			}
+			return nil
+		})
 }
