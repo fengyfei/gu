@@ -45,8 +45,8 @@ type Param struct {
 	Value  [][]byte
 }
 
-//CommPut put key-value into db, can't be used in multiple goroutines.
-func (wr *Writer) CommPut(p ...Param) error {
+//Put put key-value into db, can't be used in multiple goroutines.
+func (wr *Writer) Put(p ...Param) error {
 	return wr.store.db.Update(func(tx *bolt.Tx) error {
 		for _, bucket := range p {
 			if len(bucket.Key) != len(bucket.Value) {
@@ -74,27 +74,27 @@ func (wr *Writer) CommPut(p ...Param) error {
 
 //MultiplePut only useful when there are multiple goroutines putting Key-Value to db.
 func (wr *Writer) MultiplePut(p ...Param) error {
-		return wr.store.db.Batch(func(tx *bolt.Tx) error {
-			for _, bucket := range p {
-				if len(bucket.Key) != len(bucket.Value) {
-					return ErrInvalidParam
-				}
+	return wr.store.db.Batch(func(tx *bolt.Tx) error {
+		for _, bucket := range p {
+			if len(bucket.Key) != len(bucket.Value) {
+				return ErrInvalidParam
+			}
 
-				b, err := tx.CreateBucketIfNotExists([]byte(bucket.Bucket))
-				if err != nil {
+			b, err := tx.CreateBucketIfNotExists([]byte(bucket.Bucket))
+			if err != nil {
+				return err
+			}
+
+			if len(bucket.Key) == 0 {
+				continue
+			}
+
+			for i := 0; i < len(bucket.Key); i++ {
+				if err := b.Put(bucket.Key[i], bucket.Value[i]); err != nil {
 					return err
 				}
-
-				if len(bucket.Key) == 0 {
-					continue
-				}
-
-				for i := 0; i < len(bucket.Key); i++ {
-					if err := b.Put(bucket.Key[i], bucket.Value[i]); err != nil {
-						return err
-					}
-				}
 			}
-			return nil
-		})
+		}
+		return nil
+	})
 }
