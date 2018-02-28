@@ -37,7 +37,7 @@ import (
 )
 
 var (
-	ErrEmptyPath = errors.New("boltdb: empty path")
+	ErrEmptyPath    = errors.New("boltdb: empty path")
 	ErrInvalidParam = errors.New("Invalid Param")
 )
 
@@ -78,8 +78,14 @@ func (st *Store) Reader() (*Reader, error) {
 }
 
 // Writer returns a writer.
-func (st *Store) Writer() *Writer {
+func (st *Store) Writer() (*Writer, error) {
+	tx, err := st.db.Begin(true)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Writer{
 		store: st,
-	}
+		tx:    tx,
+	}, nil
 }

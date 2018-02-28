@@ -27,56 +27,72 @@
  *     Initial: 2018/02/26        Tong Yuehong
  */
 
-package main
+package boltdb
 
 import (
 	"fmt"
-	"sync"
-	"time"
-
-	bolt "github.com/fengyfei/gu/libs/store/boltdb"
+	"testing"
 )
 
-func main() {
-	kv, err := bolt.NewStore("./user.db")
+var (
+	store *Store
+)
+
+func TestNewStore(t *testing.T) {
+	var err error
+	store, err = NewStore("./user.db")
 
 	if err != nil {
-		fmt.Println(err)
+		t.Fatal(err)
 	}
+}
 
-	wg := &sync.WaitGroup{}
-	wg.Add(6)
-	for i := 0; i < 6; i++ {
-		go func(i int) {
-			err := kv.Writer().MultiplePut(bolt.Param{
-				Bucket:"user",
-				Key: [][]byte{[]byte("one"), []byte("two")},
-				Value: [][]byte{[]byte("one"), []byte("two")},
-			})
-
-			if err != nil {
-				fmt.Println(err)
-			}
-			wg.Done()
-		}(i)
-		time.Sleep(500 * time.Millisecond)
-	}
-
-	reader, err := kv.Reader()
+func TestWriter_Put(t *testing.T) {
+	var err error
+	writer, err := store.Writer()
 	if err != nil {
-		fmt.Println(err)
+		t.Fatal(err)
 	}
 
-	v, err := reader.Switch("user").Get([]byte("one"))
+	err = writer.Put("user", []byte(fmt.Sprintf("%d", 10)), []byte("test"))
 	if err != nil {
-		fmt.Println(err)
+		t.Fatal(err)
+		writer.Rollback()
 	}
-	fmt.Println("v", string(v))
 
-	reader.ForEach(func(k, v []byte) error {
-		fmt.Printf("key=%s, value=%s\n", k, v)
-		return nil
-	})
+	err = writer.Put("user", []byte(""), []byte("test"))
+	if err == nil {
+		t.Fatal(err)
+	}
 
-	wg.Wait()
+	err = writer.Put("test", []byte("test"), []byte("test"))
+	if err != nil {
+		t.Fatal(err)
+		writer.Rollback()
+	} else {
+		writer.Commit()
+	}
+}
+
+func TestReader_Get(t *testing.T) {
+	var err error
+	reader, err := store.Reader()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	v, err := reader.Switch("user").Get([]byte(fmt.Sprintf("%d", 10)))
+	if err != nil || string(v) != "test" {
+		t.Fatal(err)
+	}
+
+	a, err := reader.Switch("test").Get([]byte("test"))
+	if err != nil || string(a) != "test" {
+		t.Fatal(err)
+	}
+
+	err = reader.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
 }

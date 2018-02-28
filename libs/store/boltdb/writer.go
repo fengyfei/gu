@@ -37,64 +37,39 @@ import (
 // Writer handles write operations on a bolt DB.
 type Writer struct {
 	store *Store
+	tx    *bolt.Tx
 }
 
-type Param struct {
-	Bucket string
-	Key    [][]byte
-	Value  [][]byte
+func (w *Writer) Bucket(bucket string) (*bolt.Bucket, error) {
+	b, err := w.tx.CreateBucketIfNotExists([]byte(bucket))
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
 }
 
 //Put put key-value into db, can't be used in multiple goroutines.
-func (wr *Writer) Put(p ...Param) error {
-	return wr.store.db.Update(func(tx *bolt.Tx) error {
-		for _, bucket := range p {
-			if len(bucket.Key) != len(bucket.Value) {
-				return ErrInvalidParam
-			}
+func (w *Writer) Put(bucket string, key []byte, value []byte) error {
+	b, err := w.Bucket(bucket)
+	if err != nil {
+		return err
+	}
 
-			b, err := tx.CreateBucketIfNotExists([]byte(bucket.Bucket))
-			if err != nil {
-				return err
-			}
+	err = b.Put(key, value)
+	if err != nil {
+		return err
+	}
 
-			if len(bucket.Key) == 0 {
-				continue
-			}
-
-			for i := 0; i < len(bucket.Key); i++ {
-				if err := b.Put(bucket.Key[i], bucket.Value[i]); err != nil {
-					return err
-				}
-			}
-		}
-		return nil
-	})
+	return nil
 }
 
-//MultiplePut only useful when there are multiple goroutines putting Key-Value to db.
-func (wr *Writer) MultiplePut(p ...Param) error {
-	return wr.store.db.Batch(func(tx *bolt.Tx) error {
-		for _, bucket := range p {
-			if len(bucket.Key) != len(bucket.Value) {
-				return ErrInvalidParam
-			}
+// Close the internal transaction.
+func (w *Writer) Commit() error {
+	return w.tx.Commit()
+}
 
-			b, err := tx.CreateBucketIfNotExists([]byte(bucket.Bucket))
-			if err != nil {
-				return err
-			}
-
-			if len(bucket.Key) == 0 {
-				continue
-			}
-
-			for i := 0; i < len(bucket.Key); i++ {
-				if err := b.Put(bucket.Key[i], bucket.Value[i]); err != nil {
-					return err
-				}
-			}
-		}
-		return nil
-	})
+// Rollback closes the transaction and ignores all previous updates.
+func (w *Writer) Rollback() error {
+	return w.tx.Rollback()
 }
