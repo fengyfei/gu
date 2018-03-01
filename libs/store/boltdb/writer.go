@@ -31,8 +31,9 @@
 package boltdb
 
 import (
-	"github.com/coreos/bbolt"
 	"bytes"
+
+	"github.com/coreos/bbolt"
 )
 
 // Writer handles write operations on a bolt DB.

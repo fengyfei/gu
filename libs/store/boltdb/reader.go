@@ -31,9 +31,9 @@ package boltdb
 
 import (
 	"errors"
+	"bytes"
 
 	bolt "github.com/coreos/bbolt"
-	"bytes"
 )
 
 var (

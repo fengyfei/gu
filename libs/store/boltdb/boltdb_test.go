@@ -49,7 +49,7 @@ func TestNewStore(t *testing.T) {
 	}
 }
 
-func TestWriter_Put(t *testing.T) {
+func TestRollback(t *testing.T) {
 	var (
 		err error
 	)
@@ -59,10 +59,10 @@ func TestWriter_Put(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = wr.Put("user", []byte("test"), []byte("a"))
+	err = wr.Put("user", []byte("rollback"), []byte("a"))
 	if err != nil {
-		t.Fatal(err)
 		wr.Rollback()
+		t.Fatal(err)
 	}
 	wr.Commit()
 
@@ -71,16 +71,71 @@ func TestWriter_Put(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = writer.Put("user", []byte(""), []byte("test"))
+	err = writer.Put("user", []byte("rollback"), []byte("test"))
 	if err != nil {
 		writer.Rollback()
+		t.Fatal(err)
 	}
 
-	err = writer.Put("user", []byte("test"), []byte("test"))
+	err = writer.Put("user", []byte(""), []byte("test"))
 	if err != nil {
 		writer.Rollback()
 	} else {
 		writer.Commit()
+	}
+
+	reader, err := store.Reader()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	m, err := reader.Switch("user").Get([]byte("rollback"))
+	if err != nil || string(m) != "a" {
+		t.Fatal(err)
+	}
+
+	err = reader.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestCommit(t *testing.T) {
+	var (
+		err error
+	)
+
+	w, err := store.Writer()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = w.Put("user", []byte("commit"), []byte("a"))
+	if err != nil {
+		w.Rollback()
+		t.Fatal(err)
+	}
+
+	err = w.Put("user", []byte("commit"), []byte("test"))
+	if err != nil {
+		w.Rollback()
+		t.Fatal(err)
+	} else {
+		w.Commit()
+	}
+
+	reader, err := store.Reader()
+	if err != nil {
+		t.Fatal(err)
+	}
+	n, err := reader.Switch("user").Get([]byte("commit"))
+	if err != nil || string(n) != "test" {
+		t.Fatal(err)
+	}
+
+	err = reader.Close()
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -89,13 +144,26 @@ func TestReader_Get(t *testing.T) {
 		err error
 	)
 
+	wr, err := store.Writer()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = wr.Put("user", []byte("get"), []byte("get"))
+	if err != nil {
+		wr.Rollback()
+		t.Fatal(err)
+	}
+	wr.Commit()
+
+
 	reader, err := store.Reader()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	a, err := reader.Switch("user").Get([]byte("test"))
-	if err != nil || string(a) != "a" {
+	m, err := reader.Switch("user").Get([]byte("get"))
+	if err != nil || string(m) != "get" {
 		t.Fatal(err)
 	}
 
