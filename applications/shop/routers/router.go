@@ -59,7 +59,7 @@ func register(r *server.Router) {
 
 	r.Post("/shop/category/add", handler.AddCategory)
 	r.Post("/shop/category/modify", handler.ModifyCategory)
-	r.Post("/shop/category/get", handler.GetCategory)
+	//r.Post("/shop/category/get", handler.GetCategory)
 
 	// ware api for admin
 	//r.Post("/shop/api/ware/create",  "post:CreateWare")

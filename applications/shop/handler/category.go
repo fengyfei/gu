@@ -138,10 +138,10 @@ func ModifyCategory(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
-func GetCategory(c *server.Context) error {
-	var get models.Get
-
-}
+//func GetCategory(c *server.Context) error {
+//	var get models.Get
+//
+//}
 
 // // get all parent categories
 // func GetMainCategories(c *server.Context) error {

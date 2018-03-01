@@ -31,12 +31,11 @@
 package handler
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/dgrijalva/jwt-go"
+
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/applications/shop/mysql"
 	"github.com/fengyfei/gu/applications/shop/util"
@@ -44,6 +43,8 @@ import (
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
 	models "github.com/fengyfei/gu/models/shop/account"
+	"github.com/fengyfei/gu/models/user"
+	json "github.com/json-iterator/go"
 )
 
 const (
@@ -57,8 +58,8 @@ const (
 // Login by wechat
 func WechatLogin(c *server.Context) error {
 	var (
-		wechatCode models.WechatCode
-		wechatData models.WechatData
+		wechatCode user.WechatCode
+		wechatData user.WechatData
 	)
 
 	err := c.JSONBody(&wechatCode)
@@ -85,15 +86,13 @@ func WechatLogin(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrWechatAuth, nil)
 	}
 
-	body, err := ioutil.ReadAll(wechatResp.Body)
-	err = json.Unmarshal(body, &wechatData)
+	err = json.NewDecoder(wechatResp.Body).Decode(&wechatData)
 	if err != nil {
 		logger.Error("Error in parsing response:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrWechatAuth, nil)
 	}
 
-	wechatLogin := models.WechatLogin{
-		OpenID:  wechatData.OpenID,
+	wechatLogin := user.WechatLogin{
 		UnionID: wechatData.UnionID,
 	}
 
@@ -104,24 +103,23 @@ func WechatLogin(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	user, err := models.Service.WechatLogin(conn, &wechatLogin)
+	u, avatar, err := user.UserServer.WeChatLogin(conn, &wechatLogin)
 	if err != nil {
 		logger.Error("Error in Wechat Login:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	token, err := util.NewToken(user.ID, wechatData.SessionKey, user.IsAdmin)
+	token, err := util.NewToken(u.UserID, wechatData.SessionKey, u.IsAdmin)
 	if err != nil {
 		logger.Error("Error in getting token:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	userData := models.UserData{
+	userData := user.UserData{
 		Token:    token,
-		UserName: user.UserName,
-		Phone:    user.Phone,
-		Avatar:   user.Avatar,
-		Sex:      user.Sex,
+		UserName: u.UserName,
+		Sex:      u.Sex,
+		Avatar:   avatar.Avatar,
 	}
 
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, &userData)
@@ -169,7 +167,7 @@ func AddPhone(c *server.Context) error {
 
 // Change information
 func ChangeInfo(c *server.Context) error {
-	var change models.ChangeInfo
+	var change user.ChangeInfo
 
 	err := c.JSONBody(&change)
 	if err != nil {
@@ -190,7 +188,7 @@ func ChangeInfo(c *server.Context) error {
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
-	userid := uint64(claims[util.UserID].(float64))
+	userid := uint32(claims[util.UserID].(float32))
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
@@ -198,7 +196,7 @@ func ChangeInfo(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = models.Service.ChangeInfo(conn, userid, &change)
+	err = user.UserServer.ChangeInfo(conn, userid, &change)
 	if err != nil {
 		logger.Error("Error in changing informantion:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
@@ -209,7 +207,7 @@ func ChangeInfo(c *server.Context) error {
 
 // Register by phone
 func PhoneRegister(c *server.Context) error {
-	var register models.PhoneRegister
+	var register user.PhoneRegister
 
 	err := c.JSONBody(&register)
 	if err != nil {
@@ -230,7 +228,7 @@ func PhoneRegister(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = models.Service.PhoneRegister(conn, &register)
+	err = user.UserServer.PhoneRegister(conn, &register)
 	if err != nil {
 		logger.Error("Error in registering by phone:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -241,7 +239,7 @@ func PhoneRegister(c *server.Context) error {
 
 // Login by phone
 func PhoneLogin(c *server.Context) error {
-	var login models.PhoneLogin
+	var login user.PhoneLogin
 
 	err := c.JSONBody(&login)
 	if err != nil {
@@ -261,32 +259,31 @@ func PhoneLogin(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	user, err := models.Service.PhoneLogin(conn, &login)
+	u, avatar, err := user.UserServer.PhoneLogin(conn, &login)
 	if err != nil {
 		logger.Error("Error in Phone Login:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrAccount, nil)
 	}
 
-	token, err := util.NewToken(user.ID, "", user.IsAdmin)
+	token, err := util.NewToken(u.UserID, "", u.IsAdmin)
 	if err != nil {
 		logger.Error("Error in getting token:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	userData := models.UserData{
+	userData := user.UserData{
 		Token:    token,
-		UserName: user.UserName,
-		Phone:    user.Phone,
-		Avatar:   user.Avatar,
-		Sex:      user.Sex,
+		UserName: u.UserName,
+		Phone:    u.Phone,
+		Sex:      u.Sex,
+		Avatar:   avatar.Avatar,
 	}
-
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, &userData)
 }
 
 // Change password
 func ChangePassword(c *server.Context) error {
-	var change models.ChangePass
+	var change user.ChangePass
 
 	err := c.JSONBody(&change)
 	if err != nil {
@@ -307,7 +304,7 @@ func ChangePassword(c *server.Context) error {
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
-	userid := uint64(claims[util.UserID].(float64))
+	userid := uint32(claims[util.UserID].(float32))
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
@@ -315,7 +312,7 @@ func ChangePassword(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = models.Service.ChangePassword(conn, userid, &change)
+	err = user.UserServer.ChangePassword(conn, userid, &change)
 	if err != nil {
 		logger.Error("Error in changing password:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
