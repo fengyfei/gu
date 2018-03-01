@@ -27,7 +27,7 @@
  *     Initial: 2018/02/12        Li Zebang
  */
 
-package segment
+package site
 
 import (
 	"github.com/fengyfei/gu/applications/crawler/client"
@@ -36,10 +36,14 @@ import (
 )
 
 const (
-	Segment = "segment"
+	SegmentBlog = "segment blog"
 )
 
 func init() {
+	client.Clients[SegmentBlog] = NewSegmentClient
+}
+
+func NewSegmentClient() *client.Client {
 	var (
 		dataCh   = make(chan *crawler.Data)
 		finishCh = make(chan struct{})
@@ -47,7 +51,7 @@ func init() {
 
 	crawler := segment.NewSegmentCrawler(dataCh, finishCh)
 
-	cli := &client.Client{
+	return &client.Client{
 		Crawler:   crawler,
 		DataCh:    &dataCh,
 		FinishCh:  &finishCh,
@@ -56,6 +60,4 @@ func init() {
 		BotsToken: "xoxb-312476598064-97wqE4OJeqhv4mTX1g2c9LZs",
 		Channel:   "C97LN9DGF",
 	}
-
-	client.Clients[Segment] = cli
 }

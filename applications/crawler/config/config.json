@@ -1,0 +1,7 @@
+{
+  "event:cron":{
+    "gocn daily news":"0 0 0 * * *",
+    "segment blog":"0 0 0 * * 0",
+    "vuejs news":"0 0 0 * * 0"
+  }
+}

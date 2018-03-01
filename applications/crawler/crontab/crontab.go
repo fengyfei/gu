@@ -24,29 +24,37 @@
 
 /*
  * Revision History:
- *     Initial: 2018/02/25        Li Zebang
+ *     Initial: 2018/03/01        Li Zebang
  */
 
-package client
+package crontab
 
 import (
-	"github.com/fengyfei/gu/libs/logger"
-	mgo "gopkg.in/mgo.v2"
+	"fmt"
+
+	"github.com/fengyfei/gu/applications/crawler/config"
+	"github.com/robfig/cron"
 )
 
 var (
-	session *mgo.Session
+	EventCh = make(chan string)
 )
 
-func initMgo() {
-	var err error
+type event struct {
+	e string
+}
 
-	session, err = mgo.Dial("mongodb://127.0.0.1:27017")
-	if err != nil {
-		logger.Error("Conn't get connection to mongodb:", err)
+func (e *event) Run() {
+	fmt.Println(e.e)
+	EventCh <- e.e
+}
+
+func StartTimingTasks() {
+	cron := cron.New()
+
+	for k, v := range config.Config {
+		cron.AddJob(v, &event{k})
 	}
 
-	session.SetMode(mgo.Monotonic, true)
-
-	logger.Info("The mongoDB is connected!")
+	cron.Start()
 }

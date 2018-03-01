@@ -31,11 +31,23 @@ package main
 
 import (
 	"github.com/fengyfei/gu/applications/crawler/client"
-	"github.com/fengyfei/gu/applications/crawler/gocn"
-	_ "github.com/fengyfei/gu/applications/crawler/segment"
-	_ "github.com/fengyfei/gu/applications/crawler/vuejs"
+	"github.com/fengyfei/gu/applications/crawler/config"
+	"github.com/fengyfei/gu/applications/crawler/crontab"
+	_ "github.com/fengyfei/gu/applications/crawler/site"
+	"github.com/fengyfei/gu/libs/logger"
 )
 
 func main() {
-	client.Start(gocn.GoCN)
+	config.InitConfig()
+	go config.RefashConfig()
+
+	go crontab.StartTimingTasks()
+
+	for e := range crontab.EventCh {
+		event := e
+		go func() {
+			logger.Info("Start crawling", event)
+			client.Start(event)
+		}()
+	}
 }

@@ -24,29 +24,40 @@
 
 /*
  * Revision History:
- *     Initial: 2018/02/25        Li Zebang
+ *     Initial: 2018/02/10        Li Zebang
  */
 
-package client
+package site
 
 import (
-	"github.com/fengyfei/gu/libs/logger"
-	mgo "gopkg.in/mgo.v2"
+	"github.com/fengyfei/gu/applications/crawler/client"
+	"github.com/fengyfei/gu/libs/crawler"
+	"github.com/fengyfei/gu/libs/crawler/vuejs"
 )
 
-var (
-	session *mgo.Session
+const (
+	VuejsNews = "vuejs news"
 )
 
-func initMgo() {
-	var err error
+func init() {
+	client.Clients[VuejsNews] = NewVuejsClient
+}
 
-	session, err = mgo.Dial("mongodb://127.0.0.1:27017")
-	if err != nil {
-		logger.Error("Conn't get connection to mongodb:", err)
+func NewVuejsClient() *client.Client {
+	var (
+		dataCh   = make(chan *crawler.Data)
+		finishCh = make(chan struct{})
+	)
+
+	crawler := vuejs.NewVuejsCrawler(dataCh, finishCh)
+
+	return &client.Client{
+		Crawler:   crawler,
+		DataCh:    &dataCh,
+		FinishCh:  &finishCh,
+		DB:        "Crawler",
+		C:         "Vuejs News",
+		BotsToken: "xoxb-312476598064-97wqE4OJeqhv4mTX1g2c9LZs",
+		Channel:   "C97LN9DGF",
 	}
-
-	session.SetMode(mgo.Monotonic, true)
-
-	logger.Info("The mongoDB is connected!")
 }

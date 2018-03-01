@@ -24,10 +24,10 @@
 
 /*
  * Revision History:
- *     Initial: 2018/02/10        Li Zebang
+ *     Initial: 2018/03/01        Li Zebang
  */
 
-package gocn
+package site
 
 import (
 	"github.com/fengyfei/gu/applications/crawler/client"
@@ -36,10 +36,14 @@ import (
 )
 
 const (
-	GoCN = "gocn"
+	GoCNDailyNews = "gocn daily news"
 )
 
 func init() {
+	client.Clients[GoCNDailyNews] = NewGoCNClinet
+}
+
+func NewGoCNClinet() *client.Client {
 	var (
 		dataCh   = make(chan *crawler.Data)
 		finishCh = make(chan struct{})
@@ -47,7 +51,7 @@ func init() {
 
 	crawler := gocn.NewGoCNCrawler(dataCh, finishCh)
 
-	cli := &client.Client{
+	return &client.Client{
 		Crawler:   crawler,
 		DataCh:    &dataCh,
 		FinishCh:  &finishCh,
@@ -56,6 +60,4 @@ func init() {
 		BotsToken: "xoxb-312476598064-97wqE4OJeqhv4mTX1g2c9LZs",
 		Channel:   "C97LN9DGF",
 	}
-
-	client.Clients[GoCN] = cli
 }

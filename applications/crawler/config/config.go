@@ -24,38 +24,40 @@
 
 /*
  * Revision History:
- *     Initial: 2018/02/10        Li Zebang
+ *     Initial: 2018/03/01        Li Zebang
  */
 
-package vuejs
+package config
 
 import (
-	"github.com/fengyfei/gu/applications/crawler/client"
-	"github.com/fengyfei/gu/libs/crawler"
-	"github.com/fengyfei/gu/libs/crawler/vuejs"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/fengyfei/gu/libs/logger"
+	"github.com/spf13/viper"
 )
 
-const (
-	Vuejs = "vuejs"
+var (
+	Config map[string]string
 )
 
-func init() {
-	var (
-		dataCh   = make(chan *crawler.Data)
-		finishCh = make(chan struct{})
-	)
+func InitConfig() {
+	viper.AddConfigPath("./config")
+	viper.SetConfigName("config")
 
-	crawler := vuejs.NewVuejsCrawler(dataCh, finishCh)
-
-	cli := &client.Client{
-		Crawler:   crawler,
-		DataCh:    &dataCh,
-		FinishCh:  &finishCh,
-		DB:        "Crawler",
-		C:         "Vuejs News",
-		BotsToken: "xoxb-312476598064-97wqE4OJeqhv4mTX1g2c9LZs",
-		Channel:   "C97LN9DGF",
+	if err := viper.ReadInConfig(); err != nil {
+		panic(err)
 	}
 
-	client.Clients[Vuejs] = cli
+	Config = viper.GetStringMapString("event:cron")
+	logger.Info("Successfully read the configuration.")
+}
+
+func RefashConfig() {
+	sCh := make(chan os.Signal)
+	signal.Notify(sCh, syscall.SIGALRM)
+	for range sCh {
+		InitConfig()
+	}
 }

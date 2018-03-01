@@ -48,11 +48,13 @@ type Client struct {
 	Channel   string
 }
 
-var Clients = make(map[string]*Client)
+var Clients = make(map[string]func() *Client)
 
 func Start(client string) error {
+	initMgo()
+
 	var (
-		cli   = Clients[client]
+		cli   = Clients[client]()
 		errCh = make(chan error)
 	)
 
