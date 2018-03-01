@@ -30,7 +30,6 @@
 package boltdb
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -39,7 +38,10 @@ var (
 )
 
 func TestNewStore(t *testing.T) {
-	var err error
+	var (
+		err error
+	)
+
 	store, err = NewStore("./user.db")
 
 	if err != nil {
@@ -48,26 +50,34 @@ func TestNewStore(t *testing.T) {
 }
 
 func TestWriter_Put(t *testing.T) {
-	var err error
+	var (
+		err error
+	)
+
+	wr, err := store.Writer()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = wr.Put("user", []byte("test"), []byte("a"))
+	if err != nil {
+		t.Fatal(err)
+		wr.Rollback()
+	}
+	wr.Commit()
+
 	writer, err := store.Writer()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = writer.Put("user", []byte(fmt.Sprintf("%d", 10)), []byte("test"))
+	err = writer.Put("user", []byte(""), []byte("test"))
 	if err != nil {
-		t.Fatal(err)
 		writer.Rollback()
 	}
 
-	err = writer.Put("user", []byte(""), []byte("test"))
-	if err == nil {
-		t.Fatal(err)
-	}
-
-	err = writer.Put("test", []byte("test"), []byte("test"))
+	err = writer.Put("user", []byte("test"), []byte("test"))
 	if err != nil {
-		t.Fatal(err)
 		writer.Rollback()
 	} else {
 		writer.Commit()
@@ -75,19 +85,17 @@ func TestWriter_Put(t *testing.T) {
 }
 
 func TestReader_Get(t *testing.T) {
-	var err error
+	var (
+		err error
+	)
+
 	reader, err := store.Reader()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	v, err := reader.Switch("user").Get([]byte(fmt.Sprintf("%d", 10)))
-	if err != nil || string(v) != "test" {
-		t.Fatal(err)
-	}
-
-	a, err := reader.Switch("test").Get([]byte("test"))
-	if err != nil || string(a) != "test" {
+	a, err := reader.Switch("user").Get([]byte("test"))
+	if err != nil || string(a) != "a" {
 		t.Fatal(err)
 	}
 

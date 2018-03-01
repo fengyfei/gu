@@ -38,7 +38,7 @@ import (
 
 var (
 	ErrEmptyPath    = errors.New("boltdb: empty path")
-	ErrInvalidParam = errors.New("Invalid Param")
+	ErrInvalidKey = errors.New("Invalid Key")
 )
 
 // Store represents a general bolt db.

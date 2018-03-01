@@ -33,6 +33,7 @@ import (
 	"errors"
 
 	bolt "github.com/coreos/bbolt"
+	"bytes"
 )
 
 var (
@@ -61,6 +62,10 @@ func (r *Reader) Get(key []byte) ([]byte, error) {
 
 	if r.bucket == nil {
 		return nil, errNoBucket
+	}
+
+	if bytes.Equal(key, nil){
+		return nil, ErrInvalidKey
 	}
 
 	v := r.bucket.Get(key)
