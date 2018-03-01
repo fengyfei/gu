@@ -68,8 +68,8 @@ func LangInfo(c *server.Context) error {
 		req   langReq
 		info  infoResp
 		sub   *nc.Subscriber
-		t     *github.Trending
-		tList []*github.Trending
+		t     github.Trending
+		tList []github.Trending
 		resp  = make([]infoResp, 0)
 		today = time.Now().Format("20060102")
 	)

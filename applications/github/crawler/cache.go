@@ -38,7 +38,7 @@ import (
 
 // reposCache use to store the different repos of trending data, the key is
 // "title + date".
-type reposCache map[string]*github.Trending
+type reposCache map[string]github.Trending
 
 // trendingCache use to store the trending data of specified language.
 type trendingCache struct {
@@ -60,18 +60,18 @@ func (tc *trendingCache) Write(lang *string, trending *github.Trending) {
 	reposKey := trending.Title + trending.Date
 
 	if _, ok := tc.cache[*lang]; ok {
-		tc.cache[*lang][reposKey] = trending
+		tc.cache[*lang][reposKey] = *trending
 	} else {
 		tc.cache[*lang] = make(reposCache)
-		tc.cache[*lang][reposKey] = trending
+		tc.cache[*lang][reposKey] = *trending
 	}
 }
 
 // Read getting the trending list of the specified language from TrendingCache.
 // The results were descended in sequence according to the field "Today" of
 // struct "github.Trending".
-func (tc *trendingCache) Read(lang *string) ([]*github.Trending, bool) {
-	var list []*github.Trending
+func (tc *trendingCache) Read(lang *string) ([]github.Trending, bool) {
+	var list []github.Trending
 
 	tc.mux.RLock()
 	defer tc.mux.RUnlock()
@@ -95,7 +95,7 @@ func (tc *trendingCache) Flush(lang *string) {
 	tc.mux.Unlock()
 }
 
-func sortByStar(list []*github.Trending) {
+func sortByStar(list []github.Trending) {
 	sort.Slice(list, func(i, j int) bool {
 		return list[i].Today > list[j].Today
 	})
