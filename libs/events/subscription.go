@@ -25,6 +25,7 @@
 /*
  * Revision History:
  *     Initial: 2018/02/27        Feng Yifei
+ *     Modify : 2018/02/27        Tong Yuehong
  */
 
 package events
@@ -33,39 +34,75 @@ import (
 	"sync"
 )
 
-// Subscription -
+// Subscription is a collection of subscriptions for all events.
 type Subscription struct {
 	mu          sync.RWMutex
 	subscribers map[EventType]map[Subscriber]EventHandler
 }
 
-// NewSubscription -
+// NewSubscription - create a subscription.
 func NewSubscription() *Subscription {
 	return &Subscription{
 		subscribers: make(map[EventType]map[Subscriber]EventHandler),
 	}
 }
 
-// Subscribe -
+// Subscribe will create a subscriber on the given eventType using the specified Handler.
 func (s *Subscription) Subscribe(etype EventType, h EventHandler) Subscriber {
-	return nil
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	subscriber := make(chan interface{})
+
+	m, ok := s.subscribers[etype]
+	if ok {
+		m[subscriber] = h
+		return nil
+	}
+
+	n := make(map[Subscriber]EventHandler)
+	n[subscriber] = h
+	s.subscribers[etype] = n
+
+	return subscriber
 }
 
-// Unsubscribe -
+// Unsubscribe deletes the subscriber from the subscribers which eventType is etype.
 func (s *Subscription) Unsubscribe(etype EventType, subscriber Subscriber) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	delete(s.subscribers[etype], subscriber)
 	return nil
 }
 
-// Notify -
+// Notify handles the handler from the subscribers which eventType is etype.
 func (s *Subscription) Notify(etype EventType, val interface{}) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	sub := s.subscribers[etype]
+	for _, handler := range sub {
+		handler(val)
+	}
+
 	return nil
 }
 
-// NofityAll -
-func (s *Subscription) NofityAll() []error {
+// NofityAll handles all the handlers.
+func (s *Subscription) NotifyAll() []error {
 	var (
 		errs []error
 	)
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for _, sub := range s.subscribers{
+		for _, handler := range sub {
+			handler(nil)
+		}
+	}
 
 	return errs
 }
