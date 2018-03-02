@@ -35,6 +35,7 @@ import (
 	"net/http"
 
 	"github.com/dgrijalva/jwt-go"
+	json "github.com/json-iterator/go"
 
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/applications/shop/mysql"
@@ -42,17 +43,13 @@ import (
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
-	models "github.com/fengyfei/gu/models/shop/account"
 	"github.com/fengyfei/gu/models/user"
-	json "github.com/json-iterator/go"
 )
 
 const (
 	WechatURL = "https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code"
 	APPID     = ""
 	SECRET    = ""
-
-	typeUser = false
 )
 
 // Login by wechat
@@ -125,9 +122,9 @@ func WechatLogin(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, &userData)
 }
 
-// Add a phone number
+// Wechat add a phone number
 func AddPhone(c *server.Context) error {
-	var phone models.AddPhone
+	var phone user.WechatPhone
 
 	err := c.JSONBody(&phone)
 	if err != nil {
@@ -141,6 +138,11 @@ func AddPhone(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
+	if !util.IsValidPhone(phone.Phone) {
+		logger.Error("Invalid phone number")
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
 	token, err := util.Parse(c)
 	if err != nil {
 		logger.Error("Error in parsing token:", err)
@@ -148,7 +150,7 @@ func AddPhone(c *server.Context) error {
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
-	userid := uint64(claims[util.UserID].(float64))
+	userid := uint32(claims[util.UserID].(float64))
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
@@ -156,7 +158,7 @@ func AddPhone(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = models.Service.AddPhone(conn, userid, &phone)
+	err = user.UserServer.AddPhone(conn, userid, &phone)
 	if err != nil {
 		logger.Error("Error in adding a phone number:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
@@ -188,7 +190,7 @@ func ChangeInfo(c *server.Context) error {
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
-	userid := uint32(claims[util.UserID].(float32))
+	userid := uint32(claims[util.UserID].(float64))
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
@@ -216,8 +218,13 @@ func PhoneRegister(c *server.Context) error {
 	}
 
 	err = c.Validate(&register)
-	if err != nil || !util.IsValidPhone(register.Phone) {
+	if err != nil {
 		logger.Error("Invalid parameters:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	if !util.IsValidPhone(register.Phone) {
+		logger.Error("Invalid phone number")
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
@@ -304,7 +311,7 @@ func ChangePassword(c *server.Context) error {
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
-	userid := uint32(claims[util.UserID].(float32))
+	userid := uint32(claims[util.UserID].(float64))
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
