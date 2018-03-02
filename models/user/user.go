@@ -62,6 +62,8 @@ var (
 
 	// ErrInvalidPass
 	ErrInvalidPass = errors.New("the password error.")
+	// Mobile phone registration cannot add phone number.
+	ErrAddPhone = errors.New("Mobile phone registration cannot add phone number.")
 )
 
 type (
@@ -77,13 +79,11 @@ type (
 	}
 
 	ChangePass struct {
-		OldPass string `json:"oldPass" validate:"required,min=6,max=30"`
-		NewPass string `json:"newPass" validate:"required,min=6,max=30"`
+		OldPass string `json:"oldpass" validate:"required,min=6,max=30"`
+		NewPass string `json:"newpass" validate:"required,min=6,max=30"`
 	}
 
 	WechatLogin struct {
-		//UserName   string `json:"username"`
-		//Sex        uint8  `json:"sex"`
 		UnionID    string `json:"unionid"`
 		SessionKey string `json:"session_key"`
 	}
@@ -98,6 +98,10 @@ type (
 	WechatData struct {
 		SessionKey string `json:"session_key"`
 		UnionID    string `json:"unionid"`
+	}
+
+	WechatPhone struct {
+		Phone string `json:"phone" validate:"required,alphanum,len=11"`
 	}
 
 	UserData struct {
@@ -122,19 +126,17 @@ type (
 
 // User represents users information
 type User struct {
-	UserID   uint32 `gorm:"column:id;primary_key;auto_increment" json:"userID"`
-	UserName string `gorm:"column:username;size:16"`
-	Sex      uint8  `gorm:"column:sex"`
-	Password string `gorm:"column:password;type:varchar(128)" json:"password" validate:"required,alphanum,min=6,max=30"`
-	Phone    string `gorm:"type:varchar(16)" json:"phone" validate:"required,numeric,len=11"`
-	UnionID  string `gorm:"column:unionid;type:varchar(128)"`
-	//Avatar    string    `gorm:"column:avatar;type:varchar(128)"`
+	UserID    uint32    `gorm:"column:id;primary_key;auto_increment" json:"userID"`
+	UserName  string    `gorm:"column:username;size:16"`
+	Sex       uint8     `gorm:"column:sex"`
+	Password  string    `gorm:"column:password;type:varchar(128)" json:"password" validate:"required,alphanum,min=6,max=30"`
+	Phone     string    `gorm:"type:varchar(16)" json:"phone" validate:"required,numeric,len=11"`
+	UnionID   string    `gorm:"column:unionid;type:varchar(128)"`
 	Created   time.Time `gorm:"column:created"`
 	LastLogin time.Time `gorm:"column:lastlogin"`
 	IsAdmin   bool      `gorm:"column:isadmin"`
 	Type      int       `grom:"column:type"`
 	IsActive  bool      `gorm:"column:isactive;not null;default:1"`
-	//ArticleNum int64     `gorm:"column:articlenum;not null;default:0"`
 }
 
 func init() {
@@ -200,9 +202,28 @@ func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, info *WechatLo
 	return &user, avatar, nil
 }
 
+// wechat add a phone number
+func (this *UserServiceProvider) AddPhone(conn orm.Connection, id uint32, phone *WechatPhone) error {
+	var user User
+	db := conn.(*gorm.DB)
+	err := db.Where("id = ?", id).First(&user).Error
+	if err != nil {
+		return err
+	}
+	if user.Type == 1 {
+		return ErrAddPhone
+	}
+	user.Phone = phone.Phone
+	return db.Save(&user).Error
+}
+
 // Change user information
 func (this *UserServiceProvider) ChangeInfo(conn orm.Connection, id uint32, change *ChangeInfo) error {
 	var user User
+	var avatar = &Avatar{
+		UserID: id,
+		Avatar: change.Avatar,
+	}
 
 	db := conn.(*gorm.DB)
 
@@ -212,7 +233,7 @@ func (this *UserServiceProvider) ChangeInfo(conn orm.Connection, id uint32, chan
 	}
 
 	c := session.Connect()
-	_, err = c.Upsert(bson.M{"_id": id}, change.Avatar)
+	err = c.Update(bson.M{"userid": id}, avatar)
 	if err != nil {
 		return err
 	}
@@ -248,6 +269,8 @@ func (this *UserServiceProvider) PhoneRegister(conn orm.Connection, register *Ph
 
 func (this *UserServiceProvider) PhoneLogin(conn orm.Connection, login *PhoneLogin) (*User, *Avatar, error) {
 	var user User
+	var updater = make(map[string]interface{})
+	updater["lastlogin"] = time.Now()
 
 	db := conn.(*gorm.DB)
 
@@ -257,6 +280,11 @@ func (this *UserServiceProvider) PhoneLogin(conn orm.Connection, login *PhoneLog
 	}
 	if !security.SaltHashCompare([]byte(user.Password), &login.Password) {
 		return nil, nil, ErrInvalidPass
+	}
+
+	err = db.Model(&user).Where("id = ?", user.UserID).Update(updater).Limit(1).Error
+	if err != nil {
+		return nil, nil, err
 	}
 	avatar, err := userAvatar(user)
 	return &user, avatar, nil
