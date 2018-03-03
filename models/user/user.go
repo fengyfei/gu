@@ -57,9 +57,9 @@ const (
 
 var (
 	// UserServer
-	//UserServer *UserServiceProvider
-	session    *mongo.Connection
 	UserServer = &UserServiceProvider{}
+
+	session    *mongo.Connection
 
 	// ErrInvalidPass
 	ErrInvalidPass = errors.New("the password error.")
