@@ -30,8 +30,6 @@
 package crontab
 
 import (
-	"fmt"
-
 	"github.com/fengyfei/gu/applications/crawler/config"
 	"github.com/robfig/cron"
 )
@@ -45,7 +43,6 @@ type event struct {
 }
 
 func (e *event) Run() {
-	fmt.Println(e.e)
 	EventCh <- e.e
 }
 
