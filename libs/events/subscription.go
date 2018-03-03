@@ -75,20 +75,20 @@ func (s *Subscription) Unsubscribe(etype EventType, subscriber Subscriber) error
 	return nil
 }
 
-// Notify handles the handler from the subscribers which eventType is etype.
+// Notify will execute all handlers subscribered on event type of etype.
 func (s *Subscription) Notify(etype EventType, val interface{}) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	sub := s.subscribers[etype]
 	for _, handler := range sub {
-		handler(val)
+		go handler(val)
 	}
 
 	return nil
 }
 
-// NofityAll handles all the handlers.
+// NotifyAll send a broadcast event to all subscribers.
 func (s *Subscription) NotifyAll() []error {
 	var (
 		errs []error
@@ -97,9 +97,9 @@ func (s *Subscription) NotifyAll() []error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	for _, sub := range s.subscribers{
+	for _, sub := range s.subscribers {
 		for _, handler := range sub {
-			handler(nil)
+			go handler(nil)
 		}
 	}
 
