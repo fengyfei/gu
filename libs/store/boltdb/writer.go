@@ -24,8 +24,7 @@
 
 /*
  * Revision History:
- *     Initial: 2018/02/26        Feng Yifei
- *     Modify : 2018/02/26        Tong Yuehong
+ *     Initial: 2018/02/26        Tong Yuehong
  */
 
 package boltdb

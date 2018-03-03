@@ -24,8 +24,7 @@
 
 /*
  * Revision History:
- *     Initial: 2018/02/27        Feng Yifei
- *     Modify : 2018/02/27        Tong Yuehong
+ *     Initial: 2018/02/27        Tong Yuehong
  */
 
 package events
