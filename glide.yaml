@@ -72,6 +72,8 @@ import:
 - package: github.com/go-stack/stack
   version: v1.7.0
 - package: github.com/golang/groupcache
+- package: github.com/asdine/storm
+  version: v2.0.2
 testImport:
 - package: github.com/smartystreets/goconvey
   version: 1.6.3
