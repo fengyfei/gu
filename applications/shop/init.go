@@ -36,6 +36,7 @@ import (
 	"github.com/fengyfei/gu/libs/http/server/middleware"
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/applications/shop/mysql"
+	"github.com/fengyfei/gu/models/user"
 )
 
 var (
@@ -47,6 +48,8 @@ func startServer() {
 	serverConfig := &server.Configuration{
 		Address: conf.ShopConfig.Address,
 	}
+
+	user.InitMongo("avatar", "user", conf.ShopConfig.MongoURL)
 
 	mysql.InitPool()
 

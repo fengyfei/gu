@@ -29,7 +29,9 @@
 
 package conf
 
-import "github.com/spf13/viper"
+import (
+	"github.com/spf13/viper"
+)
 
 type shopConfig struct {
 	Address   string
