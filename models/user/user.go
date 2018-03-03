@@ -57,8 +57,9 @@ const (
 
 var (
 	// UserServer
-	UserServer *UserServiceProvider
+	//UserServer *UserServiceProvider
 	session    *mongo.Connection
+	UserServer = &UserServiceProvider{}
 
 	// ErrInvalidPass
 	ErrInvalidPass = errors.New("the password error.")
@@ -118,9 +119,8 @@ type (
 		Avatar   string `json:"avatar"`
 	}
 	Avatar struct {
-		AvatarID bson.ObjectId `bson:"_id,omitempty"`
-		UserID   uint32        `bson:"userid,omitempty" json:"id"`
-		Avatar   string        `bson:"avatar" json:"avatar"`
+		UserID uint32 `bson:"userid,omitempty" json:"id"`
+		Avatar string `bson:"avatar" json:"avatar"`
 	}
 )
 
@@ -139,9 +139,8 @@ type User struct {
 	IsActive  bool      `gorm:"column:isactive;not null;default:1"`
 }
 
-func init() {
-	const collection = "avatar"
-	url := "mongodb://127.0.0.1:27017"
+func InitMongo(dbName, tableName, url string) {
+	var collection = dbName
 	s, err := mgo.Dial(url)
 	if err != nil {
 		panic(err)
@@ -149,8 +148,8 @@ func init() {
 
 	s.SetMode(mgo.Monotonic, true)
 
-	session = mongo.NewConnection(s, "user", collection)
-	UserServer = &UserServiceProvider{}
+	session = mongo.NewConnection(s, tableName, collection)
+
 }
 
 // TableName
@@ -162,14 +161,14 @@ func (u User) TableName() string {
 func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, info *WechatLogin) (*User, *Avatar, error) {
 	var err error
 	var user User
-
+	var avatar Avatar
 	db := conn.(*gorm.DB)
 
 	err = db.Where("unionID = ?", info.UnionID).First(&user).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			r := rand.New(rand.NewSource(time.Now().UnixNano()))
-			s := fmt.Sprintf("%s%s", info.UnionID, r.Intn(10000))
+			s := fmt.Sprintf("%s%d", info.UnionID, r.Intn(10000))
 			salt, err := security.SaltHashGenerate(&s)
 			if err != nil {
 				return nil, nil, err
@@ -192,14 +191,26 @@ func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, info *WechatLo
 			if err != nil {
 				return nil, nil, err
 			}
+			c := session.Connect()
+			avatar = Avatar{
+				UserID: user.UserID,
+				Avatar: "null",
+			}
+			err = c.Insert(avatar)
+			if err != nil {
+				return nil, nil, err
+			}
+			return &user, &avatar, err
 		}
 		return nil, nil, err
 	}
-	avatar, err := userAvatar(user)
+
+	c := session.Connect()
+	err = c.GetUniqueOne(bson.M{"userid": user.UserID}, &avatar)
 	if err != nil {
 		return nil, nil, err
 	}
-	return &user, avatar, nil
+	return &user, &avatar, nil
 }
 
 // wechat add a phone number
@@ -246,6 +257,8 @@ func (this *UserServiceProvider) ChangeInfo(conn orm.Connection, id uint32, chan
 
 // Register by phone
 func (this *UserServiceProvider) PhoneRegister(conn orm.Connection, register *PhoneRegister) error {
+	var avatar Avatar
+
 	salt, err := security.SaltHashGenerate(&register.Password)
 	if err != nil {
 		return err
@@ -263,17 +276,29 @@ func (this *UserServiceProvider) PhoneRegister(conn orm.Connection, register *Ph
 	}
 
 	db := conn.(*gorm.DB)
-
-	return db.Create(&user).Error
+	err = db.Create(&user).Error
+	if err != nil {
+		return err
+	}
+	c := session.Connect()
+	avatar = Avatar{
+		UserID: user.UserID,
+		Avatar: "null",
+	}
+	err = c.Insert(avatar)
+	if err != nil {
+		return err
+	}
+	return err
 }
 
 func (this *UserServiceProvider) PhoneLogin(conn orm.Connection, login *PhoneLogin) (*User, *Avatar, error) {
 	var user User
+	var avatar Avatar
 	var updater = make(map[string]interface{})
 	updater["lastlogin"] = time.Now()
 
 	db := conn.(*gorm.DB)
-
 	err := db.Where("phone = ?", login.Phone).First(&user).Error
 	if err != nil {
 		return nil, nil, err
@@ -286,29 +311,13 @@ func (this *UserServiceProvider) PhoneLogin(conn orm.Connection, login *PhoneLog
 	if err != nil {
 		return nil, nil, err
 	}
-	avatar, err := userAvatar(user)
-	return &user, avatar, nil
-}
 
-// create and insert avatar for mongodb
-func userAvatar(user User) (*Avatar, error) {
-	var avatar Avatar
 	c := session.Connect()
-	err := c.GetUniqueOne(bson.M{"userid": user.UserID}, &avatar)
-
-	if err != nil && err == mgo.ErrNotFound {
-		avatar = Avatar{
-			UserID: user.UserID,
-			Avatar: "null",
-		}
-		err = c.Insert(avatar)
-		if err != nil {
-			return nil, err
-		}
-	} else if err != nil {
-		return nil, err
+	err = c.GetUniqueOne(bson.M{"userid": user.UserID}, &avatar)
+	if err != nil {
+		return nil, nil, err
 	}
-	return &avatar, err
+	return &user, &avatar, nil
 }
 
 func (this *UserServiceProvider) ChangePassword(conn orm.Connection, id uint32, change *ChangePass) error {
