@@ -30,19 +30,65 @@
 package util
 
 import (
+	"errors"
+	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/fengyfei/gu/libs/http/server"
 )
 
-const tokenKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+const (
+	tokenKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+	UserId   = "UserId"
+)
 
-func NewToken(userId uint64, isAdmin bool) (string, error) {
+var (
+	wechatLoginUrl = "/bbs/user/wechatlogin"
+	registerUrl    = "/bbs/user/register"
+	loginUrl       = "/bbs/user/login"
+)
+
+func NewToken(userId uint32, sessionKey string, isAdmin bool) (string, error) {
 	claims := make(jwt.MapClaims)
 	claims["userid"] = userId
-	claims["admin"] = isAdmin
+	claims["user"] = isAdmin
+	claims["SessionKey"] = sessionKey
 	claims["exp"] = time.Now().Add(time.Hour * 480).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	return token.SignedString([]byte(tokenKey))
+}
+
+func Parse(ctx *server.Context) (*jwt.Token, error) {
+	var (
+		tokenString string
+		token       *jwt.Token
+		err         error
+	)
+
+	url := ctx.Request().URL.String()
+	if url == wechatLoginUrl || url == loginUrl || url == registerUrl {
+		return nil, errors.New("don't use token on " + url)
+	}
+
+	authString := ctx.Request().Header.Get("Authorization")
+	kv := strings.Split(authString, " ")
+	if len(kv) != 2 || kv[0] != "Bearer" {
+		return nil, errors.New("authString invalid " + authString)
+	}
+
+	tokenString = kv[1]
+	token, err = jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return []byte(tokenKey), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if !token.Valid {
+		return nil, errors.New("token invalid " + tokenString)
+	}
+
+	return token, nil
 }

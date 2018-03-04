@@ -25,6 +25,7 @@
 /*
  * Revision History:
  *     Initial: 2018/01/21        Chen Yanchen
+ *     Modify : 2018/03/04
  */
 
 package user
@@ -32,11 +33,11 @@ package user
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	jwtgo "github.com/dgrijalva/jwt-go"
 
+	"github.com/fengyfei/gu/applications/bbs/initialize"
 	"github.com/fengyfei/gu/applications/bbs/util"
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/libs/constants"
@@ -45,107 +46,105 @@ import (
 	"github.com/fengyfei/gu/models/user"
 )
 
-var (
-	// APPID
-	APPID = ""
-
-	// SECRET
-	SECRET   = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
-	typeUser = false
-)
-
-type (
-	// WechatLoginReq
-	WechatLoginReq struct {
-		UserName   string `json:"userName" validate:"required,alphanum,min=6,max=30"`
-		WechatCode string `json:"wechatCode" validate:"required"`
-	}
-
-	wechatLogin struct {
-		data wechatLoginData
-	}
-
-	wechatLoginData struct {
-		errmsg  string
-		unionid string
-	}
+const (
+	WechatURL = "https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code"
+	APPID     = ""
+	SECRET    = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
 )
 
 // WechatLogin
 func WechatLogin(this *server.Context) error {
 	var (
-		wechatUser WechatLoginReq
-		userId     uint64
-		url        string
-		wechatData wechatLogin
-		wechatRes  *http.Response
-		con        []byte
-		token      string
+		wechatCode user.WechatCode
+		wechatData user.WechatData
 	)
 
-	if err := this.JSONBody(&wechatUser); err != nil {
+	if err := this.JSONBody(&wechatCode); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	err := this.Validate(&wechatUser)
-	if err != nil {
+	if err := this.Validate(&wechatCode); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	url = fmt.Sprintf("https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code", APPID, SECRET, wechatUser.WechatCode)
+	url := fmt.Sprintf(WechatURL, APPID, SECRET, wechatCode.Code)
+	wechatRes, err := http.Get(url)
 
-	wechatRes, err = http.Get(url)
 	if err != nil {
+		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrWechatAuth, nil)
 	}
 
-	con, _ = ioutil.ReadAll(wechatRes.Body)
-	err = json.Unmarshal(con, &wechatData)
-	if err != nil {
+	if wechatRes.StatusCode != http.StatusOK {
+		logger.Error("Can't get session key from weixin server: response status code", wechatRes.StatusCode)
 		return core.WriteStatusAndDataJSON(this, constants.ErrWechatAuth, nil)
 	}
 
-	if wechatData.data.errmsg != "" {
+	err = json.NewDecoder(wechatRes.Body).Decode(&wechatData)
+	if err != nil {
+		logger.Error("Error in parsing response:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrWechatAuth, nil)
 	}
 
-	userId, err = user.UserServer.WeChatLogin(&wechatUser.UserName, &wechatData.data.unionid)
+	wechatLogin := user.WechatLogin{
+		UnionID: wechatData.UnionID,
+	}
+
+	// connect to mysql
+	conn, err := initialize.Pool.Get()
 	if err != nil {
+		logger.Error("Can not connected mysql.", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
 	}
 
-	token, err = util.NewToken(userId, typeUser)
+	u, avatar, err := user.UserServer.WeChatLogin(conn, &wechatLogin)
+	if err != nil {
+		logger.Error("Wechat login failed.")
+		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
+	}
+
+	token, err := util.NewToken(u.UserID, wechatData.SessionKey, false)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
-	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, token)
+
+	userData := user.UserData{
+		Token:    token,
+		UserName: u.UserName,
+		Phone:    u.Phone,
+		Avatar:   avatar.Avatar,
+		Sex:      u.Sex,
+	}
+
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, userData)
 }
 
 // PhoneRegister register by phoneNumber
 func PhoneRegister(c *server.Context) error {
-	var (
-		req user.PhoneRegister
-		err error
-	)
+	var register user.PhoneRegister
 
-	err = c.JSONBody(&req)
-	if err != nil {
+	if err := c.JSONBody(&register); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	err = c.Validate(&req)
-	if err != nil {
+	if err := c.Validate(&register); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	err = user.UserServer.PhoneRegister(&req)
+	conn, err := initialize.Pool.Get()
 	if err != nil {
-		logger.Error(err)
+		logger.Error("Can not connected mysql.", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	err = user.UserServer.PhoneRegister(conn, &register)
+	if err != nil {
+		logger.Error("Register failed.", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
@@ -154,52 +153,77 @@ func PhoneRegister(c *server.Context) error {
 
 // PhoneLogin login by phone
 func PhoneLogin(c *server.Context) error {
-	var (
-		req   user.PhoneLogin
-		err   error
-		token string
-		uid   uint64
-	)
+	var phoneLogin user.PhoneLogin
 
-	err = c.JSONBody(&req)
-	if err != nil {
+	if err := c.JSONBody(&phoneLogin); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	err = c.Validate(&req)
-	if err != nil {
+	if err := c.Validate(&phoneLogin); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	uid, err = user.UserServer.PhoneLogin(&req)
+	conn, err := initialize.Pool.Get()
+	if err != nil {
+		logger.Error("Can not connected mysql.", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	u, avatar, err := user.UserServer.PhoneLogin(conn, &phoneLogin)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrAccount, nil)
 	}
 
-	token, err = util.NewToken(uid, typeUser)
+	token, err := util.NewToken(u.UserID, "", false)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, token)
-}
-
-// ChangeUsername
-func ChangeUsername(this *server.Context) error {
-	var req struct {
-		NewName string `json:"newname" validate:"required,alphanum,min=6,max=30"`
+	userData := user.UserData{
+		Token:    token,
+		UserName: u.UserName,
+		Phone:    u.Phone,
+		Sex:      u.Sex,
+		Avatar:   avatar.Avatar,
 	}
 
-	userID := this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(float64)
-	if err := this.JSONBody(&req); err != nil {
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, &userData)
+}
+
+// Change User Info
+func ChangeUserInfo(this *server.Context) error {
+	var changeInfo user.ChangeInfo
+
+	if err := this.JSONBody(&changeInfo); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
-	err := user.UserServer.ChangeName(uint64(userID), &req.NewName)
+
+	if err := this.Validate(&changeInfo); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	token, err := util.Parse(this)
+	if err != nil {
+		logger.Error("Error in parsing token:", err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrToken, nil)
+	}
+
+	claims := token.Claims.(jwtgo.MapClaims)
+	userid := uint32(claims[util.UserId].(float64))
+
+	conn, err := initialize.Pool.Get()
+	if err != nil {
+		logger.Error("Can not connected mysql.", err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
+	}
+
+	err = user.UserServer.ChangeInfo(conn, userid, &changeInfo)
 	if err != nil {
 		logger.Error(err)
 		core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
@@ -207,22 +231,40 @@ func ChangeUsername(this *server.Context) error {
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, nil)
 }
 
-// ChangeAvatar
-func ChangeAvatar(this *server.Context) error {
-	var req struct {
-		NewAvatar string `json:"newname" validate:"required,alphanum,min=6,max=30"`
-	}
-	userID := this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(float64)
+// Change password
+func ChangePassword(c *server.Context) error {
+	var change user.ChangePass
 
-	if err := this.JSONBody(&req); err != nil {
+	if err := c.JSONBody(&change); err != nil {
 		logger.Error(err)
-		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	avatarId, err := user.UserServer.ChangeAvatar(uint64(userID), &req.NewAvatar)
+	if err := c.Validate(&change); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	token, err := util.Parse(c)
 	if err != nil {
 		logger.Error(err)
-		core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
 	}
-	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, avatarId)
+
+	claims := token.Claims.(jwtgo.MapClaims)
+	userid := uint32(claims[util.UserId].(float64))
+
+	conn, err := initialize.Pool.Get()
+	if err != nil {
+		logger.Error("Can not connected mysql.", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	err = user.UserServer.ChangePassword(conn, userid, &change)
+	if err != nil {
+		logger.Error("Error in changing password:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }

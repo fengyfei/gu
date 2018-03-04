@@ -51,7 +51,7 @@ func InitRouter(u *server.Router) {
 	}
 
 	u.Post("/user/wechatlogin", user.WechatLogin)
-	u.Post("/user/changeusername", user.ChangeUsername)
+	u.Post("/user/changeinfo", user.ChangeUserInfo)
 	u.Post("/user/changeavatar", user.ChangeAvatar)
 	u.Post("/user/phoneregister", user.PhoneRegister)
 	u.Post("/user/phonelogin", user.PhoneLogin)
