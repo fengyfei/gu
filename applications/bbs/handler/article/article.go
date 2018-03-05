@@ -54,7 +54,7 @@ func AddArticle(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	userID := this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(float64)
+	userID := this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(uint32)
 	if err := this.Validate(&reqAdd); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)

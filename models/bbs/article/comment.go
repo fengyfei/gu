@@ -36,6 +36,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/fengyfei/gu/applications/bbs/conf"
+	mysql "github.com/fengyfei/gu/applications/bbs/initialize"
 	"github.com/fengyfei/gu/libs/mongo"
 	"github.com/fengyfei/gu/models/bbs"
 	"github.com/fengyfei/gu/models/user"
@@ -53,20 +54,20 @@ var (
 type Comment struct {
 	Id        bson.ObjectId `bson:"_id,omitempty"  json:"id"`
 	ArtID     bson.ObjectId `bson:"artID"          json:"artID"`
-	CreatorID uint64        `bson:"creatorID"      json:"creatorID"`
+	CreatorID uint32        `bson:"creatorID"      json:"creatorID"`
 	Creator   string        `bson:"creator"        json:"creator"`
-	ReplierID uint64        `bson:"replierID"      json:"replierID"`
+	ReplierID uint32        `bson:"replierID"      json:"replierID"`
 	Replier   string        `bson:"replier"        json:"replier"`
 	ParentID  bson.ObjectId `bson:"parentID"       json:"parentID"`
 	Content   string        `bson:"content"        json:"content"`
 	Created   time.Time     `bson:"created"        json:"created"`
-	IsActive  bool          `bson:"isActive"         json:"isActive"`
+	IsActive  bool          `bson:"isActive"       json:"isActive"`
 }
 
 // CreateComment represents the article information when created.
 type CreateComment struct {
-	CreatorID uint64 `json:"creatorID"`
-	ReplierID uint64 `json:"replierID"`
+	CreatorID uint32 `json:"creatorID"`
+	ReplierID uint32 `json:"replierID"`
 	ParentID  string `json:"parentID"`
 	ArtID     string `json:"artID"`
 	Content   string `json:"content"`
@@ -89,12 +90,15 @@ func init() {
 
 // Create insert comment.
 func (sp *commentServiceProvider) Create(comment CreateComment) error {
-	creator, err := user.UserServer.GetUserByID(comment.CreatorID)
+	con, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(con)
+
+	creator, err := user.UserServer.GetUserByID(con, comment.CreatorID)
 	if err != nil {
 		return err
 	}
 
-	replier, err := user.UserServer.GetUserByID(comment.CreatorID)
+	replier, err := user.UserServer.GetUserByID(con, comment.CreatorID)
 	if err != nil {
 		return err
 	}
@@ -193,7 +197,7 @@ func (sp *commentServiceProvider) GetByArtID(artID string) ([]Comment, error) {
 }
 
 // GetByUserID return comments by userID
-func (sp *commentServiceProvider) GetByUserID(userID uint64) ([]Comment, error) {
+func (sp *commentServiceProvider) GetByUserID(userID uint32) ([]Comment, error) {
 	var comments []Comment
 
 	conn := commentSession.Connect()
@@ -211,7 +215,7 @@ func (sp *commentServiceProvider) GetByUserID(userID uint64) ([]Comment, error) 
 }
 
 // UserReply return the information about someone's reply.
-func (sp *commentServiceProvider) UserReply(userID uint64) ([]UserReply, error) {
+func (sp *commentServiceProvider) UserReply(userID uint32) ([]UserReply, error) {
 	comments, err := sp.GetByUserID(userID)
 	if err != nil {
 		return nil, err

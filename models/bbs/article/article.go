@@ -36,6 +36,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/fengyfei/gu/applications/bbs/conf"
+	mysql "github.com/fengyfei/gu/applications/bbs/initialize"
 	"github.com/fengyfei/gu/libs/mongo"
 	"github.com/fengyfei/gu/models/bbs"
 	"github.com/fengyfei/gu/models/user"
@@ -109,7 +110,7 @@ func init() {
 }
 
 // Insert - add article.
-func (sp *articleServiceProvider) Insert(article CreateArticle, userID float64) (string, error) {
+func (sp *articleServiceProvider) Insert(article CreateArticle, userID uint32) (string, error) {
 	moduleID, err := ModuleService.GetModuleID(article.Module)
 	if err != nil {
 		return "", err
@@ -120,7 +121,10 @@ func (sp *articleServiceProvider) Insert(article CreateArticle, userID float64) 
 		return "", err
 	}
 
-	userInfo, err := user.UserServer.GetUserByID(uint64(userID))
+	con, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(con)
+
+	userInfo, err := user.UserServer.GetUserByID(con, userID)
 	if err != nil {
 		return "", err
 	}
@@ -240,7 +244,7 @@ func (sp *articleServiceProvider) GetByArtID(artID bson.ObjectId) (*Article, err
 }
 
 // GetByUserID return articles by title.
-func (sp *articleServiceProvider) GetByUserID(userID uint64) ([]Article, error) {
+func (sp *articleServiceProvider) GetByUserID(userID uint32) ([]Article, error) {
 	var list []Article
 
 	conn := articleSession.Connect()

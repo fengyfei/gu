@@ -57,7 +57,7 @@ func AddComment(this *server.Context) error {
 	}
 
 	userID := this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(float64)
-	req.CreatorID =uint64(userID)
+	req.CreatorID =uint32(userID)
 
 	err := article.CommentService.Create(req)
 	if err != nil {
@@ -112,7 +112,7 @@ func CommentInfo(this *server.Context) error {
 // // UserReply return the information about someone's reply.
 func UserReply(this *server.Context) error {
 	var user struct {
-		UserID uint64 `json:"userID"`
+		UserID uint32 `json:"userID"`
 	}
 
 	if err := this.JSONBody(&user); err != nil {
