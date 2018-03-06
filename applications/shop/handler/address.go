@@ -25,6 +25,7 @@
 /*
  * Revision History:
  *     Initial: 2018/02/01        Shi Ruitao
+ *     Modify : 2018/03/06        Tong Yuehong
  */
 
 package handler
@@ -40,9 +41,15 @@ import (
 	models "github.com/fengyfei/gu/models/shop/address"
 )
 
+type (
+	id struct {
+		ID uint64 `json:"id"`
+	}
+)
+
 // Add an address
 func AddAddress(c *server.Context) error {
-	var add models.Add
+	var add models.AddressData
 
 	err := c.JSONBody(&add)
 	if err != nil {
@@ -63,7 +70,7 @@ func AddAddress(c *server.Context) error {
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
-	userID := uint64(claims[util.UserID].(float64))
+	userID := uint32(claims[util.UserID].(float64))
 
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
@@ -83,17 +90,10 @@ func AddAddress(c *server.Context) error {
 
 // Set an address as the default address
 func SetDefaultAddress(c *server.Context) error {
-	var set models.SetDefault
-
-	err := c.JSONBody(&set)
+	var id id
+	err := c.JSONBody(&id)
 	if err != nil {
 		logger.Error("Error in JSONBody:", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
-	}
-
-	err = c.Validate(&set)
-	if err != nil {
-		logger.Error("Invalid parameters:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
@@ -104,7 +104,7 @@ func SetDefaultAddress(c *server.Context) error {
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
-	userID := uint64(claims[util.UserID].(float64))
+	userID := uint32(claims[util.UserID].(float64))
 
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
@@ -113,7 +113,7 @@ func SetDefaultAddress(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = models.Service.SetDefault(conn, userID, set.ID)
+	err = models.Service.SetDefault(conn, userID, id.ID)
 	if err != nil {
 		logger.Error("Error in setting the default address:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -138,15 +138,6 @@ func ModifyAddress(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	token, err := util.Parse(c)
-	if err != nil {
-		logger.Error("Error in parsing token:", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
-	}
-
-	claims := token.Claims.(jwt.MapClaims)
-	userID := uint64(claims[util.UserID].(float64))
-
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
@@ -154,7 +145,7 @@ func ModifyAddress(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = models.Service.Modify(conn, userID, &modify)
+	err = models.Service.Modify(conn, &modify)
 	if err != nil {
 		logger.Error("Error in modifying the address:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -172,7 +163,7 @@ func GetAddress(c *server.Context) error {
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
-	userID := uint(claims[util.UserID].(float64))
+	userID := uint32(claims[util.UserID].(float64))
 
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
@@ -191,28 +182,28 @@ func GetAddress(c *server.Context) error {
 
 // Delete an address
 func DeleteAddress(c *server.Context) error {
-	var delete models.Delete
+	var id id
 
-	err := c.JSONBody(&delete)
+	err := c.JSONBody(&id)
 	if err != nil {
 		logger.Error("Error in JSONBody:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	err = c.Validate(&delete)
-	if err != nil {
-		logger.Error("Invalid parameters:", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
-	}
+	//err = c.Validate(&id.ID)
+	//if err != nil {
+	//	logger.Error("Invalid parameters:", err)
+	//	return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	//}
 
-	token, err := util.Parse(c)
-	if err != nil {
-		logger.Error("Error in parsing token:", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
-	}
+	//token, err := util.Parse(c)
+	//if err != nil {
+	//	logger.Error("Error in parsing token:", err)
+	//	return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
+	//}
 
-	claims := token.Claims.(jwt.MapClaims)
-	userID := uint64(claims[util.UserID].(float64))
+	//claims := token.Claims.(jwt.MapClaims)
+	//userID := uint64(claims[util.UserID].(float64))
 
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
@@ -221,7 +212,7 @@ func DeleteAddress(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = models.Service.Delete(conn, userID, delete.ID)
+	err = models.Service.Delete(conn, id.ID)
 	if err != nil {
 		logger.Error("Error in deleting the address:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
