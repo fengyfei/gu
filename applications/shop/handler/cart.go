@@ -43,7 +43,7 @@ import (
 )
 
 // Add commodity
-func Add(c *server.Context) error {
+func AddCart(c *server.Context) error {
 	var (
 		req   Cart.AddCartReq
 		err   error
@@ -58,7 +58,7 @@ func Add(c *server.Context) error {
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
-	userId := uint64(claims[util.UserID].(float64))
+	userId := uint32(claims[util.UserID].(float64))
 
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
@@ -89,7 +89,7 @@ func Add(c *server.Context) error {
 
 func GetByUser(c *server.Context) error {
 	var (
-		items []Cart.CartItem
+		items []Cart.Cart
 		err   error
 		conn  orm.Connection
 		token *jwt.Token
@@ -102,7 +102,7 @@ func GetByUser(c *server.Context) error {
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
-	userId := uint(claims[util.UserID].(float64))
+	userId := uint32(claims[util.UserID].(float64))
 
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
@@ -146,6 +146,37 @@ func Remove(c *server.Context) error {
 	}
 
 	err = Cart.Service.RemoveById(conn, req.Id)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
+}
+
+type reqRemove struct{
+	IDs  []uint64 `json:"ids"`
+}
+func RemoveMany(c *server.Context) error {
+	var (
+		req  reqRemove
+		err  error
+		conn orm.Connection
+	)
+
+	conn, err = mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	err = c.JSONBody(&req)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	err = Cart.Service.RemoveWhenOrder(conn, req.IDs)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)

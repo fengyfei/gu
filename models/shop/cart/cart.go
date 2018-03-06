@@ -25,7 +25,8 @@
 /*
  * Revision History:
  *     Initial: 2017/11/30        ShiChao
- *	   Modify: 2018/02/02         Shi Ruitao
+ *	   Modify : 2018/02/02        Shi Ruitao
+ *	   Modify : 2018/03/06        Tong Yuehong
  */
 
 package cart
@@ -45,12 +46,12 @@ var (
 )
 
 type (
-	CartItem struct {
-		ID        uint64     `gorm:"primary_key;auto_increment"`
-		UserId    uint64     `gorm:"not null"`
-		WareId    uint64     `gorm:"not null"`
-		Count     uint32     `gorm:"not null";default:0`
-		CreatedAt *time.Time `gorm:"column:created"`
+	Cart struct {
+		ID      uint64     `gorm:"primary_key;auto_increment"  json:"id"`
+		UserId  uint32     `gorm:"not null"                    json:"user_id"`
+		WareId  uint64     `gorm:"not null"                    json:"ware_id"`
+		Count   uint32     `gorm:"not null;default:0"          json:"count"`
+		Created time.Time  `gorm:"column:created"              json:"created"`
 	}
 
 	AddCartReq struct {
@@ -63,54 +64,63 @@ type (
 	}
 )
 
-func (this *serviceProvider) Add(conn orm.Connection, userId uint64, wareId uint64, count uint32) error {
-	db := conn.(*gorm.DB).Exec("USE shop")
-
-	item := &CartItem{}
-	item.UserId = userId
-	item.WareId = wareId
-	err := db.First(&item).Error
-	if err == nil {
-		item.Count += count
-		return db.Save(&item).Error
-	}
-
-	if err == gorm.ErrRecordNotFound {
-		now := time.Now()
-		item.CreatedAt = &now
-		item.Count = count
-	} else {
-		return err
-	}
-
-	return db.Model(&CartItem{}).Create(&item).Error
+func (Cart) TableName() string {
+	return "cart"
 }
 
-func (this *serviceProvider) GetByUserID(conn orm.Connection, userId uint) ([]CartItem, error) {
+func (this *serviceProvider) Add(conn orm.Connection, userId uint32, wareId uint64, count uint32) error {
+	var (
+		cart Cart
+	)
 	db := conn.(*gorm.DB).Exec("USE shop")
-	items := []CartItem{}
 
-	err := db.Where("userid = ?", userId).Find(&items).Error
+	err := db.Where("ware_id = ?", wareId).Find(&cart).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			cart := &Cart{
+				UserId:  userId,
+				WareId:  wareId,
+				Count:   count,
+				Created: time.Now(),
+			}
+			return db.Table("cart").Create(&cart).Error
+		} else {
+			return err
+		}
+	}
 
-	return items, err
+	cart.Count += count
+	return db.Save(&cart).Error
+}
+
+func (this *serviceProvider) GetByUserID(conn orm.Connection, userId uint32) ([]Cart, error) {
+	db := conn.(*gorm.DB).Exec("USE shop")
+	var carts []Cart
+
+	err := db.Where("user_id = ?", userId).Find(&carts).Error
+
+	return carts, err
 }
 
 func (this *serviceProvider) RemoveById(conn orm.Connection, id uint64) error {
 	db := conn.(*gorm.DB).Exec("USE shop")
-	item := &CartItem{}
-	item.ID = id
 
-	return db.Delete(&item).Error
+	return db.Table("cart").Where("id = ?", id).Delete(&Cart{}).Error
 }
 
-func (this *serviceProvider) RemoveWhenOrder(tx *gorm.DB, userId uint, wareIdList []uint64) error {
+func (this *serviceProvider) RemoveWhenOrder(conn orm.Connection, wareIdList []uint64) error {
+	var (
+		err error
+	)
+
+	db := conn.(*gorm.DB).Exec("USE shop")
+
 	for i := 0; i < len(wareIdList); i++ {
-		item := &CartItem{}
-		item.ID = wareIdList[i]
-		err := tx.Delete(&item).Error
+		err = db.Table("cart").Where("id = ?", wareIdList[i]).Delete(&Cart{}).Error
 		if err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
