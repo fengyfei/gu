@@ -47,9 +47,9 @@ const (
 )
 
 var (
-	wechatLoginUrl = "/shop/user/wechatlogin"
-	registerUrl    = "/shop/user/register"
-	loginUrl       = "/shop/user/login"
+	wechatLoginUrl = "/shop/account/wechatlogin"
+	registerUrl    = "/shop/account/register"
+	loginUrl       = "/shop/account/phonelogin"
 )
 
 func NewToken(userID uint32, sessionKey string, isAdmin bool) (string, error) {

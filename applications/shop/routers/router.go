@@ -76,9 +76,10 @@ func register(r *server.Router) {
 	//r.Post("/shop/ware/getdetail", "post:GetDetail")
 
 	// cart api
-	//r.Post("/shop/cart/add", &handler.CartController{}, "post:Add")
-	//r.Post("/shop/cart/remove", &handler.CartController{}, "post:Remove")
-	r.Post("/shop/cart/get", handler.GetByUser)
+	r.Post("/shop/cart/add", handler.AddCart)
+	r.Post("/shop/cart/userid", handler.GetByUser)
+	r.Post("/shop/cart/remove", handler.Remove)
+	r.Post("/shop/cart/removemany", handler.RemoveMany)
 
 	// order api for user
 	//r.Post("/shop/user/order/add", &handler.OrderController{}, "post:CreateOrder")
