@@ -24,7 +24,7 @@
 
 /*
  * Revision History:
- *     Initial: 2018/02/04        Shi Ruitao
+ *     Initial: 2018/03/07        Tong Yuehong
  */
 
 package category
@@ -39,49 +39,24 @@ import (
 
 type serviceProvider struct{}
 
-const (
-	Unused = 1
-	InUse  = 2
-)
-
 var (
 	Service *serviceProvider
 )
 
 type (
 	Category struct {
-		ID          uint64    `gorm:"column:id"`
-		Category    string    `gorm:"column:category"`
-		Description string    `gorm:"column:description"`
-		ParentID    uint64    `gorm:"column:parentid"`
-		Status      uint8     `gorm:"column:status"`
-		Created     time.Time `gorm:"column:created"`
-	}
-
-	CategoryData struct {
-		ID          uint64    `gorm:"column:id"`
-		Category    string    `gorm:"column:category"`
-		Description string    `gorm:"column:description"`
-		ParentID    uint64    `gorm:"column:parentid"`
-		Status      uint8     `gorm:"column:status"`
-		Created     time.Time `gorm:"column:created"`
+		ID       uint16    `gorm:"column:id"`
+		Category string    `gorm:"column:category"`
+		ParentID uint16    `gorm:"column:parent_id"`
+		IsActive bool      `gorm:"column:is_active"`
+		Created  time.Time `gorm:"column:created"`
 	}
 )
 
 type (
-	Add struct {
-		Category    string `json:"category" validate:"required,alphanumunicode,max=12"`
-		Description string `json:"description" validate:"required,max=50"`
-		Status      uint8  `json:"status"`
-		ParentID    uint64 `json:"parentid"`
-	}
-
-	Modify struct {
-		ID          uint64 `json:"id"`
-		Category    string `json:"category" validate:"required,alphanumunicode,max=12"`
-		Description string `json:"description" validate:"required,max=50"`
-		Status      uint8  `json:"status"`
-		ParentID    uint64 `json:"parentid"`
+	Info struct {
+		Category string `json:"category" validate:"required,min=2,max=12"`
+		ParentID uint16 `json:"parentid"`
 	}
 )
 
@@ -90,13 +65,12 @@ func (Category) TableName() string {
 }
 
 // Add a category
-func (sp *serviceProvider) Add(conn orm.Connection, add *Add) error {
+func (sp *serviceProvider) Add(conn orm.Connection, add *Info) error {
 	category := Category{
-		Category:    add.Category,
-		Description: add.Description,
-		ParentID:    add.ParentID,
-		Status:      add.Status,
-		Created:     time.Now(),
+		Category: add.Category,
+		ParentID: add.ParentID,
+		IsActive: true,
+		Created:  time.Now(),
 	}
 
 	db := conn.(*gorm.DB)
@@ -104,30 +78,27 @@ func (sp *serviceProvider) Add(conn orm.Connection, add *Add) error {
 	return db.Create(&category).Error
 }
 
-func (sp *serviceProvider) GetCategory(conn orm.Connection, pid uint64) ([]Category, error) {
+func (sp *serviceProvider) GetMainCategory(conn orm.Connection) ([]Category, error) {
 	var list []Category
 
 	db := conn.(*gorm.DB).Exec("USE shop")
-	res := db.Table("categories").Where("status > ? AND parentid = ?", 0, pid).Scan(&list)
+	err := db.Table("category").Where("is_active = ? AND parent_id = ?", true, 0).Find(&list).Error
 
-	return list, res.Error
+	return list, err
 }
 
-// Modify the category
-func (sp *serviceProvider) Modify(conn orm.Connection, modify *Modify) error {
-	var category Category
+func (sp *serviceProvider) GetSubCategory(conn orm.Connection, pid uint16) ([]Category, error) {
+	var list []Category
 
+	db := conn.(*gorm.DB).Exec("USE shop")
+	err := db.Table("category").Where("is_active = ? AND parent_id = ?", true, pid).Find(&list).Error
+
+	return list, err
+}
+
+// Delete the category.
+func (sp *serviceProvider) Delete(conn orm.Connection, id uint16) error {
 	db := conn.(*gorm.DB)
 
-	err := db.Where("id = ?", modify.ID).First(&category).Error
-	if err != nil {
-		return err
-	}
-
-	category.Category = modify.Category
-	category.Description = modify.Description
-	category.ParentID = modify.ParentID
-	category.Status = modify.Status
-
-	return db.Save(&category).Error
+	return db.Table("category").Where("id = ?", id).Update("is_active", false).Error
 }

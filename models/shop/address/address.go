@@ -160,8 +160,8 @@ func (this *serviceProvider) Modify(conn orm.Connection, modify *Modify) error {
 	db := conn.(*gorm.DB)
 
 	return db.Table("address").Where("id = ?", modify.ID).Update(map[string]interface{}{
-		"name": modify.Name,
-		"phone": modify.Phone,
+		"name":    modify.Name,
+		"phone":   modify.Phone,
 		"address": modify.Address,
 	}).Error
 }

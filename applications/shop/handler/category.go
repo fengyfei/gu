@@ -24,8 +24,7 @@
 
 /*
  * Revision History:
- *     Initial: 2018/02/04        Shi Ruitao
- *     Modify:  2018/02/05        Li Zebang
+ *     Initial: 2018/02/04        Tong Yuehong
  */
 
 package handler
@@ -40,19 +39,21 @@ import (
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
-	models "github.com/fengyfei/gu/models/shop/category"
+	category "github.com/fengyfei/gu/models/shop/category"
 )
 
 var (
 	ErrNotAdmin = errors.New("non-administrators can not operate.")
 )
 
+type pid struct {
+	Id   uint16    `json:"id"`
+}
 // Add a category
 func AddCategory(c *server.Context) error {
-	var add models.Add
+	var add category.Info
 
-	isAdmin := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(bool)
-
+	isAdmin := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.IsAdmin].(bool)
 	if !isAdmin {
 		logger.Error("Permission denied:", ErrNotAdmin)
 		return core.WriteStatusAndDataJSON(c, constants.ErrPermission, ErrNotAdmin)
@@ -77,7 +78,7 @@ func AddCategory(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = models.Service.Add(conn, &add)
+	err = category.Service.Add(conn, &add)
 	if err != nil {
 		logger.Error("Error in add a category:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -86,105 +87,85 @@ func AddCategory(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
-func ModifyCategory(c *server.Context) error {
-	var modify models.Modify
+ // get all parent categories
+ func GetMainCategories(c *server.Context) error {
+ 	conn, err := mysql.Pool.Get()
+ 	defer mysql.Pool.Release(conn)
+ 	if err != nil {
+ 		logger.Error("mysql.Pool.Get()", err)
+ 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+ 	}
 
-	isAdmin := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(bool)
+ 	res, err := category.Service.GetMainCategory(conn)
+ 	if err != nil {
+ 		logger.Error("category.Service.GetCategory()", err)
+ 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+ 	}
 
+ 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, res)
+ }
+
+ // get categories of the specified pid
+ func GetSubCategories(c *server.Context) error {
+ 	var (
+ 		err    error
+ 		pid    pid
+ 		res    []category.Category
+ 	)
+
+ 	conn, err := mysql.Pool.Get()
+ 	defer mysql.Pool.Release(conn)
+ 	if err != nil {
+ 		logger.Error("mysql.Pool.Get():", err)
+ 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+ 	}
+
+ 	err = c.JSONBody(&pid)
+ 	if err != nil {
+ 		logger.Error("JSONBody():", err)
+ 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+ 	}
+
+ 	res, err = category.Service.GetSubCategory(conn, pid.Id)
+ 	if err != nil {
+ 		logger.Error(err)
+ 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+ 	}
+
+ 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, res)
+ }
+
+// Delete deletes category.
+func Delete(c *server.Context) error {
+	var (
+		err    error
+		pid    pid
+	)
+
+	isAdmin := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.IsAdmin].(bool)
 	if !isAdmin {
 		logger.Error("Permission denied:", ErrNotAdmin)
 		return core.WriteStatusAndDataJSON(c, constants.ErrPermission, ErrNotAdmin)
 	}
 
-	err := c.JSONBody(&modify)
-	if err != nil {
-		logger.Error("Error in parsing token:", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
-	}
-
-	err = c.Validate(&modify)
-	if err != nil {
-		logger.Error("Permission denied:", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
-	}
-
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
-		logger.Error("Can't get mysql connection:", err)
+		logger.Error("mysql.Pool.Get():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = models.Service.Modify(conn, &modify)
+	err = c.JSONBody(&pid)
 	if err != nil {
-		logger.Error("Error in modifying the category:", err)
+		logger.Error("JSONBody():", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	err = category.Service.Delete(conn, pid.Id)
+	if err != nil {
+		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
-
-//func GetCategory(c *server.Context) error {
-//	var get models.Get
-//
-//}
-
-// // get all parent categories
-// func GetMainCategories(c *server.Context) error {
-// 	var (
-// 		pid uint64 = 0
-// 		err error
-// 		res []category.Category
-// 	)
-
-// 	conn, err := mysql.Pool.Get()
-// 	defer mysql.Pool.Release(conn)
-// 	if err != nil {
-// 		logger.Error("mysql.Pool.Get()", err)
-// 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-// 	}
-
-// 	res, err = category.Service.GetCategory(conn, pid)
-// 	if err != nil {
-// 		logger.Error("category.Service.GetCategory()", err)
-// 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-// 	}
-
-// 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, res)
-// }
-
-// // get categories of the specified pid
-// func GetSubCategories(c *server.Context) error {
-// 	var (
-// 		err    error
-// 		pidReq category.SubCategoryReq
-// 		res    []category.Category
-// 	)
-
-// 	conn, err := mysql.Pool.Get()
-// 	defer mysql.Pool.Release(conn)
-// 	if err != nil {
-// 		logger.Error("mysql.Pool.Get():", err)
-// 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-// 	}
-
-// 	err = c.JSONBody(&pidReq)
-// 	if err != nil {
-// 		logger.Error("JSONBody():", err)
-// 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
-// 	}
-
-// 	err = c.Validate(pidReq)
-// 	if err != nil {
-// 		logger.Error("Validate():", err)
-// 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
-// 	}
-
-// 	res, err = category.Service.GetCategory(conn, pidReq.PID)
-// 	if err != nil {
-// 		logger.Error(err)
-// 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-// 	}
-
-// 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, res)
-// }
