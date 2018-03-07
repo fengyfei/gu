@@ -47,48 +47,50 @@ var (
 
 type (
 	Ware struct {
-		ID         uint32    `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
-		Name       string    `gorm:"type:varchar(50);not null"  json:"name" validate:"required,alphanumunicode,max=12"`
-		Desc       string    `gorm:"type:varchar(100);not null" json:"desc" validate:"alphanumunicode,max=50"`
-		CategoryID uint      `gorm:"not null" json:"categoryId"`
-		TotalSale  uint      `gorm:"not null" json:"totalSale"`
-		Inventory  uint      `gorm:"not null" json:"inventory"`
-		Status     int8      `gorm:"type:TINYINT;default:1" json:"status"` // -1, hide or delete;1, common wares;2, promotion
-		Price      float32   `gorm:"not null;type:float" json:"price"`
-		SalePrice  float32   `gorm:"not null;type:float" json:"salePrice"` // promotion price
-		Avatar     string    `gorm:"type:varchar(100)"   json:"avatar"`
-		Image      string    `gorm:"type:varchar(100)"   json:"image"`
-		DetailPic  string    `gorm:"type:varchar(100)"   json:"detailPic"`
-		CreatedAt  time.Time `json:"createdAt"`
+		ID               uint32    `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
+		Name             string    `gorm:"type:varchar(50);not null"  json:"name" validate:"required,alphanumunicode,max=12"`
+		Desc             string    `gorm:"type:varchar(100);not null" json:"desc" validate:"alphanumunicode,max=50"`
+		ParentCategoryID uint16    `gorm:"not null" json:"parent_category_id"`
+		CategoryID       uint16    `gorm:"not null" json:"category_id"`
+		TotalSale        uint32    `gorm:"not null" json:"totalale"`
+		Inventory        uint16    `gorm:"not null" json:"inventory"`
+		Status           int8      `gorm:"type:TINYINT;default:1" json:"status"` // -1, hide or delete;1, common wares;2, promotion;3, new wares;4, recommend wares
+		Price            float32   `gorm:"not null;type:float" json:"price"`
+		SalePrice        float32   `gorm:"not null;type:float" json:"sale_price"` // promotion price
+		Avatar           string    `gorm:"type:varchar(100)"   json:"avatar"`
+		Image            string    `gorm:"type:varchar(100)"   json:"image"`
+		DetailPic        string    `gorm:"type:varchar(100)"   json:"detail_pic"`
+		CreatedAt        time.Time `json:"createdAt"`
 	}
 
 	BriefInfo struct {
 		ID        uint32  `json:"id"`
 		Name      string  `json:"name"`
-		TotalSale uint    `json:"totalSale"`
-		Inventory uint    `json:"inventory"`
+		TotalSale uint32  `json:"total_sale"`
+		Inventory uint16  `json:"inventory"`
 		Status    int8    `json:"status"`
 		Price     float32 `json:"price"`
-		SalePrice float32 `json:"salePrice"`
+		SalePrice float32 `json:"sale_price"`
 		Avatar    string  `json:"avatar"`
 	}
 
 	UpdateReq struct {
-		ID         uint32 `json:"id" validate:"required"`
-		Name       string `json:"name"`
-		Desc       string `json:"desc" validate:"max=50"`
-		CategoryID uint   `json:"categoryId"`
-		TotalSale  uint   `json:"totalSale"`
-		Avatar     string `json:"avatar"`
-		Image      string `json:"image"`
-		DetailPic  string `json:"detailPic"`
-		Inventory  uint   `json:"inventory"`
+		ID               uint32 `json:"id" validate:"required"`
+		Name             string `json:"name"`
+		Desc             string `json:"desc" validate:"max=50"`
+		ParentCategoryID uint16 `json:"parent_category_id"`
+		CategoryID       uint16 `json:"category_id"`
+		TotalSale        uint32 `json:"total_sale"`
+		Avatar           string `json:"avatar"`
+		Image            string `json:"image"`
+		DetailPic        string `json:"detail_pic"`
+		Inventory        uint16 `json:"inventory"`
 	}
 
 	ModifyPriceReq struct {
 		ID        uint32  `json:"id" validate:"required"`
 		Price     float32 `json:"price"`
-		SalePrice float32 `json:"salePrice"`
+		SalePrice float32 `json:"sale_price"`
 	}
 )
 
@@ -97,6 +99,7 @@ func (sp *serviceProvider) CreateWare(conn orm.Connection, wareReq Ware) error {
 	ware := &Ware{}
 	ware.Name = wareReq.Name
 	ware.Desc = wareReq.Desc
+	ware.ParentCategoryID = wareReq.ParentCategoryID
 	ware.CategoryID = wareReq.CategoryID
 	ware.Price = wareReq.Price
 	ware.SalePrice = wareReq.SalePrice
@@ -124,6 +127,18 @@ func (sp *serviceProvider) GetAllWare(conn orm.Connection) ([]Ware, error) {
 	return list, res.Error
 }
 
+// get wares by parent categoryID
+func (sp *serviceProvider) GetByParentCID(conn orm.Connection, cid uint16) ([]BriefInfo, error) {
+	var (
+		res  *gorm.DB
+		list []BriefInfo
+	)
+
+	db := conn.(*gorm.DB).Exec("USE shop")
+	res = db.Table("wares").Where("status > ? AND parent_category_id = ?", 0, cid).Scan(&list)
+	return list, res.Error
+}
+
 // get wares by categoryID
 func (sp *serviceProvider) GetByCID(conn orm.Connection, cid uint16) ([]BriefInfo, error) {
 	var (
@@ -133,7 +148,6 @@ func (sp *serviceProvider) GetByCID(conn orm.Connection, cid uint16) ([]BriefInf
 
 	db := conn.(*gorm.DB).Exec("USE shop")
 	res = db.Table("wares").Where("status > ? AND category_id = ?", 0, cid).Scan(&list)
-
 	return list, res.Error
 }
 
@@ -165,13 +179,8 @@ func (sp *serviceProvider) UpdateWare(conn orm.Connection, req UpdateReq) error 
 	var imgs Ware
 
 	db := conn.(*gorm.DB).Exec("USE shop")
-	err := db.Table("wares").Select("avatar,image,detail_pic").Where("id = ?", req.ID).First(&imgs).Error
-	if err != nil {
-		logger.Error(err)
-		return err
-	}
 
-	err = db.Table("wares").Where("id = ?", req.ID).Updates(req).Error
+	err := db.Table("wares").Where("id = ?", req.ID).Updates(req).Error
 	if err != nil {
 		logger.Error(err)
 		return err
@@ -202,11 +211,11 @@ func (sp *serviceProvider) ModifyPrice(conn orm.Connection, req ModifyPriceReq) 
 	return res.Error
 }
 
-// get ware by id
-func (sp *serviceProvider) GetByID(conn orm.Connection, id uint) (*Ware, error) {
+// get detail ware by id
+func (sp *serviceProvider) GetByID(conn orm.Connection, id uint32) (*Ware, error) {
 	db := conn.(*gorm.DB).Exec("USE shop")
 	ware := &Ware{}
-	err := db.Table("wares").Where("id = ?", id).First(&ware).Error
+	err := db.Table("wares").Where("id = ?", id).First(ware).Error
 
 	return ware, err
 }
@@ -237,7 +246,7 @@ func (sp *serviceProvider) HomePageList(conn orm.Connection, id int) ([]BriefInf
 }
 
 // RecommendList
-func (sp *serviceProvider) GetRecommendList(conn orm.Connection, id uint) ([]BriefInfo, error) {
+func (sp *serviceProvider) GetRecommendList(conn orm.Connection) ([]BriefInfo, error) {
 	var (
 		list   []BriefInfo
 		res    *gorm.DB
@@ -245,7 +254,7 @@ func (sp *serviceProvider) GetRecommendList(conn orm.Connection, id uint) ([]Bri
 	)
 
 	db := conn.(*gorm.DB).Exec("USE shop")
-	res = db.Table("wares").Select(fields).Order("total_sale desc").Where("status > ?", 0).Limit(10).Scan(&list)
+	res = db.Table("wares").Select(fields).Order("total_sale desc").Where("status = ?", 4).Limit(10).Scan(&list)
 
 	return list, res.Error
 }

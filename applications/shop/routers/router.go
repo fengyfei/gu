@@ -44,12 +44,12 @@ func init() {
 }
 
 func register(r *server.Router) {
-	//r.Post("/shop/account/wechatlogin", handler.WechatLogin)
-	//r.Post("/shop/account/addphone", handler.AddPhone)
-	//r.Post("/shop/account/changeinfo", handler.ChangeInfo)
+	r.Post("/shop/account/wechatlogin", handler.WechatLogin)
+	r.Post("/shop/account/addphone", handler.AddPhone)
+	r.Post("/shop/account/changeinfo", handler.ChangeInfo)
 	r.Post("/shop/account/register", handler.PhoneRegister)
 	r.Post("/shop/account/phonelogin", handler.PhoneLogin)
-	//r.Post("/shop/account/changepass", handler.ChangePassword)
+	r.Post("/shop/account/changepass", handler.ChangePassword)
 
 	r.Post("/shop/address/add", handler.AddAddress)
 	r.Post("/shop/address/setdefault", handler.SetDefaultAddress)
@@ -63,17 +63,18 @@ func register(r *server.Router) {
 
 	// ware api for admin
 	r.Post("/shop/api/ware/create", handler.CreateWare)
-	//r.Get("/shop/api/ware/getall",  "get:GetAllWare")
-	//r.Post("/shop/api/ware/updateinfo",  "post:UpdateWithID")
-	//r.Post("/shop/api/ware/modifyprice",  "post:ModifyPrice")
-	//r.Post("/shop/api/ware/changestatus",  "post:ChangeStatus")
+	r.Get("/shop/api/ware/getall", handler.GetAllWare)
+	r.Post("/shop/api/ware/updateinfo", handler.UpdateWithID)
+	r.Post("/shop/api/ware/modifyprice", handler.ModifyPrice)
+	r.Post("/shop/api/ware/changestatus", handler.ChangeStatus)
 
 	// ware api for user
-	//r.Post("/shop/ware/getbycid", "post:GetWareByCategory")
-	//r.Get("/shop/ware/getpromotion",  "get:GetPromotion")
-	//r.Post("/shop/ware/homelist",  "post:HomePageList")
-	//r.Post("/shop/ware/recommend", "post:RecommendList")
-	//r.Post("/shop/ware/getdetail", "post:GetDetail")
+	r.Post("/shop/ware/getbycid", handler.GetWareByCategory)
+	r.Get("/shop/ware/getpromotion", handler.GetPromotion)
+	r.Post("/shop/ware/gethomelist",  handler.HomePageList)
+	r.Get("/shop/ware/getrecommend", handler.RecommendList)
+	r.Post("/shop/ware/getdetail", handler.GetDetail)
+	r.Get("/shop/ware/getnew", handler.GetNewWares)
 
 	// cart api
 	r.Post("/shop/cart/add", handler.AddCart)
@@ -90,8 +91,8 @@ func register(r *server.Router) {
 
 	// collection api for user
 	r.Post("/shop/collection/get", handler.GetByUserID)
-	r.Post("/shop/collection/add",handler.AddColl)
-	r.Post("/shop/collection/remove",handler.RemoveColl)
+	r.Post("/shop/collection/add", handler.AddColl)
+	r.Post("/shop/collection/remove", handler.RemoveColl)
 
 	// panel api for admin
 	//r.Post("/shop/api/panel/create", &handler.PanelController{}, "post:AddPanel")

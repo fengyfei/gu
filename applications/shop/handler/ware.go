@@ -32,35 +32,34 @@ package handler
 import (
 	"errors"
 
+	jwtgo "github.com/dgrijalva/jwt-go"
+
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/applications/shop/mysql"
 	"github.com/fengyfei/gu/applications/shop/util"
 	"github.com/fengyfei/gu/libs/constants"
+	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/libs/orm"
 	"github.com/fengyfei/gu/models/shop/ware"
-	"github.com/fengyfei/gu/libs/http/server"
 )
 
 type (
 	categoryReq struct {
-		CID uint16 `json:"cid" validate:"required"`
+		ParentCID uint16 `json:"parent_cid" validate:"required"`
+		CID       uint16 `json:"cid"`
 	}
 
 	homeReq struct {
-		LastID int `json:"lastId"`
+		LastID int `json:"last_id"`
 	}
 
 	detailReq struct {
-		ID uint `json:"id" validate:"required"`
-	}
-
-	recommendReq struct {
-		UserID uint `json:"id" validate:"required"`
+		ID uint32 `json:"id" validate:"required"`
 	}
 
 	ChangeStatusReq struct {
-		IDs    []uint `json:"ids" validate:"required,min=1"`
+		IDs    []uint `json:"i_ds" validate:"required,min=1"`
 		Status int8   `json:"status" validate:"required,eq=-1|eq=1|eq=2|eq=3"`
 	}
 )
@@ -72,6 +71,12 @@ func CreateWare(c *server.Context) error {
 		addReq ware.Ware
 		conn   orm.Connection
 	)
+
+	isAdmin := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.IsAdmin].(bool)
+	if !isAdmin {
+		logger.Error("You don't have access")
+		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
+	}
 
 	conn, err = mysql.Pool.Get()
 	if err != nil {
@@ -176,7 +181,37 @@ func GetWareByCategory(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	res, err = ware.Service.GetByCID(conn, cidReq.CID)
+	if cidReq.CID == 0 {
+		res, err = ware.Service.GetByParentCID(conn, cidReq.ParentCID)
+		if err != nil {
+			logger.Error(err)
+			return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+		}
+	} else {
+		res, err = ware.Service.GetByCID(conn, cidReq.CID)
+		if err != nil {
+			logger.Error(err)
+			return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+		}
+	}
+
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, res)
+}
+
+// get new wares
+func GetNewWares(c *server.Context) error {
+	var (
+		err error
+		res []ware.BriefInfo
+	)
+
+	conn, err := mysql.Pool.Get()
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	res, err = ware.Service.GetNewWares(conn)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -213,6 +248,12 @@ func UpdateWithID(c *server.Context) error {
 		err error
 		req ware.UpdateReq
 	)
+
+	isAdmin := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.IsAdmin].(bool)
+	if !isAdmin {
+		logger.Error("You don't have access")
+		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
+	}
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
@@ -257,24 +298,30 @@ func UpdateWithID(c *server.Context) error {
 	err = ware.Service.UpdateWare(conn, req)
 	if err != nil {
 		logger.Error(err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 		if (len(req.Avatar) > 0 && !util.DeletePicture(req.Avatar)) ||
 			(len(req.Image) > 0 && !util.DeletePicture(req.Image)) ||
 			(len(req.DetailPic) > 0 && !util.DeletePicture(req.DetailPic)) {
 			logger.Error(errors.New("update ware failed and delete it's pictures go wrong, please delete picture manually"))
 		}
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
 	logger.Info("update ware info of id:", req.ID)
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
-// modify price
+// modify price by id
 func ModifyPrice(c *server.Context) error {
 	var (
 		err error
 		req ware.ModifyPriceReq
 	)
+
+	isAdmin := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.IsAdmin].(bool)
+	if !isAdmin {
+		logger.Error("You don't have access")
+		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
+	}
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
@@ -342,9 +389,8 @@ func HomePageList(c *server.Context) error {
 // get recommend list
 func RecommendList(c *server.Context) error {
 	var (
-		err   error
-		idReq recommendReq
-		res   []ware.BriefInfo
+		err error
+		res []ware.BriefInfo
 	)
 
 	conn, err := mysql.Pool.Get()
@@ -353,19 +399,7 @@ func RecommendList(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = c.JSONBody(&idReq)
-	if err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
-	}
-
-	err = c.Validate(idReq)
-	if err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
-	}
-
-	res, err = ware.Service.GetRecommendList(conn, idReq.UserID)
+	res, err = ware.Service.GetRecommendList(conn)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -415,6 +449,12 @@ func ChangeStatus(c *server.Context) error {
 		err       error
 		changeReq ChangeStatusReq
 	)
+
+	isAdmin := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.IsAdmin].(bool)
+	if !isAdmin {
+		logger.Error("You don't have access")
+		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
+	}
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
