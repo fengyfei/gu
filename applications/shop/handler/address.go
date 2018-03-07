@@ -24,14 +24,14 @@
 
 /*
  * Revision History:
- *     Initial: 2018/02/01        Shi Ruitao
- *     Modify : 2018/03/06        Tong Yuehong
+ *     Initial : 2018/03/06        Tong Yuehong
  */
 
 package handler
 
 import (
-	"github.com/dgrijalva/jwt-go"
+	jwtgo "github.com/dgrijalva/jwt-go"
+
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/applications/shop/mysql"
 	"github.com/fengyfei/gu/applications/shop/util"
@@ -63,21 +63,14 @@ func AddAddress(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	token, err := util.Parse(c)
-	if err != nil {
-		logger.Error("Error in parsing token:", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
-	}
-
-	claims := token.Claims.(jwt.MapClaims)
-	userID := uint32(claims[util.UserID].(float64))
-
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
 		logger.Error("Can't get mysql connection:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
+
+	userID := uint32(c.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(float64))
 
 	err = models.Service.Add(conn, userID, &add)
 	if err != nil {
@@ -97,15 +90,6 @@ func SetDefaultAddress(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	token, err := util.Parse(c)
-	if err != nil {
-		logger.Error("Error in parsing token:", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
-	}
-
-	claims := token.Claims.(jwt.MapClaims)
-	userID := uint32(claims[util.UserID].(float64))
-
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
@@ -113,6 +97,7 @@ func SetDefaultAddress(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
+	userID := c.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(uint32)
 	err = models.Service.SetDefault(conn, userID, id.ID)
 	if err != nil {
 		logger.Error("Error in setting the default address:", err)
@@ -156,21 +141,14 @@ func ModifyAddress(c *server.Context) error {
 
 // Get all address by userid
 func GetAddress(c *server.Context) error {
-	token, err := util.Parse(c)
-	if err != nil {
-		logger.Error("Error in parsing token:", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
-	}
-
-	claims := token.Claims.(jwt.MapClaims)
-	userID := uint32(claims[util.UserID].(float64))
-
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
 		logger.Error("Can't get mysql connection:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
+
+	userID := c.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(uint32)
 
 	addr, err := models.Service.Get(conn, userID)
 	if err != nil {
@@ -189,21 +167,6 @@ func DeleteAddress(c *server.Context) error {
 		logger.Error("Error in JSONBody:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
-
-	//err = c.Validate(&id.ID)
-	//if err != nil {
-	//	logger.Error("Invalid parameters:", err)
-	//	return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
-	//}
-
-	//token, err := util.Parse(c)
-	//if err != nil {
-	//	logger.Error("Error in parsing token:", err)
-	//	return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
-	//}
-
-	//claims := token.Claims.(jwt.MapClaims)
-	//userID := uint64(claims[util.UserID].(float64))
 
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
