@@ -24,7 +24,8 @@
 
 /*
  * Revision History:
- *     Initial: 2018/02/01        Shi Ruitao
+ *     Initial: 2018/02/01        Shi  Ruitao
+ *     Initial: 2018/03/07        Tong Yuehong
  */
 
 package main
@@ -41,7 +42,27 @@ import (
 
 var (
 	ep *server.Entrypoint
+	URLMap    = make(map[string]struct{})
+	claimsKey = "user"
+	tokenHMACKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+	jwtConfig    = middleware.JWTConfig{
+		Skipper:    customSkipper,
+		SigningKey: []byte(tokenHMACKey),
+		ContextKey: claimsKey,
+	}
 )
+
+func customSkipper(c *server.Context) bool {
+	URLMap["/shop/account/register"] = struct{}{}
+	URLMap["/shop/account/phonelogin"] = struct{}{}
+	URLMap["/shop/account/wechatlogin"] = struct{}{}
+	if _, ok := URLMap[c.Request().RequestURI]; ok {
+		return true
+	}
+
+	return false
+}
+
 
 // startServer starts a HTTP server.
 func startServer() {
@@ -54,6 +75,7 @@ func startServer() {
 	mysql.InitPool()
 
 	ep = server.NewEntrypoint(serverConfig, nil)
+	jwtMiddleware := middleware.JWTWithConfig(jwtConfig)
 
 	// add middlewares
 	ep.AttachMiddleware(middleware.NegroniRecoverHandler())
@@ -62,6 +84,7 @@ func startServer() {
 		AllowedOrigins: conf.ShopConfig.CorsHosts,
 		AllowedMethods: []string{server.GET, server.POST},
 	}))
+	ep.AttachMiddleware(jwtMiddleware)
 
 	if err := ep.Start(routers.Router.Handler()); err != nil {
 		logger.Error(err)
