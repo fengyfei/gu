@@ -31,6 +31,7 @@ package handler
 
 import (
 	jwtgo "github.com/dgrijalva/jwt-go"
+
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/applications/shop/mysql"
 	"github.com/fengyfei/gu/applications/shop/util"

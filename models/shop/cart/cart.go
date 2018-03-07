@@ -24,9 +24,7 @@
 
 /*
  * Revision History:
- *     Initial: 2017/11/30        ShiChao
- *	   Modify : 2018/02/02        Shi Ruitao
- *	   Modify : 2018/03/06        Tong Yuehong
+ *     Initial: 2017/11/30        Tong Yuehong
  */
 
 package cart
