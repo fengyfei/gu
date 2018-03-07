@@ -24,29 +24,16 @@
 
 /*
  * Revision History:
- *     Initial: 2018/01/27        Chen Yanchen
+ *     Initial: 2018/03/06        Chen Yanchen
  */
 
 package util
 
-import (
-	"time"
+import "regexp"
 
-	"github.com/dgrijalva/jwt-go"
-)
-
-const (
-	tokenKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
-	UserId   = "userid"
-)
-
-func NewToken(userId uint32, sessionKey string, isAdmin bool) (string, error) {
-	claims := make(jwt.MapClaims)
-	claims[UserId] = userId
-	claims["user"] = isAdmin
-	claims["SessionKey"] = sessionKey
-	claims["exp"] = time.Now().Add(time.Hour * 480).Unix()
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	return token.SignedString([]byte(tokenKey))
+func ValidatePhone(phone string) bool {
+	reg := `^1(3[0-9]|4[579]|5[^4]|7[0135678]|8[0-9])\d{8}$`
+	rgx := regexp.MustCompile(reg)
+	return rgx.MatchString(phone)
 }
+

@@ -94,6 +94,7 @@ func WechatLogin(this *server.Context) error {
 
 	// connect to mysql
 	conn, err := initialize.Pool.Get()
+	defer initialize.Pool.Release(conn)
 	if err != nil {
 		logger.Error("Can not connected mysql.", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
@@ -122,6 +123,42 @@ func WechatLogin(this *server.Context) error {
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, userData)
 }
 
+// Add phoneNum
+func AddPhone(c *server.Context) error {
+	var phone user.WechatPhone
+
+	if err := c.JSONBody(&phone); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	if err := c.Validate(&phone); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	if !util.ValidatePhone(phone.Phone) {
+		logger.Error("Invalid phone.")
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	userid := c.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(uint32)
+	conn, err := initialize.Pool.Get()
+	defer initialize.Pool.Release(conn)
+	if err != nil {
+		logger.Error("Can not connected mysql.", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	err = user.UserServer.AddPhone(conn, userid, &phone)
+	if err != nil {
+		logger.Error("Add phoneNumber failed.")
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
+}
+
 // PhoneRegister register by phoneNumber
 func PhoneRegister(c *server.Context) error {
 	var register user.PhoneRegister
@@ -137,6 +174,7 @@ func PhoneRegister(c *server.Context) error {
 	}
 
 	conn, err := initialize.Pool.Get()
+	defer initialize.Pool.Release(conn)
 	if err != nil {
 		logger.Error("Can not connected mysql.", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -166,6 +204,7 @@ func PhoneLogin(c *server.Context) error {
 	}
 
 	conn, err := initialize.Pool.Get()
+	defer initialize.Pool.Release(conn)
 	if err != nil {
 		logger.Error("Can not connected mysql.", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -208,22 +247,14 @@ func ChangeUserInfo(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	token, err := util.Parse(this)
-	if err != nil {
-		logger.Error("Error in parsing token:", err)
-		return core.WriteStatusAndDataJSON(this, constants.ErrToken, nil)
-	}
-
-	claims := token.Claims.(jwtgo.MapClaims)
-	userid := uint32(claims[util.UserId].(float64))
-
+	userid := this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(float64)
 	conn, err := initialize.Pool.Get()
+	defer initialize.Pool.Release(conn)
 	if err != nil {
 		logger.Error("Can not connected mysql.", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
 	}
-
-	err = user.UserServer.ChangeInfo(conn, userid, &changeInfo)
+	err = user.UserServer.ChangeInfo(conn, uint32(userid), &changeInfo)
 	if err != nil {
 		logger.Error(err)
 		core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
@@ -236,31 +267,25 @@ func ChangePassword(c *server.Context) error {
 	var change user.ChangePass
 
 	if err := c.JSONBody(&change); err != nil {
-		logger.Error(err)
+		logger.Error("JsonBody Error.", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
 	if err := c.Validate(&change); err != nil {
-		logger.Error(err)
+		logger.Error("Validate Error.", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	token, err := util.Parse(c)
-	if err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
-	}
-
-	claims := token.Claims.(jwtgo.MapClaims)
-	userid := uint32(claims[util.UserId].(float64))
+	userid := c.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(float64)
 
 	conn, err := initialize.Pool.Get()
+	defer initialize.Pool.Release(conn)
 	if err != nil {
 		logger.Error("Can not connected mysql.", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = user.UserServer.ChangePassword(conn, userid, &change)
+	err = user.UserServer.ChangePassword(conn, uint32(userid), &change)
 	if err != nil {
 		logger.Error("Error in changing password:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
