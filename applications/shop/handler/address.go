@@ -58,7 +58,7 @@ func AddAddress(c *server.Context) error {
 	}
 
 	err = c.Validate(&add)
-	if err != nil || !util.IsValidPhone(add.Phone) {
+	if err != nil {
 		logger.Error("Invalid parameters:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
@@ -70,7 +70,7 @@ func AddAddress(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	userID := uint32(c.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(float64))
+	userID := uint32(c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(float64))
 
 	err = models.Service.Add(conn, userID, &add)
 	if err != nil {
@@ -84,6 +84,7 @@ func AddAddress(c *server.Context) error {
 // Set an address as the default address
 func SetDefaultAddress(c *server.Context) error {
 	var id id
+
 	err := c.JSONBody(&id)
 	if err != nil {
 		logger.Error("Error in JSONBody:", err)
@@ -97,7 +98,8 @@ func SetDefaultAddress(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	userID := c.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(uint32)
+	userID := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(uint32)
+
 	err = models.Service.SetDefault(conn, userID, id.ID)
 	if err != nil {
 		logger.Error("Error in setting the default address:", err)
@@ -148,7 +150,7 @@ func GetAddress(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	userID := c.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(uint32)
+	userID := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(uint32)
 
 	addr, err := models.Service.Get(conn, userID)
 	if err != nil {

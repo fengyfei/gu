@@ -44,12 +44,12 @@ func init() {
 }
 
 func register(r *server.Router) {
-	r.Post("/shop/account/wechatlogin", handler.WechatLogin)
-	r.Post("/shop/account/addphone", handler.AddPhone)
-	r.Post("/shop/account/changeinfo", handler.ChangeInfo)
+	//r.Post("/shop/account/wechatlogin", handler.WechatLogin)
+	//r.Post("/shop/account/addphone", handler.AddPhone)
+	//r.Post("/shop/account/changeinfo", handler.ChangeInfo)
 	r.Post("/shop/account/register", handler.PhoneRegister)
 	r.Post("/shop/account/phonelogin", handler.PhoneLogin)
-	r.Post("/shop/account/changepass", handler.ChangePassword)
+	//r.Post("/shop/account/changepass", handler.ChangePassword)
 
 	r.Post("/shop/address/add", handler.AddAddress)
 	r.Post("/shop/address/setdefault", handler.SetDefaultAddress)
@@ -57,8 +57,8 @@ func register(r *server.Router) {
 	r.Post("/shop/address/delete", handler.DeleteAddress)
 	r.Get("/shop/address/get", handler.GetAddress)
 
-	r.Post("/shop/category/add", handler.AddCategory)
-	r.Post("/shop/category/modify", handler.ModifyCategory)
+	//r.Post("/shop/category/add", handler.AddCategory)
+	//r.Post("/shop/category/modify", handler.ModifyCategory)
 	//r.Post("/shop/category/get", handler.GetCategory)
 
 	// ware api for admin
@@ -89,9 +89,9 @@ func register(r *server.Router) {
 	//r.Post("/shop/api/order/confirm", &handler.OrderController{}, "post:ConfirmOrder")
 
 	// collection api for user
-	//r.Post("/shop/collection/get", &handler.CollectionController{}, "get:GetByUserID")
-	//r.Post("/shop/collection/add", &handler.CollectionController{}, "post:Add")
-	//r.Post("/shop/collection/remove", &handler.CollectionController{}, "post:Remove")
+	r.Post("/shop/collection/get", handler.GetByUserID)
+	r.Post("/shop/collection/add",handler.AddColl)
+	r.Post("/shop/collection/remove",handler.RemoveColl)
 
 	// panel api for admin
 	//r.Post("/shop/api/panel/create", &handler.PanelController{}, "post:AddPanel")

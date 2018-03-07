@@ -33,7 +33,7 @@ package handler
 import (
 	"errors"
 
-	"github.com/dgrijalva/jwt-go"
+	jwtgo "github.com/dgrijalva/jwt-go"
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/applications/shop/mysql"
 	"github.com/fengyfei/gu/applications/shop/util"
@@ -51,21 +51,14 @@ var (
 func AddCategory(c *server.Context) error {
 	var add models.Add
 
-	token, err := util.Parse(c)
-	if err != nil {
-		logger.Error("Error in parsing token:", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
-	}
-
-	claims := token.Claims.(jwt.MapClaims)
-	isAdmin := claims[util.IsAdmin].(bool)
+	isAdmin := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(bool)
 
 	if !isAdmin {
 		logger.Error("Permission denied:", ErrNotAdmin)
 		return core.WriteStatusAndDataJSON(c, constants.ErrPermission, ErrNotAdmin)
 	}
 
-	err = c.JSONBody(&add)
+	err := c.JSONBody(&add)
 	if err != nil {
 		logger.Error("Error in JSONBody:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
@@ -96,21 +89,14 @@ func AddCategory(c *server.Context) error {
 func ModifyCategory(c *server.Context) error {
 	var modify models.Modify
 
-	token, err := util.Parse(c)
-	if err != nil {
-		logger.Error("Error in parsing token:", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
-	}
-
-	claims := token.Claims.(jwt.MapClaims)
-	isAdmin := claims[util.IsAdmin].(bool)
+	isAdmin := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(bool)
 
 	if !isAdmin {
 		logger.Error("Permission denied:", ErrNotAdmin)
 		return core.WriteStatusAndDataJSON(c, constants.ErrPermission, ErrNotAdmin)
 	}
 
-	err = c.JSONBody(&modify)
+	err := c.JSONBody(&modify)
 	if err != nil {
 		logger.Error("Error in parsing token:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)

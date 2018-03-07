@@ -24,7 +24,7 @@
 
 /*
  * Revision History:
- *     Initial: 2017/12/01      Lin Hao
+ *     Initial: 2018/03/07      Tong Yuehong
  */
 
 package collection
@@ -42,41 +42,39 @@ var (
 	Service *serviceProvider
 )
 
-type CollectionItem struct {
-	ID        int32 `gorm:"primary_key;auto_increment"`
-	UserId    int32
-	WareId    int32
-	CreatedAt *time.Time
+type Collection struct {
+	ID      int32  `gorm:"primary_key;auto_increment" json:"id"`
+	UserId  uint32 `json:"user_id"`
+	WareId  uint64 `json:"ware_id"`
+	Created *time.Time
 }
 
-func (this *serviceProvider) Add(conn orm.Connection, userId, wareId int32) error {
+func (this *serviceProvider) Add(conn orm.Connection, userId uint32, wareId uint64) error {
 	now := time.Now()
 
-	item := &CollectionItem{}
-	item.CreatedAt = &now
-	item.UserId = userId
-	item.WareId = wareId
+	item := &Collection{
+		UserId:  userId,
+		WareId:  wareId,
+		Created: &now,
+	}
 
 	db := conn.(*gorm.DB).Exec("USE shop")
 
-	return db.Model(&CollectionItem{}).Create(&item).Error
+	return db.Table("Collect").Create(&item).Error
 }
 
-func (this *serviceProvider) GetByUserID(conn orm.Connection, userId int32) ([]CollectionItem, error) {
+func (this *serviceProvider) GetByUserID(conn orm.Connection, userId uint32) ([]Collection, error) {
+	items := []Collection{}
+
 	db := conn.(*gorm.DB).Exec("USE shop")
 
-	items := []CollectionItem{}
-
-	err := db.Where("user_id = ?", userId).Find(&items).Error
+	err := db.Table("collect").Where("user_id = ?", userId).Find(&items).Error
 
 	return items, err
 }
 
-func (this *serviceProvider) Remove(conn orm.Connection, id int32) error {
+func (this *serviceProvider) Remove(conn orm.Connection, id uint64) error {
 	db := conn.(*gorm.DB).Exec("USE shop")
 
-	item := &CollectionItem{}
-	item.ID = id
-
-	return db.Delete(&item).Error
+	return db.Table("collect").Where("id = ?", id).Delete(&Collection{}).Error
 }

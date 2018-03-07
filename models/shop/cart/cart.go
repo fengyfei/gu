@@ -47,11 +47,11 @@ var (
 
 type (
 	Cart struct {
-		ID      uint64     `gorm:"primary_key;auto_increment"  json:"id"`
-		UserId  uint32     `gorm:"not null"                    json:"user_id"`
-		WareId  uint64     `gorm:"not null"                    json:"ware_id"`
-		Count   uint32     `gorm:"not null;default:0"          json:"count"`
-		Created time.Time  `gorm:"column:created"              json:"created"`
+		ID      uint64    `gorm:"primary_key;auto_increment"  json:"id"`
+		UserId  uint32    `gorm:"not null"                    json:"user_id"`
+		WareId  uint64    `gorm:"not null"                    json:"ware_id"`
+		Count   uint32    `gorm:"not null;default:0"          json:"count"`
+		Created time.Time `gorm:"column:created"              json:"created"`
 	}
 
 	AddCartReq struct {
@@ -72,6 +72,7 @@ func (this *serviceProvider) Add(conn orm.Connection, userId uint32, wareId uint
 	var (
 		cart Cart
 	)
+
 	db := conn.(*gorm.DB).Exec("USE shop")
 
 	err := db.Where("ware_id = ?", wareId).Find(&cart).Error

@@ -34,10 +34,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/dgrijalva/jwt-go"
 	json "github.com/json-iterator/go"
 
 	"github.com/fengyfei/gu/applications/core"
+	jwtgo "github.com/dgrijalva/jwt-go"
 	"github.com/fengyfei/gu/applications/shop/mysql"
 	"github.com/fengyfei/gu/applications/shop/util"
 	"github.com/fengyfei/gu/libs/constants"
@@ -143,14 +143,7 @@ func AddPhone(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	token, err := util.Parse(c)
-	if err != nil {
-		logger.Error("Error in parsing token:", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
-	}
-
-	claims := token.Claims.(jwt.MapClaims)
-	userid := uint32(claims[util.UserID].(float64))
+	userID := uint32(c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(float64))
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
@@ -158,7 +151,7 @@ func AddPhone(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = user.UserServer.AddPhone(conn, userid, &phone)
+	err = user.UserServer.AddPhone(conn, userID, &phone)
 	if err != nil {
 		logger.Error("Error in adding a phone number:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
@@ -183,14 +176,7 @@ func ChangeInfo(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	token, err := util.Parse(c)
-	if err != nil {
-		logger.Error("Error in parsing token:", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
-	}
-
-	claims := token.Claims.(jwt.MapClaims)
-	userid := uint32(claims[util.UserID].(float64))
+	userID := uint32(c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(float64))
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
@@ -198,7 +184,7 @@ func ChangeInfo(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = user.UserServer.ChangeInfo(conn, userid, &change)
+	err = user.UserServer.ChangeInfo(conn, userID, &change)
 	if err != nil {
 		logger.Error("Error in changing informantion:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
@@ -304,14 +290,7 @@ func ChangePassword(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	token, err := util.Parse(c)
-	if err != nil {
-		logger.Error("Error in parsing token:", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
-	}
-
-	claims := token.Claims.(jwt.MapClaims)
-	userid := uint32(claims[util.UserID].(float64))
+	userID := uint32(c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(float64))
 
 	conn, err := mysql.Pool.Get()
 	if err != nil {
@@ -319,7 +298,7 @@ func ChangePassword(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = user.UserServer.ChangePassword(conn, userid, &change)
+	err = user.UserServer.ChangePassword(conn, userID, &change)
 	if err != nil {
 		logger.Error("Error in changing password:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)

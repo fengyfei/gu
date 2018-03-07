@@ -24,13 +24,13 @@
 
 /*
  * Revision History:
- *     Initial: 2018/02/03        Shi Ruitao
+ *     Initial: 2018/03/06        Tong Yuehong
  */
 
 package handler
 
 import (
-	"github.com/dgrijalva/jwt-go"
+	jwtgo "github.com/dgrijalva/jwt-go"
 
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/applications/shop/mysql"
@@ -42,23 +42,17 @@ import (
 	Cart "github.com/fengyfei/gu/models/shop/cart"
 )
 
+type reqRemove struct {
+	IDs []uint64 `json:"ids"`
+}
+
 // Add commodity
 func AddCart(c *server.Context) error {
 	var (
-		req   Cart.AddCartReq
-		err   error
-		token *jwt.Token
-		conn  orm.Connection
+		req  Cart.AddCartReq
+		err  error
+		conn orm.Connection
 	)
-
-	token, err = util.Parse(c)
-	if err != nil {
-		logger.Error("Error in parsing token:", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
-	}
-
-	claims := token.Claims.(jwt.MapClaims)
-	userId := uint32(claims[util.UserID].(float64))
 
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
@@ -79,7 +73,9 @@ func AddCart(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	err = Cart.Service.Add(conn, userId, req.WareId, req.Count)
+	userID := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(uint32)
+
+	err = Cart.Service.Add(conn, userID, req.WareId, req.Count)
 	if err != nil {
 		logger.Error("Cart.Service.Add():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -92,17 +88,7 @@ func GetByUser(c *server.Context) error {
 		items []Cart.Cart
 		err   error
 		conn  orm.Connection
-		token *jwt.Token
 	)
-
-	token, err = util.Parse(c)
-	if err != nil {
-		logger.Error("Error in parsing token:", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
-	}
-
-	claims := token.Claims.(jwt.MapClaims)
-	userId := uint32(claims[util.UserID].(float64))
 
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
@@ -111,7 +97,9 @@ func GetByUser(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	items, err = Cart.Service.GetByUserID(conn, userId)
+	userID := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(uint32)
+
+	items, err = Cart.Service.GetByUserID(conn, userID)
 	if err != nil {
 		logger.Error("Cart.Service.GetByUserID():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -153,9 +141,6 @@ func Remove(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
-type reqRemove struct{
-	IDs  []uint64 `json:"ids"`
-}
 func RemoveMany(c *server.Context) error {
 	var (
 		req  reqRemove

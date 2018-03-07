@@ -32,18 +32,18 @@ package main
 
 import (
 	"github.com/fengyfei/gu/applications/shop/conf"
+	"github.com/fengyfei/gu/applications/shop/mysql"
 	"github.com/fengyfei/gu/applications/shop/routers"
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/http/server/middleware"
 	"github.com/fengyfei/gu/libs/logger"
-	"github.com/fengyfei/gu/applications/shop/mysql"
 	"github.com/fengyfei/gu/models/user"
 )
 
 var (
-	ep *server.Entrypoint
-	URLMap    = make(map[string]struct{})
-	claimsKey = "user"
+	ep           *server.Entrypoint
+	URLMap       = make(map[string]struct{})
+	claimsKey    = "user"
 	tokenHMACKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
 	jwtConfig    = middleware.JWTConfig{
 		Skipper:    customSkipper,
@@ -62,7 +62,6 @@ func customSkipper(c *server.Context) bool {
 
 	return false
 }
-
 
 // startServer starts a HTTP server.
 func startServer() {

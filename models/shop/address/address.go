@@ -61,16 +61,16 @@ type (
 	}
 
 	AddressData struct {
-		Name      string `json:"name"`
-		Phone     string `json:"phone"`
-		Address   string `json:"address"`
+		Name      string `json:"name"      validate:"required,alphaunicode,min=2,max=30"`
+		Phone     string `json:"phone"     validate:"required,Mobile"`
+		Address   string `json:"address"   validate:"required,max=128"`
 		IsDefault bool   `json:"isdefault"`
 	}
 
 	Modify struct {
 		ID      uint64 `json:"id"`
-		Name    string `json:"name" validate:"required"`
-		Phone   string `json:"phone" validate:"required,len=11"`
+		Name    string `json:"name"    validate:"required"`
+		Phone   string `json:"phone"   validate:"required,Mobile"`
 		Address string `json:"address" validate:"required,max=128"`
 	}
 )
@@ -96,18 +96,19 @@ func (this *serviceProvider) Add(conn orm.Connection, userID uint32, add *Addres
 	}
 
 	db := conn.(*gorm.DB)
+	tx := conn.(*gorm.DB).Begin().Exec("USE shop")
 
 	if add.IsDefault {
 		err = db.Where("userid = ? AND isdefault = ?", userID, DefaultAddress).Find(&address).Error
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
-				err = db.Create(&addr).Error
+				err = tx.Create(&addr).Error
 				return err
 			}
 			return err
 		}
 		address.IsDefault = NotDefaultAddress
-		err = db.Save(&address).Error
+		err = tx.Save(&address).Error
 		if err != nil {
 			return err
 		}
@@ -180,12 +181,6 @@ func (this *serviceProvider) Get(conn orm.Connection, userID uint32) (*[]Address
 
 func (this *serviceProvider) Delete(conn orm.Connection, id uint64) error {
 	db := conn.(*gorm.DB)
-
-	//address := Address{
-	//	ID: id,
-	//}
-	//
-	//return db.Where("userid = ?", userID).Delete(&address).Error
 
 	return db.Table("address").Where("id = ?", id).Delete(&Address{}).Error
 }
