@@ -56,6 +56,12 @@ func customSkipper(c *server.Context) bool {
 	URLMap["/shop/account/register"] = struct{}{}
 	URLMap["/shop/account/phonelogin"] = struct{}{}
 	URLMap["/shop/account/wechatlogin"] = struct{}{}
+	URLMap["/shop/ware/getdetail"] = struct{}{}
+	URLMap["/shop/ware/getbycid"] = struct{}{}
+	URLMap["/shop/ware/getpromotion"] = struct{}{}
+	URLMap["/shop/ware/homelist"] = struct{}{}
+	URLMap["/shop/ware/recommend"] = struct{}{}
+	URLMap["/shop/ware/recommend"] = struct{}{}
 	if _, ok := URLMap[c.Request().RequestURI]; ok {
 		return true
 	}
