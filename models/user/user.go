@@ -140,15 +140,13 @@ type User struct {
 }
 
 func InitMongo(dbName, tableName, url string) {
-	var collection = dbName
 	s, err := mgo.Dial(url)
 	if err != nil {
 		panic(err)
 	}
 
 	s.SetMode(mgo.Monotonic, true)
-
-	session = mongo.NewConnection(s, tableName, collection)
+	session = mongo.NewConnection(s, dbName, tableName)
 
 }
 
