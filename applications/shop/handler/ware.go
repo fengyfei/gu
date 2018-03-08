@@ -58,7 +58,7 @@ type (
 		ID uint32 `json:"id" validate:"required"`
 	}
 
-	ChangeStatusReq struct {
+	changeStatusReq struct {
 		IDs    []uint32 `json:"i_ds" validate:"required,min=1"`
 		Status int8   `json:"status" validate:"required,eq=-1|eq=1|eq=2|eq=3"`
 	}
@@ -447,7 +447,7 @@ func GetDetail(c *server.Context) error {
 func ChangeStatus(c *server.Context) error {
 	var (
 		err       error
-		changeReq ChangeStatusReq
+		changeReq changeStatusReq
 	)
 
 	isAdmin := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.IsAdmin].(bool)

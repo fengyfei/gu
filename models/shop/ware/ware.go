@@ -46,6 +46,7 @@ var (
 )
 
 type (
+	// Ware represents the ware information
 	Ware struct {
 		ID               uint32    `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
 		Name             string    `gorm:"type:varchar(50);not null"  json:"name" validate:"required,alphanumunicode,max=12"`
@@ -63,6 +64,7 @@ type (
 		CreatedAt        time.Time `json:"createdAt"`
 	}
 
+	// BriefInfo represents the wares display
 	BriefInfo struct {
 		ID        uint32  `json:"id"`
 		Name      string  `json:"name"`
@@ -74,6 +76,7 @@ type (
 		Avatar    string  `json:"avatar"`
 	}
 
+	//UpdateReq represents information to be updated.
 	UpdateReq struct {
 		ID               uint32 `json:"id" validate:"required"`
 		Name             string `json:"name"`
@@ -86,7 +89,7 @@ type (
 		DetailPic        string `json:"detail_pic"`
 		Inventory        uint32 `json:"inventory"`
 	}
-
+	// ModifyPriceReq represents promotion price and original price to be updated
 	ModifyPriceReq struct {
 		ID        uint32  `json:"id" validate:"required"`
 		Price     float32 `json:"price"`
