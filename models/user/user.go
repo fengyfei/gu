@@ -139,15 +139,14 @@ type User struct {
 	IsActive  bool      `gorm:"column:isactive;not null;default:1"`
 }
 
-func InitMongo(dbName, tableName, url string) {
+func InitMongo(dbName, collection, url string) {
 	s, err := mgo.Dial(url)
 	if err != nil {
 		panic(err)
 	}
 
 	s.SetMode(mgo.Monotonic, true)
-	session = mongo.NewConnection(s, dbName, tableName)
-
+	session = mongo.NewConnection(s, dbName, collection)
 }
 
 // TableName
