@@ -43,13 +43,15 @@ import (
 
 type (
 	id struct {
-		ID uint64 `json:"id"`
+		ID uint32 `json:"id"`
 	}
 )
 
-// Add an address
+// Add adds address.
 func AddAddress(c *server.Context) error {
-	var add models.AddressData
+	var (
+		add models.AddressData
+	)
 
 	err := c.JSONBody(&add)
 	if err != nil {
@@ -81,9 +83,11 @@ func AddAddress(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
-// Set an address as the default address
+// SetDefault sets default address.
 func SetDefaultAddress(c *server.Context) error {
-	var id id
+	var (
+		id id
+	)
 
 	err := c.JSONBody(&id)
 	if err != nil {
@@ -109,9 +113,11 @@ func SetDefaultAddress(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
-// Modify an address
+// Modify modify the address.
 func ModifyAddress(c *server.Context) error {
-	var modify models.Modify
+	var (
+		modify models.Modify
+	)
 
 	err := c.JSONBody(&modify)
 	if err != nil {
@@ -141,7 +147,7 @@ func ModifyAddress(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
-// Get all address by userid
+// Get gets address by userid.
 func GetAddress(c *server.Context) error {
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
@@ -160,9 +166,11 @@ func GetAddress(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, addr)
 }
 
-// Delete an address
+// Delete deletes address by id.
 func DeleteAddress(c *server.Context) error {
-	var id id
+	var (
+		id id
+	)
 
 	err := c.JSONBody(&id)
 	if err != nil {

@@ -43,15 +43,17 @@ const (
 	NotDefaultAddress = false
 )
 
+type serviceProvider struct{}
+
 var (
+	// Service expose serviceProvider.
 	Service *serviceProvider
 )
 
-type serviceProvider struct{}
-
 type (
+	// Address represents the address of users.
 	Address struct {
-		ID        uint64    `gorm:"column:id;primary_key;auto_increment"`
+		ID        uint32    `gorm:"column:id;primary_key;auto_increment"`
 		UserID    uint32    `gorm:"column:userid;not null"`
 		Name      string    `gorm:"column:name;not null"`
 		Phone     string    `gorm:"column:phone;not null"`
@@ -60,6 +62,7 @@ type (
 		Created   time.Time `gorm:"column:created"`
 	}
 
+	// AddressData represents the information about address.
 	AddressData struct {
 		Name      string `json:"name"      validate:"required,alphaunicode,min=2,max=30"`
 		Phone     string `json:"phone"     validate:"required,Mobile"`
@@ -67,19 +70,21 @@ type (
 		IsDefault bool   `json:"isdefault"`
 	}
 
+	// Modify represents the information when modifying address.
 	Modify struct {
-		ID      uint64 `json:"id"`
+		ID      uint32 `json:"id"`
 		Name    string `json:"name"    validate:"required"`
 		Phone   string `json:"phone"   validate:"required,Mobile"`
 		Address string `json:"address" validate:"required,max=128"`
 	}
 )
 
+// TableName returns table name in database.
 func (Address) TableName() string {
 	return "address"
 }
 
-// Add the address
+// Add adds address.
 func (this *serviceProvider) Add(conn orm.Connection, userID uint32, add *AddressData) error {
 	var (
 		address Address
@@ -95,11 +100,17 @@ func (this *serviceProvider) Add(conn orm.Connection, userID uint32, add *Addres
 		Created:   time.Now(),
 	}
 
-	db := conn.(*gorm.DB)
 	tx := conn.(*gorm.DB).Begin().Exec("USE shop")
+	defer func() {
+		if err != nil {
+			err = tx.Rollback().Error
+		} else {
+			err = tx.Commit().Error
+		}
+	}()
 
 	if add.IsDefault {
-		err = db.Where("userid = ? AND isdefault = ?", userID, DefaultAddress).Find(&address).Error
+		err = tx.Where("userid = ? AND isdefault = ?", userID, DefaultAddress).Find(&address).Error
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				err = tx.Create(&addr).Error
@@ -114,12 +125,12 @@ func (this *serviceProvider) Add(conn orm.Connection, userID uint32, add *Addres
 		}
 	}
 
-	err = db.Create(&addr).Error
+	err = tx.Create(&addr).Error
 	return err
 }
 
-// Set default address
-func (this *serviceProvider) SetDefault(conn orm.Connection, userID uint32, id uint64) error {
+// SetDefault sets default address.
+func (this *serviceProvider) SetDefault(conn orm.Connection, userID uint32, id uint32) error {
 	var (
 		err     error
 		add     Address
@@ -155,7 +166,7 @@ func (this *serviceProvider) SetDefault(conn orm.Connection, userID uint32, id u
 	return tx.Save(&address).Error
 }
 
-// Modify address
+// Modify modify the address.
 func (this *serviceProvider) Modify(conn orm.Connection, modify *Modify) error {
 	db := conn.(*gorm.DB)
 
@@ -166,7 +177,7 @@ func (this *serviceProvider) Modify(conn orm.Connection, modify *Modify) error {
 	}).Error
 }
 
-// Read the address
+// Get gets address by userid.
 func (this *serviceProvider) Get(conn orm.Connection, userID uint32) (*[]Address, error) {
 	var (
 		address []Address
@@ -179,7 +190,8 @@ func (this *serviceProvider) Get(conn orm.Connection, userID uint32) (*[]Address
 	return &address, err
 }
 
-func (this *serviceProvider) Delete(conn orm.Connection, id uint64) error {
+// Delete deletes address by id.
+func (this *serviceProvider) Delete(conn orm.Connection, id uint32) error {
 	db := conn.(*gorm.DB)
 
 	return db.Table("address").Where("id = ?", id).Delete(&Address{}).Error

@@ -40,31 +40,33 @@ import (
 type serviceProvider struct{}
 
 var (
+	// Service expose serviceProvider.
 	Service *serviceProvider
 )
 
 type (
+	// Category represents the class of wares.
 	Category struct {
-		ID       uint16    `gorm:"column:id"`
+		ID       uint32    `gorm:"column:id"`
 		Category string    `gorm:"column:category"`
-		ParentID uint16    `gorm:"column:parent_id"`
+		ParentID uint32    `gorm:"column:parent_id"`
 		IsActive bool      `gorm:"column:is_active"`
 		Created  time.Time `gorm:"column:created"`
 	}
-)
 
-type (
+	// Info represents the category's information.
 	Info struct {
 		Category string `json:"category" validate:"required,min=2,max=12"`
-		ParentID uint16 `json:"parentid"`
+		ParentID uint32 `json:"parentid"`
 	}
 )
 
+// TableName returns table name in database.
 func (Category) TableName() string {
 	return "category"
 }
 
-// Add a category
+// Add adds a new category.
 func (sp *serviceProvider) Add(conn orm.Connection, add *Info) error {
 	category := Category{
 		Category: add.Category,
@@ -78,8 +80,11 @@ func (sp *serviceProvider) Add(conn orm.Connection, add *Info) error {
 	return db.Create(&category).Error
 }
 
+// GetMainCategory gets all the parentid.
 func (sp *serviceProvider) GetMainCategory(conn orm.Connection) ([]Category, error) {
-	var list []Category
+	var (
+		list []Category
+	)
 
 	db := conn.(*gorm.DB).Exec("USE shop")
 	err := db.Table("category").Where("is_active = ? AND parent_id = ?", true, 0).Find(&list).Error
@@ -87,8 +92,11 @@ func (sp *serviceProvider) GetMainCategory(conn orm.Connection) ([]Category, err
 	return list, err
 }
 
-func (sp *serviceProvider) GetSubCategory(conn orm.Connection, pid uint16) ([]Category, error) {
-	var list []Category
+// GetSubCategory gets subcategory which parentid is pid.
+func (sp *serviceProvider) GetSubCategory(conn orm.Connection, pid uint32) ([]Category, error) {
+	var (
+		list []Category
+	)
 
 	db := conn.(*gorm.DB).Exec("USE shop")
 	err := db.Table("category").Where("is_active = ? AND parent_id = ?", true, pid).Find(&list).Error
@@ -96,8 +104,8 @@ func (sp *serviceProvider) GetSubCategory(conn orm.Connection, pid uint16) ([]Ca
 	return list, err
 }
 
-// Delete the category.
-func (sp *serviceProvider) Delete(conn orm.Connection, id uint16) error {
+// Delete deletes the category.
+func (sp *serviceProvider) Delete(conn orm.Connection, id uint32) error {
 	db := conn.(*gorm.DB)
 
 	return db.Table("category").Where("id = ?", id).Update("is_active", false).Error

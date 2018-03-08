@@ -44,11 +44,11 @@ import (
 
 type (
 	wareID struct {
-		WareID uint64 `json:"wareId"`
+		WareID uint32 `json:"wareId"`
 	}
 )
 
-// Add - add collection.
+// AddColl adds wares into someone's collection.
 func AddColl(c *server.Context) error {
 	var (
 		err  error
@@ -86,7 +86,7 @@ func AddColl(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
-// GetByUserID - get collections by userID.
+// GetByUserID gets collections by userID.
 func GetByUserID(c *server.Context) error {
 	var (
 		err  error
@@ -111,7 +111,7 @@ func GetByUserID(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, collections)
 }
 
-// Remove - remove collections.
+// RemoveColl remove collections.
 func RemoveColl(c *server.Context) error {
 	var (
 		err    error

@@ -39,17 +39,20 @@ import (
 type serviceProvider struct{}
 
 var (
+	// Service expose serviceProvider.
 	Service *serviceProvider
 )
 
+// Collection represents the wares which user collects.
 type Collection struct {
 	ID      int32  `gorm:"primary_key;auto_increment" json:"id"`
 	UserId  uint32 `json:"user_id"`
-	WareId  uint64 `json:"ware_id"`
+	WareId  uint32 `json:"ware_id"`
 	Created *time.Time
 }
 
-func (this *serviceProvider) Add(conn orm.Connection, userId uint32, wareId uint64) error {
+// Add adds wares into someone's collection.
+func (this *serviceProvider) Add(conn orm.Connection, userId uint32, wareId uint32) error {
 	now := time.Now()
 
 	item := &Collection{
@@ -60,9 +63,10 @@ func (this *serviceProvider) Add(conn orm.Connection, userId uint32, wareId uint
 
 	db := conn.(*gorm.DB).Exec("USE shop")
 
-	return db.Table("Collect").Create(&item).Error
+	return db.Table("collect").Create(&item).Error
 }
 
+// GetByUserID gets someone's collection by userid.
 func (this *serviceProvider) GetByUserID(conn orm.Connection, userId uint32) ([]Collection, error) {
 	items := []Collection{}
 
@@ -73,7 +77,8 @@ func (this *serviceProvider) GetByUserID(conn orm.Connection, userId uint32) ([]
 	return items, err
 }
 
-func (this *serviceProvider) Remove(conn orm.Connection, id uint64) error {
+// Remove deletes ware from collection.
+func (this *serviceProvider) Remove(conn orm.Connection, id uint32) error {
 	db := conn.(*gorm.DB).Exec("USE shop")
 
 	return db.Table("collect").Where("id = ?", id).Delete(&Collection{}).Error

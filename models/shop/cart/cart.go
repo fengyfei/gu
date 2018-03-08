@@ -40,40 +40,43 @@ import (
 type serviceProvider struct{}
 
 var (
+	// Service expose serviceProvider.
 	Service *serviceProvider
 )
 
 type (
 	Cart struct {
-		ID      uint64    `gorm:"primary_key;auto_increment"  json:"id"`
+		ID      uint32    `gorm:"primary_key;auto_increment"  json:"id"`
 		UserId  uint32    `gorm:"not null"                    json:"user_id"`
-		WareId  uint64    `gorm:"not null"                    json:"ware_id"`
-		Count   uint32    `gorm:"not null;default:0"          json:"count"`
+		WareId  uint32    `gorm:"not null"                    json:"ware_id"`
+		Count   int8    `gorm:"not null;default:0"          json:"count"`
 		Created time.Time `gorm:"column:created"              json:"created"`
 	}
 
 	AddCartReq struct {
-		WareId uint64 `json:"wareId"`
+		WareId uint32 `json:"wareId"`
 		Count  uint32 `json:"count"`
 	}
 
 	RemoveCartReq struct {
-		Id uint64 `json:"id" validate:"required"`
+		Id uint32 `json:"id" validate:"required"`
 	}
 )
 
+// TableName returns table name in database.
 func (Cart) TableName() string {
 	return "cart"
 }
 
-func (this *serviceProvider) Add(conn orm.Connection, userId uint32, wareId uint64, count uint32) error {
+// Add adds wares to cart.
+func (this *serviceProvider) Add(conn orm.Connection, userId uint32, wareId uint32, count uint32) error {
 	var (
 		cart Cart
 	)
 
 	db := conn.(*gorm.DB).Exec("USE shop")
 
-	err := db.Where("ware_id = ?", wareId).Find(&cart).Error
+	err := db.Where("ware_id = ? AND user_id = ?", wareId, userId).Find(&cart).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			cart := &Cart{
@@ -92,22 +95,28 @@ func (this *serviceProvider) Add(conn orm.Connection, userId uint32, wareId uint
 	return db.Save(&cart).Error
 }
 
+// GetByUserID gets carts by userid.
 func (this *serviceProvider) GetByUserID(conn orm.Connection, userId uint32) ([]Cart, error) {
+	var (
+		carts []Cart
+	)
+
 	db := conn.(*gorm.DB).Exec("USE shop")
-	var carts []Cart
 
 	err := db.Where("user_id = ?", userId).Find(&carts).Error
 
 	return carts, err
 }
 
-func (this *serviceProvider) RemoveById(conn orm.Connection, id uint64) error {
+// RemoveById deletes a ware by id.
+func (this *serviceProvider) RemoveById(conn orm.Connection, id uint32) error {
 	db := conn.(*gorm.DB).Exec("USE shop")
 
 	return db.Table("cart").Where("id = ?", id).Delete(&Cart{}).Error
 }
 
-func (this *serviceProvider) RemoveWhenOrder(conn orm.Connection, wareIdList []uint64) error {
+// RemoveWhenOrder deletes wares by ids.
+func (this *serviceProvider) RemoveWhenOrder(conn orm.Connection, wareIdList []uint32) error {
 	var (
 		err error
 	)

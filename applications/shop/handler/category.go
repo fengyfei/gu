@@ -47,11 +47,14 @@ var (
 )
 
 type pid struct {
-	Id   uint16    `json:"id"`
+	Id uint32 `json:"id"`
 }
-// Add a category
+
+// Add adds a new category.
 func AddCategory(c *server.Context) error {
-	var add category.Info
+	var (
+		add category.Info
+	)
 
 	isAdmin := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.IsAdmin].(bool)
 	if !isAdmin {
@@ -87,59 +90,59 @@ func AddCategory(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
- // get all parent categories
- func GetMainCategories(c *server.Context) error {
- 	conn, err := mysql.Pool.Get()
- 	defer mysql.Pool.Release(conn)
- 	if err != nil {
- 		logger.Error("mysql.Pool.Get()", err)
- 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
- 	}
+// GetMainCategory gets all the parentid.
+func GetMainCategories(c *server.Context) error {
+	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error("mysql.Pool.Get()", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
 
- 	res, err := category.Service.GetMainCategory(conn)
- 	if err != nil {
- 		logger.Error("category.Service.GetCategory()", err)
- 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
- 	}
+	res, err := category.Service.GetMainCategory(conn)
+	if err != nil {
+		logger.Error("category.Service.GetCategory()", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
 
- 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, res)
- }
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, res)
+}
 
- // get categories of the specified pid
- func GetSubCategories(c *server.Context) error {
- 	var (
- 		err    error
- 		pid    pid
- 		res    []category.Category
- 	)
+// GetSubCategory gets subcategory which parentid is pid.
+func GetSubCategories(c *server.Context) error {
+	var (
+		err error
+		pid pid
+		res []category.Category
+	)
 
- 	conn, err := mysql.Pool.Get()
- 	defer mysql.Pool.Release(conn)
- 	if err != nil {
- 		logger.Error("mysql.Pool.Get():", err)
- 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
- 	}
+	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error("mysql.Pool.Get():", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
 
- 	err = c.JSONBody(&pid)
- 	if err != nil {
- 		logger.Error("JSONBody():", err)
- 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
- 	}
+	err = c.JSONBody(&pid)
+	if err != nil {
+		logger.Error("JSONBody():", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
 
- 	res, err = category.Service.GetSubCategory(conn, pid.Id)
- 	if err != nil {
- 		logger.Error(err)
- 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
- 	}
+	res, err = category.Service.GetSubCategory(conn, pid.Id)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
 
- 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, res)
- }
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, res)
+}
 
-// Delete deletes category.
+// Delete deletes the category.
 func Delete(c *server.Context) error {
 	var (
-		err    error
-		pid    pid
+		err error
+		pid pid
 	)
 
 	isAdmin := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.IsAdmin].(bool)

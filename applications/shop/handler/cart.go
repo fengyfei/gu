@@ -43,10 +43,10 @@ import (
 )
 
 type reqRemove struct {
-	IDs []uint64 `json:"ids"`
+	IDs []uint32 `json:"ids"`
 }
 
-// Add commodity
+// Add adds wares to cart.
 func AddCart(c *server.Context) error {
 	var (
 		req  Cart.AddCartReq
@@ -83,6 +83,7 @@ func AddCart(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
+// GetByUser gets carts by userid.
 func GetByUser(c *server.Context) error {
 	var (
 		items []Cart.Cart
@@ -107,6 +108,7 @@ func GetByUser(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, items)
 }
 
+// Remove deletes a ware by id.
 func Remove(c *server.Context) error {
 	var (
 		req  Cart.RemoveCartReq
@@ -141,7 +143,8 @@ func Remove(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
-func RemoveMany(c *server.Context) error {
+// RemoveWhenOrder deletes wares by ids.
+func RemoveWhenOrder(c *server.Context) error {
 	var (
 		req  reqRemove
 		err  error
