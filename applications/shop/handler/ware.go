@@ -118,7 +118,7 @@ func CreateWare(c *server.Context) error {
 		}
 	}
 
-	err = ware.Service.CreateWare(conn, addReq)
+	err = ware.Service.CreateWare(conn, &addReq)
 	if err != nil {
 		logger.Error(err)
 		if (len(addReq.Avatar) > 0 && !util.DeletePicture(addReq.Avatar)) ||
@@ -295,7 +295,7 @@ func UpdateWithID(c *server.Context) error {
 		}
 	}
 
-	err = ware.Service.UpdateWare(conn, req)
+	err = ware.Service.UpdateWare(conn, &req)
 	if err != nil {
 		logger.Error(err)
 		if (len(req.Avatar) > 0 && !util.DeletePicture(req.Avatar)) ||
@@ -341,7 +341,7 @@ func ModifyPrice(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	err = ware.Service.ModifyPrice(conn, req)
+	err = ware.Service.ModifyPrice(conn, &req)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)

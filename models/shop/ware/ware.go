@@ -45,6 +45,21 @@ var (
 	Service *serviceProvider
 )
 
+const (
+	// hide or delete wares
+	invalidation = -1
+	//judge the effectiveness of the wares
+	judgement = 0
+	// common wares
+	common = 1
+	// promotion wares
+	promotion = 2
+	// new wares
+	newWare = 3
+	//recommend wares
+	recommend = 4
+)
+
 type (
 	// Ware represents the ware information
 	Ware struct {
@@ -55,10 +70,10 @@ type (
 		CategoryID       uint32    `gorm:"not null" json:"category_id"`
 		TotalSale        uint32    `gorm:"not null" json:"totalale"`
 		Inventory        uint32    `gorm:"not null" json:"inventory"`
-		Status           int8      `gorm:"type:TINYINT;default:1" json:"status"` // -1, hide or delete;1, common wares;2, promotion;3, new wares;4, recommend wares
+		Status           int8      `gorm:"not null;type:TINYINT;default:1" json:"status"` // -1, hide or delete;1, common wares;2, promotion;3, new wares;4, recommend wares
 		Price            float32   `gorm:"not null;type:float" json:"price"`
 		SalePrice        float32   `gorm:"not null;type:float" json:"sale_price"` // promotion price
-		Avatar           string    `gorm:"type:varchar(100)"   json:"avatar"`
+		Avatar           string    `gorm:"not null;type:varchar(100)"   json:"avatar"`
 		Image            string    `gorm:"type:varchar(100)"   json:"image"`
 		DetailPic        string    `gorm:"type:varchar(100)"   json:"detail_pic"`
 		CreatedAt        time.Time `json:"createdAt"`
@@ -98,7 +113,7 @@ type (
 )
 
 // add ware
-func (sp *serviceProvider) CreateWare(conn orm.Connection, wareReq Ware) error {
+func (sp *serviceProvider) CreateWare(conn orm.Connection, wareReq *Ware) error {
 	ware := &Ware{}
 	ware.Name = wareReq.Name
 	ware.Desc = wareReq.Desc
@@ -159,7 +174,7 @@ func (sp *serviceProvider) GetPromotionList(conn orm.Connection) ([]BriefInfo, e
 	var list []BriefInfo
 
 	db := conn.(*gorm.DB).Exec("USE shop")
-	res := db.Table("wares").Where("status = ?", 2).Scan(&list)
+	res := db.Table("wares").Where("status = ?", promotion).Scan(&list)
 
 	return list, res.Error
 }
@@ -172,13 +187,13 @@ func (sp *serviceProvider) GetNewWares(conn orm.Connection) ([]BriefInfo, error)
 	)
 
 	db := conn.(*gorm.DB).Exec("USE shop")
-	res = db.Table("wares").Where("status = ?", 3).Scan(&list)
+	res = db.Table("wares").Where("status = ?", newWare).Scan(&list)
 
 	return list, res.Error
 }
 
 // update ware info
-func (sp *serviceProvider) UpdateWare(conn orm.Connection, req UpdateReq) error {
+func (sp *serviceProvider) UpdateWare(conn orm.Connection, req *UpdateReq) error {
 	var imgs Ware
 
 	db := conn.(*gorm.DB).Exec("USE shop")
@@ -202,7 +217,7 @@ func (sp *serviceProvider) UpdateWare(conn orm.Connection, req UpdateReq) error 
 }
 
 // modify ware price
-func (sp *serviceProvider) ModifyPrice(conn orm.Connection, req ModifyPriceReq) error {
+func (sp *serviceProvider) ModifyPrice(conn orm.Connection, req *ModifyPriceReq) error {
 	var res *gorm.DB
 
 	db := conn.(*gorm.DB).Exec("USE shop")
@@ -233,16 +248,16 @@ func (sp *serviceProvider) HomePageList(conn orm.Connection, id uint32) ([]Brief
 	)
 
 	db := conn.(*gorm.DB).Exec("USE shop")
-	db.Table("wares").Where("status > ?", 0).Count(&count)
+	db.Table("wares").Where("status > ?", judgement).Count(&count)
 
 	if id == 0 || count <= 10 {
 		if count <= 10 {
-			res = db.Table("wares").Select(fields).Where("status > ?", 0).Scan(&list)
+			res = db.Table("wares").Select(fields).Where("status > ?", judgement).Scan(&list)
 		} else {
-			res = db.Table("wares").Select(fields).Order("id desc").Where("status > ?", 0).Limit(10).Scan(&list)
+			res = db.Table("wares").Select(fields).Order("id desc").Where("status > ?", judgement).Limit(10).Scan(&list)
 		}
 	} else {
-		res = db.Table("wares").Select(fields).Order("id desc").Where("status > ? AND id < ?", 0, id).Limit(10).Scan(&list)
+		res = db.Table("wares").Select(fields).Order("id desc").Where("status > ? AND id < ?", judgement, id).Limit(10).Scan(&list)
 	}
 
 	return list, res.Error
@@ -257,7 +272,7 @@ func (sp *serviceProvider) GetRecommendList(conn orm.Connection) ([]BriefInfo, e
 	)
 
 	db := conn.(*gorm.DB).Exec("USE shop")
-	res = db.Table("wares").Select(fields).Order("total_sale desc").Where("status = ?", 4).Limit(10).Scan(&list)
+	res = db.Table("wares").Select(fields).Order("total_sale desc").Where("status = ?", recommend).Limit(10).Scan(&list)
 
 	return list, res.Error
 }
@@ -278,7 +293,7 @@ func (sp *serviceProvider) GetByIDs(conn orm.Connection, ids []string) ([]BriefI
 	)
 
 	db := conn.(*gorm.DB).Exec("USE shop")
-	res = db.Table("wares").Where("status > ? AND id in (?) ", 0, ids).Scan(&list)
+	res = db.Table("wares").Where("status > ? AND id in (?) ", judgement, ids).Scan(&list)
 
 	return list, res.Error
 }
