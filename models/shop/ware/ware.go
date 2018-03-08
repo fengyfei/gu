@@ -50,10 +50,10 @@ type (
 		ID               uint32    `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
 		Name             string    `gorm:"type:varchar(50);not null"  json:"name" validate:"required,alphanumunicode,max=12"`
 		Desc             string    `gorm:"type:varchar(100);not null" json:"desc" validate:"alphanumunicode,max=50"`
-		ParentCategoryID uint16    `gorm:"not null" json:"parent_category_id"`
-		CategoryID       uint16    `gorm:"not null" json:"category_id"`
+		ParentCategoryID uint32    `gorm:"not null" json:"parent_category_id"`
+		CategoryID       uint32    `gorm:"not null" json:"category_id"`
 		TotalSale        uint32    `gorm:"not null" json:"totalale"`
-		Inventory        uint16    `gorm:"not null" json:"inventory"`
+		Inventory        uint32    `gorm:"not null" json:"inventory"`
 		Status           int8      `gorm:"type:TINYINT;default:1" json:"status"` // -1, hide or delete;1, common wares;2, promotion;3, new wares;4, recommend wares
 		Price            float32   `gorm:"not null;type:float" json:"price"`
 		SalePrice        float32   `gorm:"not null;type:float" json:"sale_price"` // promotion price
@@ -67,7 +67,7 @@ type (
 		ID        uint32  `json:"id"`
 		Name      string  `json:"name"`
 		TotalSale uint32  `json:"total_sale"`
-		Inventory uint16  `json:"inventory"`
+		Inventory uint32  `json:"inventory"`
 		Status    int8    `json:"status"`
 		Price     float32 `json:"price"`
 		SalePrice float32 `json:"sale_price"`
@@ -78,13 +78,13 @@ type (
 		ID               uint32 `json:"id" validate:"required"`
 		Name             string `json:"name"`
 		Desc             string `json:"desc" validate:"max=50"`
-		ParentCategoryID uint16 `json:"parent_category_id"`
-		CategoryID       uint16 `json:"category_id"`
+		ParentCategoryID uint32 `json:"parent_category_id"`
+		CategoryID       uint32 `json:"category_id"`
 		TotalSale        uint32 `json:"total_sale"`
 		Avatar           string `json:"avatar"`
 		Image            string `json:"image"`
 		DetailPic        string `json:"detail_pic"`
-		Inventory        uint16 `json:"inventory"`
+		Inventory        uint32 `json:"inventory"`
 	}
 
 	ModifyPriceReq struct {
@@ -128,7 +128,7 @@ func (sp *serviceProvider) GetAllWare(conn orm.Connection) ([]Ware, error) {
 }
 
 // get wares by parent categoryID
-func (sp *serviceProvider) GetByParentCID(conn orm.Connection, cid uint16) ([]BriefInfo, error) {
+func (sp *serviceProvider) GetByParentCID(conn orm.Connection, cid uint32) ([]BriefInfo, error) {
 	var (
 		res  *gorm.DB
 		list []BriefInfo
@@ -140,7 +140,7 @@ func (sp *serviceProvider) GetByParentCID(conn orm.Connection, cid uint16) ([]Br
 }
 
 // get wares by categoryID
-func (sp *serviceProvider) GetByCID(conn orm.Connection, cid uint16) ([]BriefInfo, error) {
+func (sp *serviceProvider) GetByCID(conn orm.Connection, cid uint32) ([]BriefInfo, error) {
 	var (
 		res  *gorm.DB
 		list []BriefInfo
@@ -221,9 +221,9 @@ func (sp *serviceProvider) GetByID(conn orm.Connection, id uint32) (*Ware, error
 }
 
 // get homepage ware list, 10 wares per time
-func (sp *serviceProvider) HomePageList(conn orm.Connection, id int) ([]BriefInfo, error) {
+func (sp *serviceProvider) HomePageList(conn orm.Connection, id uint32) ([]BriefInfo, error) {
 	var (
-		count  uint
+		count  uint32
 		list   []BriefInfo
 		res    *gorm.DB
 		fields = []string{"id", "name", "status", "price", "sale_price", "total_sale", "inventory", "avatar"}
@@ -260,7 +260,7 @@ func (sp *serviceProvider) GetRecommendList(conn orm.Connection) ([]BriefInfo, e
 }
 
 // change status
-func (sp *serviceProvider) ChangeStatus(conn orm.Connection, reqList []uint, status int8) error {
+func (sp *serviceProvider) ChangeStatus(conn orm.Connection, reqList []uint32, status int8) error {
 	db := conn.(*gorm.DB).Exec("USE shop")
 	err := db.Table("wares").Where("id in (?)", reqList).Update("status", status).Error
 

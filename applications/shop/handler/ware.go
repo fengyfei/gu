@@ -46,12 +46,12 @@ import (
 
 type (
 	categoryReq struct {
-		ParentCID uint16 `json:"parent_cid" validate:"required"`
-		CID       uint16 `json:"cid"`
+		ParentCID uint32 `json:"parent_cid" validate:"required"`
+		CID       uint32 `json:"cid"`
 	}
 
 	homeReq struct {
-		LastID int `json:"last_id"`
+		LastID uint32 `json:"last_id"`
 	}
 
 	detailReq struct {
@@ -59,7 +59,7 @@ type (
 	}
 
 	ChangeStatusReq struct {
-		IDs    []uint `json:"i_ds" validate:"required,min=1"`
+		IDs    []uint32 `json:"i_ds" validate:"required,min=1"`
 		Status int8   `json:"status" validate:"required,eq=-1|eq=1|eq=2|eq=3"`
 	}
 )
