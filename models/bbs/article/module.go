@@ -56,7 +56,7 @@ var (
 type Theme struct {
 	Id       bson.ObjectId `bson:"id"         json:"id"`
 	Name     string        `bson:"name"       json:"name"  validate:"required"`
-	IsActive bool          `bson:"isActive"     json:"isActive"`
+	IsActive bool          `bson:"isActive"   json:"isActive"`
 }
 
 // Module represents the module information.

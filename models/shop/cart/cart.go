@@ -49,13 +49,13 @@ type (
 		ID      uint32    `gorm:"primary_key;auto_increment"  json:"id"`
 		UserId  uint32    `gorm:"not null"                    json:"user_id"`
 		WareId  uint32    `gorm:"not null"                    json:"ware_id"`
-		Count   int8    `gorm:"not null;default:0"          json:"count"`
+		Count   uint8     `gorm:"not null;default:0"          json:"count"`
 		Created time.Time `gorm:"column:created"              json:"created"`
 	}
 
 	AddCartReq struct {
-		WareId uint32 `json:"wareId"`
-		Count  uint32 `json:"count"`
+		WareId uint32 `json:"wareId" validate:"required"`
+		Count  uint8 `json:"count"  validate:"required"`
 	}
 
 	RemoveCartReq struct {
@@ -69,7 +69,7 @@ func (Cart) TableName() string {
 }
 
 // Add adds wares to cart.
-func (this *serviceProvider) Add(conn orm.Connection, userId uint32, wareId uint32, count uint32) error {
+func (this *serviceProvider) Add(conn orm.Connection, userId uint32, wareId uint32, count uint8) error {
 	var (
 		cart Cart
 	)

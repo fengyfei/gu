@@ -62,12 +62,6 @@ func AddColl(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	err = c.Validate(&add)
-	if err != nil {
-		logger.Error("Invalid parameters:", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
-	}
-
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
@@ -122,12 +116,6 @@ func RemoveColl(c *server.Context) error {
 	err = c.JSONBody(&remove)
 	if err != nil {
 		logger.Error("Error in JSONBody:", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
-	}
-
-	err = c.Validate(&remove)
-	if err != nil {
-		logger.Error("Invalid parameters:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
