@@ -30,87 +30,88 @@
 package util
 
 import (
-  "encoding/base64"
-  "github.com/fengyfei/gu/libs/logger"
-  "strings"
-  "strconv"
-  "time"
-  "io/ioutil"
-  "os"
-  "errors"
+	"encoding/base64"
+	"errors"
+	"io/ioutil"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/fengyfei/gu/libs/logger"
 )
 
 var picturePath = "./img/"
 
 func getNameByTime(path string, suffix string) string {
-  files, _ := ioutil.ReadDir(path)
-  timeStamp := time.Now().Unix()
+	files, _ := ioutil.ReadDir(path)
+	timeStamp := time.Now().Unix()
 
-  return strconv.FormatInt(timeStamp, 10) + strconv.Itoa(len(files)) + "." + suffix
+	return strconv.FormatInt(timeStamp, 10) + strconv.Itoa(len(files)) + "." + suffix
 }
 
 func checkDir(path string) error {
-  _, err := os.Stat(path)
+	_, err := os.Stat(path)
 
-  if err != nil {
-    if os.IsNotExist(err) {
-      err = os.MkdirAll(path, 0777)
+	if err != nil {
+		if os.IsNotExist(err) {
+			err = os.MkdirAll(path, 0777)
 
-      if err != nil {
-        return err
-      }
-    }
-  }
+			if err != nil {
+				return err
+			}
+		}
+	}
 
-  return err
+	return err
 }
 
 func SavePicture(base64Str string, pathPrefix string) (string, error) {
-  if !strings.Contains(base64Str, "base64") || !strings.Contains(base64Str, "image") {
-    return "", errors.New("unvalid image base64 string")
-  }
+	if !strings.Contains(base64Str, "base64") || !strings.Contains(base64Str, "image") {
+		return "", errors.New("unvalid image base64 string")
+	}
 
-  slice := strings.Split(base64Str, ",")
-  suffix := string([]byte(slice[0])[11:len(slice[0]) - 7]) // picture format suffix
+	slice := strings.Split(base64Str, ",")
+	suffix := string([]byte(slice[0])[11 : len(slice[0])-7]) // picture format suffix
 
-  byteData, err := base64.StdEncoding.DecodeString(slice[1])
-  if err != nil {
-    logger.Error(err)
+	byteData, err := base64.StdEncoding.DecodeString(slice[1])
+	if err != nil {
+		logger.Error(err)
 
-    return "", err
-  }
+		return "", err
+	}
 
-  path := picturePath + pathPrefix
-  fileName := getNameByTime(path, suffix)
+	path := picturePath + pathPrefix
+	fileName := getNameByTime(path, suffix)
 
-  err = checkDir(path)
-  if err != nil {
-    logger.Error(err)
+	err = checkDir(path)
+	if err != nil {
+		logger.Error(err)
 
-    return "", err
-  }
+		return "", err
+	}
 
-  err = ioutil.WriteFile(path + fileName, byteData, 0777)
-  if err != nil {
-    logger.Error(err)
-  }
+	err = ioutil.WriteFile(path+fileName, byteData, 0777)
+	if err != nil {
+		logger.Error(err)
+	}
 
-  return path + fileName, err
+	return path + fileName, err
 }
 
 func DeletePicture(path string) bool { // true -> delete success; false -> delete failed
-  _, err := os.Stat(path)
+	_, err := os.Stat(path)
 
-  if err == nil || os.IsExist(err) {
-    err = os.Remove(path)
-    if err != nil {
-      logger.Error(errors.New(path + " delete failed"))
+	if err == nil || os.IsExist(err) {
+		err = os.Remove(path)
+		if err != nil {
+			logger.Error(errors.New(path + " delete failed"))
 
-      return false
-    }
+			return false
+		}
 
-    return true
-  }
+		return true
+	}
 
-  return os.IsNotExist(err)
+	return os.IsNotExist(err)
 }

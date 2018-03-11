@@ -31,13 +31,14 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
+	jwtgo "github.com/dgrijalva/jwt-go"
 	json "github.com/json-iterator/go"
 
 	"github.com/fengyfei/gu/applications/core"
-	jwtgo "github.com/dgrijalva/jwt-go"
 	"github.com/fengyfei/gu/applications/shop/mysql"
 	"github.com/fengyfei/gu/applications/shop/util"
 	"github.com/fengyfei/gu/libs/constants"
@@ -100,7 +101,7 @@ func WechatLogin(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	u, avatar, err := user.UserServer.WeChatLogin(conn, &wechatLogin)
+	u, err := user.UserServer.WeChatLogin(conn, &wechatLogin)
 	if err != nil {
 		logger.Error("Error in Wechat Login:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -116,7 +117,7 @@ func WechatLogin(c *server.Context) error {
 		Token:    token,
 		UserName: u.UserName,
 		Sex:      u.Sex,
-		Avatar:   avatar.Avatar,
+		Avatar:   u.Avatar,
 	}
 
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, &userData)
@@ -184,9 +185,20 @@ func ChangeInfo(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
+	if len(change.Avatar) > 0 {
+		change.Avatar, err = util.SavePicture(change.Avatar, "avatar/")
+		if err != nil {
+			logger.Error(err)
+			return core.WriteStatusAndDataJSON(c, constants.ErrInternalServerError, nil)
+		}
+	}
+
 	err = user.UserServer.ChangeInfo(conn, userID, &change)
 	if err != nil {
 		logger.Error("Error in changing informantion:", err)
+		if len(change.Avatar) > 0 && !util.DeletePicture(change.Avatar) {
+			logger.Error(errors.New("create ware failed and delete it's pictures go wrong, please delete picture manually"))
+		}
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
@@ -252,7 +264,7 @@ func PhoneLogin(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	u, avatar, err := user.UserServer.PhoneLogin(conn, &login)
+	u, err := user.UserServer.PhoneLogin(conn, &login)
 	if err != nil {
 		logger.Error("Error in Phone Login:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrAccount, nil)
@@ -269,7 +281,7 @@ func PhoneLogin(c *server.Context) error {
 		UserName: u.UserName,
 		Phone:    u.Phone,
 		Sex:      u.Sex,
-		Avatar:   avatar.Avatar,
+		Avatar:   u.Avatar,
 	}
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, &userData)
 }

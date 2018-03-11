@@ -37,7 +37,6 @@ import (
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/http/server/middleware"
 	"github.com/fengyfei/gu/libs/logger"
-	"github.com/fengyfei/gu/models/user"
 )
 
 var (
@@ -59,9 +58,9 @@ func customSkipper(c *server.Context) bool {
 	URLMap["/shop/ware/getdetail"] = struct{}{}
 	URLMap["/shop/ware/getbycid"] = struct{}{}
 	URLMap["/shop/ware/getpromotion"] = struct{}{}
-	URLMap["/shop/ware/homelist"] = struct{}{}
-	URLMap["/shop/ware/recommend"] = struct{}{}
-	URLMap["/shop/ware/recommend"] = struct{}{}
+	URLMap["/shop/ware/gethomelist"] = struct{}{}
+	URLMap["/shop/ware/getrecommend"] = struct{}{}
+	URLMap["/shop/ware/getnew"] = struct{}{}
 	if _, ok := URLMap[c.Request().RequestURI]; ok {
 		return true
 	}
@@ -74,8 +73,6 @@ func startServer() {
 	serverConfig := &server.Configuration{
 		Address: conf.ShopConfig.Address,
 	}
-
-	user.InitMongo("avatar", "user", conf.ShopConfig.MongoURL)
 
 	mysql.InitPool()
 

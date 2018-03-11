@@ -60,7 +60,7 @@ type (
 
 	changeStatusReq struct {
 		IDs    []uint32 `json:"i_ds" validate:"required,min=1"`
-		Status int8   `json:"status" validate:"required,eq=-1|eq=1|eq=2|eq=3"`
+		Status int8     `json:"status" validate:"required,eq=-1|eq=1|eq=2|eq=3"`
 	}
 )
 

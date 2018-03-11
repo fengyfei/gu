@@ -30,8 +30,6 @@
 package wechatPay
 
 import (
-	"github.com/chanxuehong/wechat.v2/mch/core"
-	"github.com/chanxuehong/wechat.v2/mch/pay"
 	"time"
 	"math/rand"
 	"bytes"
@@ -39,6 +37,9 @@ import (
 	"io"
 	"fmt"
 	"strconv"
+
+	"github.com/chanxuehong/wechat.v2/mch/core"
+	"github.com/chanxuehong/wechat.v2/mch/pay"
 )
 
 var (

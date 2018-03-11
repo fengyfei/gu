@@ -5,9 +5,10 @@ CREATE TABLE IF NOT EXISTS `users` (
   `id` INT(64) UNSIGNED NOT NULL AUTO_INCREMENT,
   `unionid` VARCHAR(29)  UNIQUE,
   `username` VARCHAR(128),
+  `avatar` VARCHAR(128),
   `phone` VARCHAR (16),
   `password` VARCHAR(128),
-  `sex` INT(8) UNSIGNED,
+  `sex` INT(8) UNSIGNED COMMENT '0:男;1:女',
   `isadmin` BOOLEAN NOT NULL,
   `type` VARCHAR(32),
   `created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -55,5 +56,37 @@ CREATE TABLE IF NOT EXISTS `category` (
   `parentid` INT(64) UNSIGNED NOT NULL DEFAULT 0,
   `status` INT(8) UNSIGNED NOT NULL DEFAULT 1,
   `created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+CREATE TABLE IF NOT EXISTS `orders` (
+  `id` INT(64) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `bill_id` VARCHAR(128),
+  `user_id` INT(64),
+  `parent_id` INT(64),
+  `status` INT(64),
+  `ware_id` INT(64),
+  `count` INT (32),
+  `price` DOUBLE(10, 2),
+  `receive_way` INT(8),
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+CREATE TABLE IF NOT EXISTS `wares` (
+  `id` INT(64) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(50) NOT NULL,
+  `desc` VARCHAR(100) NOT NULL,
+  `parent_category_id` INT(16) NOT NULL,
+  `category_id` INT(16) NOT NULL,
+  `total_sale` INT(32),
+  `inventory` INT(16),
+  `status` INT(8) DEFAULT 1,
+  `price` DOUBLE(10, 2),
+  `sale_price` DOUBLE(10, 2),
+  `avatar` VARCHAR(128),
+  `image` VARCHAR(128),
+  `detail_pic` VARCHAR(128),
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_bin;

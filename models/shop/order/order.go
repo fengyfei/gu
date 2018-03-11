@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd..
+ * Copyright (c) 2018 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,115 +24,118 @@
 
 /*
  * Revision History:
- *     Initial: 2017/11/25        ShiChao
+ *     Initial: 2018/03/08        Shi Ruitao
  */
 
 package order
 
 import (
 	"time"
-	"github.com/fengyfei/gu/libs/orm"
+
 	"github.com/jinzhu/gorm"
-	// "github.com/fengyfei/gu/applications/beego/shop/util/wechatPay"
-	//User "github.com/fengyfei/gu/models/shop/user"
-	Cart "github.com/fengyfei/gu/models/shop/cart"
-	"fmt"
+
+	"github.com/fengyfei/gu/libs/orm"
+	//User "github.com/fengyfei/gu/models/user"
 	"github.com/fengyfei/gu/applications/shop/util/wechatPay"
+	Cart "github.com/fengyfei/gu/models/shop/cart"
 )
 
 type serviceProvider struct{}
 
 var (
 	Service         *serviceProvider
-	defaultParentId uint  = 0x0
-	unPay           uint  = 0x0
-	StatusUnpay     uint  = 0x0
-	StatusPaid      uint  = 0x1
-	StatusConfirmed uint  = 0x2
-	PayWayOnline    int32 = 0x0
+	defaultParentId uint64 = 0
+	StatusUnpay     uint8  = 0
+	StatusPaid      uint8  = 1
+	StatusConfirmed uint8  = 2
+	PayWayOnline    uint8  = 3
 )
 
 const AMonth = 30 * 24 * 60 * 60 * 1e9
 
-type Order struct {
-	ID         uint    `gorm:"primary_key;auto_increment"`
-	BillID     string  `gorm:"not null"`
-	UserID     uint    `gorm:"not null"`
-	ParentID   uint    `gorm:"not null"`
-	Status     uint    `gorm:"not null";default:0`
-	WareId     uint    `gorm:"not null"`
-	Count      uint    `gorm:"not null";default:0`
-	Price      float64 `gorm:"not null";default:0`
-	CreatedAt  *time.Time
-}
+type (
+	Order struct {
+		ID         uint64  `gorm:"primary_key;auto_increment"`
+		BillID     string  `gorm:"not null"`
+		UserID     uint32  `gorm:"not null"`
+		ParentID   uint64  `gorm:"not null"`
+		Status     uint8   `gorm:"not null";default:0`
+		WareId     uint32  `gorm:"not null" json:"ware_id"`
+		Count      uint8   `gorm:"not null";default:0 json:"count"`
+		Price      float32 `gorm:"not null";default:0 json:"price"`
+		ReceiveWay uint8   `gorm:"not null";default:0`
+		CreatedAt  *time.Time
+	}
 
-type OrderItem struct {
-	WareId uint    `json:"wareId" validate:"required"`
-	Count  uint    `json:"count" validate:"required"`
-	Price  float64 `json:"price" validate:"required"`
-}
+	OrderItem struct {
+		WareId uint32  `json:"ware_id"" validate:"required"`
+		Count  uint8   `json:"count" validate:"required"`
+		Price  float32 `json:"price" validate:"required"`
+	}
+	CreateReq struct {
+		Orders     []OrderItem `json:"orders" validate:"required"`
+		ReceiveWay uint8       `json:"receive_way" validate:"required"`
+	}
+)
 
-func (this *serviceProvider) OrderByWechat(conn orm.Connection, userId uint, IP string, receiveWay int8, orders []OrderItem) (string, error) {
+func (this *serviceProvider) OrderByWechat(conn orm.Connection, userId uint32, IP string, req *CreateReq) (string, error) {
 	var (
 		parentOrder Order
 		err         error
-		totalPrice  float64
-		childOrders []OrderItem
-		wareIdList  = make([]uint, len(orders))
-		/*user        *User.User
-		totalFee    int64
-		paySign     string*/
+		totalPrice  float32
+		wareIdList  = make([]uint32, len(req.Orders))
+		//user        *User.User
+		//totalFee    int64
+		//paySign     string
 	)
 
-	childOrders = orders
 	parentOrder.BillID = wechatPay.GenerateBillID()
-	fmt.Println(parentOrder.BillID)
 	parentOrder.UserID = userId
-	parentOrder.ReceiveWay = receiveWay
+	parentOrder.ReceiveWay = req.ReceiveWay
 	parentOrder.ParentID = defaultParentId
-	parentOrder.Status = unPay
+	parentOrder.Status = StatusUnpay
 
 	db := conn.(*gorm.DB).Exec("USE shop")
 	tx := db.Begin()
 
-	err = tx.Create(&parentOrder).Error
+	err = tx.Table("orders").Create(&parentOrder).Error
 	if err != nil {
 		goto errFinish
 	}
 
-	for i := 0; i < len(childOrders); i++ {
-		wareIdList[i] = childOrders[i].WareId
+	for i := 0; i < len(req.Orders); i++ {
+		wareIdList[i] = req.Orders[i].WareId
 		child := &Order{}
-		curOrder := childOrders[i]
-		child.Price = curOrder.Price * float64(curOrder.Count)
+		curOrder := req.Orders[i]
+		child.Price = curOrder.Price * float32(curOrder.Count)
 		child.Count = curOrder.Count
 		child.WareId = curOrder.WareId
 		child.ParentID = parentOrder.ID
 
 		totalPrice += child.Price
-		err = tx.Create(&child).Error
+		err = tx.Table("orders").Create(&child).Error
 		if err != nil {
 			goto errFinish
 		}
 	}
 
-	err = Cart.Service.RemoveWhenOrder(tx, userId, wareIdList)
+	err = Cart.Service.RemoveWhenOrder(tx, wareIdList)
 	if err != nil {
 		goto errFinish
 	}
 
-	/*user, err = User.Service.GetUserByID(conn, userId)
-	if err != nil {
-		goto errFinish
-	}
-
-	totalFee = int64(totalPrice * 100)
-	paySign, err = wechatPay.OnPay(user.UserName, "desc", parentOrder.BillID, IP, totalFee)
-	if err != nil {
-		goto errFinish
-	}
-
-	return paySign, nil*/
+	//user, err = User.UserServer.GetUserByID(conn, userId)
+	//if err != nil {
+	//	goto errFinish
+	//}
+	//
+	//totalFee = int64(totalPrice * 100)
+	//paySign, err = wechatPay.OnPay(user.UserName, "desc", parentOrder.BillID, IP, totalFee)
+	//if err != nil {
+	//	goto errFinish
+	//}
+	//
+	//return paySign, nil
 	tx.Commit()
 	return "", nil
 
@@ -141,7 +144,7 @@ errFinish:
 	return "", err
 }
 
-func (this *serviceProvider) ChangeStateByOne(conn orm.Connection, ID, status uint) error {
+func (this *serviceProvider) ChangeStateByOne(conn orm.Connection, ID uint64, status uint8) error {
 	db := conn.(*gorm.DB).Exec("USE shop")
 	return db.Model(&Order{}).Where("id = ?", ID).Update("status", status).Error
 }
@@ -164,7 +167,7 @@ onErr:
 	return err
 }
 
-func (this *serviceProvider) GetUserOrder(conn orm.Connection, userId uint) (*[]Order, error) {
+func (this *serviceProvider) GetUserOrder(conn orm.Connection, userId uint32) (*[]Order, error) {
 	var (
 		orders []Order
 	)

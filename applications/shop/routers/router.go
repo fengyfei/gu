@@ -72,7 +72,7 @@ func register(r *server.Router) {
 	// ware api for user
 	r.Post("/shop/ware/getbycid", handler.GetWareByCategory)
 	r.Get("/shop/ware/getpromotion", handler.GetPromotion)
-	r.Post("/shop/ware/gethomelist",  handler.HomePageList)
+	r.Post("/shop/ware/gethomelist", handler.HomePageList)
 	r.Get("/shop/ware/getrecommend", handler.RecommendList)
 	r.Post("/shop/ware/getdetail", handler.GetDetail)
 	r.Get("/shop/ware/getnew", handler.GetNewWares)
@@ -84,11 +84,11 @@ func register(r *server.Router) {
 	r.Post("/shop/cart/removemany", handler.RemoveWhenOrder)
 
 	// order api for user
-	//r.Post("/shop/user/order/add", &handler.OrderController{}, "post:CreateOrder")
-	//r.Post("/shop/user/order/get", &handler.OrderController{}, "get:GetUserOrder")
+	r.Post("/shop/user/order/add", handler.CreateOrder)
+	r.Get("/shop/user/order/get", handler.GetUserOrder)
 
 	// order api for admin
-	//r.Post("/shop/api/order/confirm", &handler.OrderController{}, "post:ConfirmOrder")
+	r.Post("/shop/api/order/confirm", handler.ConfirmOrder)
 
 	// collection api for user
 	r.Post("/shop/collection/get", handler.GetByUserID)

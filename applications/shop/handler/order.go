@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd.
+ * Copyright (c) 2018 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,156 +24,131 @@
 
 /*
  * Revision History:
- *     Initial: 2017/11/25        ShiChao
+ *     Initial: 2018/03/08        Shi Ruitao
  */
 
 package handler
 
-//import (
-//	"github.com/fengyfei/gu/applications/beego/base"
-//	"github.com/fengyfei/gu/libs/constants"
-//	"encoding/json"
-//	"github.com/fengyfei/gu/libs/logger"
-//	"github.com/fengyfei/gu/applications/beego/shop/mysql"
-//	"github.com/fengyfei/gu/libs/orm"
-//	Order "github.com/fengyfei/gu/models/shop/order"
-//)
-//
-//type (
-//	OrderController struct {
-//		base.Controller
-//	}
-//
-//	createReq struct {
-//		Orders     []Order.OrderItem `json:"orders" validate:"required"`
-//		ReceiveWay int8              `json:"receiveWay" validate:"required"`
-//	}
-//
-//	confirmOrderReq struct {
-//		ID     uint `json:"id"`
-//	}
-//)
-//
-//func (this *OrderController) CreateOrder() {
-//	var (
-//		req     createReq
-//		err     error
-//		IP      string
-//		userId  uint
-//		conn    orm.Connection
-//		signStr string
-//	)
-//
-//	userId = this.Ctx.Request.Context().Value("userId").(uint)
-//
-//	conn, err = mysql.Pool.Get()
-//	if err != nil {
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-//		goto finish
-//	}
-//
-//	err = json.Unmarshal(this.Ctx.Input.RequestBody, &req)
-//	if err != nil {
-//		logger.Error(err)
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-//
-//		goto finish
-//	}
-//
-//	IP = this.Ctx.Input.IP()
-//
-//	err = this.Validate(&req)
-//	if err != nil {
-//		logger.Error(err)
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-//
-//		goto finish
-//	}
-//
-//	signStr, err = Order.Service.OrderByWechat(conn, userId, IP, req.ReceiveWay, req.Orders)
-//	if err != nil {
-//		logger.Error(err)
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrWechatPay}
-//
-//		goto finish
-//	}
-//	this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed, constants.RespPaySign: signStr}
-//
-//finish:
-//	this.ServeJSON(true)
-//}
-//
-//func (this *OrderController) ConfirmOrder() {
-//
-//	var (
-//		req  confirmOrderReq
-//		conn orm.Connection
-//		err  error
-//	)
-//
-//	isAdmin := this.Ctx.Request.Context().Value("isAdmin").(bool)
-//	if !isAdmin {
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrPermission}
-//	}
-//
-//	conn, err = mysql.Pool.Get()
-//	if err != nil {
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-//		goto finish
-//	}
-//
-//	err = json.Unmarshal(this.Ctx.Input.RequestBody, &req)
-//	if err != nil {
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-//		goto finish
-//	}
-//
-//	err = this.Validate(&req)
-//	if err != nil {
-//		logger.Error(err)
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-//
-//		goto finish
-//	}
-//
-//	err = Order.Service.ChangeStateByOne(conn, req.ID, Order.StatusConfirmed)
-//	if err != nil {
-//		logger.Error(err)
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-//		goto finish
-//	}
-//
-//	this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed}
-//
-//finish:
-//	this.ServeJSON(true)
-//}
-//
-//func (this *OrderController) GetUserOrder() {
-//	var (
-//		conn   orm.Connection
-//		orders *[]Order.Order
-//		err    error
-//	)
-//
-//	userId := this.Ctx.Request.Context().Value("userId").(uint)
-//
-//	conn, err = mysql.Pool.Get()
-//	if err != nil {
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrMysql}
-//		goto finish
-//	}
-//
-//	orders, err = Order.Service.GetUserOrder(conn, userId)
-//	if err != nil {
-//		logger.Error(err)
-//		this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrInvalidParam}
-//		goto finish
-//	}
-//
-//	this.Data["json"] = map[string]interface{}{constants.RespKeyStatus: constants.ErrSucceed, constants.RespKeyData: orders}
-//
-//finish:
-//	this.ServeJSON(true)
-//}
-//
+import (
+	jwtgo "github.com/dgrijalva/jwt-go"
+
+	"github.com/fengyfei/gu/applications/core"
+	"github.com/fengyfei/gu/applications/shop/mysql"
+	"github.com/fengyfei/gu/applications/shop/util"
+	"github.com/fengyfei/gu/libs/constants"
+	"github.com/fengyfei/gu/libs/http/server"
+	"github.com/fengyfei/gu/libs/logger"
+	"github.com/fengyfei/gu/libs/orm"
+	Order "github.com/fengyfei/gu/models/shop/order"
+)
+
+type (
+	confirmOrderReq struct {
+		ID uint64 `json:"id"`
+	}
+)
+
+func CreateOrder(c *server.Context) error {
+	var (
+		req     Order.CreateReq
+		err     error
+		IP      string
+		userId  uint32
+		conn    orm.Connection
+		signStr string
+	)
+
+	err = c.JSONBody(&req)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	IP = c.Request().RemoteAddr
+
+	err = c.Validate(&req)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	userId = uint32(c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(float64))
+
+	conn, err = mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error("Can't get mysql connection:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	signStr, err = Order.Service.OrderByWechat(conn, userId, IP, &req)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrWechatPay, nil)
+	}
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, signStr)
+}
+
+func ConfirmOrder(c *server.Context) error {
+	var (
+		req  confirmOrderReq
+		conn orm.Connection
+		err  error
+	)
+
+	err = c.JSONBody(&req)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	err = c.Validate(&req)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	isAdmin := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.IsAdmin].(bool)
+	if !isAdmin {
+		return core.WriteStatusAndDataJSON(c, constants.ErrPermission, nil)
+	}
+
+	conn, err = mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	err = Order.Service.ChangeStateByOne(conn, req.ID, Order.StatusConfirmed)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
+}
+
+func GetUserOrder(c *server.Context) error {
+	var (
+		conn   orm.Connection
+		orders *[]Order.Order
+		err    error
+	)
+
+	userId := uint32(c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(float64))
+
+	conn, err = mysql.Pool.Get()
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	orders, err = Order.Service.GetUserOrder(conn, userId)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, orders)
+}
