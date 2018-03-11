@@ -24,8 +24,7 @@
 
 /*
  * Revision History:
- *     Initial: 2018/01/21        Chen Yanchen
- *	   Modify:  2018/02/01        Shi Ruitao
+ *     Initial: 2018/02/01        Shi Ruitao
  */
 
 package user
@@ -37,8 +36,6 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 
 	"github.com/fengyfei/gu/libs/mongo"
 	"github.com/fengyfei/gu/libs/orm"
@@ -59,7 +56,7 @@ var (
 	// UserServer
 	UserServer = &UserServiceProvider{}
 
-	session    *mongo.Connection
+	session *mongo.Connection
 
 	// ErrInvalidPass
 	ErrInvalidPass = errors.New("the password error.")
@@ -71,7 +68,7 @@ type (
 	PhoneRegister struct {
 		Phone    string `json:"phone" validate:"required,alphanum,len=11"`
 		Password string `json:"password" validate:"required,min=6,max=30"`
-		UserName string `json:"username" validate:"required,alphaunicode,min=2,max=30"`
+		UserName string `json:"usernaame" validate:"required,alphaunicode,min=2,max=30"`
 	}
 
 	PhoneLogin struct {
@@ -118,16 +115,13 @@ type (
 		Sex      uint8  `json:"sex"`
 		Avatar   string `json:"avatar"`
 	}
-	Avatar struct {
-		UserID uint32 `bson:"userid,omitempty" json:"id"`
-		Avatar string `bson:"avatar" json:"avatar"`
-	}
 )
 
 // User represents users information
 type User struct {
 	UserID    uint32    `gorm:"column:id;primary_key;auto_increment" json:"userID"`
 	UserName  string    `gorm:"column:username;size:16"`
+	Avatar    string    `gorm:"column:avatar"`
 	Sex       uint8     `gorm:"column:sex"`
 	Password  string    `gorm:"column:password;type:varchar(128)" json:"password" validate:"required,alphanum,min=6,max=30"`
 	Phone     string    `gorm:"type:varchar(16)" json:"phone" validate:"required,numeric,len=11"`
@@ -139,26 +133,15 @@ type User struct {
 	IsActive  bool      `gorm:"column:isactive;not null;default:1"`
 }
 
-func InitMongo(dbName, collection, url string) {
-	s, err := mgo.Dial(url)
-	if err != nil {
-		panic(err)
-	}
-
-	s.SetMode(mgo.Monotonic, true)
-	session = mongo.NewConnection(s, dbName, collection)
-}
-
 // TableName
 func (u User) TableName() string {
 	return "users"
 }
 
 // WeChatLogin
-func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, info *WechatLogin) (*User, *Avatar, error) {
+func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, info *WechatLogin) (*User, error) {
 	var err error
 	var user User
-	var avatar Avatar
 	db := conn.(*gorm.DB)
 
 	err = db.Where("unionID = ?", info.UnionID).First(&user).Error
@@ -168,7 +151,7 @@ func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, info *WechatLo
 			s := fmt.Sprintf("%s%d", info.UnionID, r.Intn(10000))
 			salt, err := security.SaltHashGenerate(&s)
 			if err != nil {
-				return nil, nil, err
+				return nil, err
 			}
 
 			user.Type = WeChat
@@ -181,33 +164,19 @@ func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, info *WechatLo
 
 			err = db.Model(&User{}).Create(&user).Error
 			if err != nil {
-				return nil, nil, err
+				return nil, err
 			}
 
 			err = db.Where("unionID = ?", info.UnionID).First(&user).Error
 			if err != nil {
-				return nil, nil, err
+				return nil, err
 			}
-			c := session.Connect()
-			avatar = Avatar{
-				UserID: user.UserID,
-				Avatar: "null",
-			}
-			err = c.Insert(avatar)
-			if err != nil {
-				return nil, nil, err
-			}
-			return &user, &avatar, err
+			return &user, err
 		}
-		return nil, nil, err
+		return nil, err
 	}
 
-	c := session.Connect()
-	err = c.GetUniqueOne(bson.M{"userid": user.UserID}, &avatar)
-	if err != nil {
-		return nil, nil, err
-	}
-	return &user, &avatar, nil
+	return &user, nil
 }
 
 // wechat add a phone number
@@ -228,10 +197,6 @@ func (this *UserServiceProvider) AddPhone(conn orm.Connection, id uint32, phone 
 // Change user information
 func (this *UserServiceProvider) ChangeInfo(conn orm.Connection, id uint32, change *ChangeInfo) error {
 	var user User
-	var avatar = &Avatar{
-		UserID: id,
-		Avatar: change.Avatar,
-	}
 
 	db := conn.(*gorm.DB)
 
@@ -240,22 +205,15 @@ func (this *UserServiceProvider) ChangeInfo(conn orm.Connection, id uint32, chan
 		return err
 	}
 
-	c := session.Connect()
-	err = c.Update(bson.M{"userid": id}, avatar)
-	if err != nil {
-		return err
-	}
-
 	user.UserName = change.UserName
 	user.Sex = change.Sex
+	user.Avatar = change.Avatar
 
 	return db.Save(&user).Error
 }
 
 // Register by phone
 func (this *UserServiceProvider) PhoneRegister(conn orm.Connection, register *PhoneRegister) error {
-	var avatar Avatar
-
 	salt, err := security.SaltHashGenerate(&register.Password)
 	if err != nil {
 		return err
@@ -277,44 +235,29 @@ func (this *UserServiceProvider) PhoneRegister(conn orm.Connection, register *Ph
 	if err != nil {
 		return err
 	}
-	c := session.Connect()
-	avatar = Avatar{
-		UserID: user.UserID,
-		Avatar: "null",
-	}
-	err = c.Insert(avatar)
-	if err != nil {
-		return err
-	}
 	return err
 }
 
-func (this *UserServiceProvider) PhoneLogin(conn orm.Connection, login *PhoneLogin) (*User, *Avatar, error) {
+func (this *UserServiceProvider) PhoneLogin(conn orm.Connection, login *PhoneLogin) (*User, error) {
 	var user User
-	var avatar Avatar
 	var updater = make(map[string]interface{})
 	updater["lastlogin"] = time.Now()
 
 	db := conn.(*gorm.DB)
 	err := db.Where("phone = ?", login.Phone).First(&user).Error
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if !security.SaltHashCompare([]byte(user.Password), &login.Password) {
-		return nil, nil, ErrInvalidPass
+		return nil, ErrInvalidPass
 	}
 
 	err = db.Model(&user).Where("id = ?", user.UserID).Update(updater).Limit(1).Error
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	c := session.Connect()
-	err = c.GetUniqueOne(bson.M{"userid": user.UserID}, &avatar)
-	if err != nil {
-		return nil, nil, err
-	}
-	return &user, &avatar, nil
+	return &user, nil
 }
 
 func (this *UserServiceProvider) ChangePassword(conn orm.Connection, id uint32, change *ChangePass) error {
