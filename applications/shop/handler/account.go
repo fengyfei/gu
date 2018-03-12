@@ -186,7 +186,7 @@ func ChangeInfo(c *server.Context) error {
 	}
 
 	if len(change.Avatar) > 0 {
-		change.Avatar, err = util.SavePicture(change.Avatar, "avatar/")
+		change.Avatar, err = user.SavePicture(change.Avatar, "avatar/")
 		if err != nil {
 			logger.Error(err)
 			return core.WriteStatusAndDataJSON(c, constants.ErrInternalServerError, nil)
@@ -196,7 +196,7 @@ func ChangeInfo(c *server.Context) error {
 	err = user.UserServer.ChangeInfo(conn, userID, &change)
 	if err != nil {
 		logger.Error("Error in changing informantion:", err)
-		if len(change.Avatar) > 0 && !util.DeletePicture(change.Avatar) {
+		if len(change.Avatar) > 0 && !user.DeletePicture(change.Avatar) {
 			logger.Error(errors.New("create ware failed and delete it's pictures go wrong, please delete picture manually"))
 		}
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
