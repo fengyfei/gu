@@ -205,6 +205,10 @@ func (this *UserServiceProvider) ChangeInfo(conn orm.Connection, id uint32, chan
 		return err
 	}
 
+	if len(user.Avatar) > 0 {
+		DeletePicture(user.Avatar)
+	}
+
 	user.UserName = change.UserName
 	user.Sex = change.Sex
 	user.Avatar = change.Avatar
