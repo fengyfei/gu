@@ -32,6 +32,7 @@ package user
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -100,13 +101,13 @@ func WechatLogin(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
 	}
 
-	u, avatar, err := user.UserServer.WeChatLogin(conn, &wechatLogin)
+	u, err := user.UserServer.WeChatLogin(conn, &wechatLogin)
 	if err != nil {
 		logger.Error("Wechat login failed.")
 		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
 	}
 
-	token, err := util.NewToken(u.UserID, wechatData.SessionKey, false)
+	token, err := util.NewToken(u.UserID, wechatData.SessionKey, u.IsAdmin)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
@@ -116,7 +117,7 @@ func WechatLogin(this *server.Context) error {
 		Token:    token,
 		UserName: u.UserName,
 		Phone:    u.Phone,
-		Avatar:   avatar.Avatar,
+		Avatar:   u.Avatar,
 		Sex:      u.Sex,
 	}
 
@@ -173,6 +174,10 @@ func PhoneRegister(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
+	if !util.ValidatePhone(register.Phone) {
+		logger.Error("Phone not right.")
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
 	conn, err := initialize.Pool.Get()
 	defer initialize.Pool.Release(conn)
 	if err != nil {
@@ -210,7 +215,7 @@ func PhoneLogin(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	u, avatar, err := user.UserServer.PhoneLogin(conn, &phoneLogin)
+	u, err := user.UserServer.PhoneLogin(conn, &phoneLogin)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrAccount, nil)
@@ -227,7 +232,7 @@ func PhoneLogin(c *server.Context) error {
 		UserName: u.UserName,
 		Phone:    u.Phone,
 		Sex:      u.Sex,
-		Avatar:   avatar.Avatar,
+		Avatar:   u.Avatar,
 	}
 
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, &userData)
@@ -254,10 +259,22 @@ func ChangeUserInfo(this *server.Context) error {
 		logger.Error("Can not connected mysql.", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
 	}
+
+	if len(changeInfo.Avatar) > 0 {
+		changeInfo.Avatar, err = user.SavePicture(changeInfo.Avatar, "avatar/")
+		if err != nil {
+			logger.Error(err)
+			return core.WriteStatusAndDataJSON(this, constants.ErrInternalServerError, nil)
+		}
+	}
+
 	err = user.UserServer.ChangeInfo(conn, uint32(userid), &changeInfo)
 	if err != nil {
 		logger.Error(err)
-		core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+		if len(changeInfo.Avatar) > 0 && !user.DeletePicture(changeInfo.Avatar) {
+			logger.Error(errors.New("create ware failed and delete it's pictures go wrong, please delete picture manually"))
+		}
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, nil)
 }

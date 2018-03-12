@@ -37,7 +37,6 @@ import (
 	"github.com/fengyfei/gu/libs/http/server/middleware"
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/models/bbs/article"
-	mongo "github.com/fengyfei/gu/models/user"
 )
 
 func main() {
@@ -76,7 +75,6 @@ func startServer() {
 	}
 
 	go article.Cron()
-	mongo.InitMongo("bbs", "avatar", conf.BBSConfig.MongoURL)
 
 	ep = server.NewEntrypoint(serverConfig, nil)
 
