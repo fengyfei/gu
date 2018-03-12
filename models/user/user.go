@@ -68,7 +68,7 @@ type (
 	PhoneRegister struct {
 		Phone    string `json:"phone" validate:"required,alphanum,len=11"`
 		Password string `json:"password" validate:"required,min=6,max=30"`
-		UserName string `json:"usernaame" validate:"required,alphaunicode,min=2,max=30"`
+		UserName string `json:"username" validate:"required,alphaunicode,min=2,max=30"`
 	}
 
 	PhoneLogin struct {
