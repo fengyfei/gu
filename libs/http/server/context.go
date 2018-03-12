@@ -77,13 +77,21 @@ func (c *Context) Reset(w http.ResponseWriter, r *http.Request) {
 	c.LastError = nil
 }
 
+func isJson(s string) bool {
+	s = strings.Replace(strings.ToUpper(s), " ", "", -1)
+	j := strings.Replace(strings.ToUpper(MIMEApplicationJSON), " ", "", -1)
+	jsonCharset := strings.Replace(strings.ToUpper(MIMEApplicationJSONCharsetUTF8), " ", "", -1)
+
+	return strings.EqualFold(s, j) || strings.EqualFold(s, jsonCharset)
+}
+
 // JSONBody parses the JSON request body.
 func (c *Context) JSONBody(v interface{}) error {
 	if c.request.ContentLength == 0 {
 		return errNoBody
 	}
 
-	if conType := c.request.Header.Get(HeaderContentType); !strings.EqualFold(conType, MIMEApplicationJSON) {
+	if conType := c.request.Header.Get(HeaderContentType); !isJson(conType) {
 		return errNotJSONBody
 	}
 
