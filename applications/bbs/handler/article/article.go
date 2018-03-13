@@ -188,3 +188,23 @@ func UpdateTimes(this *server.Context) error {
 
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, nil)
 }
+
+// Recommend return popular articles.
+func Recommend(this *server.Context) error {
+	var req struct {
+		Page int `json:"page"`
+	}
+
+	if err := this.JSONBody(&req); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	list, err := article.ArticleService.Recommend(req.Page)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, list)
+}

@@ -64,6 +64,7 @@ func InitRouter(u *server.Router) {
 	u.Post("/bbs/article/title", article.GetByTitle)
 	u.Post("/bbs/article/userid", article.GetByUserID)
 	u.Post("/bbs/article/updatetimes", article.UpdateTimes)
+	u.Post("/bbs/article/recommend", article.Recommend)
 
 	u.Post("/bbs/module/insert", article.AddModule)
 	u.Post("/bbs/module/theme/insert", article.AddTheme)

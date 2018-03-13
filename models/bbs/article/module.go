@@ -295,7 +295,7 @@ func (sp *moduleServiceProvider) ListRecommend() ([]Module, error) {
 	defer conn.Disconnect()
 
 	var list []Module
-	query := bson.M{}
+	query := bson.M{"isActive": true}
 	err := conn.Collection().Find(query).Sort("-recommend").Limit(2).All(&list)
 	return list, err
 }

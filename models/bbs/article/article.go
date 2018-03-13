@@ -376,3 +376,19 @@ func (sp *articleServiceProvider) UpdateLastComment(artID, user string) error {
 
 	return conn.Update(bson.M{"_id": bson.ObjectIdHex(artID), "isActive": true}, updater)
 }
+
+// Recommend gets the popular articles.
+func (sp *articleServiceProvider) Recommend(page int) ([]Article, error) {
+	conn := articleSession.Connect()
+	defer conn.Disconnect()
+
+	var list []Article
+	query := bson.M{"isActive": true}
+
+	err := conn.Collection().Find(query).Limit(conf.BBSConfig.Pages).Skip(page * conf.BBSConfig.Pages).All(&list)
+	if err != nil {
+		return nil, err
+	}
+
+	return list, nil
+}

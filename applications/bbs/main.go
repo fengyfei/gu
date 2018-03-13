@@ -79,7 +79,7 @@ func startServer() {
 	ep = server.NewEntrypoint(serverConfig, nil)
 
 	// add middlewares
-	jwtMiddleware := middleware.JWTWithConfig(jwtConfig)
+	//jwtMiddleware := middleware.JWTWithConfig(jwtConfig)
 
 	ep.AttachMiddleware(middleware.NegroniRecoverHandler())
 	ep.AttachMiddleware(middleware.NegroniLoggerHandler())
@@ -88,7 +88,7 @@ func startServer() {
 		AllowedMethods: []string{server.GET, server.POST},
 	}))
 
-	ep.AttachMiddleware(jwtMiddleware)
+	//ep.AttachMiddleware(jwtMiddleware)
 
 	if err := ep.Start(user.Router.Handler()); err != nil {
 		logger.Error(err)
