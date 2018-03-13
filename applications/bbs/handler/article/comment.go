@@ -65,7 +65,7 @@ func AddComment(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, nil)
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, nil)
 }
 
 // DeleteComment delete comment.
@@ -88,7 +88,7 @@ func DeleteComment(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, nil)
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, nil)
 }
 
 // CommentInfo return comment's information
@@ -106,7 +106,7 @@ func CommentInfo(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, list)
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
 }
 
 // // UserReply return the information about someone's reply.
@@ -126,5 +126,25 @@ func UserReply(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, list)
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
+}
+
+// GetByArticle return comments by articleId.
+func GetByArticle(this *server.Context) error {
+	var artID struct {
+		ArtID string  `json:"artID"`
+	}
+
+	if err := this.JSONBody(&artID); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	list, err := article.CommentService.GetByArtID(artID.ArtID)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
 }

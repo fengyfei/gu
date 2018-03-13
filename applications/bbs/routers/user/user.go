@@ -79,4 +79,5 @@ func InitRouter(u *server.Router) {
 	u.Post("/bbs/comment/delete", article.DeleteComment)
 	u.Post("/bbs/comment/listinfo", article.CommentInfo)
 	u.Post("/bbs/comment/userreply", article.UserReply)
+	u.Post("/bbs/comment/article", article.GetByArticle)
 }

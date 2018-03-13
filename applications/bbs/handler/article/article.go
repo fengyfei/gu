@@ -66,7 +66,7 @@ func AddArticle(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, id)
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, id)
 }
 
 // GetByModuleID gets articles by ModuleID.
@@ -165,7 +165,7 @@ func DeleteArt(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, nil)
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, nil)
 }
 
 // UpdateTimes update times.
@@ -186,7 +186,7 @@ func UpdateTimes(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, nil)
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, nil)
 }
 
 // Recommend return popular articles.
@@ -206,5 +206,5 @@ func Recommend(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, list)
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
 }

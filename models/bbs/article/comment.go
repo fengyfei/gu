@@ -185,7 +185,7 @@ func (sp *commentServiceProvider) GetByArtID(artID string) ([]Comment, error) {
 	conn := commentSession.Connect()
 	defer conn.Disconnect()
 
-	query := bson.M{"artID": artID, "isActive": true}
+	query := bson.M{"artID": bson.ObjectIdHex(artID), "isActive": true}
 	sort := "-Created"
 
 	err := conn.GetMany(query, &comments, sort)
