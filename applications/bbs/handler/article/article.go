@@ -31,11 +31,13 @@ package article
 
 import (
 	jwtgo "github.com/dgrijalva/jwt-go"
+	"gopkg.in/mgo.v2/bson"
 
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
+	"github.com/fengyfei/gu/models/bbs"
 	"github.com/fengyfei/gu/models/bbs/article"
 )
 
@@ -47,7 +49,9 @@ type (
 
 // AddArticle - add article.
 func AddArticle(this *server.Context) error {
-	var reqAdd article.CreateArticle
+	var (
+		reqAdd article.CreateArticle
+	)
 
 	if err := this.JSONBody(&reqAdd); err != nil {
 		logger.Error(err)
@@ -71,10 +75,12 @@ func AddArticle(this *server.Context) error {
 
 // GetByModuleID gets articles by ModuleID.
 func GetByModuleID(this *server.Context) error {
-	var req struct {
-		Page   int    `json:"page"`
-		Module string `json:"module"`
-	}
+	var (
+		req struct {
+			Page   int    `json:"page"`
+			Module string `json:"module"`
+		}
+	)
 
 	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)
@@ -92,11 +98,13 @@ func GetByModuleID(this *server.Context) error {
 
 // GetByThemeID - gets articles by ThemeID.
 func GetByThemeID(this *server.Context) error {
-	var req struct {
-		Page   int    `json:"page"`
-		Module string `json:"module"`
-		Theme  string `json:"theme"`
-	}
+	var (
+		req struct {
+			Page   int    `json:"page"`
+			Module string `json:"module"`
+			Theme  string `json:"theme"`
+		}
+	)
 
 	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)
@@ -114,7 +122,9 @@ func GetByThemeID(this *server.Context) error {
 
 // GetByTitle - gets articles by ThemeID.
 func GetByTitle(this *server.Context) error {
-	var title title
+	var (
+		title title
+	)
 
 	if err := this.JSONBody(&title); err != nil {
 		logger.Error(err)
@@ -132,9 +142,11 @@ func GetByTitle(this *server.Context) error {
 
 // GetByUserID - gets articles by ThemeID.
 func GetByUserID(this *server.Context) error {
-	var user struct {
-		UserID string `json:"userID"`
-	}
+	var (
+		user struct {
+			UserID string `json:"userID"`
+		}
+	)
 
 	if err := this.JSONBody(&user); err != nil {
 		logger.Error(err)
@@ -152,7 +164,9 @@ func GetByUserID(this *server.Context) error {
 
 // DeleteArt deletes article
 func DeleteArt(this *server.Context) error {
-	var title title
+	var (
+		title title
+	)
 
 	if err := this.JSONBody(&title); err != nil {
 		logger.Error(err)
@@ -170,13 +184,20 @@ func DeleteArt(this *server.Context) error {
 
 // UpdateTimes update times.
 func UpdateTimes(this *server.Context) error {
-	var times struct {
-		Num   int64
-		ArtID string
-	}
+	var (
+		times struct {
+			Num   int64
+			ArtID string
+		}
+	)
 
 	if err := this.JSONBody(&times); err != nil {
 		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	if !bson.IsObjectIdHex(times.ArtID) {
+		logger.Error(bbs.InvalidObjectId)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
@@ -191,9 +212,11 @@ func UpdateTimes(this *server.Context) error {
 
 // Recommend return popular articles.
 func Recommend(this *server.Context) error {
-	var req struct {
-		Page int `json:"page"`
-	}
+	var (
+		req struct {
+			Page int `json:"page"`
+		}
+	)
 
 	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)

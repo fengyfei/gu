@@ -32,8 +32,9 @@ package collection
 import (
 	"time"
 
-	"github.com/fengyfei/gu/libs/orm"
 	"github.com/jinzhu/gorm"
+
+	"github.com/fengyfei/gu/libs/orm"
 )
 
 type serviceProvider struct{}
@@ -82,4 +83,29 @@ func (this *serviceProvider) Remove(conn orm.Connection, id uint32) error {
 	db := conn.(*gorm.DB).Exec("USE shop")
 
 	return db.Table("collect").Where("id = ?", id).Delete(&Collection{}).Error
+}
+
+// RemoveMany deletes wares from collection.
+func (this *serviceProvider) RemoveMany(conn orm.Connection, collectIdList []uint32) error {
+	var (
+		err error
+	)
+
+	tx := conn.(*gorm.DB).Begin().Exec("USE shop")
+	defer func() {
+		if err != nil {
+			err = tx.Rollback().Error
+		} else {
+			err = tx.Commit().Error
+		}
+	}()
+
+	for i := 0; i < len(collectIdList); i++ {
+		err = tx.Table("collect").Where("id = ?", collectIdList[i]).Delete(&Collection{}).Error
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

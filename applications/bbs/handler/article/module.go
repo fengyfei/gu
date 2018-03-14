@@ -30,10 +30,13 @@
 package article
 
 import (
+	"gopkg.in/mgo.v2/bson"
+
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
+	"github.com/fengyfei/gu/models/bbs"
 	"github.com/fengyfei/gu/models/bbs/article"
 )
 
@@ -78,7 +81,9 @@ func AddModule(this *server.Context) error {
 
 // UpdateModuleView updates ModuleView.
 func UpdateModuleView(this *server.Context) error {
-	var moduleView moduleView
+	var (
+		moduleView moduleView
+	)
 
 	if err := this.JSONBody(&moduleView); err != nil {
 		logger.Error(err)
@@ -96,7 +101,9 @@ func UpdateModuleView(this *server.Context) error {
 
 // AddTheme add theme.
 func AddTheme(this *server.Context) error {
-	var createTheme createTheme
+	var (
+		createTheme createTheme
+	)
 
 	if err := this.JSONBody(&createTheme); err != nil {
 		logger.Error(err)
@@ -119,7 +126,9 @@ func AddTheme(this *server.Context) error {
 
 // DeleteModule delete module.
 func DeleteModule(this *server.Context) error {
-	var module module
+	var (
+		module module
+	)
 
 	if err := this.JSONBody(&module); err != nil {
 		logger.Error(err)
@@ -137,13 +146,20 @@ func DeleteModule(this *server.Context) error {
 
 // DeleteTheme delete theme.
 func DeleteTheme(this *server.Context) error {
-	var theme struct {
-		ModuleID string
-		ThemeID  string
-	}
+	var (
+		theme struct {
+			ModuleID string
+			ThemeID  string
+		}
+	)
 
 	if err := this.JSONBody(&theme); err != nil {
 		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	if !bson.IsObjectIdHex(theme.ModuleID) || !bson.IsObjectIdHex(theme.ThemeID) {
+		logger.Error(bbs.InvalidObjectId)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
@@ -158,10 +174,17 @@ func DeleteTheme(this *server.Context) error {
 
 // ModuleInfo return module's information.
 func ModuleInfo(this *server.Context) error {
-	var module module
+	var (
+		module module
+	)
 
 	if err := this.JSONBody(&module); err != nil {
 		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	if !bson.IsObjectIdHex(module.ModuleID) {
+		logger.Error(bbs.InvalidObjectId)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
@@ -174,7 +197,7 @@ func ModuleInfo(this *server.Context) error {
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, list)
 }
 
-// AllModule returns all modules.
+// AllModules returns all modules.
 func AllModules(this *server.Context) error {
 	list, err := article.ModuleService.AllModules()
 	if err != nil {

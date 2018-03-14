@@ -57,7 +57,7 @@ func AddComment(this *server.Context) error {
 	}
 
 	userID := this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(float64)
-	req.CreatorID =uint32(userID)
+	req.CreatorID = uint32(userID)
 
 	err := article.CommentService.Create(req)
 	if err != nil {
@@ -100,6 +100,11 @@ func CommentInfo(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
+	if !bson.IsObjectIdHex(commentID.CommentID) {
+		logger.Error(bbs.InvalidObjectId)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
 	list, err := article.CommentService.ListInfo(bson.ObjectIdHex(commentID.CommentID))
 	if err != nil {
 		logger.Error(err)
@@ -109,7 +114,7 @@ func CommentInfo(this *server.Context) error {
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
 }
 
-// // UserReply return the information about someone's reply.
+// UserReply return the information about someone's reply.
 func UserReply(this *server.Context) error {
 	var user struct {
 		UserID uint32 `json:"userID"`
@@ -132,11 +137,16 @@ func UserReply(this *server.Context) error {
 // GetByArticle return comments by articleId.
 func GetByArticle(this *server.Context) error {
 	var artID struct {
-		ArtID string  `json:"artID"`
+		ArtID string `json:"artID"`
 	}
 
 	if err := this.JSONBody(&artID); err != nil {
 		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	if !bson.IsObjectIdHex(artID.ArtID) {
+		logger.Error(bbs.InvalidObjectId)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 

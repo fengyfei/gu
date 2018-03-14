@@ -43,8 +43,16 @@ import (
 )
 
 type (
+	collID struct {
+		ID uint32 `json:"id"`
+	}
+
+	removereq struct {
+		IDs []uint32 `json:"ids"`
+	}
+
 	wareID struct {
-		WareID uint32 `json:"wareId"`
+		WareID uint32 `json:"ware_id"`
 	}
 )
 
@@ -110,7 +118,7 @@ func RemoveColl(c *server.Context) error {
 	var (
 		err    error
 		conn   orm.Connection
-		remove wareID
+		remove collID
 	)
 
 	err = c.JSONBody(&remove)
@@ -126,11 +134,40 @@ func RemoveColl(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = Collection.Service.Remove(conn, remove.WareID)
+	err = Collection.Service.Remove(conn, remove.ID)
 	if err != nil {
 		logger.Error("Error in modifying the collection:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
+}
+
+// RemoveMany deletes collectios by ids.
+func RemoveMany(c *server.Context) error {
+	var (
+		req  removereq
+		err  error
+		conn orm.Connection
+	)
+
+	conn, err = mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	err = c.JSONBody(&req)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	err = Collection.Service.RemoveMany(conn, req.IDs)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }

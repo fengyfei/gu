@@ -55,7 +55,7 @@ type (
 
 	AddCartReq struct {
 		WareId uint32 `json:"wareId" validate:"required"`
-		Count  uint8 `json:"count"  validate:"required"`
+		Count  uint8  `json:"count"  validate:"required"`
 	}
 
 	RemoveCartReq struct {
@@ -121,10 +121,17 @@ func (this *serviceProvider) RemoveWhenOrder(conn orm.Connection, wareIdList []u
 		err error
 	)
 
-	db := conn.(*gorm.DB).Exec("USE shop")
+	tx := conn.(*gorm.DB).Begin().Exec("USE shop")
+	defer func() {
+		if err != nil {
+			err = tx.Rollback().Error
+		} else {
+			err = tx.Commit().Error
+		}
+	}()
 
 	for i := 0; i < len(wareIdList); i++ {
-		err = db.Table("cart").Where("id = ?", wareIdList[i]).Delete(&Cart{}).Error
+		err = tx.Table("cart").Where("id = ?", wareIdList[i]).Delete(&Cart{}).Error
 		if err != nil {
 			return err
 		}

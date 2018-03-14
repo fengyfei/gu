@@ -57,7 +57,7 @@ type (
 	// Info represents the category's information.
 	Info struct {
 		Category string `json:"category" validate:"required,min=2,max=12"`
-		ParentID uint32 `json:"parentid"`
+		ParentID uint32 `json:"parent_id"`
 	}
 )
 
@@ -109,4 +109,14 @@ func (sp *serviceProvider) Delete(conn orm.Connection, id uint32) error {
 	db := conn.(*gorm.DB)
 
 	return db.Table("category").Where("id = ?", id).Update("is_active", false).Error
+}
+
+// Modify modify category's information.
+func (sp *serviceProvider) Modify(conn orm.Connection, id uint32, add *Info) error {
+	db := conn.(*gorm.DB)
+
+	return db.Table("category").Where("id = ?", id).Update(map[string]interface{}{
+		"category":  add.Category,
+		"parent_id": add.ParentID,
+	}).Error
 }

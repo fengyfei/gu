@@ -46,9 +46,16 @@ var (
 	ErrNotAdmin = errors.New("non-administrators can not operate.")
 )
 
-type pid struct {
-	Id uint32 `json:"id"`
-}
+type (
+	pid struct {
+		Id uint32 `json:"id"`
+	}
+
+	modify struct {
+		Id   uint32 `json:"id"`
+		Info category.Info
+	}
+)
 
 // Add adds a new category.
 func AddCategory(c *server.Context) error {
@@ -165,6 +172,41 @@ func Delete(c *server.Context) error {
 	}
 
 	err = category.Service.Delete(conn, pid.Id)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
+}
+
+// Modify update the category's information.
+func Modify(c *server.Context) error {
+	var (
+		err    error
+		modify modify
+	)
+
+	isAdmin := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.IsAdmin].(bool)
+	if !isAdmin {
+		logger.Error("Permission denied:", ErrNotAdmin)
+		return core.WriteStatusAndDataJSON(c, constants.ErrPermission, ErrNotAdmin)
+	}
+
+	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error("mysql.Pool.Get():", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	err = c.JSONBody(&modify)
+	if err != nil {
+		logger.Error("JSONBody():", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	err = category.Service.Modify(conn, modify.Id, &modify.Info)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
