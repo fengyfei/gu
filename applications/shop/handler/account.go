@@ -147,6 +147,7 @@ func AddPhone(c *server.Context) error {
 	userID := uint32(c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(float64))
 
 	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
 	if err != nil {
 		logger.Error("Can't get mysql connection:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -180,6 +181,7 @@ func ChangeInfo(c *server.Context) error {
 	userID := uint32(c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(float64))
 
 	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
 	if err != nil {
 		logger.Error("Can't get mysql connection:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -259,6 +261,7 @@ func PhoneLogin(c *server.Context) error {
 	}
 
 	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
 	if err != nil {
 		logger.Error("Can't get mysql connection:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -305,6 +308,7 @@ func ChangePassword(c *server.Context) error {
 	userID := uint32(c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(float64))
 
 	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
 	if err != nil {
 		logger.Error("Can't get mysql connection:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
