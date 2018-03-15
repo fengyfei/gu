@@ -115,8 +115,8 @@ type (
 		Sex      uint8  `json:"sex"`
 		Avatar   string `json:"avatar"`
 	}
-	
-	PutValue struct {
+
+	ValueInfo struct {
 		UserID uint32 `json:"user_id"`
 		Field  string `json:"field"`
 		Value  string `json:"value"`
@@ -227,7 +227,7 @@ func (this *UserServiceProvider) ChangeInfo(conn orm.Connection, id uint32, chan
 	user.Sex = change.Sex
 	user.Avatar = change.Avatar
 
-  	return db.Save(&user).Error
+	return db.Save(&user).Error
 }
 
 // Register by phone
@@ -322,7 +322,7 @@ func (this *UserServiceProvider) GetUserByID(conn orm.Connection, userID uint32)
 }
 
 // bbs: add field and value
-func (this *UserServiceProvider) PutBbsValue(conn orm.Connection, info *PutValue) error {
+func (this *UserServiceProvider) PutExtraValue(conn orm.Connection, info *ValueInfo) error {
 	var bbs ExtraInfo
 	bbs.UserID = info.UserID
 	bbs.Field = info.Field
@@ -333,32 +333,39 @@ func (this *UserServiceProvider) PutBbsValue(conn orm.Connection, info *PutValue
 	return err
 }
 
+// Change ExtraInfo information
+func (this *UserServiceProvider) ChangeExtraInfo(conn orm.Connection, info *ValueInfo) error {
+	var extraInfo ExtraInfo
+	db := conn.(*gorm.DB)
+	return db.Model(&extraInfo).Where("user_id = ? AND field = ? AND status = ?", info.UserID, info.Field, 0).Update("value", info.Value).Error
+}
+
 // bbs: get user information by userId.
-func (this *UserServiceProvider) GetBbsInfo(conn orm.Connection, userID uint32) (*[]ExtraInfo, error) {
-	var bbs []ExtraInfo
+func (this *UserServiceProvider) GetExtraInfo(conn orm.Connection, userID uint32) (*[]ExtraInfo, error) {
+	var extraInfo []ExtraInfo
 
 	db := conn.(*gorm.DB)
-	err := db.Where("user_id = ?", userID).Find(&bbs).Error
+	err := db.Where("user_id = ?", userID).Find(&extraInfo).Error
 
-	return &bbs, err
+	return &extraInfo, err
 }
 
 // bbs: get user value by userId and field.
-func (this *UserServiceProvider) GetBbsValue(conn orm.Connection, userID uint32, field string) (*string, error) {
-	var bbs ExtraInfo
+func (this *UserServiceProvider) GetExtraValue(conn orm.Connection, userID uint32, field string) (*string, error) {
+	var extraInfo ExtraInfo
 	db := conn.(*gorm.DB)
-	err := db.Where("user_id = ? AND field = ? ", userID, field).Find(&bbs).Error
+	err := db.Where("user_id = ? AND field = ? ", userID, field).Find(&extraInfo).Error
 
-	return &bbs.Value, err
+	return &extraInfo.Value, err
 }
 
 // bbs: modify status
 // 0 -> normal
 // 1 -> delete or hide
-func (this *UserServiceProvider) ChangeBbsStatus(conn orm.Connection, id uint32, status uint8) error {
-	var bbs ExtraInfo
+func (this *UserServiceProvider) ChangeExtraStatus(conn orm.Connection, id uint32, status uint8) error {
+	var extraInfo ExtraInfo
 	db := conn.(*gorm.DB)
-	bbs.Status = status
+	extraInfo.Status = status
 
-	return db.Model(&bbs).Where("id = ?", id).Update("status", status).Error
+	return db.Model(&extraInfo).Where("id = ?", id).Update("status", status).Error
 }
