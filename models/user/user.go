@@ -115,12 +115,6 @@ type (
 		Sex      uint8  `json:"sex"`
 		Avatar   string `json:"avatar"`
 	}
-
-	ValueInfo struct {
-		UserID uint32 `json:"user_id"`
-		Field  string `json:"field"`
-		Value  string `json:"value"`
-	}
 )
 
 // User represents users information
@@ -139,14 +133,6 @@ type User struct {
 	IsActive  bool      `gorm:"column:isactive;not null;default:1"`
 }
 
-type ExtraInfo struct {
-	ID     uint32 `gorm:"column:id";primary_key;auto_increment" json:"id"`
-	UserID uint32 `gorm:"column:user_id;not null;";json:"user_id"`
-	Field  string `gorm:"column:field"json:"field"`
-	Value  string `gorm:"column:value"json:"value"`
-	Status uint8  `gorm:"column:status;not null;";json:"status"`
-}
-
 // TableName
 func (u User) TableName() string {
 	return "users"
@@ -154,8 +140,10 @@ func (u User) TableName() string {
 
 // WeChatLogin
 func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, info *WechatLogin) (*User, error) {
-	var err error
-	var user User
+	var (
+		err  error
+		user User
+	)
 	db := conn.(*gorm.DB)
 
 	err = db.Where("unionID = ?", info.UnionID).First(&user).Error
@@ -185,6 +173,7 @@ func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, info *WechatLo
 			if err != nil {
 				return nil, err
 			}
+
 			return &user, err
 		}
 		return nil, err
@@ -195,7 +184,10 @@ func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, info *WechatLo
 
 // wechat add a phone number
 func (this *UserServiceProvider) AddPhone(conn orm.Connection, id uint32, phone *WechatPhone) error {
-	var user User
+	var (
+		user User
+	)
+
 	db := conn.(*gorm.DB)
 	err := db.Where("id = ?", id).First(&user).Error
 	if err != nil {
@@ -210,7 +202,9 @@ func (this *UserServiceProvider) AddPhone(conn orm.Connection, id uint32, phone 
 
 // Change user information
 func (this *UserServiceProvider) ChangeInfo(conn orm.Connection, id uint32, change *ChangeInfo) error {
-	var user User
+	var (
+		user User
+	)
 
 	db := conn.(*gorm.DB)
 
@@ -250,11 +244,17 @@ func (this *UserServiceProvider) PhoneRegister(conn orm.Connection, register *Ph
 
 	db := conn.(*gorm.DB)
 	err = db.Create(&user).Error
+	if err != nil {
+		return err
+	}
+
 	return err
 }
 
 func (this *UserServiceProvider) PhoneLogin(conn orm.Connection, login *PhoneLogin) (*User, error) {
-	var user User
+	var (
+		user User
+	)
 	var updater = make(map[string]interface{})
 	updater["lastlogin"] = time.Now()
 
@@ -319,53 +319,4 @@ func (this *UserServiceProvider) GetUserByID(conn orm.Connection, userID uint32)
 	err := db.Where("id = ?", userID).First(&user).Error
 
 	return user, err
-}
-
-// bbs: add field and value
-func (this *UserServiceProvider) PutExtraValue(conn orm.Connection, info *ValueInfo) error {
-	var bbs ExtraInfo
-	bbs.UserID = info.UserID
-	bbs.Field = info.Field
-	bbs.Value = info.Value
-	db := conn.(*gorm.DB)
-	err := db.Create(&bbs).Error
-
-	return err
-}
-
-// Change ExtraInfo information
-func (this *UserServiceProvider) ChangeExtraInfo(conn orm.Connection, info *ValueInfo) error {
-	var extraInfo ExtraInfo
-	db := conn.(*gorm.DB)
-	return db.Model(&extraInfo).Where("user_id = ? AND field = ? AND status = ?", info.UserID, info.Field, 0).Update("value", info.Value).Error
-}
-
-// bbs: get user information by userId.
-func (this *UserServiceProvider) GetExtraInfo(conn orm.Connection, userID uint32) (*[]ExtraInfo, error) {
-	var extraInfo []ExtraInfo
-
-	db := conn.(*gorm.DB)
-	err := db.Where("user_id = ?", userID).Find(&extraInfo).Error
-
-	return &extraInfo, err
-}
-
-// bbs: get user value by userId and field.
-func (this *UserServiceProvider) GetExtraValue(conn orm.Connection, userID uint32, field string) (*string, error) {
-	var extraInfo ExtraInfo
-	db := conn.(*gorm.DB)
-	err := db.Where("user_id = ? AND field = ? ", userID, field).Find(&extraInfo).Error
-
-	return &extraInfo.Value, err
-}
-
-// bbs: modify status
-// 0 -> normal
-// 1 -> delete or hide
-func (this *UserServiceProvider) ChangeExtraStatus(conn orm.Connection, id uint32, status uint8) error {
-	var extraInfo ExtraInfo
-	db := conn.(*gorm.DB)
-	extraInfo.Status = status
-
-	return db.Model(&extraInfo).Where("id = ?", id).Update("status", status).Error
 }
