@@ -115,6 +115,12 @@ type (
 		Sex      uint8  `json:"sex"`
 		Avatar   string `json:"avatar"`
 	}
+	
+	PutValue struct {
+		UserID uint32 `json:"user_id"`
+		Field  string `json:"field"`
+		Value  string `json:"value"`
+	}
 )
 
 // User represents users information
@@ -131,6 +137,14 @@ type User struct {
 	IsAdmin   bool      `gorm:"column:isadmin"`
 	Type      int       `grom:"column:type"`
 	IsActive  bool      `gorm:"column:isactive;not null;default:1"`
+}
+
+type ExtraInfo struct {
+	ID     uint32 `gorm:"column:id";primary_key;auto_increment" json:"id"`
+	UserID uint32 `gorm:"column:user_id;not null;";json:"user_id"`
+	Field  string `gorm:"column:field"json:"field"`
+	Value  string `gorm:"column:value"json:"value"`
+	Status uint8  `gorm:"column:status;not null;";json:"status"`
 }
 
 // TableName
@@ -213,7 +227,7 @@ func (this *UserServiceProvider) ChangeInfo(conn orm.Connection, id uint32, chan
 	user.Sex = change.Sex
 	user.Avatar = change.Avatar
 
-	return db.Save(&user).Error
+  	return db.Save(&user).Error
 }
 
 // Register by phone
@@ -236,9 +250,6 @@ func (this *UserServiceProvider) PhoneRegister(conn orm.Connection, register *Ph
 
 	db := conn.(*gorm.DB)
 	err = db.Create(&user).Error
-	if err != nil {
-		return err
-	}
 	return err
 }
 
@@ -301,11 +312,53 @@ func (this *UserServiceProvider) ChangePassword(conn orm.Connection, id uint32, 
 }
 
 // GetUserByID gets user's information by userId.
-func (this *UserServiceProvider) GetUserByID(conn orm.Connection, userId uint32) (*User, error) {
-	db := conn.(*gorm.DB).Exec("USE user")
+func (this *UserServiceProvider) GetUserByID(conn orm.Connection, userID uint32) (*User, error) {
+	db := conn.(*gorm.DB)
 	user := &User{}
 
-	err := db.Where("id = ?", userId).First(&user).Error
+	err := db.Where("id = ?", userID).First(&user).Error
 
 	return user, err
+}
+
+// bbs: add field and value
+func (this *UserServiceProvider) PutBbsValue(conn orm.Connection, info *PutValue) error {
+	var bbs ExtraInfo
+	bbs.UserID = info.UserID
+	bbs.Field = info.Field
+	bbs.Value = info.Value
+	db := conn.(*gorm.DB)
+	err := db.Create(&bbs).Error
+
+	return err
+}
+
+// bbs: get user information by userId.
+func (this *UserServiceProvider) GetBbsInfo(conn orm.Connection, userID uint32) (*[]ExtraInfo, error) {
+	var bbs []ExtraInfo
+
+	db := conn.(*gorm.DB)
+	err := db.Where("user_id = ?", userID).Find(&bbs).Error
+
+	return &bbs, err
+}
+
+// bbs: get user value by userId and field.
+func (this *UserServiceProvider) GetBbsValue(conn orm.Connection, userID uint32, field string) (*string, error) {
+	var bbs ExtraInfo
+	db := conn.(*gorm.DB)
+	err := db.Where("user_id = ? AND field = ? ", userID, field).Find(&bbs).Error
+
+	return &bbs.Value, err
+}
+
+// bbs: modify status
+// 0 -> normal
+// 1 -> delete or hide
+func (this *UserServiceProvider) ChangeBbsStatus(conn orm.Connection, id uint32, status uint8) error {
+	var bbs ExtraInfo
+	db := conn.(*gorm.DB)
+	bbs.Status = status
+
+	return db.Model(&bbs).Where("id = ?", id).Update("status", status).Error
 }
