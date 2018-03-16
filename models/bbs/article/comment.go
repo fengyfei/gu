@@ -30,16 +30,14 @@
 package article
 
 import (
-	"time"
-
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/fengyfei/gu/applications/bbs/conf"
-	mysql "github.com/fengyfei/gu/applications/bbs/initialize"
 	"github.com/fengyfei/gu/libs/mongo"
 	"github.com/fengyfei/gu/models/bbs"
 	"github.com/fengyfei/gu/models/user"
+	"github.com/fengyfei/gu/libs/orm"
 )
 
 type commentServiceProvider struct{}
@@ -60,7 +58,7 @@ type Comment struct {
 	Replier   string        `bson:"replier"        json:"replier"`
 	ParentID  bson.ObjectId `bson:"parentID"       json:"parentID"`
 	Content   string        `bson:"content"        json:"content"`
-	Created   time.Time     `bson:"created"        json:"created"`
+	Created   string        `bson:"created"        json:"created"`
 	IsActive  bool          `bson:"isActive"       json:"isActive"`
 }
 
@@ -71,6 +69,8 @@ type CreateComment struct {
 	ParentID  string `json:"parentID"`
 	ArtID     string `json:"artID"`
 	Content   string `json:"content"`
+	Created   string `json:"created"`
+	Type      int    `json:"type"`
 }
 
 func init() {
@@ -89,34 +89,40 @@ func init() {
 }
 
 // Create insert comment.
-func (sp *commentServiceProvider) Create(comment CreateComment) error {
-	con, err := mysql.Pool.Get()
-	defer mysql.Pool.Release(con)
+func (sp *commentServiceProvider) Create(con orm.Connection, comment CreateComment) error {
+	var (
+		comm Comment
+	)
+
+	conn := commentSession.Connect()
+	defer conn.Disconnect()
 
 	creator, err := user.UserServer.GetUserByID(con, comment.CreatorID)
 	if err != nil {
 		return err
 	}
 
-	replier, err := user.UserServer.GetUserByID(con, comment.CreatorID)
-	if err != nil {
-		return err
-	}
-
-	comm := Comment{
+	comm = Comment{
 		CreatorID: comment.CreatorID,
 		Creator:   creator.UserName,
-		ReplierID: comment.ReplierID,
-		Replier:   replier.UserName,
-		ParentID:  bson.ObjectIdHex(comment.ParentID),
 		ArtID:     bson.ObjectIdHex(comment.ArtID),
 		Content:   comment.Content,
-		Created:   time.Now(),
+		Created:   comment.Created,
 		IsActive:  true,
 	}
 
-	conn := commentSession.Connect()
-	defer conn.Disconnect()
+	if comment.Type == bbs.MainComment {
+		comm.ParentID = bson.ObjectIdHex(comment.ArtID)
+	} else {
+		replier, err := user.UserServer.GetUserByID(con, comment.ReplierID)
+		if err != nil {
+			return err
+		}
+
+		comm.Replier = replier.UserName
+		comm.ReplierID = comment.ReplierID
+		comm.ParentID = bson.ObjectIdHex(comment.ParentID)
+	}
 
 	err = conn.Insert(&comm)
 	if err != nil {
@@ -186,7 +192,7 @@ func (sp *commentServiceProvider) GetByArtID(artID string) ([]Comment, error) {
 	defer conn.Disconnect()
 
 	query := bson.M{"artID": bson.ObjectIdHex(artID), "isActive": true}
-	sort := "-Created"
+	sort := "-created"
 
 	err := conn.GetMany(query, &comments, sort)
 	if err != nil {
@@ -204,7 +210,7 @@ func (sp *commentServiceProvider) GetByUserID(userID uint32) ([]Comment, error) 
 	defer conn.Disconnect()
 
 	query := bson.M{"creatorID": userID, "isActive": true}
-	sort := "-Created"
+	sort := "created"
 
 	err := conn.GetMany(query, &comments, sort)
 	if err != nil {
@@ -239,4 +245,17 @@ func (sp *commentServiceProvider) UserReply(userID uint32) ([]UserReply, error) 
 	}
 
 	return list, nil
+}
+
+func (sp *commentServiceProvider) CommentNum(userID uint32) (int, error){
+	conn := commentSession.Connect()
+	defer conn.Disconnect()
+
+	query := bson.M{"creatorID": userID, "isActive":true}
+	userComment, err := conn.Collection().Find(query).Count()
+	if err != nil {
+		return 0, err
+	}
+
+	return userComment, err
 }

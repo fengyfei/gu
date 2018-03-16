@@ -30,16 +30,14 @@
 package article
 
 import (
-	"time"
-
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/fengyfei/gu/applications/bbs/conf"
-	mysql "github.com/fengyfei/gu/applications/bbs/initialize"
 	"github.com/fengyfei/gu/libs/mongo"
 	"github.com/fengyfei/gu/models/bbs"
 	"github.com/fengyfei/gu/models/user"
+	"github.com/fengyfei/gu/libs/orm"
 )
 
 type articleServiceProvider struct{}
@@ -54,7 +52,7 @@ var (
 type Article struct {
 	Id          bson.ObjectId `bson:"_id,omitempty"  json:"id"`
 	Title       string        `bson:"title"          json:"title"`
-	UserID      uint64        `bson:"userID"         json:"userID"`
+	UserID      uint32        `bson:"userID"         json:"userID"`
 	Content     string        `bson:"content"        json:"content"`
 	Module      string        `bson:"module"         json:"module"`
 	Theme       string        `bson:"theme"          json:"theme"`
@@ -63,7 +61,7 @@ type Article struct {
 	CommentNum  int64         `bson:"commentNum"     json:"commentNum"`
 	Times       int64         `bson:"times"          json:"times"`
 	LastComment string        `bson:"lastComment"    json:"lastComment"`
-	Created     time.Time     `bson:"created"        json:"created"`
+	Created     string        `bson:"created"        json:"created"`
 	Image       string        `bson:"image"          json:"image"`
 	IsActive    bool          `bson:"isActive"       json:"isActive"`
 }
@@ -75,6 +73,7 @@ type CreateArticle struct {
 	Module  string `json:"module"`
 	Theme   string `json:"theme"`
 	Image   string `json:"image"`
+	Created string `json:"created"`
 }
 
 // UserReply represents the information about someone's reply.
@@ -84,7 +83,7 @@ type UserReply struct {
 	Replier string    `json:"replier"`
 	Module  string    `json:"module"`
 	Content string    `json:"content"`
-	Created time.Time `json:"created"`
+	Created string    `json:"created"`
 }
 
 func init() {
@@ -110,7 +109,7 @@ func init() {
 }
 
 // Insert - add article.
-func (sp *articleServiceProvider) Insert(article CreateArticle, userID uint32) (string, error) {
+func (sp *articleServiceProvider) Insert(con orm.Connection, article CreateArticle, userID uint32) (string, error) {
 	moduleID, err := ModuleService.GetModuleID(article.Module)
 	if err != nil {
 		return "", err
@@ -121,9 +120,6 @@ func (sp *articleServiceProvider) Insert(article CreateArticle, userID uint32) (
 		return "", err
 	}
 
-	con, err := mysql.Pool.Get()
-	defer mysql.Pool.Release(con)
-
 	userInfo, err := user.UserServer.GetUserByID(con, userID)
 	if err != nil {
 		return "", err
@@ -131,7 +127,7 @@ func (sp *articleServiceProvider) Insert(article CreateArticle, userID uint32) (
 
 	art := Article{
 		Title:       article.Title,
-		UserID:      uint64(userID),
+		UserID:      uint32(userID),
 		Content:     article.Content,
 		Module:      article.Module,
 		Theme:       article.Theme,
@@ -140,7 +136,7 @@ func (sp *articleServiceProvider) Insert(article CreateArticle, userID uint32) (
 		CommentNum:  0,
 		Times:       0,
 		LastComment: userInfo.UserName,
-		Created:     time.Now(),
+		Created:     article.Created,
 		Image:       article.Image,
 		IsActive:    true,
 	}
@@ -216,7 +212,7 @@ func (sp *articleServiceProvider) GetByTitle(title string) ([]Article, error) {
 	conn := articleSession.Connect()
 	defer conn.Disconnect()
 
-	sort := "-Created"
+	sort := "-created"
 
 	query := bson.M{"title": bson.M{"$regex": title, "$options": "$i"}, "isActive": true}
 	err := conn.GetMany(query, &list, sort)
@@ -250,7 +246,7 @@ func (sp *articleServiceProvider) GetByUserID(userID uint32) ([]Article, error) 
 	conn := articleSession.Connect()
 	defer conn.Disconnect()
 
-	sort := "-Created"
+	sort := "created"
 
 	query := bson.M{"userID": userID, "isActive": true}
 	err := conn.GetMany(query, &list, sort)
@@ -391,4 +387,17 @@ func (sp *articleServiceProvider) Recommend(page int) ([]Article, error) {
 	}
 
 	return list, nil
+}
+
+func (sp *articleServiceProvider) ArtNum(userID uint32) (int, error){
+	conn := articleSession.Connect()
+	defer conn.Disconnect()
+
+	query := bson.M{"userID": userID, "isActive":true}
+	artNum, err := conn.Collection().Find(query).Count()
+	if err != nil {
+		return 0, err
+	}
+
+	return artNum, err
 }

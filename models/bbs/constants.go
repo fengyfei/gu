@@ -41,6 +41,9 @@ const (
 	Increase = 1
 	// Decrease submit 1
 	Decrease = -1
+
+	// MainComment - the main comment.
+	MainComment = 0
 )
 
 // InvalidObjectId
