@@ -50,12 +50,13 @@ func InitRouter(u *server.Router) {
 		panic("[InitRouter]: server couldn't be nil")
 	}
 
-	u.Post("/user/wechatlogin", user.WechatLogin)
-	u.Post("/user/addphone", user.AddPhone)
-	u.Post("/user/changeinfo", user.ChangeUserInfo)
-	u.Post("/user/changepassword", user.ChangePassword)
-	u.Post("/user/phoneregister", user.PhoneRegister)
-	u.Post("/user/phonelogin", user.PhoneLogin)
+	u.Post("/bbs/user/wechatlogin", user.WechatLogin)
+	u.Post("/bbs/user/addphone", user.AddPhone)
+	u.Post("/bbs/user/changeinfo", user.ChangeUserInfo)
+	u.Post("/bbs/user/changepassword", user.ChangePassword)
+	u.Post("/bbs/user/phoneregister", user.PhoneRegister)
+	u.Post("/bbs/user/phonelogin", user.PhoneLogin)
+	u.Get("/bbs/user/homepage", user.BbsUserInfo)
 
 	u.Post("/bbs/article/insert", article.AddArticle)
 	u.Post("/bbs/article/delete", article.DeleteArt)

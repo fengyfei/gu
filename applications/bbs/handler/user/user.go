@@ -44,7 +44,9 @@ import (
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
+	"github.com/fengyfei/gu/models/bbs/article"
 	"github.com/fengyfei/gu/models/user"
+	"time"
 )
 
 const (
@@ -52,6 +54,17 @@ const (
 	APPID     = ""
 	SECRET    = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
 )
+
+type bbsUserInfo struct {
+	UserID     uint32
+	Username   string
+	Phone      string
+	Avatar     string
+	Sex        uint8
+	ArticleNum int
+	CommentNum int
+	LastLogin  time.Time
+}
 
 // WechatLogin
 func WechatLogin(this *server.Context) error {
@@ -93,7 +106,6 @@ func WechatLogin(this *server.Context) error {
 		UnionID: wechatData.UnionID,
 	}
 
-	// connect to mysql
 	conn, err := initialize.Pool.Get()
 	defer initialize.Pool.Release(conn)
 	if err != nil {
@@ -112,8 +124,7 @@ func WechatLogin(this *server.Context) error {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
-
-	userData := user.UserData{
+	userData := &user.UserData{
 		Token:    token,
 		UserName: u.UserName,
 		Phone:    u.Phone,
@@ -227,15 +238,14 @@ func PhoneLogin(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	userData := user.UserData{
+	userData := &user.UserData{
 		Token:    token,
 		UserName: u.UserName,
 		Phone:    u.Phone,
 		Sex:      u.Sex,
 		Avatar:   u.Avatar,
 	}
-
-	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, &userData)
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, userData)
 }
 
 // Change User Info
@@ -252,7 +262,7 @@ func ChangeUserInfo(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	userid := this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(float64)
+	userid := this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(uint32)
 	conn, err := initialize.Pool.Get()
 	defer initialize.Pool.Release(conn)
 	if err != nil {
@@ -268,7 +278,7 @@ func ChangeUserInfo(this *server.Context) error {
 		}
 	}
 
-	err = user.UserServer.ChangeInfo(conn, uint32(userid), &changeInfo)
+	err = user.UserServer.ChangeInfo(conn, userid, &changeInfo)
 	if err != nil {
 		logger.Error(err)
 		if len(changeInfo.Avatar) > 0 && !user.DeletePicture(changeInfo.Avatar) {
@@ -293,7 +303,7 @@ func ChangePassword(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	userid := c.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(float64)
+	userid := c.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(uint32)
 
 	conn, err := initialize.Pool.Get()
 	defer initialize.Pool.Release(conn)
@@ -302,11 +312,52 @@ func ChangePassword(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = user.UserServer.ChangePassword(conn, uint32(userid), &change)
+	err = user.UserServer.ChangePassword(conn, userid, &change)
 	if err != nil {
 		logger.Error("Error in changing password:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
+}
+
+// BbsUserInfo get user info in bbs.
+func BbsUserInfo(c *server.Context) error {
+	userid := c.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(uint32)
+
+	conn, err := initialize.Pool.Get()
+	defer initialize.Pool.Release(conn)
+	if err != nil {
+		logger.Error("Can not connected mysql.", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	u, err := user.UserServer.GetUserByID(conn, userid)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	artNum, err := article.ArticleService.ArtNum(userid)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+	comNum, err := article.CommentService.CommentNum(userid)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	bbsUserInfo := &bbsUserInfo{
+		UserID:     userid,
+		Username:   u.UserName,
+		Phone:      u.Phone,
+		Avatar:     u.Avatar,
+		Sex:        u.Sex,
+		ArticleNum: artNum,
+		CommentNum: comNum,
+		LastLogin:  u.LastLogin,
+	}
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, bbsUserInfo)
 }
