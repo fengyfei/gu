@@ -30,7 +30,6 @@
 package article
 
 import (
-	jwtgo "github.com/dgrijalva/jwt-go"
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/fengyfei/gu/applications/core"
@@ -39,11 +38,16 @@ import (
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/models/bbs"
 	"github.com/fengyfei/gu/models/bbs/article"
+	mysql "github.com/fengyfei/gu/applications/bbs/initialize"
 )
 
 type (
 	commentID struct {
 		CommentID string `json:"commentID"`
+	}
+
+	user struct {
+		UserID uint32 `json:"userID"`
 	}
 )
 
@@ -56,16 +60,28 @@ func AddComment(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	userID := this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(float64)
-	req.CreatorID = uint32(userID)
+	if !bson.IsObjectIdHex(req.ArtID) {
+		logger.Error(bbs.InvalidObjectId)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
 
-	err := article.CommentService.Create(req)
+	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error("Can't get mysql connection:", err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
+	}
+
+	//userID := this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(float64)
+	//req.CreatorID = uint32(1001)
+
+	info, err := article.CommentService.Create(conn, req)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, nil)
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, info)
 }
 
 // DeleteComment delete comment.
@@ -157,4 +173,76 @@ func GetByArticle(this *server.Context) error {
 	}
 
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
+}
+
+// CommentNum return the number of comment by userid.
+func CommentNum(this *server.Context) error {
+	var user user
+
+	if err := this.JSONBody(&user); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	num, err := article.CommentService.CommentNum(user.UserID)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, num)
+}
+
+// HistoryMessage return all the message by userid.
+func HistoryMessage(this *server.Context) error {
+	var user user
+
+	if err := this.JSONBody(&user); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	list, err := article.CommentService.HistoryMessage(user.UserID)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
+}
+
+// UnreadMessage return the unread comment by userid.
+func UnreadMessage(this *server.Context) error {
+	var user user
+
+	if err := this.JSONBody(&user); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	list, err := article.CommentService.UnreadMessage(user.UserID)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
+}
+
+// MessageRead change the status of the message which is read.
+func MessageRead(this *server.Context) error {
+	var comment commentID
+
+	if err := this.JSONBody(&comment); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	err := article.CommentService.MessageRead(comment.CommentID)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, nil)
 }

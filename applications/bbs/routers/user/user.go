@@ -81,4 +81,11 @@ func InitRouter(u *server.Router) {
 	u.Post("/bbs/comment/listinfo", article.CommentInfo)
 	u.Post("/bbs/comment/userreply", article.UserReply)
 	u.Post("/bbs/comment/article", article.GetByArticle)
+
+	u.Post("/bbs/message/history", article.HistoryMessage)
+	u.Post("/bbs/message/unread", article.UnreadMessage)
+	u.Post("/bbs/message/read", article.MessageRead)
+
+	u.Post("/bbs/collection/collect", article.AddCollection)
+	u.Post("/bbs/collection/uncollect", article.UnCollection)
 }

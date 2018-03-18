@@ -42,8 +42,12 @@ const (
 	// Decrease submit 1
 	Decrease = -1
 
-	// MainComment - the main comment.
-	MainComment = 0
+	// CommentDeleted represents the comment which is deleted.
+	CommentDeleted = -1
+	// CommentUnread represents the comment which is not read.
+	CommentUnread = 0
+	// CommentRead represents the comment which id read.
+	CommentRead = 1
 )
 
 // InvalidObjectId
