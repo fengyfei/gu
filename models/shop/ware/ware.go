@@ -171,7 +171,9 @@ func (sp *serviceProvider) GetByCID(conn orm.Connection, cid uint32) ([]BriefInf
 
 // get promotion wares (status = 2)
 func (sp *serviceProvider) GetPromotionList(conn orm.Connection) ([]BriefInfo, error) {
-	var list []BriefInfo
+	var (
+		list []BriefInfo
+	)
 
 	db := conn.(*gorm.DB).Exec("USE shop")
 	res := db.Table("wares").Where("status = ?", promotion).Scan(&list)
@@ -194,7 +196,9 @@ func (sp *serviceProvider) GetNewWares(conn orm.Connection) ([]BriefInfo, error)
 
 // update ware info
 func (sp *serviceProvider) UpdateWare(conn orm.Connection, req *UpdateReq) error {
-	var imgs Ware
+	var (
+		imgs Ware
+	)
 
 	db := conn.(*gorm.DB).Exec("USE shop")
 
@@ -218,7 +222,9 @@ func (sp *serviceProvider) UpdateWare(conn orm.Connection, req *UpdateReq) error
 
 // modify ware price
 func (sp *serviceProvider) ModifyPrice(conn orm.Connection, req *ModifyPriceReq) error {
-	var res *gorm.DB
+	var (
+		res *gorm.DB
+	)
 
 	db := conn.(*gorm.DB).Exec("USE shop")
 	res = db.Table("wares").Where("id = ?", req.ID).Updates(map[string]interface{}{

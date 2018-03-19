@@ -150,7 +150,10 @@ func (this *serviceProvider) ChangeStateByOne(conn orm.Connection, ID uint64, st
 }
 
 func (this *serviceProvider) ChangeStateByGroup(conn orm.Connection, IdList []uint, status uint) error {
-	var err error
+	var (
+		err error
+	)
+
 	db := conn.(*gorm.DB).Exec("USE shop")
 	tx := db.Begin()
 	for _, id := range IdList {
@@ -171,6 +174,7 @@ func (this *serviceProvider) GetUserOrder(conn orm.Connection, userId uint32) (*
 	var (
 		orders []Order
 	)
+
 	db := conn.(*gorm.DB).Exec("USE shop")
 	err := db.Where("user_id = ?", userId).Find(&orders).Error
 	if err != nil {
@@ -189,14 +193,20 @@ func (this *serviceProvider) GetByStatus(conn orm.Connection, status uint) ([]Or
 }
 
 func (this *serviceProvider) GetParents(conn orm.Connection) ([]Order, error) {
-	var parents []Order
+	var (
+		parents []Order
+	)
+
 	db := conn.(*gorm.DB)
 	err := db.Where("parent_id = 0").Find(&parents).Error
 	return parents, err
 }
 
 func (this *serviceProvider) GetByParentId(conn orm.Connection, parentId uint) ([]Order, error) {
-	var parents []Order
+	var (
+		parents []Order
+	)
+
 	db := conn.(*gorm.DB)
 	err := db.Where("parent_id = ", parentId).Find(&parents).Error
 	return parents, err

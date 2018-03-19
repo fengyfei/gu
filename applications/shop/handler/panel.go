@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd..
+ * Copyright (c) 2018 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,212 +24,231 @@
 
 /*
  * Revision History:
- *     Initial: 2017/11/30        Wang RiYu
+ *     Initial: 2017/3/16        Shi Ruitao
  */
 
 package handler
 
-//import (
-//  "github.com/fengyfei/gu/applications/beego/shop/mysql"
-//  "github.com/fengyfei/gu/applications/beego/base"
-//  "github.com/fengyfei/gu/models/shop/panel"
-//  "github.com/fengyfei/gu/models/shop/ware"
-//  "github.com/fengyfei/gu/libs/logger"
-//  "github.com/fengyfei/gu/libs/orm"
-//  "github.com/fengyfei/gu/libs/constants"
-//  "encoding/json"
-//  "errors"
-//  "strings"
-//  "github.com/fengyfei/gu/applications/beego/shop/util"
-//)
-//
-//type (
-//  PanelController struct {
-//    base.Controller
-//  }
-//)
-//
-//// add promotion panel
-//func (this *PanelController) AddPanel() {
-//  var (
-//    err error
-//    addReq panel.PanelReq
-//    conn orm.Connection
-//  )
-//
-//  conn, err = mysql.Pool.Get()
-//  if err != nil {
-//    logger.Error(err)
-//    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
-//  }
-//
-//  err = json.Unmarshal(this.Ctx.Input.RequestBody, &addReq)
-//  if err != nil {
-//    logger.Error(err)
-//    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
-//  }
-//
-//  err = this.Validate(addReq)
-//  if err != nil {
-//    logger.Error(err)
-//    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
-//  }
-//
-//  err = panel.Service.CreatePanel(conn, addReq)
-//  if err != nil {
-//    logger.Error(err)
-//    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
-//  }
-//
-//  logger.Info("create panel", addReq.Title, "success")
-//  this.WriteStatusAndDataJSON(constants.ErrSucceed, nil)
-//}
-//
-//// add promotion list
-//func (this *PanelController) AddPromotion() {
-//  var (
-//    err error
-//    addReq panel.PromotionReq
-//    conn orm.Connection
-//  )
-//
-//  conn, err = mysql.Pool.Get()
-//  if err != nil {
-//    logger.Error(err)
-//    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
-//  }
-//
-//  err = json.Unmarshal(this.Ctx.Input.RequestBody, &addReq)
-//  if err != nil {
-//    logger.Error(err)
-//    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
-//  }
-//
-//  err = this.Validate(addReq)
-//  if err != nil {
-//    logger.Error(err)
-//    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
-//  }
-//
-//  err = panel.Service.AddPromotionList(conn, addReq)
-//  if err != nil {
-//    logger.Error(err)
-//    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
-//  }
-//
-//  logger.Info("add promotion list success")
-//  this.WriteStatusAndDataJSON(constants.ErrSucceed, nil)
-//}
-//
-//// add recommend
-//func (this *PanelController) AddRecommend() {
-//  var (
-//    err error
-//    addReq panel.RecommendReq
-//    conn orm.Connection
-//  )
-//
-//  conn, err = mysql.Pool.Get()
-//  if err != nil {
-//    logger.Error(err)
-//    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
-//  }
-//
-//  err = json.Unmarshal(this.Ctx.Input.RequestBody, &addReq)
-//  if err != nil {
-//    logger.Error(err)
-//    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
-//  }
-//
-//  err = this.Validate(addReq)
-//  if err != nil {
-//    logger.Error(err)
-//    this.WriteStatusAndDataJSON(constants.ErrInvalidParam, nil)
-//  }
-//
-//  addReq.Picture, err = util.SavePicture(addReq.Picture, "recommend/")
-//  if err != nil {
-//    logger.Error(err)
-//    this.WriteStatusAndDataJSON(constants.ErrInternalServerError, nil)
-//  }
-//
-//  err = panel.Service.AddRecommend(conn, addReq)
-//  if err != nil {
-//    logger.Error(err)
-//    if !util.DeletePicture(addReq.Picture) {
-//      logger.Error(errors.New("add recommend failed and delete it's pictures go wrong, please delete picture manually"))
-//    }
-//    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
-//  }
-//
-//  logger.Info("add recommend of panel success")
-//  this.WriteStatusAndDataJSON(constants.ErrSucceed, nil)
-//}
-//
-//// TODO: add second-hand
-//func (this *PanelController) AddSecondHand() {}
-//
-//// get panel page
-//func (this *PanelController) GetPanelPage() {
-//  var (
-//    err error
-//    res []panel.PanelsPage
-//  )
-//
-//  conn, err := mysql.Pool.Get()
-//  if err != nil {
-//    logger.Error(err)
-//    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
-//  }
-//
-//  res, err = panel.Service.GetPanels(conn)
-//  if err != nil {
-//    logger.Error(err)
-//    this.WriteStatusAndDataJSON(constants.ErrMysql, nil)
-//  }
-//
-//  for i := range res {
-//    if res[i].Type == 1 {
-//      detail, err := panel.Service.GetDetail(conn, res[i].ID)
-//      if err != nil {
-//        logger.Error(err)
-//        res[i].Content = []interface{}{}
-//      } else {
-//        ids := strings.Split(detail.Content, "#")
-//
-//        wares, err := ware.Service.GetByIDs(conn, ids)
-//        if err != nil {
-//          logger.Error(err)
-//          res[i].Content = []interface{}{}
-//        } else {
-//          for k := range wares {
-//            res[i].Content = append(res[i].Content, wares[k])
-//          }
-//        }
-//      }
-//    }
-//    if res[i].Type == 2 {
-//      detail, err := panel.Service.GetDetail(conn, res[i].ID)
-//      if err != nil {
-//        logger.Error(err)
-//        res[i].Content = []interface{}{}
-//      } else {
-//        res[i].Content = append(res[i].Content, detail.Picture)
-//      }
-//    }
-//    if res[i].Type == 3 {
-//      if newWares, newErr := ware.Service.GetNewWares(conn); len(newWares) > 0 {
-//        if newErr != nil {
-//          logger.Error(newErr)
-//          res[i].Content = []interface{}{}
-//        } else {
-//          res[i].Content = append(res[i].Content, newWares)
-//        }
-//      } else {
-//        res[i].Content = []interface{}{}
-//      }
-//    }
-//  }
-//
-//  this.WriteStatusAndDataJSON(constants.ErrSucceed, res)
-//}
+import (
+	"errors"
+	"strings"
+
+	jwtgo "github.com/dgrijalva/jwt-go"
+
+	"github.com/fengyfei/gu/applications/core"
+	"github.com/fengyfei/gu/applications/shop/mysql"
+	"github.com/fengyfei/gu/applications/shop/util"
+	"github.com/fengyfei/gu/libs/constants"
+	"github.com/fengyfei/gu/libs/http/server"
+	"github.com/fengyfei/gu/libs/logger"
+	"github.com/fengyfei/gu/libs/orm"
+	"github.com/fengyfei/gu/models/shop/panel"
+	"github.com/fengyfei/gu/models/shop/ware"
+)
+
+// add promotion panel
+func AddPanel(c *server.Context) error {
+	var (
+		err    error
+		addReq panel.PanelReq
+		conn   orm.Connection
+	)
+
+	isAdmin := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.IsAdmin].(bool)
+	if !isAdmin {
+		logger.Error("You don't have access")
+		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
+	}
+
+	err = c.JSONBody(&addReq)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	err = c.Validate(addReq)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	conn, err = mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	err = panel.Service.CreatePanel(conn, addReq)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	logger.Info("create panel", addReq.Title, "success")
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
+}
+
+// add promotion list
+func AddPromotion(c *server.Context) error {
+	var (
+		err    error
+		addReq panel.PromotionReq
+		conn   orm.Connection
+	)
+
+	isAdmin := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.IsAdmin].(bool)
+	if !isAdmin {
+		logger.Error("You don't have access")
+		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
+	}
+
+	err = c.JSONBody(&addReq)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	err = c.Validate(addReq)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	conn, err = mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	err = panel.Service.AddPromotionList(conn, addReq)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	logger.Info("add promotion list success")
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
+}
+
+// add recommend
+func AddRecommend(c *server.Context) error {
+	var (
+		err    error
+		addReq panel.RecommendReq
+		conn   orm.Connection
+	)
+
+	isAdmin := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.IsAdmin].(bool)
+	if !isAdmin {
+		logger.Error("You don't have access")
+		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
+	}
+
+	err = c.JSONBody(&addReq)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	err = c.Validate(addReq)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	addReq.Picture, err = util.SavePicture(addReq.Picture, "recommend/")
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInternalServerError, nil)
+	}
+
+	conn, err = mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	err = panel.Service.AddRecommend(conn, addReq)
+	if err != nil {
+		logger.Error(err)
+		if !util.DeletePicture(addReq.Picture) {
+			logger.Error(errors.New("add recommend failed and delete it's pictures go wrong, please delete picture manually"))
+		}
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	logger.Info("add recommend of panel success")
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
+}
+
+// TODO: add second-hand
+func AddSecondHand(c *server.Context) {}
+
+// get panel page
+func GetPanelPage(c *server.Context) error {
+	var (
+		err error
+		res []panel.PanelsPage
+	)
+
+	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	res, err = panel.Service.GetPanels(conn)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	for i := range res {
+		if res[i].Type == 1 {
+			detail, err := panel.Service.GetDetail(conn, res[i].ID)
+			if err != nil {
+				logger.Error(err)
+				res[i].Content = []interface{}{}
+			} else {
+				ids := strings.Split(detail.Content, "#")
+
+				wares, err := ware.Service.GetByIDs(conn, ids)
+				if err != nil {
+					logger.Error(err)
+					res[i].Content = []interface{}{}
+				} else {
+					for k := range wares {
+						res[i].Content = append(res[i].Content, wares[k])
+					}
+				}
+			}
+		}
+		if res[i].Type == 2 {
+			detail, err := panel.Service.GetDetail(conn, res[i].ID)
+			if err != nil {
+				logger.Error(err)
+				res[i].Content = []interface{}{}
+			} else {
+				res[i].Content = append(res[i].Content, detail.Picture)
+			}
+		}
+		if res[i].Type == 3 {
+			if newWares, newErr := ware.Service.GetNewWares(conn); len(newWares) > 0 {
+				if newErr != nil {
+					logger.Error(newErr)
+					res[i].Content = []interface{}{}
+				} else {
+					res[i].Content = append(res[i].Content, newWares)
+				}
+			} else {
+				res[i].Content = []interface{}{}
+			}
+		}
+	}
+
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, res)
+}

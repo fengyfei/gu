@@ -125,7 +125,9 @@ func WechatLogin(c *server.Context) error {
 
 // Wechat add a phone number
 func AddPhone(c *server.Context) error {
-	var phone user.WechatPhone
+	var (
+		phone user.WechatPhone
+	)
 
 	err := c.JSONBody(&phone)
 	if err != nil {
@@ -164,7 +166,9 @@ func AddPhone(c *server.Context) error {
 
 // Change information
 func ChangeInfo(c *server.Context) error {
-	var change user.ChangeInfo
+	var (
+		change user.ChangeInfo
+	)
 
 	err := c.JSONBody(&change)
 	if err != nil {
@@ -209,7 +213,9 @@ func ChangeInfo(c *server.Context) error {
 
 // Register by phone
 func PhoneRegister(c *server.Context) error {
-	var register user.PhoneRegister
+	var (
+		register user.PhoneRegister
+	)
 
 	err := c.JSONBody(&register)
 	if err != nil {
@@ -246,7 +252,9 @@ func PhoneRegister(c *server.Context) error {
 
 // Login by phone
 func PhoneLogin(c *server.Context) error {
-	var login user.PhoneLogin
+	var (
+		login user.PhoneLogin
+	)
 
 	err := c.JSONBody(&login)
 	if err != nil {
@@ -291,7 +299,9 @@ func PhoneLogin(c *server.Context) error {
 
 // Change password
 func ChangePassword(c *server.Context) error {
-	var change user.ChangePass
+	var (
+		change user.ChangePass
+	)
 
 	err := c.JSONBody(&change)
 	if err != nil {

@@ -78,12 +78,6 @@ func CreateWare(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
 	}
 
-	conn, err = mysql.Pool.Get()
-	if err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-	}
-
 	err = c.JSONBody(&addReq)
 	if err != nil {
 		logger.Error(err)
@@ -118,6 +112,13 @@ func CreateWare(c *server.Context) error {
 		}
 	}
 
+	conn, err = mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
 	err = ware.Service.CreateWare(conn, &addReq)
 	if err != nil {
 		logger.Error(err)
@@ -141,6 +142,7 @@ func GetAllWare(c *server.Context) error {
 	)
 
 	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -163,12 +165,6 @@ func GetWareByCategory(c *server.Context) error {
 		res    []ware.BriefInfo
 	)
 
-	conn, err := mysql.Pool.Get()
-	if err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-	}
-
 	err = c.JSONBody(&cidReq)
 	if err != nil {
 		logger.Error(err)
@@ -179,6 +175,13 @@ func GetWareByCategory(c *server.Context) error {
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
 	if cidReq.CID == 0 {
@@ -206,6 +209,7 @@ func GetNewWares(c *server.Context) error {
 	)
 
 	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -228,6 +232,7 @@ func GetPromotion(c *server.Context) error {
 	)
 
 	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -253,12 +258,6 @@ func UpdateWithID(c *server.Context) error {
 	if !isAdmin {
 		logger.Error("You don't have access")
 		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
-	}
-
-	conn, err := mysql.Pool.Get()
-	if err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
 	err = c.JSONBody(&req)
@@ -295,6 +294,13 @@ func UpdateWithID(c *server.Context) error {
 		}
 	}
 
+	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
 	err = ware.Service.UpdateWare(conn, &req)
 	if err != nil {
 		logger.Error(err)
@@ -323,12 +329,6 @@ func ModifyPrice(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
 	}
 
-	conn, err := mysql.Pool.Get()
-	if err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-	}
-
 	err = c.JSONBody(&req)
 	if err != nil {
 		logger.Error(err)
@@ -339,6 +339,13 @@ func ModifyPrice(c *server.Context) error {
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
 	err = ware.Service.ModifyPrice(conn, &req)
@@ -359,12 +366,6 @@ func HomePageList(c *server.Context) error {
 		res   []ware.BriefInfo
 	)
 
-	conn, err := mysql.Pool.Get()
-	if err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-	}
-
 	err = c.JSONBody(&idReq)
 	if err != nil {
 		logger.Error(err)
@@ -375,6 +376,13 @@ func HomePageList(c *server.Context) error {
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
 	res, err = ware.Service.HomePageList(conn, idReq.LastID)
@@ -416,12 +424,6 @@ func GetDetail(c *server.Context) error {
 		res *ware.Ware
 	)
 
-	conn, err := mysql.Pool.Get()
-	if err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-	}
-
 	err = c.JSONBody(&req)
 	if err != nil {
 		logger.Error(err)
@@ -432,6 +434,13 @@ func GetDetail(c *server.Context) error {
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
 	res, err = ware.Service.GetByID(conn, req.ID)
@@ -456,12 +465,6 @@ func ChangeStatus(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrToken, nil)
 	}
 
-	conn, err := mysql.Pool.Get()
-	if err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-	}
-
 	err = c.JSONBody(&changeReq)
 	if err != nil {
 		logger.Error(err)
@@ -472,6 +475,13 @@ func ChangeStatus(c *server.Context) error {
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
 	// status: -1 -> delete or sold out

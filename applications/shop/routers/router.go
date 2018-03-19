@@ -51,12 +51,14 @@ func register(r *server.Router) {
 	r.Post("/shop/account/phonelogin", handler.PhoneLogin)
 	r.Post("/shop/account/changepass", handler.ChangePassword)
 
+	// address api for user
 	r.Post("/shop/address/add", handler.AddAddress)
 	r.Post("/shop/address/setdefault", handler.SetDefaultAddress)
 	r.Post("/shop/address/modify", handler.ModifyAddress)
 	r.Post("/shop/address/delete", handler.DeleteAddress)
 	r.Get("/shop/address/get", handler.GetAddress)
 
+	// category api for admin
 	r.Post("/shop/category/add", handler.AddCategory)
 	r.Post("/shop/category/maincategory", handler.GetMainCategories)
 	r.Post("/shop/category/subcategory", handler.GetSubCategories)
@@ -96,10 +98,10 @@ func register(r *server.Router) {
 	r.Post("/shop/collection/remove", handler.RemoveColl)
 
 	// panel api for admin
-	//r.Post("/shop/api/panel/create", &handler.PanelController{}, "post:AddPanel")
-	//r.Post("/shop/api/panel/addpromotion", &handler.PanelController{}, "post:AddPromotion")
-	//r.Post("/shop/api/panel/addrecommend", &handler.PanelController{}, "post:AddRecommend")
+	r.Post("/shop/api/panel/create", handler.AddPanel)
+	r.Post("/shop/api/panel/addpromotion", handler.AddPromotion)
+	r.Post("/shop/api/panel/addrecommend", handler.AddRecommend)
 
 	// panel api for user
-	//r.Post("/shop/panel/getpage", &handler.PanelController{}, "get:GetPanelPage")
+	r.Get("/shop/panel/getpage", handler.GetPanelPage)
 }
