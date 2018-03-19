@@ -32,8 +32,8 @@ package initialize
 import (
 	"fmt"
 
-	"github.com/fengyfei/gu/libs/orm/mysql"
 	"github.com/fengyfei/gu/applications/bbs/conf"
+	"github.com/fengyfei/gu/libs/orm/mysql"
 )
 
 const (

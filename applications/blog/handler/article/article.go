@@ -53,13 +53,9 @@ func CreateArticle(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	if err := this.Validate(&articleInfo); err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
-	}
-
 	staffID := this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64)
 	articleInfo.AuthorID = int32(staffID)
+
 	id, err := article.ArticleService.Create(articleInfo)
 	if err != nil {
 		logger.Error(err)
@@ -71,7 +67,9 @@ func CreateArticle(this *server.Context) error {
 
 // ArticleByID return article by articleID.
 func ArticleByID(this *server.Context) error {
-	var articleID getByIdReq
+	var (
+		articleID getByIdReq
+	)
 
 	if err := this.JSONBody(&articleID); err != nil {
 		logger.Error(err)
@@ -105,9 +103,11 @@ func ListCreated(this *server.Context) error {
 
 // ListApproval returns the articles which are passed.
 func ListApproval(this *server.Context) error {
-	var page struct {
-		Page int
-	}
+	var (
+		page struct {
+			Page int `json:"page"`
+		}
+	)
 
 	if err := this.JSONBody(&page); err != nil {
 		logger.Error(err)
@@ -125,10 +125,13 @@ func ListApproval(this *server.Context) error {
 
 // ModifyStatus modify the article status.
 func ModifyStatus(this *server.Context) error {
-	var req struct {
-		ArticleID string `json:"articleID"`
-		Status    int8   `json:"status"`
-	}
+	var (
+		req struct {
+			ArticleID string `json:"articleID"`
+			StaffID   int32  `json:"staffID"`
+			Status    int8   `json:"status"`
+		}
+	)
 
 	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)
@@ -136,7 +139,9 @@ func ModifyStatus(this *server.Context) error {
 	}
 
 	staffID := this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64)
-	err := article.ArticleService.ModifyStatus(req.ArticleID, req.Status, int32(staffID))
+	req.StaffID = int32(staffID)
+
+	err := article.ArticleService.ModifyStatus(req.ArticleID, req.Status, req.StaffID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -147,20 +152,27 @@ func ModifyStatus(this *server.Context) error {
 
 // Delete delete article.
 func Delete(this *server.Context) error {
-	var articleID getByIdReq
+	var (
+		req struct {
+			ArticleID string `json:"articleID"`
+			StaffID   int32  `json:"staffID"`
+		}
+	)
 
-	if err := this.JSONBody(&articleID); err != nil {
+	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	if err := this.Validate(&articleID); err != nil {
+	if err := this.Validate(&req); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
 	staffID := this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64)
-	err := article.ArticleService.Delete(articleID.ID, int32(staffID))
+	req.StaffID = int32(staffID)
+
+	err := article.ArticleService.Delete(req.ArticleID, req.StaffID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -172,10 +184,12 @@ func Delete(this *server.Context) error {
 
 // UpdateView update article's view.
 func UpdateView(this *server.Context) error {
-	var view struct {
-		ArticleID string
-		View      int32
-	}
+	var (
+		view struct {
+			ArticleID string `json:"articleID"`
+			View      int32  `json:"view"`
+		}
+	)
 
 	if err := this.JSONBody(&view); err != nil {
 		logger.Error(err)
@@ -193,10 +207,12 @@ func UpdateView(this *server.Context) error {
 
 // ModifyArticle modify article.
 func ModifyArticle(this *server.Context) error {
-	var modify struct {
-		ArticleID string                `json:"articleID"`
-		Article   article.CreateArticle `json:"article"`
-	}
+	var (
+		modify struct {
+			ArticleID string                `json:"articleID"`
+			Article   article.CreateArticle `json:"article"`
+		}
+	)
 
 	if err := this.JSONBody(&modify); err != nil {
 		logger.Error(err)

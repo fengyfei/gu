@@ -52,7 +52,7 @@ type (
 	}
 
 	module struct {
-		ModuleID string
+		ModuleID string `json:"moduleID"`
 	}
 )
 
@@ -148,8 +148,8 @@ func DeleteModule(this *server.Context) error {
 func DeleteTheme(this *server.Context) error {
 	var (
 		theme struct {
-			ModuleID string
-			ThemeID  string
+			ModuleID string `json:"moduleID"`
+			ThemeID  string `json:"themeID"`
 		}
 	)
 

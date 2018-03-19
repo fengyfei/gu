@@ -30,8 +30,8 @@
 package main
 
 import (
-	_ "github.com/fengyfei/gu/applications/blog/routers"
 	"github.com/fengyfei/gu/applications/blog/mysql"
+	_ "github.com/fengyfei/gu/applications/blog/routers"
 )
 
 func main() {

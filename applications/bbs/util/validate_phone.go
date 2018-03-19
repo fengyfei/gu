@@ -36,4 +36,3 @@ func ValidatePhone(phone string) bool {
 	rgx := regexp.MustCompile(reg)
 	return rgx.MatchString(phone)
 }
-

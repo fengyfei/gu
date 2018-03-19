@@ -31,17 +31,17 @@
 package main
 
 import (
+	"github.com/fengyfei/gu/applications/blog/conf"
 	"github.com/fengyfei/gu/applications/blog/routers"
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/http/server/middleware"
 	"github.com/fengyfei/gu/libs/logger"
-	"github.com/fengyfei/gu/applications/blog/conf"
 )
 
 var (
-	ep *server.Entrypoint
-	URLMap    = make(map[string]struct{})
-	claimsKey = "staff"
+	ep           *server.Entrypoint
+	URLMap       = make(map[string]struct{})
+	claimsKey    = "staff"
 	tokenHMACKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
 	jwtConfig    = middleware.JWTConfig{
 		Skipper:    customSkipper,

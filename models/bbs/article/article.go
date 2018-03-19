@@ -35,9 +35,9 @@ import (
 
 	"github.com/fengyfei/gu/applications/bbs/conf"
 	"github.com/fengyfei/gu/libs/mongo"
+	"github.com/fengyfei/gu/libs/orm"
 	"github.com/fengyfei/gu/models/bbs"
 	"github.com/fengyfei/gu/models/user"
-	"github.com/fengyfei/gu/libs/orm"
 )
 
 type articleServiceProvider struct{}
@@ -78,12 +78,12 @@ type CreateArticle struct {
 
 // UserReply represents the information about someone's reply.
 type UserReply struct {
-	Title   string    `json:"title" validate:"required,min=8,max=32"`
-	Creator string    `json:"creator"`
-	Replier string    `json:"replier"`
-	Module  string    `json:"module"`
-	Content string    `json:"content"`
-	Created string    `json:"created"`
+	Title   string `json:"title" validate:"required,min=8,max=32"`
+	Creator string `json:"creator"`
+	Replier string `json:"replier"`
+	Module  string `json:"module"`
+	Content string `json:"content"`
+	Created string `json:"created"`
 }
 
 func init() {
@@ -389,11 +389,13 @@ func (sp *articleServiceProvider) Recommend(page int) ([]Article, error) {
 	return list, nil
 }
 
-func (sp *articleServiceProvider) ArtNum(userID uint32) (int, error){
+// ArtNum gets the number of someone's articles.
+func (sp *articleServiceProvider) ArtNum(userID uint32) (int, error) {
 	conn := articleSession.Connect()
 	defer conn.Disconnect()
 
-	query := bson.M{"userID": userID, "isActive":true}
+	query := bson.M{"userID": userID, "isActive": true}
+
 	artNum, err := conn.Collection().Find(query).Count()
 	if err != nil {
 		return 0, err

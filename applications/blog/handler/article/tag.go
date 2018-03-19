@@ -39,29 +39,31 @@ import (
 	"github.com/fengyfei/gu/models/blog/tag"
 )
 
-// Tag - tag associated handlers
-type Tag struct {
-	base.Controller
-}
+type (
+	// Tag - tag associated handlers
+	Tag struct {
+		base.Controller
+	}
 
-// tagInfoReq - the request struct that get tag information by id.
-type tagInfoReq struct {
-	TagID string `json:"tagID" validate:"required,alphanum,len=24"`
-}
+	// tagInfoReq - the request struct that get tag information by id.
+	tagInfoReq struct {
+		TagID string `json:"tagID" validate:"required,alphanum,len=24"`
+	}
 
-// createTagReq - the request struct that create tag information.
-type createTagReq struct {
-	Tag string `json:"tag" validate:"required,alphaunicode,min=2,max=6"`
-}
+	// createTagReq - the request struct that create tag information.
+	createTagReq struct {
+		Tag string `json:"tag" validate:"required,alphaunicode,min=2,max=6"`
+	}
 
-// modifyTagReq - the request struct that modify the tag information.
-type modifyTagReq struct {
-	TagID  string `json:"tagID" validate:"required,alphanum,len=24"`
-	Tag    string `json:"tag"`
-	Active *bool  `json:"active"`
-}
+	// modifyTagReq - the request struct that modify the tag information.
+	modifyTagReq struct {
+		TagID  string `json:"tagID" validate:"required,alphanum,len=24"`
+		Tag    string `json:"tag"`
+		Active *bool  `json:"active"`
+	}
+)
 
-// ListTags all tags.
+// ListTags list all tags.
 func ListTags(this *server.Context) error {
 	tagList, err := tag.TagService.GetList()
 	if err != nil {
@@ -75,7 +77,6 @@ func ListTags(this *server.Context) error {
 // TagActiveList returns all active tags.
 func TagActiveList(this *server.Context) error {
 	tagList, err := tag.TagService.GetActiveList()
-
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -87,8 +88,7 @@ func TagActiveList(this *server.Context) error {
 // TagInfo return the tag's information by id.
 func TagInfo(this *server.Context) error {
 	var (
-		req  tagInfoReq
-		resp tag.Tag
+		req tagInfoReq
 	)
 
 	if err := this.JSONBody(&req); err != nil {
@@ -112,8 +112,7 @@ func TagInfo(this *server.Context) error {
 
 func CreateTag(this *server.Context) error {
 	var (
-		req  createTagReq
-		resp string
+		req createTagReq
 	)
 
 	if err := this.JSONBody(&req); err != nil {
@@ -137,7 +136,9 @@ func CreateTag(this *server.Context) error {
 
 // Modify update a specific tag.
 func ModifyTag(this *server.Context) error {
-	var req modifyTagReq
+	var (
+		req modifyTagReq
+	)
 
 	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)

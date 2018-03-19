@@ -30,21 +30,23 @@
 package staff
 
 import (
+	"github.com/fengyfei/gu/applications/blog/mysql"
+	"github.com/fengyfei/gu/applications/blog/util"
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/models/staff"
-	"github.com/fengyfei/gu/applications/blog/mysql"
-	"github.com/fengyfei/gu/applications/blog/util"
 )
 
 // Login - staff login.
 func Login(this *server.Context) error {
-	var login struct {
-		Name string `json:"name"`
-		Pass string `json:"pass"`
-	}
+	var (
+		login struct {
+			Name string `json:"name"`
+			Pass string `json:"pass"`
+		}
+	)
 
 	if err := this.JSONBody(&login); err != nil {
 		logger.Error(err)

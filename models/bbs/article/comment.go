@@ -339,7 +339,7 @@ func (sp *commentServiceProvider) HistoryMessage(userID uint32) ([]Comment, erro
 }
 
 // UnreadMessage  returns the messages which are not read.
-func (sp *commentServiceProvider) UnreadMessage(userID uint32) ([]Comment, error){
+func (sp *commentServiceProvider) UnreadMessage(userID uint32) ([]Comment, error) {
 	var list []Comment
 	conn := commentSession.Connect()
 	defer conn.Disconnect()
@@ -359,5 +359,5 @@ func (sp *commentServiceProvider) MessageRead(commentID string) error {
 	defer conn.Disconnect()
 
 	query := bson.M{"_id": bson.ObjectIdHex(commentID)}
-	return conn.Update(query, bson.M{"$set":bson.M{"status": bbs.CommentRead}})
+	return conn.Update(query, bson.M{"$set": bson.M{"status": bbs.CommentRead}})
 }

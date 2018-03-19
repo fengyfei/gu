@@ -30,9 +30,9 @@
 package article
 
 import (
-	jwtgo "github.com/dgrijalva/jwt-go"
 	"gopkg.in/mgo.v2/bson"
 
+	mysql "github.com/fengyfei/gu/applications/bbs/initialize"
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/http/server"
@@ -58,13 +58,17 @@ func AddArticle(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	userID := this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(uint32)
-	if err := this.Validate(&reqAdd); err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error("Can't get mysql connection:", err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
 	}
 
-	id, err := article.ArticleService.Insert(reqAdd, userID)
+	//userID := this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(uint32)
+	userID := uint32(1001)
+
+	id, err := article.ArticleService.Insert(conn, reqAdd, userID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -120,7 +124,7 @@ func GetByThemeID(this *server.Context) error {
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
 }
 
-// GetByTitle - gets articles by ThemeID.
+// GetByTitle - gets articles by title.
 func GetByTitle(this *server.Context) error {
 	var (
 		title title
@@ -140,7 +144,7 @@ func GetByTitle(this *server.Context) error {
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
 }
 
-// GetByUserID - gets articles by ThemeID.
+// GetByUserID - gets articles by userID.
 func GetByUserID(this *server.Context) error {
 	var (
 		user struct {
@@ -162,7 +166,7 @@ func GetByUserID(this *server.Context) error {
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
 }
 
-// DeleteArt deletes article
+// DeleteArt deletes article.
 func DeleteArt(this *server.Context) error {
 	var (
 		title title
@@ -186,8 +190,8 @@ func DeleteArt(this *server.Context) error {
 func UpdateTimes(this *server.Context) error {
 	var (
 		times struct {
-			Num   int64
-			ArtID string
+			Num   int64  `json:"num"`
+			ArtID string `json:"artID"`
 		}
 	)
 

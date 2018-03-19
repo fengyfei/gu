@@ -32,8 +32,8 @@ package mysql
 import (
 	"fmt"
 
-	"github.com/fengyfei/gu/libs/orm/mysql"
 	"github.com/fengyfei/gu/applications/blog/conf"
+	"github.com/fengyfei/gu/libs/orm/mysql"
 )
 
 var Pool *mysql.Pool

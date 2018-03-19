@@ -37,7 +37,7 @@ import (
 	"github.com/fengyfei/gu/models/bbs/article"
 )
 
-// AddCollection - add article.
+// AddCollection - add collection.
 func AddCollection(this *server.Context) error {
 	var (
 		reqAdd article.CreateColl
@@ -61,12 +61,14 @@ func AddCollection(this *server.Context) error {
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, nil)
 }
 
-// AddCollection - add article.
+// UnCollection - cancel collecting.
 func UnCollection(this *server.Context) error {
-	var req struct {
-		UserID uint32 `json:"userID"`
-		ArtID  string `json:"artID"`
-	}
+	var (
+		req struct {
+			UserID uint32 `json:"userID"`
+			ArtID  string `json:"artID"`
+		}
+	)
 
 	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)
