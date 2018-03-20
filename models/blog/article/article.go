@@ -75,29 +75,31 @@ func init() {
 	ArticleService = &articleServiceProvider{}
 }
 
-// Article represents the article information.
-type Article struct {
-	ID        bson.ObjectId   `bson:"_id,omitempty" json:"id" validate:"required"`
-	AuthorID  int32           `bson:"AuthorID"      json:"authorID"`
-	Title     string          `bson:"Title"         json:"title"`
-	Content   string          `bson:"Content"       json:"content"`
-	Abstract  string          `bson:"Abstract"      json:"abstract"`
-	TagsID    []bson.ObjectId `bson:"Tag"           json:"tag"`
-	AuditorID int32           `bson:"auditorID"     json:"auditorID"`
-	View      int32           `bson:"view"          json:"view"`
-	CreatedAt time.Time       `bson:"CreatedAt"     json:"created_at"`
-	UpdatedAt time.Time       `bson:"UpdatedAt"     json:"updated_at"`
-	Status    int8            `bson:"status"        json:"status"`
-}
+type (
+	// Article represents the article information.
+	Article struct {
+		ID        bson.ObjectId   `bson:"_id,omitempty" json:"id" validate:"required"`
+		AuthorID  int32           `bson:"AuthorID"      json:"authorID"`
+		Title     string          `bson:"Title"         json:"title"`
+		Content   string          `bson:"Content"       json:"content"`
+		Abstract  string          `bson:"Abstract"      json:"abstract"`
+		TagsID    []bson.ObjectId `bson:"Tag"           json:"tag"`
+		AuditorID int32           `bson:"auditorID"     json:"auditorID"`
+		View      int32           `bson:"view"          json:"view"`
+		CreatedAt time.Time       `bson:"CreatedAt"     json:"created_at"`
+		UpdatedAt time.Time       `bson:"UpdatedAt"     json:"updated_at"`
+		Status    int8            `bson:"status"        json:"status"`
+	}
 
-// CreateArticle represents the article information when created.
-type CreateArticle struct {
-	AuthorID int32    `json:"authorID"`
-	Title    string   `json:"title"`
-	Content  string   `json:"content"`
-	Abstract string   `json:"abstract"`
-	Tag      []string `json:"tag"`
-}
+	// CreateArticle represents the article information when created.
+	CreateArticle struct {
+		AuthorID int32    `json:"authorID"`
+		Title    string   `json:"title"`
+		Content  string   `json:"content"`
+		Abstract string   `json:"abstract"`
+		Tag      []string `json:"tag"`
+	}
+)
 
 // Create create article.
 func (sp *articleServiceProvider) Create(article CreateArticle) (string, error) {
@@ -137,7 +139,9 @@ func (sp *articleServiceProvider) Create(article CreateArticle) (string, error) 
 
 // ListApproval returns the articles which are passed.
 func (sp *articleServiceProvider) ListApproval(page int) ([]Article, error) {
-	var articles []Article
+	var (
+		articles []Article
+	)
 
 	conn := session.Connect()
 	defer conn.Disconnect()
@@ -153,7 +157,9 @@ func (sp *articleServiceProvider) ListApproval(page int) ([]Article, error) {
 
 // ListCreated return articles which are waiting for checking.
 func (sp *articleServiceProvider) ListCreated() ([]Article, error) {
-	var articles []Article
+	var (
+		articles []Article
+	)
 
 	conn := session.Connect()
 	defer conn.Disconnect()
@@ -187,7 +193,10 @@ func (sp *articleServiceProvider) Delete(articleID string, staffID int32) error 
 
 //ListDenied return articles which are denied.
 func (sp *articleServiceProvider) ListDenied() ([]Article, error) {
-	var articles []Article
+	var (
+		articles []Article
+	)
+
 	conn := session.Connect()
 	defer conn.Disconnect()
 
@@ -202,7 +211,9 @@ func (sp *articleServiceProvider) ListDenied() ([]Article, error) {
 
 // GetByID return the article's information.
 func (sp *articleServiceProvider) GetByID(articleID string) (*Article, error) {
-	var article Article
+	var (
+		article Article
+	)
 
 	conn := session.Connect()
 	defer conn.Disconnect()

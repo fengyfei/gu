@@ -34,11 +34,14 @@ const (
 	// Database name.
 	Database = "blog"
 
-	// Article Status
-	Created  = 0
-	Approval    = 1
+	// Created - article's status is created only.
+	Created = 0
+	// Approval - article is allowed to show.
+	Approval = 1
+	// NotApproval - article is not allowed to show.
 	NotApproval = -1
-	Delete  = -2
+	// Delete - article is deleted.
+	Delete = -2
 
 	// Skip - numbers of articles.
 	Skip = 4

@@ -91,7 +91,7 @@ func (this *serviceProvider) Add(conn orm.Connection, userID uint32, add *Addres
 		err     error
 	)
 
-	addr := Address{
+	addr := &Address{
 		UserID:    userID,
 		Name:      add.Name,
 		Phone:     add.Phone,

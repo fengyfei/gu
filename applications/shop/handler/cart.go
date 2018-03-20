@@ -42,9 +42,11 @@ import (
 	Cart "github.com/fengyfei/gu/models/shop/cart"
 )
 
-type reqRemove struct {
-	IDs []uint32 `json:"ids"`
-}
+type (
+	reqRemove struct {
+		IDs []uint32 `json:"ids"`
+	}
+)
 
 // Add adds wares to cart.
 func AddCart(c *server.Context) error {

@@ -77,6 +77,28 @@ func AddArticle(this *server.Context) error {
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, id)
 }
 
+// GetByArtID gets articles by ArtID.
+func GetByArtID(this *server.Context) error {
+	var (
+		req struct {
+			ArtID string `json:"artID"`
+		}
+	)
+
+	if err := this.JSONBody(&req); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	list, err := article.ArticleService.GetByArtID(bson.ObjectIdHex(req.ArtID))
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
+}
+
 // GetByModuleID gets articles by ModuleID.
 func GetByModuleID(this *server.Context) error {
 	var (
@@ -148,7 +170,7 @@ func GetByTitle(this *server.Context) error {
 func GetByUserID(this *server.Context) error {
 	var (
 		user struct {
-			UserID string `json:"userID"`
+			UserID uint32 `json:"userID"`
 		}
 	)
 
@@ -157,7 +179,7 @@ func GetByUserID(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	list, err := article.ArticleService.GetByTitle(user.UserID)
+	list, err := article.ArticleService.GetByUserID(user.UserID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)

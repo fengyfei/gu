@@ -48,43 +48,45 @@ var (
 	articleSession *mongo.Connection
 )
 
-// Article represents the article information.
-type Article struct {
-	Id          bson.ObjectId `bson:"_id,omitempty"  json:"id"`
-	Title       string        `bson:"title"          json:"title"`
-	UserID      uint32        `bson:"userID"         json:"userID"`
-	Content     string        `bson:"content"        json:"content"`
-	Module      string        `bson:"module"         json:"module"`
-	Theme       string        `bson:"theme"          json:"theme"`
-	ModuleID    bson.ObjectId `bson:"moduleID"       json:"moduleID"`
-	ThemeID     bson.ObjectId `bson:"themeID"        json:"themeID"`
-	CommentNum  int64         `bson:"commentNum"     json:"commentNum"`
-	Times       int64         `bson:"times"          json:"times"`
-	LastComment string        `bson:"lastComment"    json:"lastComment"`
-	Created     string        `bson:"created"        json:"created"`
-	Image       string        `bson:"image"          json:"image"`
-	IsActive    bool          `bson:"isActive"       json:"isActive"`
-}
+type (
+	// Article represents the article information.
+	Article struct {
+		Id          bson.ObjectId `bson:"_id,omitempty"  json:"id"`
+		Title       string        `bson:"title"          json:"title"`
+		UserID      uint32        `bson:"userID"         json:"userID"`
+		Content     string        `bson:"content"        json:"content"`
+		Module      string        `bson:"module"         json:"module"`
+		Theme       string        `bson:"theme"          json:"theme"`
+		ModuleID    bson.ObjectId `bson:"moduleID"       json:"moduleID"`
+		ThemeID     bson.ObjectId `bson:"themeID"        json:"themeID"`
+		CommentNum  int64         `bson:"commentNum"     json:"commentNum"`
+		Times       int64         `bson:"times"          json:"times"`
+		LastComment string        `bson:"lastComment"    json:"lastComment"`
+		Created     string        `bson:"created"        json:"created"`
+		Image       string        `bson:"image"          json:"image"`
+		IsActive    bool          `bson:"isActive"       json:"isActive"`
+	}
 
-// CreateArticle represents the article information when created.
-type CreateArticle struct {
-	Title   string `json:"title"`
-	Content string `json:"content"`
-	Module  string `json:"module"`
-	Theme   string `json:"theme"`
-	Image   string `json:"image"`
-	Created string `json:"created"`
-}
+	// CreateArticle represents the article information when created.
+	CreateArticle struct {
+		Title   string `json:"title"`
+		Content string `json:"content"`
+		Module  string `json:"module"`
+		Theme   string `json:"theme"`
+		Image   string `json:"image"`
+		Created string `json:"created"`
+	}
 
-// UserReply represents the information about someone's reply.
-type UserReply struct {
-	Title   string `json:"title" validate:"required,min=8,max=32"`
-	Creator string `json:"creator"`
-	Replier string `json:"replier"`
-	Module  string `json:"module"`
-	Content string `json:"content"`
-	Created string `json:"created"`
-}
+	// UserReply represents the information about someone's reply.
+	UserReply struct {
+		Title   string `json:"title" validate:"required,min=8,max=32"`
+		Creator string `json:"creator"`
+		Replier string `json:"replier"`
+		Module  string `json:"module"`
+		Content string `json:"content"`
+		Created string `json:"created"`
+	}
+)
 
 func init() {
 	const (
@@ -125,7 +127,7 @@ func (sp *articleServiceProvider) Insert(con orm.Connection, article CreateArtic
 		return "", err
 	}
 
-	art := Article{
+	art := &Article{
 		Title:       article.Title,
 		UserID:      uint32(userID),
 		Content:     article.Content,
@@ -144,7 +146,7 @@ func (sp *articleServiceProvider) Insert(con orm.Connection, article CreateArtic
 	conn := articleSession.Connect()
 	defer conn.Disconnect()
 
-	err = conn.Insert(&art)
+	err = conn.Insert(art)
 	if err != nil {
 		return "", err
 	}
@@ -181,7 +183,9 @@ func (sp *articleServiceProvider) GetByModuleID(page int, module string) ([]Arti
 
 // GetByThemeID return articles by themeID.
 func (sp *articleServiceProvider) GetByThemeID(page int, module, theme string) ([]Article, error) {
-	var list []Article
+	var (
+		list []Article
+	)
 
 	moduleID, err := ModuleService.GetModuleID(module)
 	if err != nil {
@@ -207,7 +211,9 @@ func (sp *articleServiceProvider) GetByThemeID(page int, module, theme string) (
 
 // GetByTitle return articles by title.
 func (sp *articleServiceProvider) GetByTitle(title string) ([]Article, error) {
-	var list []Article
+	var (
+		list []Article
+	)
 
 	conn := articleSession.Connect()
 	defer conn.Disconnect()
@@ -225,7 +231,9 @@ func (sp *articleServiceProvider) GetByTitle(title string) ([]Article, error) {
 
 // GetByArtID return article by artID.
 func (sp *articleServiceProvider) GetByArtID(artID bson.ObjectId) (*Article, error) {
-	var list Article
+	var (
+		list Article
+	)
 
 	conn := articleSession.Connect()
 	defer conn.Disconnect()
@@ -241,7 +249,9 @@ func (sp *articleServiceProvider) GetByArtID(artID bson.ObjectId) (*Article, err
 
 // GetByUserID return articles by title.
 func (sp *articleServiceProvider) GetByUserID(userID uint32) ([]Article, error) {
-	var list []Article
+	var (
+		list []Article
+	)
 
 	conn := articleSession.Connect()
 	defer conn.Disconnect()
@@ -259,7 +269,9 @@ func (sp *articleServiceProvider) GetByUserID(userID uint32) ([]Article, error) 
 
 // GetID return ArtID.
 func (sp *articleServiceProvider) GetID(title string) (bson.ObjectId, error) {
-	var art Article
+	var (
+		art Article
+	)
 
 	conn := articleSession.Connect()
 	defer conn.Disconnect()
@@ -276,7 +288,9 @@ func (sp *articleServiceProvider) GetID(title string) (bson.ObjectId, error) {
 
 // GetInfo return article's information.
 func (sp *articleServiceProvider) GetInfo(artID bson.ObjectId) (*Article, error) {
-	var article Article
+	var (
+		article Article
+	)
 
 	conn := articleSession.Connect()
 	defer conn.Disconnect()
@@ -321,32 +335,30 @@ func (sp *articleServiceProvider) Delete(title string) error {
 
 // UpdateCommentNum update the commentNum.
 func (sp *articleServiceProvider) UpdateCommentNum(artID bson.ObjectId, operation int) error {
-	var updater = bson.M{}
-
-	updater = bson.M{"$inc": bson.M{"commentNum": operation}}
-
 	conn := articleSession.Connect()
 	defer conn.Disconnect()
+
+	updater := bson.M{"$inc": bson.M{"commentNum": operation}}
 
 	return conn.Update(bson.M{"_id": artID}, updater)
 }
 
 //  UpdateTimes update times.
 func (sp *articleServiceProvider) UpdateTimes(num int64, artID string) error {
-	updater := bson.M{"$set": bson.M{"times": num}}
-
 	conn := articleSession.Connect()
 	defer conn.Disconnect()
+
+	updater := bson.M{"$set": bson.M{"times": num}}
 
 	return conn.Update(bson.M{"_id": bson.ObjectIdHex(artID), "isActive": true}, updater)
 }
 
 // DeleteByModule delete the articles that belong to the deleted module.
 func (sp *articleServiceProvider) DeleteByModule(moduleID string) error {
-	updater := bson.M{"$set": bson.M{"isActive": false}}
-
 	conn := articleSession.Connect()
 	defer conn.Disconnect()
+
+	updater := bson.M{"$set": bson.M{"isActive": false}}
 
 	_, err := conn.Collection().UpdateAll(bson.M{"moduleID": bson.ObjectIdHex(moduleID)}, updater)
 	return err
@@ -354,10 +366,10 @@ func (sp *articleServiceProvider) DeleteByModule(moduleID string) error {
 
 // DeleteByTheme deletes articles that belong to the deleted theme.
 func (sp *articleServiceProvider) DeleteByTheme(moduleID, themeID string) error {
-	updater := bson.M{"$set": bson.M{"isActive": false}}
-
 	conn := articleSession.Connect()
 	defer conn.Disconnect()
+
+	updater := bson.M{"$set": bson.M{"isActive": false}}
 
 	_, err := conn.Collection().UpdateAll(bson.M{"moduleID": bson.ObjectIdHex(moduleID), "themeID": bson.ObjectIdHex(themeID)}, updater)
 	return err
@@ -365,20 +377,23 @@ func (sp *articleServiceProvider) DeleteByTheme(moduleID, themeID string) error 
 
 // UpdateLastComment update lastComment.
 func (sp *articleServiceProvider) UpdateLastComment(artID, user string) error {
-	updater := bson.M{"$set": bson.M{"lastComment": user}}
-
 	conn := articleSession.Connect()
 	defer conn.Disconnect()
+
+	updater := bson.M{"$set": bson.M{"lastComment": user}}
 
 	return conn.Update(bson.M{"_id": bson.ObjectIdHex(artID), "isActive": true}, updater)
 }
 
 // Recommend gets the popular articles.
 func (sp *articleServiceProvider) Recommend(page int) ([]Article, error) {
+	var (
+		list []Article
+	)
+
 	conn := articleSession.Connect()
 	defer conn.Disconnect()
 
-	var list []Article
 	query := bson.M{"isActive": true}
 
 	err := conn.Collection().Find(query).Limit(conf.BBSConfig.Pages).Skip(page * conf.BBSConfig.Pages).All(&list)

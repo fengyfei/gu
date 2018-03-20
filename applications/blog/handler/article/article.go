@@ -32,6 +32,7 @@ package article
 
 import (
 	jwtgo "github.com/dgrijalva/jwt-go"
+
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/http/server"
@@ -40,9 +41,11 @@ import (
 )
 
 // getByIdReq - the request struct that get article information by id.
-type getByIdReq struct {
-	ID string `json:"id" validate:"required,alphanum,len=24"`
-}
+type (
+	getByIdReq struct {
+		ID string `json:"id" validate:"required,alphanum,len=24"`
+	}
+)
 
 // CreateArticle - insert article.
 func CreateArticle(this *server.Context) error {
@@ -53,8 +56,7 @@ func CreateArticle(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	staffID := this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64)
-	articleInfo.AuthorID = int32(staffID)
+	articleInfo.AuthorID = int32(this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64))
 
 	id, err := article.ArticleService.Create(articleInfo)
 	if err != nil {
@@ -138,8 +140,7 @@ func ModifyStatus(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	staffID := this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64)
-	req.StaffID = int32(staffID)
+	req.StaffID = int32(this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64))
 
 	err := article.ArticleService.ModifyStatus(req.ArticleID, req.Status, req.StaffID)
 	if err != nil {
@@ -169,8 +170,7 @@ func Delete(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	staffID := this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64)
-	req.StaffID = int32(staffID)
+	req.StaffID = int32(this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64))
 
 	err := article.ArticleService.Delete(req.ArticleID, req.StaffID)
 	if err != nil {
@@ -219,8 +219,7 @@ func ModifyArticle(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	staffID := this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64)
-	modify.Article.AuthorID = int32(staffID)
+	modify.Article.AuthorID = int32(this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64))
 
 	err := article.ArticleService.ModifyArticle(modify.ArticleID, modify.Article)
 	if err != nil {

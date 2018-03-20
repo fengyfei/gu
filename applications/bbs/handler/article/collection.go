@@ -87,3 +87,26 @@ func UnCollection(this *server.Context) error {
 
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, nil)
 }
+
+func GetByUser (this *server.Context) error {
+	var (
+		req struct {
+			UserID uint32 `json:"userID"`
+		}
+	)
+
+	if err := this.JSONBody(&req); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	//userID := this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(uint32)
+
+	list, err := article.CollectionService.GetByUser(req.UserID)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
+}

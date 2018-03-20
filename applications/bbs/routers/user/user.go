@@ -31,7 +31,6 @@ package user
 
 import (
 	"github.com/fengyfei/gu/libs/http/server"
-
 	"github.com/fengyfei/gu/applications/bbs/handler/article"
 	"github.com/fengyfei/gu/applications/bbs/handler/user"
 )
@@ -63,6 +62,7 @@ func InitRouter(u *server.Router) {
 	u.Post("/bbs/article/module", article.GetByModuleID)
 	u.Post("/bbs/article/theme", article.GetByThemeID)
 	u.Post("/bbs/article/title", article.GetByTitle)
+	u.Post("/bbs/article/artid", article.GetByArtID)
 	u.Post("/bbs/article/userid", article.GetByUserID)
 	u.Post("/bbs/article/updatetimes", article.UpdateTimes)
 	u.Post("/bbs/article/recommend", article.Recommend)
@@ -88,4 +88,6 @@ func InitRouter(u *server.Router) {
 
 	u.Post("/bbs/collection/collect", article.AddCollection)
 	u.Post("/bbs/collection/uncollect", article.UnCollection)
+	u.Post("/bbs/collection/user", article.GetByUser)
+
 }

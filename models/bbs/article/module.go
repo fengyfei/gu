@@ -31,8 +31,8 @@ package article
 
 import (
 	"errors"
-	"github.com/robfig/cron"
 
+	"github.com/robfig/cron"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
@@ -52,28 +52,30 @@ var (
 	moduleSession *mongo.Connection
 )
 
-// Theme represents the second category.
-type Theme struct {
-	Id       bson.ObjectId `bson:"id"         json:"id"`
-	Name     string        `bson:"name"       json:"name"  validate:"required"`
-	IsActive bool          `bson:"isActive"   json:"isActive"`
-}
+type (
+	// Theme represents the second category.
+	Theme struct {
+		Id       bson.ObjectId `bson:"id"         json:"id"`
+		Name     string        `bson:"name"       json:"name"  validate:"required"`
+		IsActive bool          `bson:"isActive"   json:"isActive"`
+	}
 
-// Module represents the module information.
-type Module struct {
-	Id         bson.ObjectId `bson:"_id,omitempty"   json:"id"`
-	Name       string        `bson:"name"            json:"name"`
-	ArtNum     int64         `bson:"artNum"          json:"artNum"`
-	ModuleView int64         `bson:"moduleView"      json:"moduleView"`
-	Themes     []Theme       `bson:"themes"          json:"themes"`
-	Recommend  int64         `bson:"recommend"       json:"recommend"`
-	IsActive   bool          `bson:"isActive"        json:"isActive"`
-}
+	// Module represents the module information.
+	Module struct {
+		Id         bson.ObjectId `bson:"_id,omitempty"   json:"id"`
+		Name       string        `bson:"name"            json:"name"`
+		ArtNum     int64         `bson:"artNum"          json:"artNum"`
+		ModuleView int64         `bson:"moduleView"      json:"moduleView"`
+		Themes     []Theme       `bson:"themes"          json:"themes"`
+		Recommend  int64         `bson:"recommend"       json:"recommend"`
+		IsActive   bool          `bson:"isActive"        json:"isActive"`
+	}
 
-// CreateModule represents the module information when created.
-type CreateModule struct {
-	Name string `json:"name" validate:"required"`
-}
+	// CreateModule represents the module information when created.
+	CreateModule struct {
+		Name string `json:"name" validate:"required"`
+	}
+)
 
 func init() {
 	const (
@@ -99,7 +101,9 @@ func init() {
 
 // GetModuleID return moduleID by name.
 func (sp *moduleServiceProvider) GetModuleID(name string) (bson.ObjectId, error) {
-	var module Module
+	var (
+		module Module
+	)
 
 	conn := moduleSession.Connect()
 	defer conn.Disconnect()
@@ -113,7 +117,9 @@ func (sp *moduleServiceProvider) GetModuleID(name string) (bson.ObjectId, error)
 
 // GetThemeID gets moduleID by name.
 func (sp *moduleServiceProvider) GetThemeID(moduleName, themeName string) (bson.ObjectId, error) {
-	var module Module
+	var (
+		module Module
+	)
 
 	conn := moduleSession.Connect()
 	defer conn.Disconnect()
@@ -147,19 +153,19 @@ func (sp *moduleServiceProvider) CreateModule(module CreateModule) error {
 }
 
 // CreateTheme add theme.
-func (sp *moduleServiceProvider) CreateTheme(module, theme string) error {
+func (sp *moduleServiceProvider) CreateTheme(module, themename string) error {
 	moduleID, err := sp.GetModuleID(module)
 	if err != nil {
 		return err
 	}
 
-	t := Theme{
+	theme := Theme{
 		Id:       bson.NewObjectId(),
-		Name:     theme,
+		Name:     themename,
 		IsActive: true,
 	}
 
-	updater := bson.M{"$addToSet": bson.M{"themes": t}}
+	updater := bson.M{"$addToSet": bson.M{"themes": theme}}
 
 	conn := moduleSession.Connect()
 	defer conn.Disconnect()
@@ -200,7 +206,9 @@ func (sp *moduleServiceProvider) UpdateModuleView(num int64, module string) erro
 
 // ListInfo return module's information.
 func (sp *moduleServiceProvider) ListInfo(moduleID string) (*Module, error) {
-	var module Module
+	var (
+		module Module
+	)
 
 	conn := moduleSession.Connect()
 	defer conn.Disconnect()
@@ -216,12 +224,14 @@ func (sp *moduleServiceProvider) ListInfo(moduleID string) (*Module, error) {
 
 // AllModules return all modules.
 func (sp *moduleServiceProvider) AllModules() ([]Module, error) {
-	var module []Module
+	var (
+		module []Module
+	)
 
 	conn := moduleSession.Connect()
 	defer conn.Disconnect()
 
-	sort := "-Created"
+	sort := "-created"
 
 	query := bson.M{"isActive": true}
 	err := conn.GetMany(query, &module, sort)

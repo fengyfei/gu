@@ -72,12 +72,14 @@ func init() {
 	TagService = &tagServiceProvider{}
 }
 
-// Tag represents the tag information.
-type Tag struct {
-	TagID  bson.ObjectId `bson:"_id,omitempty" json:"id"`
-	Tag    string        `bson:"Tag"           json:"tag"`
-	Active bool          `bson:"Active"        json:"active"`
-}
+type (
+	// Tag represents the tag information.
+	Tag struct {
+		TagID  bson.ObjectId `bson:"_id,omitempty" json:"id"`
+		Tag    string        `bson:"Tag"           json:"tag"`
+		Active bool          `bson:"Active"        json:"active"`
+	}
+)
 
 // GetList get all the tags.
 func (sp *tagServiceProvider) GetList() ([]Tag, error) {
@@ -161,11 +163,15 @@ func (sp *tagServiceProvider) Modify(id, tag *string, active *bool) error {
 
 // GetID return tag's id.
 func (sp *tagServiceProvider) GetID(tag string) (bson.ObjectId, error) {
-	var tagInfo Tag
+	var (
+		tagInfo Tag
+	)
+
 	conn := session.Connect()
 	defer conn.Disconnect()
 
 	query := bson.M{"Tag": tag, "Active": true}
+
 	err := conn.GetUniqueOne(query, &tagInfo)
 	if err != nil {
 		return "", err

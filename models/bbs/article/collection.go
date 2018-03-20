@@ -47,18 +47,18 @@ var (
 )
 
 type (
+	// Collection represents someone's collection.
 	Collection struct {
 		Id     bson.ObjectId   `bson:"_id,omitempty"  json:"id"`
 		UserID uint32          `bson:"userID"         json:"userID"`
 		ArtID  []bson.ObjectId `bson:"artID"          json:"artID"`
 	}
 
+	// CreateColl represents the information of collection when collecting.
 	CreateColl struct {
 		UserID uint32   `bson:"userID"         json:"userID"`
 		ArtID  []string `bson:"artID"          json:"artID"`
 	}
-
-
 )
 
 func init() {
@@ -83,8 +83,12 @@ func init() {
 	collectionSession = mongo.NewConnection(s, bbs.Database, Collection)
 }
 
+// Insert - collect the article.
 func (sp *collectionServiceProvider) Insert(created CreateColl) error {
-	var artID = make([]bson.ObjectId, len(created.ArtID))
+	var (
+		artID = make([]bson.ObjectId, len(created.ArtID))
+	)
+
 	for i, artid := range created.ArtID {
 		artID[i] = bson.ObjectIdHex(artid)
 	}
@@ -121,5 +125,22 @@ func (sp *collectionServiceProvider) UnCollect(userID uint32, artID string) erro
 	defer conn.Disconnect()
 
 	query := bson.M{"userID": userID}
+
 	return conn.Update(query, bson.M{"$pull": bson.M{"artID": bson.ObjectIdHex(artID)}})
+}
+
+// GetByUser gets someone's collection.
+func (sp *collectionServiceProvider) GetByUser(userID uint32) (Collection, error) {
+	var (
+		list Collection
+	)
+
+	conn := collectionSession.Connect()
+	defer conn.Disconnect()
+
+	query := bson.M{"userID": userID}
+
+	err := conn.GetUniqueOne(query, &list)
+
+	return list, err
 }
