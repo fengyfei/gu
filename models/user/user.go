@@ -37,7 +37,6 @@ import (
 
 	"github.com/jinzhu/gorm"
 
-	"github.com/fengyfei/gu/libs/mongo"
 	"github.com/fengyfei/gu/libs/orm"
 	"github.com/fengyfei/gu/libs/security"
 )
@@ -53,10 +52,8 @@ const (
 )
 
 var (
-	// UserServer
-	UserServer = &UserServiceProvider{}
-
-	session *mongo.Connection
+	// UserService
+	UserService = &UserServiceProvider{}
 
 	// ErrInvalidPass
 	ErrInvalidPass = errors.New("the password error.")
@@ -66,13 +63,13 @@ var (
 
 type (
 	PhoneRegister struct {
-		Phone    string `json:"phone" validate:"required,alphanum,len=11"`
+		Phone    string `json:"phone" validate:"required,numeric,len=11"`
 		Password string `json:"password" validate:"required,min=6,max=30"`
 		UserName string `json:"username" validate:"required,alphaunicode,min=2,max=30"`
 	}
 
 	PhoneLogin struct {
-		Phone    string `json:"phone" validate:"required,alphanum,len=11"`
+		Phone    string `json:"phone" validate:"required,numeric,len=11"`
 		Password string `json:"password" validate:"required,min=6,max=30"`
 	}
 
@@ -89,7 +86,7 @@ type (
 	WechatCode struct {
 		UserName string `json:"username"`
 		Sex      uint8  `json:"sex"`
-		Phone    string `json:"phone" validate:"required,alphanum,len=11"`
+		Phone    string `json:"phone" validate:"required,numeric,len=11"`
 		Code     string `json:"code" validate:"required"`
 	}
 
@@ -99,13 +96,13 @@ type (
 	}
 
 	WechatPhone struct {
-		Phone string `json:"phone" validate:"required,alphanum,len=11"`
+		Phone string `json:"phone" validate:"required,numeric,len=11"`
 	}
 
 	UserData struct {
 		Token    string `json:"token"`
-		UserName string `json:"username"`
-		Phone    string `json:"phone"`
+		UserName string `json:"username"` // todo
+		Phone    string `json:"phone"`    // todo
 		Avatar   string `json:"avatar"`
 		Sex      uint8  `json:"sex"`
 	}
@@ -119,27 +116,27 @@ type (
 
 // User represents users information
 type User struct {
-	UserID    uint32    `gorm:"column:id;primary_key;auto_increment" json:"userID"`
-	UserName  string    `gorm:"column:username;size:16"`
-	Avatar    string    `gorm:"column:avatar"`
+	UserID    uint32    `gorm:"column:id;primary_key;auto_increment" json:"user_id"`
+	UserName  string    `gorm:"column:username;type:varchar(128)" json:"user_name"`
+	Avatar    string    `gorm:"column:avatar" json:"avatar"`
 	Sex       uint8     `gorm:"column:sex"`
-	Password  string    `gorm:"column:password;type:varchar(128)" json:"password" validate:"required,alphanum,min=6,max=30"`
-	Phone     string    `gorm:"type:varchar(16)" json:"phone" validate:"required,numeric,len=11"`
+	Password  string    `gorm:"column:password;type:varchar(128)" json:"password""`
+	Phone     string    `gorm:"type:varchar(16)" json:"phone"`
+	Type      int       `gorm:"column:type"`
 	UnionID   string    `gorm:"column:unionid;type:varchar(128)"`
 	Created   time.Time `gorm:"column:created"`
 	LastLogin time.Time `gorm:"column:lastlogin"`
-	IsAdmin   bool      `gorm:"column:isadmin"`
-	Type      int       `grom:"column:type"`
+	IsAdmin   bool      `gorm:"column:isadmin;not null;default:0"`
 	IsActive  bool      `gorm:"column:isactive;not null;default:1"`
 }
 
 // TableName
 func (u User) TableName() string {
-	return "users"
+	return "user"
 }
 
 // WeChatLogin
-func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, info *WechatLogin) (*User, error) {
+func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, info *WechatLogin) (*User, error) { // todo
 	var (
 		err  error
 		user User
@@ -147,35 +144,36 @@ func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, info *WechatLo
 	db := conn.(*gorm.DB)
 
 	err = db.Where("unionID = ?", info.UnionID).First(&user).Error
+	if err == nil {
+		return &user, nil
+	}
+
+	if err != gorm.ErrRecordNotFound {
+		return nil, err
+	}
+
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	s := fmt.Sprintf("%s%d", info.UnionID, r.Intn(10000))
+	salt, err := security.SaltHashGenerate(&s)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			r := rand.New(rand.NewSource(time.Now().UnixNano()))
-			s := fmt.Sprintf("%s%d", info.UnionID, r.Intn(10000))
-			salt, err := security.SaltHashGenerate(&s)
-			if err != nil {
-				return nil, err
-			}
+		return nil, err
+	}
 
-			user.Type = WeChat
-			user.Password = string(salt)
-			user.IsActive = true
-			user.IsAdmin = false
-			user.UnionID = info.UnionID
-			user.Created = time.Now()
-			user.LastLogin = time.Now()
+	user.Type = WeChat
+	user.Password = string(salt)
+	user.IsActive = true
+	user.IsAdmin = false
+	user.UnionID = info.UnionID
+	user.Created = time.Now()
+	user.LastLogin = time.Now()
 
-			err = db.Model(&User{}).Create(&user).Error
-			if err != nil {
-				return nil, err
-			}
+	err = db.Model(&User{}).Create(&user).Error
+	if err != nil {
+		return nil, err
+	}
 
-			err = db.Where("unionID = ?", info.UnionID).First(&user).Error
-			if err != nil {
-				return nil, err
-			}
-
-			return &user, err
-		}
+	err = db.Where("unionID = ?", info.UnionID).First(&user).Error
+	if err != nil {
 		return nil, err
 	}
 
@@ -193,7 +191,7 @@ func (this *UserServiceProvider) AddPhone(conn orm.Connection, id uint32, phone 
 	if err != nil {
 		return err
 	}
-	if user.Type == 1 {
+	if user.Type == Mobile {
 		return ErrAddPhone
 	}
 	user.Phone = phone.Phone
@@ -213,7 +211,7 @@ func (this *UserServiceProvider) ChangeInfo(conn orm.Connection, id uint32, chan
 		return err
 	}
 
-	if len(user.Avatar) > 0 {
+	if len(user.Avatar) > 0 { // todo
 		DeletePicture(user.Avatar)
 	}
 
@@ -225,7 +223,7 @@ func (this *UserServiceProvider) ChangeInfo(conn orm.Connection, id uint32, chan
 }
 
 // Register by phone
-func (this *UserServiceProvider) PhoneRegister(conn orm.Connection, register *PhoneRegister) error {
+func (this *UserServiceProvider) PhoneRegister(conn orm.Connection, register *PhoneRegister) error { // todo
 	salt, err := security.SaltHashGenerate(&register.Password)
 	if err != nil {
 		return err
@@ -234,7 +232,7 @@ func (this *UserServiceProvider) PhoneRegister(conn orm.Connection, register *Ph
 	user := User{
 		UserName:  register.UserName,
 		Phone:     register.Phone,
-		UnionID:   register.Phone,
+		UnionID:   register.Phone, // todo
 		Password:  string(salt),
 		Type:      Mobile,
 		IsAdmin:   false,
@@ -243,12 +241,8 @@ func (this *UserServiceProvider) PhoneRegister(conn orm.Connection, register *Ph
 	}
 
 	db := conn.(*gorm.DB)
-	err = db.Create(&user).Error
-	if err != nil {
-		return err
-	}
 
-	return err
+	return db.Create(&user).Error
 }
 
 func (this *UserServiceProvider) PhoneLogin(conn orm.Connection, login *PhoneLogin) (*User, error) {
@@ -275,23 +269,22 @@ func (this *UserServiceProvider) PhoneLogin(conn orm.Connection, login *PhoneLog
 	return &user, nil
 }
 
-func (this *UserServiceProvider) ChangePassword(conn orm.Connection, id uint32, change *ChangePass) error {
+func (this *UserServiceProvider) ChangePassword(conn orm.Connection, id uint32, change *ChangePass) (err error) {
 	var (
 		user User
-		err  error
 	)
 
 	tx := conn.(*gorm.DB).Begin()
 	defer func() {
 		if err != nil {
-			err = tx.Rollback().Error
+			tx.Rollback()
 		} else {
 			err = tx.Commit().Error
 		}
 	}()
 
 	err = tx.Where("id = ?", id).First(&user).Error
-	if err == gorm.ErrRecordNotFound {
+	if err != nil {
 		return err
 	}
 
@@ -317,6 +310,8 @@ func (this *UserServiceProvider) GetUserByID(conn orm.Connection, userID uint32)
 	user := &User{}
 
 	err := db.Where("id = ?", userID).First(&user).Error
-
-	return user, err
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
