@@ -83,14 +83,14 @@ func (u User) TableName() string {
 }
 
 // WeChatLogin login by wechat
-func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, UnionID string) (*User, error) {
+func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, UnionID, name string) (*User, error) {
 	var (
 		err  error
 		user User
 	)
 	db := conn.(*gorm.DB)
 
-	err = db.Where("unionID = ?", "1234").First(&user).Error
+	err = db.Where("unionID = ?", UnionID).First(&user).Error
 	if err == nil {
 		lastLogin(conn, user.UserID)
 		return &user, nil
@@ -107,12 +107,12 @@ func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, UnionID string
 		return nil, err
 	}
 	time := time.Now()
-	user.UserName = "name"
+	user.UserName = name
 	user.Type = WeChat
 	user.Password = string(salt)
 	user.IsActive = true
 	user.IsAdmin = false
-	user.UnionID = "1234"
+	user.UnionID = UnionID
 	user.Avatar = ""
 	user.Created = time
 	user.LastLogin = time
@@ -122,7 +122,7 @@ func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, UnionID string
 		return nil, err
 	}
 
-	err = db.Where("unionID = ?", "1234").First(&user).Error
+	err = db.Where("unionID = ?", UnionID).First(&user).Error
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func (this *UserServiceProvider) AddPhone(conn orm.Connection, id uint32, phone 
 }
 
 // ChangeInfo change user information
-func (this *UserServiceProvider) ChangeInfo(conn orm.Connection, id uint32, userName string, sex uint8) error { // todo
+func (this *UserServiceProvider) ChangeInfo(conn orm.Connection, id uint32, userName string, sex uint8) error {
 	var (
 		user User
 	)
