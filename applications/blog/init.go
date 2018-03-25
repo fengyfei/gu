@@ -26,6 +26,7 @@
  * Revision History:
  *     Initial: 2017/10/24        Jia Chenhui
  *     Modify : 2018/02/02        Tong Yuehong
+ *     Modify : 2018/03/25        Chen Yanchen
  */
 
 package main
@@ -52,10 +53,17 @@ var (
 )
 
 func customSkipper(c *server.Context) bool {
+	URLMap["/staff/register"] = struct{}{}
 	URLMap["/staff/login"] = struct{}{}
-	URLMap["/blog/article/allapproval"] = struct{}{}
-	URLMap["/blog/article/getone"] = struct{}{}
+
+	URLMap["/blog/article/approval"] = struct{}{}
+	URLMap["/blog/article/getbyid"] = struct{}{}
 	URLMap["/blog/article/updateview"] = struct{}{}
+
+	URLMap["/blog/tag/list"] = struct{}{}
+	URLMap["/blog/tag/activelist"] = struct{}{}
+	URLMap["/blog/tag/info"] = struct{}{}
+
 	if _, ok := URLMap[c.Request().RequestURI]; ok {
 		return true
 	}

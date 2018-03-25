@@ -26,6 +26,7 @@
  * Revision History:
  *     Initial: 2017/10/22        Feng Yifei
  *     Modify : 2018/02/02        Tong Yuehong
+ *     Modify : 2018/03/25        Chen Yanchen
  */
 
 package router
@@ -51,19 +52,21 @@ func InitRouter(u *server.Router) {
 	}
 
 	u.Post("/blog/tag/create", article.CreateTag)
-	u.Post("/blog/tag/list", article.ListTags)
-	u.Post("/blog/tag/activelist", article.TagActiveList)
+	u.Get("/blog/tag/list", article.ListTags)
+	u.Get("/blog/tag/activelist", article.TagActiveList)
 	u.Post("/blog/tag/info", article.TagInfo)
 	u.Post("/blog/tag/modify", article.ModifyTag)
 
 	u.Post("/staff/login", staff.Login)
 
-	u.Post("/blog/article/getone", article.ArticleByID)
-	u.Post("/blog/article/delete", article.Delete)
 	u.Post("/blog/article/create", article.CreateArticle)
-	u.Post("/blog/article/allapproval", article.ListApproval)
-	u.Post("/blog/article/modifystatus", article.ModifyStatus)
 	u.Post("/blog/article/allcreated", article.ListCreated)
+	u.Post("/blog/article/delete", article.Delete)
+	u.Post("/blog/article/modify", article.ModifyArticle)
+	u.Post("/blog/article/modifystatus", article.ModifyStatus)
 	u.Post("/blog/article/updateview", article.UpdateView)
-	u.Post("/blog/article/modifyarticle", article.ModifyArticle)
+	u.Post("/blog/article/approval", article.ListApproval)
+	u.Post("/blog/article/getbyid", article.ArticleByID)
+	u.Post("/blog/article/getbytag", article.GetByTag)
+
 }

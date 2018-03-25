@@ -26,6 +26,7 @@
  * Revision History:
  *     Initial: 2017/10/27        ShiChao
  *     Modify : 2018/02/02        Tong Yuehong
+ *     Modify : 2018/03/25        Chen Yanchen
  */
 
 package article
@@ -40,25 +41,34 @@ import (
 	"github.com/fengyfei/gu/models/blog/article"
 )
 
-// getByIdReq - the request struct that get article information by id.
-type (
-	getByIdReq struct {
-		ID string `json:"id" validate:"required,alphanum,len=24"`
-	}
-)
+// CreateArticle represents the article information when created.
+type art struct {
+	Title    string   `json:"title"`
+	Content  string   `json:"content"`
+	Abstract string   `json:"abstract"`
+	Tags     []string `json:"tags"`
+}
 
 // CreateArticle - insert article.
 func CreateArticle(this *server.Context) error {
-	var articleInfo article.CreateArticle
+	var req art
 
-	if err := this.JSONBody(&articleInfo); err != nil {
+	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	articleInfo.AuthorID = int32(this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64))
+	AuthorID := int32(this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64))
 
-	id, err := article.ArticleService.Create(articleInfo)
+	a := &article.Article{
+		AuthorID: AuthorID,
+		Title:    req.Title,
+		Content:  req.Content,
+		Abstract: req.Abstract,
+		Tags:     req.Tags,
+	}
+
+	id, err := article.ArticleService.Create(a)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -69,21 +79,21 @@ func CreateArticle(this *server.Context) error {
 
 // ArticleByID return article by articleID.
 func ArticleByID(this *server.Context) error {
-	var (
-		articleID getByIdReq
-	)
+	var req struct {
+		ID string `json:"id" validate:"required,alphanum,len=24"`
+	}
 
-	if err := this.JSONBody(&articleID); err != nil {
+	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	if err := this.Validate(&articleID); err != nil {
+	if err := this.Validate(&req); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	articles, err := article.ArticleService.GetByID(articleID.ID)
+	articles, err := article.ArticleService.GetByID(req.ID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -105,11 +115,9 @@ func ListCreated(this *server.Context) error {
 
 // ListApproval returns the articles which are passed.
 func ListApproval(this *server.Context) error {
-	var (
-		page struct {
-			Page int `json:"page"`
-		}
-	)
+	var page struct {
+		Page int `json:"page"`
+	}
 
 	if err := this.JSONBody(&page); err != nil {
 		logger.Error(err)
@@ -127,13 +135,11 @@ func ListApproval(this *server.Context) error {
 
 // ModifyStatus modify the article status.
 func ModifyStatus(this *server.Context) error {
-	var (
-		req struct {
+	var req struct {
 			ArticleID string `json:"articleID"`
 			StaffID   int32  `json:"staffID"`
 			Status    int8   `json:"status"`
 		}
-	)
 
 	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)
@@ -153,12 +159,10 @@ func ModifyStatus(this *server.Context) error {
 
 // Delete delete article.
 func Delete(this *server.Context) error {
-	var (
-		req struct {
-			ArticleID string `json:"articleID"`
-			StaffID   int32  `json:"staffID"`
-		}
-	)
+	var req struct {
+		ArticleID string `json:"articleID"`
+		StaffID   int32  `json:"staffID"`
+	}
 
 	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)
@@ -179,17 +183,14 @@ func Delete(this *server.Context) error {
 	}
 
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, nil)
-
 }
 
 // UpdateView update article's view.
 func UpdateView(this *server.Context) error {
-	var (
-		view struct {
-			ArticleID string `json:"articleID"`
-			View      int32  `json:"view"`
-		}
-	)
+	var view struct {
+		ArticleID string `json:"articleID"`
+		View      uint32 `json:"view"`
+	}
 
 	if err := this.JSONBody(&view); err != nil {
 		logger.Error(err)
@@ -207,25 +208,57 @@ func UpdateView(this *server.Context) error {
 
 // ModifyArticle modify article.
 func ModifyArticle(this *server.Context) error {
-	var (
-		modify struct {
-			ArticleID string                `json:"articleID"`
-			Article   article.CreateArticle `json:"article"`
-		}
-	)
+	var req struct {
+		ArticleID string   `json:"articleID"`
+		Title     string   `json:"title"`
+		Abstract  string   `json:"abstract"`
+		Content   string   `json:"content"`
+		Tags      []string `json:"tags"`
+	}
 
-	if err := this.JSONBody(&modify); err != nil {
+	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	modify.Article.AuthorID = int32(this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64))
+	AuditorID := int32(this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64))
 
-	err := article.ArticleService.ModifyArticle(modify.ArticleID, modify.Article)
+	a := &article.Article{
+		AuditorID: AuditorID,
+		Title:     req.Title,
+		Content:   req.Content,
+		Abstract:  req.Abstract,
+		Tags:      req.Tags,
+	}
+
+	err := article.ArticleService.ModifyArticle(req.ArticleID, *a)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, nil)
+}
+
+// GetByTag get article by tag.
+func GetByTag(c *server.Context) error {
+	var req struct {
+		Tag string `json:"tag"`
+	}
+	if err := c.JSONBody(&req); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	if err := c.Validate(&req); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	res, err := article.ArticleService.GetByTag(req.Tag)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
+	}
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, res)
 }
