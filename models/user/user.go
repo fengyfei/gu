@@ -61,69 +61,16 @@ var (
 	ErrAddPhone = errors.New("Mobile phone registration cannot add phone number.")
 )
 
-type (
-	PhoneRegister struct {
-		Phone    string `json:"phone" validate:"required,numeric,len=11"`
-		Password string `json:"password" validate:"required,min=6,max=30"`
-		UserName string `json:"username" validate:"required,alphaunicode,min=2,max=30"`
-	}
-
-	PhoneLogin struct {
-		Phone    string `json:"phone" validate:"required,numeric,len=11"`
-		Password string `json:"password" validate:"required,min=6,max=30"`
-	}
-
-	ChangePass struct {
-		OldPass string `json:"oldpass" validate:"required,min=6,max=30"`
-		NewPass string `json:"newpass" validate:"required,min=6,max=30"`
-	}
-
-	WechatLogin struct {
-		UnionID    string `json:"unionid"`
-		SessionKey string `json:"session_key"`
-	}
-
-	WechatCode struct {
-		UserName string `json:"username"`
-		Sex      uint8  `json:"sex"`
-		Phone    string `json:"phone" validate:"required,numeric,len=11"`
-		Code     string `json:"code" validate:"required"`
-	}
-
-	WechatData struct {
-		SessionKey string `json:"session_key"`
-		UnionID    string `json:"unionid"`
-	}
-
-	WechatPhone struct {
-		Phone string `json:"phone" validate:"required,numeric,len=11"`
-	}
-
-	UserData struct {
-		Token    string `json:"token"`
-		UserName string `json:"username"` // todo
-		Phone    string `json:"phone"`    // todo
-		Avatar   string `json:"avatar"`
-		Sex      uint8  `json:"sex"`
-	}
-
-	ChangeInfo struct {
-		UserName string `json:"username"`
-		Sex      uint8  `json:"sex"`
-		Avatar   string `json:"avatar"`
-	}
-)
-
 // User represents users information
 type User struct {
 	UserID    uint32    `gorm:"column:id;primary_key;auto_increment" json:"user_id"`
 	UserName  string    `gorm:"column:username;type:varchar(128)" json:"user_name"`
 	Avatar    string    `gorm:"column:avatar" json:"avatar"`
-	Sex       uint8     `gorm:"column:sex"`
-	Password  string    `gorm:"column:password;type:varchar(128)" json:"password""`
+	Sex       uint8     `gorm:"column:sex" json:"sex"` // 0 -> male, 1 -> female
+	Password  string    `gorm:"column:password;type:varchar(128)" json:"password"`
 	Phone     string    `gorm:"type:varchar(16)" json:"phone"`
-	Type      int       `gorm:"column:type"`
-	UnionID   string    `gorm:"column:unionid;type:varchar(128)"`
+	Type      int       `gorm:"column:type"` // 0 -> Wechat, 1 -> Mobile
+	UnionID   string    `gorm:"column:unionid;type:varchar(128)" json:"union_id"`
 	Created   time.Time `gorm:"column:created"`
 	LastLogin time.Time `gorm:"column:lastlogin"`
 	IsAdmin   bool      `gorm:"column:isadmin;not null;default:0"`
@@ -135,16 +82,17 @@ func (u User) TableName() string {
 	return "user"
 }
 
-// WeChatLogin
-func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, info *WechatLogin) (*User, error) { // todo
+// WeChatLogin login by wechat
+func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, UnionID string) (*User, error) {
 	var (
 		err  error
 		user User
 	)
 	db := conn.(*gorm.DB)
 
-	err = db.Where("unionID = ?", info.UnionID).First(&user).Error
+	err = db.Where("unionID = ?", UnionID).First(&user).Error
 	if err == nil {
+		lastLogin(conn, user.UserID)
 		return &user, nil
 	}
 
@@ -153,26 +101,26 @@ func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, info *WechatLo
 	}
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	s := fmt.Sprintf("%s%d", info.UnionID, r.Intn(10000))
+	s := fmt.Sprintf("%s%d", UnionID, r.Intn(10000))
 	salt, err := security.SaltHashGenerate(&s)
 	if err != nil {
 		return nil, err
 	}
-
+	time := time.Now()
 	user.Type = WeChat
 	user.Password = string(salt)
 	user.IsActive = true
 	user.IsAdmin = false
-	user.UnionID = info.UnionID
-	user.Created = time.Now()
-	user.LastLogin = time.Now()
+	user.UnionID = UnionID
+	user.Created = time
+	user.LastLogin = time
 
 	err = db.Model(&User{}).Create(&user).Error
 	if err != nil {
 		return nil, err
 	}
 
-	err = db.Where("unionID = ?", info.UnionID).First(&user).Error
+	err = db.Where("unionID = ?", UnionID).First(&user).Error
 	if err != nil {
 		return nil, err
 	}
@@ -180,8 +128,8 @@ func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, info *WechatLo
 	return &user, nil
 }
 
-// wechat add a phone number
-func (this *UserServiceProvider) AddPhone(conn orm.Connection, id uint32, phone *WechatPhone) error {
+// AddPhone wechat add a phone number
+func (this *UserServiceProvider) AddPhone(conn orm.Connection, id uint32, phone string) error {
 	var (
 		user User
 	)
@@ -191,15 +139,17 @@ func (this *UserServiceProvider) AddPhone(conn orm.Connection, id uint32, phone 
 	if err != nil {
 		return err
 	}
+
 	if user.Type == Mobile {
 		return ErrAddPhone
 	}
-	user.Phone = phone.Phone
+
+	user.Phone = phone
 	return db.Save(&user).Error
 }
 
-// Change user information
-func (this *UserServiceProvider) ChangeInfo(conn orm.Connection, id uint32, change *ChangeInfo) error {
+// ChangeInfo change user information
+func (this *UserServiceProvider) ChangeInfo(conn orm.Connection, id uint32, userName string, sex uint8) error { // todo
 	var (
 		user User
 	)
@@ -211,31 +161,35 @@ func (this *UserServiceProvider) ChangeInfo(conn orm.Connection, id uint32, chan
 		return err
 	}
 
-	if len(user.Avatar) > 0 { // todo
-		DeletePicture(user.Avatar)
-	}
-
-	user.UserName = change.UserName
-	user.Sex = change.Sex
-	user.Avatar = change.Avatar
+	user.UserName = userName
+	user.Sex = sex
 
 	return db.Save(&user).Error
 }
 
-// Register by phone
-func (this *UserServiceProvider) PhoneRegister(conn orm.Connection, register *PhoneRegister) error { // todo
-	salt, err := security.SaltHashGenerate(&register.Password)
+// ChangeAvatar change avatar
+func (this *UserServiceProvider) ChangeAvatar(conn orm.Connection, userID uint32, avatar string) error {
+	updater := make(map[string]interface{})
+	updater["avatar"] = avatar
+
+	db := conn.(*gorm.DB)
+	return db.Table("user").Where("id = ?", userID).Update(updater).Limit(1).Error
+}
+
+// PhoneRegister register by phone
+func (this *UserServiceProvider) PhoneRegister(conn orm.Connection, userName, phone, password string) error {
+	salt, err := security.SaltHashGenerate(&password)
 	if err != nil {
 		return err
 	}
 
 	user := User{
-		UserName:  register.UserName,
-		Phone:     register.Phone,
-		UnionID:   register.Phone, // todo
+		UserName:  userName,
+		Phone:     phone,
 		Password:  string(salt),
 		Type:      Mobile,
 		IsAdmin:   false,
+		Avatar:    "",
 		Created:   time.Now(),
 		LastLogin: time.Now(),
 	}
@@ -245,23 +199,22 @@ func (this *UserServiceProvider) PhoneRegister(conn orm.Connection, register *Ph
 	return db.Create(&user).Error
 }
 
-func (this *UserServiceProvider) PhoneLogin(conn orm.Connection, login *PhoneLogin) (*User, error) {
+// PhoneLogin login by phone
+func (this *UserServiceProvider) PhoneLogin(conn orm.Connection, phone, password string) (*User, error) {
 	var (
 		user User
 	)
-	var updater = make(map[string]interface{})
-	updater["lastlogin"] = time.Now()
 
 	db := conn.(*gorm.DB)
-	err := db.Where("phone = ?", login.Phone).First(&user).Error
+	err := db.Where("phone = ?", phone).First(&user).Error
 	if err != nil {
 		return nil, err
 	}
-	if !security.SaltHashCompare([]byte(user.Password), &login.Password) {
+	if !security.SaltHashCompare([]byte(user.Password), &password) {
 		return nil, ErrInvalidPass
 	}
 
-	err = db.Model(&user).Where("id = ?", user.UserID).Update(updater).Limit(1).Error
+	err = lastLogin(conn, user.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -269,7 +222,8 @@ func (this *UserServiceProvider) PhoneLogin(conn orm.Connection, login *PhoneLog
 	return &user, nil
 }
 
-func (this *UserServiceProvider) ChangePassword(conn orm.Connection, id uint32, change *ChangePass) (err error) {
+// ChangePassword change password
+func (this *UserServiceProvider) ChangePassword(conn orm.Connection, id uint32, oldPass, newPass string) (err error) {
 	var (
 		user User
 	)
@@ -288,19 +242,19 @@ func (this *UserServiceProvider) ChangePassword(conn orm.Connection, id uint32, 
 		return err
 	}
 
-	if !security.SaltHashCompare([]byte(user.Password), &change.OldPass) {
+	if !security.SaltHashCompare([]byte(user.Password), &oldPass) {
 		err = ErrInvalidPass
 		return err
 	}
 
-	salt, err := security.SaltHashGenerate(&change.NewPass)
+	salt, err := security.SaltHashGenerate(&newPass)
 	if err != nil {
 		return err
 	}
 
 	user.Password = string(salt)
 
-	err = tx.Save(&user).Error
+	err = tx.Save(&user).Limit(1).Error
 	return err
 }
 
@@ -314,4 +268,12 @@ func (this *UserServiceProvider) GetUserByID(conn orm.Connection, userID uint32)
 		return nil, err
 	}
 	return user, nil
+}
+
+func lastLogin(conn orm.Connection, id uint32) error {
+	updater := make(map[string]interface{})
+	updater["lastlogin"] = time.Now()
+
+	db := conn.(*gorm.DB)
+	return db.Table("user").Where("id = ?", id).Update(updater).Limit(1).Error
 }
