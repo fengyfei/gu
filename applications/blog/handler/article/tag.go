@@ -26,6 +26,7 @@
  * Revision History:
  *     Initial: 2017/10/27        Jia Chenhui
  *     Modify : 2018/02/02        Tong Yuehong
+ *     Modify : 2018/03/25        Chen Yanchen
  */
 
 package article
@@ -76,7 +77,7 @@ func ListTags(this *server.Context) error {
 
 // TagActiveList returns all active tags.
 func TagActiveList(this *server.Context) error {
-	tagList, err := tag.TagService.GetActiveList()
+	tagList, err := tag.TagService.GetActiveTags()
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)

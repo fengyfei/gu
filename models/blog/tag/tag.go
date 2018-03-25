@@ -26,15 +26,16 @@
  * Revision History:
  *     Initial: 2017/10/25        Jia Chenhui
  *     Modify : 2018/02/05        Tong Yuehong
+ *     Modify : 2018/03/25        Chen Yanchen
  */
 
 package tag
 
 import (
-	"github.com/astaxie/beego"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
+	"github.com/fengyfei/gu/applications/blog/conf"
 	"github.com/fengyfei/gu/libs/mongo"
 	"github.com/fengyfei/gu/models/blog"
 )
@@ -48,11 +49,9 @@ var (
 )
 
 func init() {
-	const (
-		cname = "tag"
-	)
+	const cname = "tag"
 
-	url := beego.AppConfig.String("mongo::url") + "/" + blog.Database
+	url := conf.Config.MongoURL + "/" + blog.Database
 
 	s, err := mgo.Dial(url)
 	if err != nil {
@@ -97,7 +96,7 @@ func (sp *tagServiceProvider) GetList() ([]Tag, error) {
 }
 
 // GetActiveList get all the active tags.
-func (sp *tagServiceProvider) GetActiveList() ([]Tag, error) {
+func (sp *tagServiceProvider) GetActiveTags() ([]Tag, error) {
 	var (
 		tags []Tag
 		err  error
@@ -128,7 +127,7 @@ func (sp *tagServiceProvider) GetByID(id *string) (Tag, error) {
 
 // Create create tag.
 func (sp *tagServiceProvider) Create(tag *string) (string, error) {
-	tagInfo := Tag{
+	tagInfo := &Tag{
 		Tag:    *tag,
 		Active: true,
 	}
@@ -136,11 +135,11 @@ func (sp *tagServiceProvider) Create(tag *string) (string, error) {
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	err := conn.Insert(&tagInfo)
+	err := conn.Insert(tagInfo)
 	if err != nil {
 		return "", err
 	}
-
+	conn.GetUniqueOne(bson.M{"Tag": tag}, tagInfo)
 	return tagInfo.TagID.Hex(), nil
 }
 
@@ -162,10 +161,8 @@ func (sp *tagServiceProvider) Modify(id, tag *string, active *bool) error {
 }
 
 // GetID return tag's id.
-func (sp *tagServiceProvider) GetID(tag string) (bson.ObjectId, error) {
-	var (
-		tagInfo Tag
-	)
+func (sp *tagServiceProvider) GetID(tag []string) (bson.ObjectId, error) {
+	var tagInfo Tag
 
 	conn := session.Connect()
 	defer conn.Disconnect()
