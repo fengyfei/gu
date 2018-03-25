@@ -90,7 +90,7 @@ func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, UnionID string
 	)
 	db := conn.(*gorm.DB)
 
-	err = db.Where("unionID = ?", UnionID).First(&user).Error
+	err = db.Where("unionID = ?", "1234").First(&user).Error
 	if err == nil {
 		lastLogin(conn, user.UserID)
 		return &user, nil
@@ -107,11 +107,13 @@ func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, UnionID string
 		return nil, err
 	}
 	time := time.Now()
+	user.UserName = "name"
 	user.Type = WeChat
 	user.Password = string(salt)
 	user.IsActive = true
 	user.IsAdmin = false
-	user.UnionID = UnionID
+	user.UnionID = "1234"
+	user.Avatar = ""
 	user.Created = time
 	user.LastLogin = time
 
@@ -120,7 +122,7 @@ func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, UnionID string
 		return nil, err
 	}
 
-	err = db.Where("unionID = ?", UnionID).First(&user).Error
+	err = db.Where("unionID = ?", "1234").First(&user).Error
 	if err != nil {
 		return nil, err
 	}
