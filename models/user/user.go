@@ -83,7 +83,7 @@ func (u User) TableName() string {
 }
 
 // WeChatLogin login by wechat
-func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, UnionID, name string) (*User, error) {
+func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, UnionID, name, avatar string) (*User, error) {
 	var (
 		err  error
 		user User
@@ -113,7 +113,7 @@ func (this *UserServiceProvider) WeChatLogin(conn orm.Connection, UnionID, name 
 	user.IsActive = true
 	user.IsAdmin = false
 	user.UnionID = UnionID
-	user.Avatar = ""
+	user.Avatar = avatar
 	user.Created = time
 	user.LastLogin = time
 
