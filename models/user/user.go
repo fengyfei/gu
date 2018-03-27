@@ -192,6 +192,7 @@ func (this *UserServiceProvider) PhoneRegister(conn orm.Connection, userName, ph
 		Type:      Mobile,
 		IsAdmin:   false,
 		Avatar:    "",
+		UnionID:   phone,
 		Created:   time.Now(),
 		LastLogin: time.Now(),
 	}
