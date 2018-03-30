@@ -176,3 +176,8 @@ func (sp *tagServiceProvider) GetID(tag []string) (bson.ObjectId, error) {
 
 	return tagInfo.TagID, nil
 }
+
+// Exist check if the Tag exists.
+func (sp *tagServiceProvider) Exist(tag Tag)  {
+
+}
