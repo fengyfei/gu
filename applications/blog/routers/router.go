@@ -35,6 +35,7 @@ import (
 	"github.com/fengyfei/gu/applications/blog/handler/article"
 	"github.com/fengyfei/gu/applications/blog/handler/staff"
 	"github.com/fengyfei/gu/libs/http/server"
+	"github.com/fengyfei/gu/applications/blog/handler/project"
 )
 
 var (
@@ -69,4 +70,10 @@ func InitRouter(u *server.Router) {
 	u.Post("/blog/article/getbyid", article.ArticleByID)
 	u.Post("/blog/article/getbytag", article.GetByTag)
 
+	u.Post("/blog/project/create", project.Create)
+	u.Post("/blog/project/delete", project.Delete)
+	u.Post("/blog/project/modify", project.Modify)
+	u.Post("/blog/project/getid", project.GetID)
+	u.Post("/blog/project/getbyid", project.GetByID)
+	u.Get("/blog/project/list", project.AbstractList)
 }
