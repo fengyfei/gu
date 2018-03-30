@@ -70,23 +70,23 @@ func init() {
 	})
 
 	session = mongo.NewConnection(s, blog.Database, cname)
-	// ArticleService = &articleServiceProvider{}
 }
 
 type (
 	// Article represents the article information.
 	Article struct {
-		ID        bson.ObjectId `bson:"_id,omitempty" json:"id" validate:"required"`
-		AuthorID  int32         `bson:"AuthorID"      json:"authorID"`
-		AuditorID int32         `bson:"AuditorID"     json:"auditorID"`
-		Title     string        `bson:"Title"         json:"title"`
-		Abstract  string        `bson:"Abstract"      json:"abstract"`
-		Content   string        `bson:"Content"       json:"content"`
-		Tags      []string      `bson:"Tag"           json:"tag"`
-		View      uint32        `bson:"view"          json:"view"`
-		CreatedAt time.Time     `bson:"CreatedAt"     json:"created_at"`
-		UpdatedAt time.Time     `bson:"UpdatedAt"     json:"updated_at"`
-		Status    int8          `bson:"status"        json:"status"`
+		ID        bson.ObjectId `bson:"_id,omitempty"`
+		AuthorID  int32         `bson:"AuthorID"`
+		AuditorID int32         `bson:"AuditorID"`
+		Title     string        `bson:"Title"`
+		Abstract  string        `bson:"Abstract"`
+		Content   string        `bson:"Content"`
+		Image     string        `bson:"Image"`
+		Tags      []string      `bson:"Tags"`
+		View      uint32        `bson:"view"`
+		CreatedAt time.Time     `bson:"CreatedAt"`
+		UpdatedAt time.Time     `bson:"UpdatedAt"`
+		Status    int8          `bson:"status"`
 	}
 	// Art is Article response struct.
 	Art struct {
@@ -131,21 +131,19 @@ func (sp *articleServiceProvider) ListApproval(page int) ([]Art, error) {
 }
 
 // ListCreated return articles which are waiting for checking.
-func (sp *articleServiceProvider) ListCreated() ([]Article, error) {
-	var (
-		articles []Article
-	)
+func (sp *articleServiceProvider) ListCreated() ([]Art, error) {
+	var art []Art
 
 	conn := session.Connect()
 	defer conn.Disconnect()
 
 	query := bson.M{"status": blog.Created}
-	err := conn.GetMany(query, &articles)
+	err := conn.GetMany(query, &art)
 	if err != nil {
 		return nil, err
 	}
 
-	return articles, nil
+	return art, nil
 }
 
 // ModifyStatus modify the  article status.
@@ -247,7 +245,7 @@ func (s *articleServiceProvider) GetByTag(tag string) ([]Art, error) {
 	defer conn.Disconnect()
 
 	var art []Art
-	q := bson.M{"Tag": tag, "status": blog.Approval}
+	q := bson.M{"Tags": tag, "status": blog.Approval}
 	err := conn.GetMany(q, &art)
 	if err != nil {
 		return nil, err

@@ -47,6 +47,7 @@ type art struct {
 	Content  string   `json:"content"`
 	Abstract string   `json:"abstract"`
 	Tags     []string `json:"tags"`
+	Image    string   `json:"image"`
 }
 
 // CreateArticle - insert article.
@@ -58,14 +59,20 @@ func CreateArticle(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
+	if err := this.Validate(&req); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
 	AuthorID := int32(this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64))
 
 	a := &article.Article{
 		AuthorID: AuthorID,
 		Title:    req.Title,
-		Content:  req.Content,
 		Abstract: req.Abstract,
+		Content:  req.Content,
 		Tags:     req.Tags,
+		Image:    req.Image,
 	}
 
 	id, err := article.ArticleService.Create(a)
@@ -80,7 +87,7 @@ func CreateArticle(this *server.Context) error {
 // ArticleByID return article by articleID.
 func ArticleByID(this *server.Context) error {
 	var req struct {
-		ID string `json:"id" validate:"required,alphanum,len=24"`
+		ID string `json:"aid" validate:"required,alphanum,len=24"`
 	}
 
 	if err := this.JSONBody(&req); err != nil {
@@ -136,19 +143,18 @@ func ListApproval(this *server.Context) error {
 // ModifyStatus modify the article status.
 func ModifyStatus(this *server.Context) error {
 	var req struct {
-			ArticleID string `json:"articleID"`
-			StaffID   int32  `json:"staffID"`
-			Status    int8   `json:"status"`
-		}
+		ArticleID string `json:"aid"`
+		Status    int8   `json:"status"`
+	}
 
 	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	req.StaffID = int32(this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64))
+	StaffID := int32(this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64))
 
-	err := article.ArticleService.ModifyStatus(req.ArticleID, req.Status, req.StaffID)
+	err := article.ArticleService.ModifyStatus(req.ArticleID, req.Status, StaffID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -160,8 +166,7 @@ func ModifyStatus(this *server.Context) error {
 // Delete delete article.
 func Delete(this *server.Context) error {
 	var req struct {
-		ArticleID string `json:"articleID"`
-		StaffID   int32  `json:"staffID"`
+		ArticleID string `json:"aid"`
 	}
 
 	if err := this.JSONBody(&req); err != nil {
@@ -174,9 +179,9 @@ func Delete(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	req.StaffID = int32(this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64))
+	StaffID := int32(this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64))
 
-	err := article.ArticleService.Delete(req.ArticleID, req.StaffID)
+	err := article.ArticleService.Delete(req.ArticleID, StaffID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -188,7 +193,7 @@ func Delete(this *server.Context) error {
 // UpdateView update article's view.
 func UpdateView(this *server.Context) error {
 	var view struct {
-		ArticleID string `json:"articleID"`
+		ArticleID string `json:"aid"`
 		View      uint32 `json:"view"`
 	}
 
@@ -209,11 +214,12 @@ func UpdateView(this *server.Context) error {
 // ModifyArticle modify article.
 func ModifyArticle(this *server.Context) error {
 	var req struct {
-		ArticleID string   `json:"articleID"`
+		ArticleID string   `json:"aid"`
 		Title     string   `json:"title"`
 		Abstract  string   `json:"abstract"`
 		Content   string   `json:"content"`
 		Tags      []string `json:"tags"`
+		Image     string   `json:"image"`
 	}
 
 	if err := this.JSONBody(&req); err != nil {
@@ -229,6 +235,7 @@ func ModifyArticle(this *server.Context) error {
 		Content:   req.Content,
 		Abstract:  req.Abstract,
 		Tags:      req.Tags,
+		Image:     req.Image,
 	}
 
 	err := article.ArticleService.ModifyArticle(req.ArticleID, *a)
