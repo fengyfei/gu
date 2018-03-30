@@ -24,8 +24,7 @@
 
 /*
  * Revision History:
- *     Initial: 2018/02/02        Shi Ruitao
- *     Modify : 2018/03/06        Tong Yuehong
+ *     Initial: 2018/03/27        Shi Ruitao
  */
 
 package address
@@ -53,29 +52,13 @@ var (
 type (
 	// Address represents the address of users.
 	Address struct {
-		ID        uint32    `gorm:"column:id;primary_key;auto_increment"`
+		ID        uint32    `gorm:"column:id;primary_key;auto_increment" json:"id"`
 		UserID    uint32    `gorm:"column:userid;not null"`
-		Name      string    `gorm:"column:name;not null"`
-		Phone     string    `gorm:"column:phone;not null"`
-		Address   string    `gorm:"column:address;type:varchar(128)"`
-		IsDefault bool      `gorm:"column:isdefault;not null;default:false"`
+		UserName  string    `gorm:"column:name;not null" json:"user_name"`
+		Phone     string    `gorm:"column:phone;not null" json:"phone"`
+		Address   string    `gorm:"column:address;type:varchar(128)" json:"address"`
+		IsDefault bool      `gorm:"column:isdefault;not null;default:false" json:"is_default"`
 		Created   time.Time `gorm:"column:created"`
-	}
-
-	// AddressData represents the information about address.
-	AddressData struct {
-		Name      string `json:"name"      validate:"required,alphaunicode,min=2,max=30"`
-		Phone     string `json:"phone"     validate:"required,Mobile"`
-		Address   string `json:"address"   validate:"required,max=128"`
-		IsDefault bool   `json:"isdefault"`
-	}
-
-	// Modify represents the information when modifying address.
-	Modify struct {
-		ID      uint32 `json:"id"`
-		Name    string `json:"name"    validate:"required"`
-		Phone   string `json:"phone"   validate:"required,Mobile"`
-		Address string `json:"address" validate:"required,max=128"`
 	}
 )
 
@@ -85,15 +68,14 @@ func (Address) TableName() string {
 }
 
 // Add adds address.
-func (this *serviceProvider) Add(conn orm.Connection, userID uint32, add *AddressData) error {
+func (this *serviceProvider) Add(conn orm.Connection, userID uint32, add *Address) (err error) {
 	var (
 		address Address
-		err     error
 	)
 
 	addr := &Address{
 		UserID:    userID,
-		Name:      add.Name,
+		UserName:  add.UserName,
 		Phone:     add.Phone,
 		Address:   add.Address,
 		IsDefault: add.IsDefault,
@@ -130,13 +112,7 @@ func (this *serviceProvider) Add(conn orm.Connection, userID uint32, add *Addres
 }
 
 // SetDefault sets default address.
-func (this *serviceProvider) SetDefault(conn orm.Connection, userID uint32, id uint32) error {
-	var (
-		err     error
-		add     Address
-		address Address
-	)
-
+func (this *serviceProvider) SetDefault(conn orm.Connection, userID uint32, id uint32) (err error) {
 	tx := conn.(*gorm.DB).Begin().Exec("USE shop")
 	defer func() {
 		if err != nil {
@@ -146,35 +122,18 @@ func (this *serviceProvider) SetDefault(conn orm.Connection, userID uint32, id u
 		}
 	}()
 
-	err = tx.Where("userid = ? AND isdefault = ?", userID, true).First(&add).Error
+	err = tx.Model(&Address{}).Where("userid = ? AND isdefault = ?", userID, true).Update("isdefault", NotDefaultAddress).Limit(1).Error
 	if err != nil {
 		return err
 	}
 
-	add.IsDefault = false
-	err = tx.Save(&add).Error
-	if err != nil {
-		return err
-	}
-
-	err = tx.Table("address").Where("id = ?", id).First(&address).Error
-	if err != nil {
-		return err
-	}
-
-	address.IsDefault = true
-	return tx.Save(&address).Error
+	return tx.Model(&Address{}).Where("id = ? AND userid = ?", id, userID).Update("isdefault", DefaultAddress).Limit(1).Error
 }
 
 // Modify modify the address.
-func (this *serviceProvider) Modify(conn orm.Connection, modify *Modify) error {
+func (this *serviceProvider) Modify(conn orm.Connection, userID uint32, add *Address) error {
 	db := conn.(*gorm.DB)
-
-	return db.Table("address").Where("id = ?", modify.ID).Update(map[string]interface{}{
-		"name":    modify.Name,
-		"phone":   modify.Phone,
-		"address": modify.Address,
-	}).Error
+	return db.Model(&Address{}).Where("id = ? && userid = ?", add.ID, userID).Updates(map[string]interface{}{"name": add.UserName, "phone": add.Phone, "address": add.Address, "isdefault": add.IsDefault}).Limit(1).Error
 }
 
 // Get gets address by userid.
@@ -194,5 +153,5 @@ func (this *serviceProvider) Get(conn orm.Connection, userID uint32) (*[]Address
 func (this *serviceProvider) Delete(conn orm.Connection, id uint32) error {
 	db := conn.(*gorm.DB)
 
-	return db.Table("address").Where("id = ?", id).Delete(&Address{}).Error
+	return db.Table("address").Where("id = ?", id).Delete(&Address{}).Limit(1).Error
 }

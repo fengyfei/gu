@@ -31,7 +31,6 @@
 package handler
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -53,11 +52,29 @@ const (
 	SECRET    = ""
 )
 
-// Login by wechat
+// WechatLogin login by wechat
 func WechatLogin(c *server.Context) error {
 	var (
-		wechatCode user.WechatCode
-		wechatData user.WechatData
+		wechatCode struct {
+			UserName string `json:"user_name"`
+			Avatar   string `json:"avatar"`
+			Sex      uint8  `json:"sex"`
+			Phone    string `json:"phone" validate:"required,numeric,len=11"`
+			Code     string `json:"code" validate:"required"`
+		}
+
+		wechatData struct {
+			SessionKey string `json:"session_key"`
+			UnionID    string `json:"unionid"`
+		}
+
+		userData struct {
+			Token    string `json:"token"`
+			UserName string `json:"user_name"`
+			Phone    string `json:"phone"`
+			Avatar   string `json:"avatar"`
+			Sex      uint8  `json:"sex"`
+		}
 	)
 
 	err := c.JSONBody(&wechatCode)
@@ -90,10 +107,6 @@ func WechatLogin(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrWechatAuth, nil)
 	}
 
-	wechatLogin := user.WechatLogin{
-		UnionID: wechatData.UnionID,
-	}
-
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
@@ -101,7 +114,7 @@ func WechatLogin(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	u, err := user.UserServer.WeChatLogin(conn, &wechatLogin)
+	u, err := user.UserService.WeChatLogin(conn, wechatData.UnionID, wechatCode.UserName, wechatCode.Avatar)
 	if err != nil {
 		logger.Error("Error in Wechat Login:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -113,35 +126,36 @@ func WechatLogin(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	userData := user.UserData{
-		Token:    token,
-		UserName: u.UserName,
-		Sex:      u.Sex,
-		Avatar:   u.Avatar,
-	}
+	userData.Token = token
+	userData.UserName = u.UserName
+	userData.Phone = u.Phone
+	userData.Sex = u.Sex
+	userData.Avatar = u.Avatar
 
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, &userData)
 }
 
-// Wechat add a phone number
+// AddPhone wechat add a phone number
 func AddPhone(c *server.Context) error {
 	var (
-		phone user.WechatPhone
+		wechatPhone struct {
+			Phone string `json:"phone" validate:"required,numeric,len=11"`
+		}
 	)
 
-	err := c.JSONBody(&phone)
+	err := c.JSONBody(&wechatPhone)
 	if err != nil {
 		logger.Error("Error in JSONBody:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	err = c.Validate(&phone)
+	err = c.Validate(&wechatPhone)
 	if err != nil {
 		logger.Error("Invalid parameters:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	if !util.IsValidPhone(phone.Phone) {
+	if !util.IsValidPhone(wechatPhone.Phone) {
 		logger.Error("Invalid phone number")
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
@@ -155,7 +169,7 @@ func AddPhone(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = user.UserServer.AddPhone(conn, userID, &phone)
+	err = user.UserService.AddPhone(conn, userID, wechatPhone.Phone)
 	if err != nil {
 		logger.Error("Error in adding a phone number:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
@@ -164,10 +178,14 @@ func AddPhone(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
-// Change information
+// ChangeInfo change information
 func ChangeInfo(c *server.Context) error {
 	var (
-		change user.ChangeInfo
+		change struct {
+			UserName string `json:"user_name" validate:"required,alphaunicode,min=2,max=30"`
+			Sex      uint8  `json:"sex"`
+			Avatar   string `json:"avatar"`
+		}
 	)
 
 	err := c.JSONBody(&change)
@@ -192,29 +210,32 @@ func ChangeInfo(c *server.Context) error {
 	}
 
 	if len(change.Avatar) > 0 {
-		change.Avatar, err = user.SavePicture(change.Avatar, "avatar/")
+		change.Avatar, err = user.SavePicture(change.Avatar, "avatar/", userID)
 		if err != nil {
 			logger.Error(err)
 			return core.WriteStatusAndDataJSON(c, constants.ErrInternalServerError, nil)
 		}
+		err = user.UserService.ChangeAvatar(conn, userID, change.Avatar)
 	}
 
-	err = user.UserServer.ChangeInfo(conn, userID, &change)
+	err = user.UserService.ChangeInfo(conn, userID, change.UserName, change.Sex)
+
 	if err != nil {
 		logger.Error("Error in changing informantion:", err)
-		if len(change.Avatar) > 0 && !user.DeletePicture(change.Avatar) {
-			logger.Error(errors.New("create ware failed and delete it's pictures go wrong, please delete picture manually"))
-		}
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
-// Register by phone
+// PhoneRegister register by phone
 func PhoneRegister(c *server.Context) error {
 	var (
-		register user.PhoneRegister
+		register struct {
+			Phone    string `json:"phone" validate:"required,numeric,len=11"`
+			Password string `json:"password" validate:"required,min=6,max=30"`
+			UserName string `json:"user_name" validate:"required,alphaunicode,min=2,max=30"`
+		}
 	)
 
 	err := c.JSONBody(&register)
@@ -241,7 +262,7 @@ func PhoneRegister(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = user.UserServer.PhoneRegister(conn, &register)
+	err = user.UserService.PhoneRegister(conn, register.UserName, register.Phone, register.Password)
 	if err != nil {
 		logger.Error("Error in registering by phone:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -250,10 +271,20 @@ func PhoneRegister(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
-// Login by phone
+// PhoneLogin login by phone
 func PhoneLogin(c *server.Context) error {
 	var (
-		login user.PhoneLogin
+		login struct {
+			Phone    string `json:"phone" validate:"required,numeric,len=11"`
+			Password string `json:"password" validate:"required,min=6,max=30"`
+		}
+		userData struct {
+			Token    string `json:"token"`
+			UserName string `json:"user_name"`
+			Phone    string `json:"phone"`
+			Avatar   string `json:"avatar"`
+			Sex      uint8  `json:"sex"`
+		}
 	)
 
 	err := c.JSONBody(&login)
@@ -275,7 +306,7 @@ func PhoneLogin(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	u, err := user.UserServer.PhoneLogin(conn, &login)
+	u, err := user.UserService.PhoneLogin(conn, login.Phone, login.Password)
 	if err != nil {
 		logger.Error("Error in Phone Login:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrAccount, nil)
@@ -287,20 +318,22 @@ func PhoneLogin(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	userData := user.UserData{
-		Token:    token,
-		UserName: u.UserName,
-		Phone:    u.Phone,
-		Sex:      u.Sex,
-		Avatar:   u.Avatar,
-	}
+	userData.Token = token
+	userData.UserName = u.UserName
+	userData.Phone = u.Phone
+	userData.Sex = u.Sex
+	userData.Avatar = u.Avatar
+
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, &userData)
 }
 
-// Change password
+// ChangePassword change password
 func ChangePassword(c *server.Context) error {
 	var (
-		change user.ChangePass
+		change struct {
+			OldPass string `json:"old_pass" validate:"required,min=6,max=30"`
+			NewPass string `json:"new_pass" validate:"required,min=6,max=30"`
+		}
 	)
 
 	err := c.JSONBody(&change)
@@ -324,7 +357,7 @@ func ChangePassword(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = user.UserServer.ChangePassword(conn, userID, &change)
+	err = user.UserService.ChangePassword(conn, userID, change.OldPass, change.NewPass)
 	if err != nil {
 		logger.Error("Error in changing password:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)

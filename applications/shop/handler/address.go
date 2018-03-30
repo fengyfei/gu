@@ -24,7 +24,7 @@
 
 /*
  * Revision History:
- *     Initial : 2018/03/06        Tong Yuehong
+ *     Initial : 2018/03/06        Shi Ruitao
  */
 
 package handler
@@ -41,16 +41,10 @@ import (
 	models "github.com/fengyfei/gu/models/shop/address"
 )
 
-type (
-	id struct {
-		ID uint32 `json:"id"`
-	}
-)
-
-// Add adds address.
+// AddAddress adds address.
 func AddAddress(c *server.Context) error {
 	var (
-		add models.AddressData
+		add models.Address
 	)
 
 	err := c.JSONBody(&add)
@@ -83,10 +77,12 @@ func AddAddress(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
-// SetDefault sets default address.
+// SetDefaultAddress sets default address.
 func SetDefaultAddress(c *server.Context) error {
 	var (
-		id id
+		id struct {
+			ID uint32 `json:"id"`
+		}
 	)
 
 	err := c.JSONBody(&id)
@@ -102,7 +98,7 @@ func SetDefaultAddress(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	userID := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(uint32)
+	userID := uint32(c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(float64))
 
 	err = models.Service.SetDefault(conn, userID, id.ID)
 	if err != nil {
@@ -113,10 +109,10 @@ func SetDefaultAddress(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
-// Modify modify the address.
+// ModifyAddress modify the address.
 func ModifyAddress(c *server.Context) error {
 	var (
-		modify models.Modify
+		modify models.Address
 	)
 
 	err := c.JSONBody(&modify)
@@ -138,7 +134,9 @@ func ModifyAddress(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = models.Service.Modify(conn, &modify)
+	userID := uint32(c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(float64))
+
+	err = models.Service.Modify(conn, userID, &modify)
 	if err != nil {
 		logger.Error("Error in modifying the address:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -147,7 +145,7 @@ func ModifyAddress(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
-// Get gets address by userid.
+// GetAddress gets address by userid.
 func GetAddress(c *server.Context) error {
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
@@ -156,7 +154,7 @@ func GetAddress(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	userID := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(uint32)
+	userID := uint32(c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(float64))
 
 	addr, err := models.Service.Get(conn, userID)
 	if err != nil {
@@ -166,10 +164,12 @@ func GetAddress(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, addr)
 }
 
-// Delete deletes address by id.
+// DeleteAddress deletes address by id.
 func DeleteAddress(c *server.Context) error {
 	var (
-		id id
+		id struct {
+			ID uint32 `json:"id"`
+		}
 	)
 
 	err := c.JSONBody(&id)
