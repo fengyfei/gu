@@ -64,7 +64,6 @@ func SavePicture(base64Str string, pathPrefix string, id uint32) (string, error)
 	}
 
 	slice := strings.Split(base64Str, ",")
-	suffix := string([]byte(slice[0])[11 : len(slice[0])-7]) // picture format suffix
 
 	byteData, err := base64.StdEncoding.DecodeString(slice[1])
 	if err != nil {
@@ -73,7 +72,7 @@ func SavePicture(base64Str string, pathPrefix string, id uint32) (string, error)
 		return "", err
 	}
 
-	fileName := strconv.FormatInt(int64(id), 10) + "." + suffix
+	fileName := strconv.FormatInt(int64(id), 10) + "." + "jpg"
 	path := picturePath + pathPrefix
 	err = checkDir(path)
 	if err != nil {
