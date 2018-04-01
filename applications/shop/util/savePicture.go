@@ -72,7 +72,7 @@ func SavePicture(base64Str string, pathPrefix string) (string, error) {
 	}
 
 	slice := strings.Split(base64Str, ",")
-	suffix := string([]byte(slice[0])[11 : len(slice[0])-7]) // picture format suffix
+	//suffix := string([]byte(slice[0])[11 : len(slice[0])-7]) // picture format suffix
 
 	byteData, err := base64.StdEncoding.DecodeString(slice[1])
 	if err != nil {
@@ -82,7 +82,7 @@ func SavePicture(base64Str string, pathPrefix string) (string, error) {
 	}
 
 	path := picturePath + pathPrefix
-	fileName := getNameByTime(path, suffix)
+	fileName := getNameByTime(path, "jpg")
 
 	err = checkDir(path)
 	if err != nil {
@@ -97,6 +97,32 @@ func SavePicture(base64Str string, pathPrefix string) (string, error) {
 	}
 
 	return path + fileName, err
+}
+
+func UpdatePic(base64Str string, path string) error {
+	slice := strings.Split(base64Str, ",")
+
+	byteData, err := base64.StdEncoding.DecodeString(slice[1])
+	if err != nil {
+		logger.Error(err)
+
+		return err
+	}
+
+	err = checkDir(path)
+	if err != nil {
+		logger.Error(err)
+
+		return err
+	}
+
+	err = ioutil.WriteFile(path, byteData, 0777)
+	if err != nil {
+		logger.Error(err)
+	}
+
+	return err
+
 }
 
 func DeletePicture(path string) bool { // true -> delete success; false -> delete failed

@@ -44,27 +44,7 @@ import (
 	"github.com/fengyfei/gu/models/shop/ware"
 )
 
-type (
-	categoryReq struct {
-		ParentCID uint32 `json:"parent_cid" validate:"required"`
-		CID       uint32 `json:"cid"`
-	}
-
-	homeReq struct {
-		LastID uint32 `json:"last_id"`
-	}
-
-	detailReq struct {
-		ID uint32 `json:"id" validate:"required"`
-	}
-
-	changeStatusReq struct {
-		IDs    []uint32 `json:"i_ds" validate:"required,min=1"`
-		Status int8     `json:"status" validate:"required,eq=-1|eq=1|eq=2|eq=3"`
-	}
-)
-
-// add new ware
+// CreateWare add new ware
 func CreateWare(c *server.Context) error {
 	var (
 		err    error
@@ -134,7 +114,7 @@ func CreateWare(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
-// get all wares
+// GetAllWare get all wares
 func GetAllWare(c *server.Context) error {
 	var (
 		err error
@@ -157,15 +137,17 @@ func GetAllWare(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, res)
 }
 
-// get ware by categoryID
+// GetWareByCategory get ware by categoryID
 func GetWareByCategory(c *server.Context) error {
 	var (
-		err    error
-		cidReq categoryReq
 		res    []ware.BriefInfo
+		cidReq struct {
+			ParentCID uint32 `json:"parent_cid" validate:"required"`
+			CID       uint32 `json:"cid"`
+		}
 	)
 
-	err = c.JSONBody(&cidReq)
+	err := c.JSONBody(&cidReq)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
@@ -201,7 +183,7 @@ func GetWareByCategory(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, res)
 }
 
-// get new wares
+// GetNewWares get new wares
 func GetNewWares(c *server.Context) error {
 	var (
 		err error
@@ -224,7 +206,7 @@ func GetNewWares(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, res)
 }
 
-// get promotion wares
+// GetPromotion get promotion wares
 func GetPromotion(c *server.Context) error {
 	var (
 		err error
@@ -247,11 +229,23 @@ func GetPromotion(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, res)
 }
 
-// update ware info
+// UpdateWithID update ware info
 func UpdateWithID(c *server.Context) error {
 	var (
 		err error
-		req ware.UpdateReq
+		w   *ware.Ware
+		req struct {
+			ID               uint32 `json:"id" validate:"required"`
+			Name             string `json:"name"`
+			Desc             string `json:"desc" validate:"max=50"`
+			ParentCategoryID uint32 `json:"parent_category_id"`
+			CategoryID       uint32 `json:"category_id"`
+			TotalSale        uint32 `json:"total_sale"`
+			Avatar           string `json:"avatar"`
+			Image            string `json:"image"`
+			DetailPic        string `json:"detail_pic"`
+			Inventory        uint32 `json:"inventory"`
+		}
 	)
 
 	isAdmin := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.IsAdmin].(bool)
@@ -272,28 +266,6 @@ func UpdateWithID(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	if len(req.Avatar) > 0 {
-		req.Avatar, err = util.SavePicture(req.Avatar, "ware/")
-		if err != nil {
-			logger.Error(err)
-			return core.WriteStatusAndDataJSON(c, constants.ErrInternalServerError, nil)
-		}
-	}
-	if len(req.Image) > 0 {
-		req.Image, err = util.SavePicture(req.Image, "ware/")
-		if err != nil {
-			logger.Error(err)
-			return core.WriteStatusAndDataJSON(c, constants.ErrInternalServerError, nil)
-		}
-	}
-	if len(req.DetailPic) > 0 {
-		req.DetailPic, err = util.SavePicture(req.DetailPic, "wareIntro/")
-		if err != nil {
-			logger.Error(err)
-			return core.WriteStatusAndDataJSON(c, constants.ErrInternalServerError, nil)
-		}
-	}
-
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
@@ -301,18 +273,47 @@ func UpdateWithID(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = ware.Service.UpdateWare(conn, &req)
+	w, err = ware.Service.GetByID(conn, req.ID)
 	if err != nil {
 		logger.Error(err)
-		if (len(req.Avatar) > 0 && !util.DeletePicture(req.Avatar)) ||
-			(len(req.Image) > 0 && !util.DeletePicture(req.Image)) ||
-			(len(req.DetailPic) > 0 && !util.DeletePicture(req.DetailPic)) {
-			logger.Error(errors.New("update ware failed and delete it's pictures go wrong, please delete picture manually"))
-		}
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	logger.Info("update ware info of id:", req.ID)
+	if len(req.Avatar) > 0 {
+		err = util.UpdatePic(req.Avatar, w.Avatar)
+		if err != nil {
+			logger.Error(err)
+			return core.WriteStatusAndDataJSON(c, constants.ErrInternalServerError, nil)
+		}
+	}
+	if len(req.Image) > 0 {
+		err = util.UpdatePic(req.Image, w.Image)
+		if err != nil {
+			logger.Error(err)
+			return core.WriteStatusAndDataJSON(c, constants.ErrInternalServerError, nil)
+		}
+	}
+	if len(req.DetailPic) > 0 {
+		err = util.UpdatePic(req.DetailPic, w.DetailPic)
+		if err != nil {
+			logger.Error(err)
+			return core.WriteStatusAndDataJSON(c, constants.ErrInternalServerError, nil)
+		}
+	}
+
+	w.Name = req.Name
+	w.CategoryID = req.CategoryID
+	w.Desc = req.Desc
+	w.ParentCategoryID = req.ParentCategoryID
+	w.TotalSale = req.TotalSale
+	w.Inventory = req.Inventory
+
+	err = ware.Service.UpdateWare(conn, w)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
@@ -320,7 +321,11 @@ func UpdateWithID(c *server.Context) error {
 func ModifyPrice(c *server.Context) error {
 	var (
 		err error
-		req ware.ModifyPriceReq
+		req struct {
+			ID        uint32  `json:"id" validate:"required"`
+			Price     float32 `json:"price"`
+			SalePrice float32 `json:"sale_price"`
+		}
 	)
 
 	isAdmin := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.IsAdmin].(bool)
@@ -348,7 +353,7 @@ func ModifyPrice(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = ware.Service.ModifyPrice(conn, &req)
+	err = ware.Service.ModifyPrice(conn, req.ID, req.Price, req.SalePrice)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -362,8 +367,10 @@ func ModifyPrice(c *server.Context) error {
 func HomePageList(c *server.Context) error {
 	var (
 		err   error
-		idReq homeReq
 		res   []ware.BriefInfo
+		idReq struct {
+			LastID uint32 `json:"last_id"`
+		}
 	)
 
 	err = c.JSONBody(&idReq)
@@ -420,8 +427,10 @@ func RecommendList(c *server.Context) error {
 func GetDetail(c *server.Context) error {
 	var (
 		err error
-		req detailReq
 		res *ware.Ware
+		req struct {
+			ID uint32 `json:"id" validate:"required"`
+		}
 	)
 
 	err = c.JSONBody(&req)
@@ -456,7 +465,10 @@ func GetDetail(c *server.Context) error {
 func ChangeStatus(c *server.Context) error {
 	var (
 		err       error
-		changeReq changeStatusReq
+		changeReq struct {
+			IDs    []uint32 `json:"ids" validate:"required,min=1"`
+			Status int8     `json:"status" validate:"required,eq=-1|eq=1|eq=2|eq=3"`
+		}
 	)
 
 	isAdmin := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.IsAdmin].(bool)
