@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd..
+ * Copyright (c) 2018 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the 'Software'), to deal
@@ -24,7 +24,7 @@
 
 /*
  * Revision History:
- *     Initial: 2018/03/07      Tong Yuehong
+ *     Initial: 2018/03/28      Shi Ruitao
  */
 
 package collection
@@ -46,10 +46,10 @@ var (
 
 // Collection represents the wares which user collects.
 type Collection struct {
-	ID      int32  `gorm:"primary_key;auto_increment" json:"id"`
-	UserId  uint32 `json:"user_id"`
-	WareId  uint32 `json:"ware_id"`
-	Created *time.Time
+	ID      uint32     `gorm:"column:id;primary_key;auto_increment" json:"id"`
+	UserId  uint32     `gorm:"column:userid" json:"user_id"`
+	WareId  uint32     `gorm:"column:wareid" json:"ware_id"`
+	Created *time.Time `gorm:"column:created"`
 }
 
 // Add adds wares into someone's collection.
@@ -64,7 +64,7 @@ func (this *serviceProvider) Add(conn orm.Connection, userId uint32, wareId uint
 
 	db := conn.(*gorm.DB).Exec("USE shop")
 
-	return db.Table("collect").Create(&item).Error
+	return db.Table("collection").Create(&item).Error
 }
 
 // GetByUserID gets someone's collection by userid.
@@ -73,20 +73,13 @@ func (this *serviceProvider) GetByUserID(conn orm.Connection, userId uint32) ([]
 
 	db := conn.(*gorm.DB).Exec("USE shop")
 
-	err := db.Table("collect").Where("user_id = ?", userId).Find(&items).Error
+	err := db.Table("collection").Where("userid = ?", userId).Find(&items).Error
 
 	return items, err
 }
 
-// Remove deletes ware from collection.
-func (this *serviceProvider) Remove(conn orm.Connection, id uint32) error {
-	db := conn.(*gorm.DB).Exec("USE shop")
-
-	return db.Table("collect").Where("id = ?", id).Delete(&Collection{}).Error
-}
-
-// RemoveMany deletes wares from collection.
-func (this *serviceProvider) RemoveMany(conn orm.Connection, collectIdList []uint32) error {
+// Remove deletes wares from collection.
+func (this *serviceProvider) Remove(conn orm.Connection, id []uint32) error {
 	var (
 		err error
 	)
@@ -100,11 +93,9 @@ func (this *serviceProvider) RemoveMany(conn orm.Connection, collectIdList []uin
 		}
 	}()
 
-	for i := 0; i < len(collectIdList); i++ {
-		err = tx.Table("collect").Where("id = ?", collectIdList[i]).Delete(&Collection{}).Error
-		if err != nil {
-			return err
-		}
+	err = tx.Table("collection").Where("id in (?)", id).Delete(&Collection{}).Error
+	if err != nil {
+		return err
 	}
 
 	return nil

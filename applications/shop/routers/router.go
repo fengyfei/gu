@@ -93,7 +93,7 @@ func register(r *server.Router) {
 	r.Post("/shop/api/order/confirm", handler.ConfirmOrder)
 
 	// collection api for user
-	r.Post("/shop/collection/get", handler.GetByUserID)
+	r.Get("/shop/collection/get", handler.GetByUserID)
 	r.Post("/shop/collection/add", handler.AddColl)
 	r.Post("/shop/collection/remove", handler.RemoveColl)
 

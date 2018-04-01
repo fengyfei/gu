@@ -203,7 +203,7 @@ func (sp *serviceProvider) GetRecommendList(conn orm.Connection) ([]BriefInfo, e
 	)
 
 	db := conn.(*gorm.DB).Exec("USE shop")
-	res = db.Table("ware").Select(fields).Order("total_sale desc").Where("status = ?", recommend).Limit(10).Scan(&list)
+	res = db.Table("ware").Select(fields).Order("totalsale desc").Where("status = ?", recommend).Limit(10).Scan(&list)
 
 	return list, res.Error
 }

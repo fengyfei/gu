@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd.
+ * Copyright (c) 2018 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the 'Software'), to deal
@@ -24,7 +24,7 @@
 
 /*
  * Revision History:
- *     Initial: 2018/03/07      Tong Yuehong
+ *     Initial: 2018/03/28      Shi Ruitao
  */
 
 package handler
@@ -42,31 +42,25 @@ import (
 	Collection "github.com/fengyfei/gu/models/shop/collection"
 )
 
-type (
-	collID struct {
-		ID uint32 `json:"id"`
-	}
-
-	removereq struct {
-		IDs []uint32 `json:"ids"`
-	}
-
-	wareID struct {
-		WareID uint32 `json:"ware_id"`
-	}
-)
-
 // AddColl adds wares into someone's collection.
 func AddColl(c *server.Context) error {
 	var (
 		err  error
 		conn orm.Connection
-		add  wareID
+		add  struct {
+			WareID uint32 `json:"ware_id" validate:"required"`
+		}
 	)
 
 	err = c.JSONBody(&add)
 	if err != nil {
 		logger.Error("Error in JSONBody:", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	err = c.Validate(&add)
+	if err != nil {
+		logger.Error("Validate():", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
@@ -113,42 +107,14 @@ func GetByUserID(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, collections)
 }
 
-// RemoveColl remove collections.
+// RemoveMany deletes collectios by ids.
 func RemoveColl(c *server.Context) error {
 	var (
-		err    error
-		conn   orm.Connection
-		remove collID
-	)
-
-	err = c.JSONBody(&remove)
-	if err != nil {
-		logger.Error("Error in JSONBody:", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
-	}
-
-	conn, err = mysql.Pool.Get()
-	defer mysql.Pool.Release(conn)
-	if err != nil {
-		logger.Error("Can't get mysql connection:", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-	}
-
-	err = Collection.Service.Remove(conn, remove.ID)
-	if err != nil {
-		logger.Error("Error in modifying the collection:", err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-	}
-
-	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
-}
-
-// RemoveMany deletes collectios by ids.
-func RemoveMany(c *server.Context) error {
-	var (
-		req  removereq
 		err  error
 		conn orm.Connection
+		req  struct {
+			IDs []uint32 `json:"ids"`
+		}
 	)
 
 	conn, err = mysql.Pool.Get()
@@ -164,7 +130,7 @@ func RemoveMany(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	err = Collection.Service.RemoveMany(conn, req.IDs)
+	err = Collection.Service.Remove(conn, req.IDs)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
