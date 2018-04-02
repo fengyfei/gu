@@ -37,6 +37,7 @@ import (
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/models/staff"
+	"github.com/golang/protobuf/_conformance/conformance_proto"
 )
 
 // Login - staff login.
@@ -54,6 +55,12 @@ func Login(this *server.Context) error {
 	}
 
 	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error("Can't connect to mysql.", err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
+	}
+
 	id, err := staff.Service.Login(conn, &login.Name, &login.Pass)
 	if err != nil {
 		logger.Error(err)
@@ -67,4 +74,33 @@ func Login(this *server.Context) error {
 	}
 
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, token)
+}
+
+// Info staff info.
+func Info(c *server.Context) error {
+	var req struct{
+		Id int32 `json:"id"`
+	}
+	if err := c.JSONBody(&req); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error("Can't connect to mysql.", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	if err != nil {
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+	res, err := staff.Service.GetByID(conn, req.Id)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, res)
 }

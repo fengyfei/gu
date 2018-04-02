@@ -57,10 +57,10 @@ func Create(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	author := c.Request().Context().Value("staff").(jwt.MapClaims)["name"].(string)
+	authorID := c.Request().Context().Value("staff").(jwt.MapClaims)["staffid"].(float64)
 
 	p := &project.Project{
-		Author:   author,
+		AuthorID: int32(authorID),
 		Title:    req.Title,
 		Abstract: req.Abstract,
 		Content:  req.Content,

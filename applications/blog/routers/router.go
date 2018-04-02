@@ -59,6 +59,7 @@ func InitRouter(u *server.Router) {
 	u.Post("/blog/tag/modify", article.ModifyTag)
 
 	u.Post("/staff/login", staff.Login)
+	u.Post("/staff/info", staff.Info)
 
 	u.Post("/blog/article/create", article.CreateArticle)
 	u.Post("/blog/article/allcreated", article.ListCreated)

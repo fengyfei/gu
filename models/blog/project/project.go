@@ -47,7 +47,7 @@ var ProjectServer *projectProviceServer
 type (
 	Project struct {
 		ID       bson.ObjectId `bson:"_id,omitempty"`
-		Author   string        `bson:"author"`
+		AuthorID int32         `bson:"authorID"`
 		Title    string        `bson:"title"`
 		Abstract string        `bson:"abstract"`
 		Content  string        `bson:"content"`
@@ -60,7 +60,7 @@ type (
 	Pro struct {
 		ID       bson.ObjectId `bson:"_id"`
 		Title    string        `bson:"title"`
-		Author   string        `bson:"author"`
+		AuthorID int32         `bson:"authorID"`
 		Abstract string        `bson:"abstract"`
 	}
 )
