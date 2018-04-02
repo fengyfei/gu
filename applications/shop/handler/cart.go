@@ -24,7 +24,7 @@
 
 /*
  * Revision History:
- *     Initial: 2018/03/06        Tong Yuehong
+ *     Initial: 2018/03/29        Shi Ruitao
  */
 
 package handler
@@ -42,18 +42,15 @@ import (
 	Cart "github.com/fengyfei/gu/models/shop/cart"
 )
 
-type (
-	reqRemove struct {
-		IDs []uint32 `json:"ids"`
-	}
-)
-
 // Add adds wares to cart.
 func AddCart(c *server.Context) error {
 	var (
-		req  Cart.AddCartReq
 		err  error
 		conn orm.Connection
+		req  struct {
+			WareId uint32 `json:"ware_id" validate:"required"`
+			Count  uint8  `json:"count"   validate:"required"`
+		}
 	)
 
 	conn, err = mysql.Pool.Get()
@@ -75,7 +72,7 @@ func AddCart(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	userID := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(uint32)
+	userID := uint32(c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(float64))
 
 	err = Cart.Service.Add(conn, userID, req.WareId, req.Count)
 	if err != nil {
@@ -96,61 +93,28 @@ func GetByUser(c *server.Context) error {
 	conn, err = mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
-		logger.Error("mysql.Pool.Get():", err)
+		logger.Error("Can't get mysql connection:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	userID := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(uint32)
+	userID := uint32(c.Request().Context().Value("user").(jwtgo.MapClaims)[util.UserID].(float64))
 
 	items, err = Cart.Service.GetByUserID(conn, userID)
 	if err != nil {
-		logger.Error("Cart.Service.GetByUserID():", err)
+		logger.Error("Error get cart ware:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, items)
 }
 
-// Remove deletes a ware by id.
-func Remove(c *server.Context) error {
-	var (
-		req  Cart.RemoveCartReq
-		err  error
-		conn orm.Connection
-	)
-
-	conn, err = mysql.Pool.Get()
-	defer mysql.Pool.Release(conn)
-	if err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-	}
-
-	err = c.JSONBody(&req)
-	if err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
-	}
-
-	err = c.Validate(&req)
-	if err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
-	}
-
-	err = Cart.Service.RemoveById(conn, req.Id)
-	if err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
-	}
-	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
-}
-
 // RemoveWhenOrder deletes wares by ids.
 func RemoveWhenOrder(c *server.Context) error {
 	var (
-		req  reqRemove
 		err  error
 		conn orm.Connection
+		req  struct {
+			IDs []uint32 `json:"ids"`
+		}
 	)
 
 	conn, err = mysql.Pool.Get()

@@ -79,11 +79,7 @@ func (this *serviceProvider) GetByUserID(conn orm.Connection, userId uint32) ([]
 }
 
 // Remove deletes wares from collection.
-func (this *serviceProvider) Remove(conn orm.Connection, id []uint32) error {
-	var (
-		err error
-	)
-
+func (this *serviceProvider) Remove(conn orm.Connection, id []uint32) (err error) {
 	tx := conn.(*gorm.DB).Begin().Exec("USE shop")
 	defer func() {
 		if err != nil {
