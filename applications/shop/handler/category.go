@@ -24,7 +24,7 @@
 
 /*
  * Revision History:
- *     Initial: 2018/02/04        Tong Yuehong
+ *     Initial: 2018/04/02        Shi Ruitao
  */
 
 package handler
@@ -50,17 +50,15 @@ type (
 	pid struct {
 		Id uint32 `json:"id"`
 	}
-
-	modify struct {
-		Id   uint32 `json:"id"`
-		Info category.Info
-	}
 )
 
 // Add adds a new category.
 func AddCategory(c *server.Context) error {
 	var (
-		add category.Info
+		add struct {
+			Category string `json:"category" validate:"required,min=1,max=12"`
+			ParentID uint32 `json:"parent_id"`
+		}
 	)
 
 	isAdmin := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.IsAdmin].(bool)
@@ -88,7 +86,7 @@ func AddCategory(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = category.Service.Add(conn, &add)
+	err = category.Service.Add(conn, add.Category, add.ParentID)
 	if err != nil {
 		logger.Error("Error in add a category:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
@@ -102,13 +100,13 @@ func GetMainCategories(c *server.Context) error {
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
-		logger.Error("mysql.Pool.Get()", err)
+		logger.Error("mysqlErr:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
 	res, err := category.Service.GetMainCategory(conn)
 	if err != nil {
-		logger.Error("category.Service.GetCategory()", err)
+		logger.Error("Get main category error:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
@@ -132,7 +130,7 @@ func GetSubCategories(c *server.Context) error {
 
 	err = c.JSONBody(&pid)
 	if err != nil {
-		logger.Error("JSONBody():", err)
+		logger.Error("jsonErr", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
@@ -161,13 +159,13 @@ func Delete(c *server.Context) error {
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
-		logger.Error("mysql.Pool.Get():", err)
+		logger.Error("mysqlErr:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
 	err = c.JSONBody(&pid)
 	if err != nil {
-		logger.Error("JSONBody():", err)
+		logger.Error("jsonErr:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
@@ -180,11 +178,15 @@ func Delete(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
-// Modify update the category's information.
-func Modify(c *server.Context) error {
+// ModifyCategory update the category's information.
+func ModifyCategory(c *server.Context) error {
 	var (
 		err    error
-		modify modify
+		modify struct {
+			Id       uint32 `json:"id"`
+			Category string `json:"category" validate:"required,min=2,max=12"`
+			ParentID uint32 `json:"parent_id"`
+		}
 	)
 
 	isAdmin := c.Request().Context().Value("user").(jwtgo.MapClaims)[util.IsAdmin].(bool)
@@ -196,17 +198,17 @@ func Modify(c *server.Context) error {
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
-		logger.Error("mysql.Pool.Get():", err)
+		logger.Error("mysqlErr", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
 	err = c.JSONBody(&modify)
 	if err != nil {
-		logger.Error("JSONBody():", err)
+		logger.Error("jsonErr:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	err = category.Service.Modify(conn, modify.Id, &modify.Info)
+	err = category.Service.Modify(conn, modify.Id, modify.Category, modify.ParentID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)

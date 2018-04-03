@@ -60,8 +60,9 @@ func register(r *server.Router) {
 
 	// category api for admin
 	r.Post("/shop/category/add", handler.AddCategory)
-	r.Post("/shop/category/maincategory", handler.GetMainCategories)
+	r.Get("/shop/category/maincategory", handler.GetMainCategories)
 	r.Post("/shop/category/subcategory", handler.GetSubCategories)
+	r.Post("/shop/category/modify", handler.ModifyCategory)
 	r.Post("/shop/category/delete", handler.Delete)
 
 	// ware api for admin

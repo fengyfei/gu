@@ -24,7 +24,7 @@
 
 /*
  * Revision History:
- *     Initial: 2018/03/07        Tong Yuehong
+ *     Initial: 2018/04/1        Shi Ruitao
  */
 
 package category
@@ -44,20 +44,19 @@ var (
 	Service *serviceProvider
 )
 
+const (
+	// Main category
+	parentID = 0
+)
+
 type (
 	// Category represents the class of wares.
 	Category struct {
 		ID       uint32    `gorm:"column:id"`
 		Category string    `gorm:"column:category"`
-		ParentID uint32    `gorm:"column:parent_id"`
-		IsActive bool      `gorm:"column:is_active"`
+		ParentID uint32    `gorm:"column:parentid"`
+		IsActive bool      `gorm:"column:isactive"`
 		Created  time.Time `gorm:"column:created"`
-	}
-
-	// Info represents the category's information.
-	Info struct {
-		Category string `json:"category" validate:"required,min=2,max=12"`
-		ParentID uint32 `json:"parent_id"`
 	}
 )
 
@@ -67,10 +66,10 @@ func (Category) TableName() string {
 }
 
 // Add adds a new category.
-func (sp *serviceProvider) Add(conn orm.Connection, add *Info) error {
+func (sp *serviceProvider) Add(conn orm.Connection, categoryName string, parentID uint32) error {
 	category := Category{
-		Category: add.Category,
-		ParentID: add.ParentID,
+		Category: categoryName,
+		ParentID: parentID,
 		IsActive: true,
 		Created:  time.Now(),
 	}
@@ -87,7 +86,7 @@ func (sp *serviceProvider) GetMainCategory(conn orm.Connection) ([]Category, err
 	)
 
 	db := conn.(*gorm.DB).Exec("USE shop")
-	err := db.Table("category").Where("is_active = ? AND parent_id = ?", true, 0).Find(&list).Error
+	err := db.Table("category").Where("isactive = ? AND parentid = ?", true, parentID).Find(&list).Error
 
 	return list, err
 }
@@ -99,7 +98,7 @@ func (sp *serviceProvider) GetSubCategory(conn orm.Connection, pid uint32) ([]Ca
 	)
 
 	db := conn.(*gorm.DB).Exec("USE shop")
-	err := db.Table("category").Where("is_active = ? AND parent_id = ?", true, pid).Find(&list).Error
+	err := db.Table("category").Where("isactive = ? AND parentid = ?", true, pid).Find(&list).Error
 
 	return list, err
 }
@@ -108,15 +107,12 @@ func (sp *serviceProvider) GetSubCategory(conn orm.Connection, pid uint32) ([]Ca
 func (sp *serviceProvider) Delete(conn orm.Connection, id uint32) error {
 	db := conn.(*gorm.DB)
 
-	return db.Table("category").Where("id = ?", id).Update("is_active", false).Error
+	return db.Table("category").Where("id = ?", id).Update("isactive", false).Error
 }
 
 // Modify modify category's information.
-func (sp *serviceProvider) Modify(conn orm.Connection, id uint32, add *Info) error {
+func (sp *serviceProvider) Modify(conn orm.Connection, id uint32, categoryName string, parentID uint32) error {
 	db := conn.(*gorm.DB)
 
-	return db.Table("category").Where("id = ?", id).Update(map[string]interface{}{
-		"category":  add.Category,
-		"parent_id": add.ParentID,
-	}).Error
+	return db.Table("category").Where("id = ?", id).Update(Category{Category:categoryName, ParentID:parentID}).Error
 }
