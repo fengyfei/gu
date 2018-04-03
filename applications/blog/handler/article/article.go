@@ -39,20 +39,18 @@ import (
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/models/blog/article"
+	"github.com/fengyfei/gu/models/blog"
 )
-
-// CreateArticle represents the article information when created.
-type art struct {
-	Title    string   `json:"title"`
-	Content  string   `json:"content"`
-	Abstract string   `json:"abstract"`
-	Tags     []string `json:"tags"`
-	Image    string   `json:"image"`
-}
 
 // CreateArticle - insert article.
 func CreateArticle(this *server.Context) error {
-	var req art
+	var req struct {
+		Title    string   `json:"title"`
+		Content  string   `json:"content"`
+		Abstract string   `json:"abstract"`
+		Tags     []string `json:"tags"`
+		Image    string   `json:"image"`
+	}
 
 	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)
@@ -80,6 +78,7 @@ func CreateArticle(this *server.Context) error {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
+	req.Image, err = blog.SavePicture(req.Image, "/image", id)
 
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, id)
 }
@@ -252,6 +251,7 @@ func GetByTag(c *server.Context) error {
 	var req struct {
 		Tag string `json:"tag"`
 	}
+
 	if err := c.JSONBody(&req); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
@@ -268,4 +268,29 @@ func GetByTag(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
 	}
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, res)
+}
+
+// GetByAuthorID
+func GetByAuthorID(c *server.Context) error {
+	var req struct {
+		AuthorID int32 `json:"id"`
+	}
+
+	if err := c.JSONBody(&req); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	if err := c.Validate(&req); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	resp, err := article.ArticleService.GetByAuthorID(req.AuthorID)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, resp)
 }

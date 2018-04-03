@@ -33,9 +33,9 @@ package router
 
 import (
 	"github.com/fengyfei/gu/applications/blog/handler/article"
+	"github.com/fengyfei/gu/applications/blog/handler/project"
 	"github.com/fengyfei/gu/applications/blog/handler/staff"
 	"github.com/fengyfei/gu/libs/http/server"
-	"github.com/fengyfei/gu/applications/blog/handler/project"
 )
 
 var (
@@ -69,6 +69,7 @@ func InitRouter(u *server.Router) {
 	u.Post("/blog/article/updateview", article.UpdateView)
 	u.Post("/blog/article/approval", article.ListApproval)
 	u.Post("/blog/article/getbyid", article.ArticleByID)
+	u.Post("/blog/article/getbyauthorid", article.GetByAuthorID)
 	u.Post("/blog/article/getbytag", article.GetByTag)
 
 	u.Post("/blog/project/create", project.Create)

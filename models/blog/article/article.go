@@ -93,6 +93,7 @@ type (
 		ID       bson.ObjectId `bson:"_id,omitempty"`
 		Title    string        `bson:"Title"`
 		Abstract string        `bson:"Abstract"`
+		Image    string        `bson:"Image"`
 	}
 )
 
@@ -246,6 +247,20 @@ func (s *articleServiceProvider) GetByTag(tag string) ([]Art, error) {
 
 	var art []Art
 	q := bson.M{"Tags": tag, "status": blog.Approval}
+	err := conn.GetMany(q, &art)
+	if err != nil {
+		return nil, err
+	}
+	return art, nil
+}
+
+// GetByAuthorID get articles by author ID.
+func (s *articleServiceProvider) GetByAuthorID(id int32) ([]Art, error) {
+	conn := session.Connect()
+	defer conn.Disconnect()
+
+	var art []Art
+	q := bson.M{"AuthorID": id, "status": blog.Approval}
 	err := conn.GetMany(q, &art)
 	if err != nil {
 		return nil, err
