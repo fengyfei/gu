@@ -25,6 +25,7 @@
 /*
  * Revision History:
  *     Initial: 2018/02/04        Tong Yuehong
+ *     Modify : 2018/04/01        Chen Yanchen
  */
 
 package staff
@@ -37,7 +38,6 @@ import (
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/models/staff"
-	"github.com/golang/protobuf/_conformance/conformance_proto"
 )
 
 // Login - staff login.
