@@ -33,7 +33,7 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
-	"github.com/fengyfei/gu/applications/bbs/conf"
+	"github.com/fengyfei/gu/applications/bbs/initialize"
 	"github.com/fengyfei/gu/libs/mongo"
 	"github.com/fengyfei/gu/models/bbs"
 )
@@ -50,56 +50,30 @@ type (
 	// Collection represents someone's collection.
 	Collection struct {
 		Id     bson.ObjectId   `bson:"_id,omitempty"  json:"id"`
-		UserID uint32          `bson:"userID"         json:"userID"`
-		ArtID  []bson.ObjectId `bson:"artID"          json:"artID"`
-	}
-
-	// CreateColl represents the information of collection when collecting.
-	CreateColl struct {
-		UserID uint32   `bson:"userID"         json:"userID"`
-		ArtID  []string `bson:"artID"          json:"artID"`
+		UserID uint32          `bson:"userID"         json:"userid"`
+		ArtID  []bson.ObjectId `bson:"artID"          json:"artid"`
 	}
 )
 
 func init() {
 	const (
-		Collection = "collection"
+		cname = "collection"
 	)
 
-	url := conf.BBSConfig.MongoURL + "/" + bbs.Database
-	s, err := mgo.Dial(url)
-	if err != nil {
-		panic(err)
-	}
-
-	s.SetMode(mgo.Monotonic, true)
-	s.DB(bbs.Database).C(Collection).EnsureIndex(mgo.Index{
+	initialize.S.DB(bbs.Database).C(cname).EnsureIndex(mgo.Index{
 		Key:        []string{"userID"},
 		Unique:     true,
 		Background: true,
 		Sparse:     true,
 	})
 
-	collectionSession = mongo.NewConnection(s, bbs.Database, Collection)
+	collectionSession = mongo.NewConnection(initialize.S, bbs.Database, cname)
 }
 
 // Insert - collect the article.
-func (sp *collectionServiceProvider) Insert(created CreateColl) error {
-	var (
-		artID = make([]bson.ObjectId, len(created.ArtID))
-	)
-
-	for i, artid := range created.ArtID {
-		artID[i] = bson.ObjectIdHex(artid)
-	}
-
+func (sp *collectionServiceProvider) Insert(created Collection) error {
 	conn := collectionSession.Connect()
 	defer conn.Disconnect()
-
-	collection := &Collection{
-		UserID: created.UserID,
-		ArtID:  artID,
-	}
 
 	query := bson.M{"userID": created.UserID}
 	num, err := conn.Collection().Find(query).Count()
@@ -108,12 +82,12 @@ func (sp *collectionServiceProvider) Insert(created CreateColl) error {
 	}
 
 	if num != 0 {
-		err = conn.Update(query, bson.M{"$push": bson.M{"artID": bson.M{"$each": artID}}})
+		err = conn.Update(query, bson.M{"$push": bson.M{"artID": bson.M{"$each": created.ArtID}}})
 		if err != nil {
 			return err
 		}
 	} else {
-		err = conn.Insert(collection)
+		err = conn.Insert(created)
 	}
 
 	return nil

@@ -30,31 +30,69 @@
 package article
 
 import (
+	"net"
+	"os"
+	"strings"
+
 	"gopkg.in/mgo.v2/bson"
 
 	mysql "github.com/fengyfei/gu/applications/bbs/initialize"
+	"github.com/fengyfei/gu/applications/bbs/util"
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/models/bbs"
 	"github.com/fengyfei/gu/models/bbs/article"
+	"github.com/fengyfei/gu/models/user"
 )
 
 type (
 	title struct {
-		Title string `json:"title"`
+		Title string `json:"title" validate:"required"`
+	}
+
+	createArticle struct {
+		Title      string `json:"title"       validate:"required"`
+		Content    string `json:"content"     validate:"required"`
+		AuthorID   uint32 `json:"authorid"`
+		CategoryID string `json:"categoryid"  validate:"required"`
+		TagID      string `json:"tagid"       validate:"required"`
+		Image      string `json:"image"`
+		Created    string `json:"created"     validate:"required"`
+	}
+
+	replyInfo struct {
+		Id         bson.ObjectId `json:"id"`
+		Title      string        `json:"title"`
+		Brief      string        `json:"brief"`
+		Content    string        `json:"content"`
+		Author     string        `json:"author"`
+		AuthorID   uint32        `json:"authorid"`
+		Category   string        `json:"category"`
+		Tag        string        `json:"tag"`
+		Image      string        `json:"image"`
+		CommentNum int           `json:"commentnum"`
+		VisitNum   int64         `json:"visitnum"`
+		Created    string        `json:"created"`
 	}
 )
 
 // AddArticle - add article.
 func AddArticle(this *server.Context) error {
 	var (
-		reqAdd article.CreateArticle
+		reqAdd  createArticle
+		imgpath string
+		ip      string
 	)
 
 	if err := this.JSONBody(&reqAdd); err != nil {
 		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	if err := this.Validate(&reqAdd); err != nil {
+		logger.Error("Validate():", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
@@ -65,24 +103,77 @@ func AddArticle(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
 	}
 
-	//userID := this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(uint32)
-	userID := uint32(1001)
+	//userID := uint32(this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(float64))
+	userID := uint32(1000)
 
-	id, err := article.ArticleService.Insert(conn, reqAdd, userID)
+	err = article.CategoryService.IsExist(reqAdd.CategoryID)
+	if err != nil {
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	conpath, err := util.Save(userID, reqAdd.Content, util.Content)
+	if err != nil {
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	if reqAdd.Image != "" {
+		imgpath, err = util.Save(userID, reqAdd.Image, util.Image)
+		if err != nil {
+			return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+		}
+	} else {
+		imgpath = ""
+	}
+
+	brief := util.GetBrief(reqAdd.Content)
+
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		logger.Error(err)
+		os.Exit(1)
+	}
+
+	for _, address := range addrs {
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				ip = ipnet.IP.String()
+			}
+
+		}
+	}
+
+	ip = "http://" + ip + ":8080"
+	path := strings.Replace(conpath, ".", ip, 1)
+	imgpath = strings.Replace(imgpath, ".", ip, 1)
+
+	addArticle := &article.Article{
+		Title:      reqAdd.Title,
+		Brief:      brief,
+		Content:    path,
+		AuthorID:   userID,
+		CategoryID: bson.ObjectIdHex(reqAdd.CategoryID),
+		TagID:      bson.ObjectIdHex(reqAdd.TagID),
+		Image:      imgpath,
+		Created:    reqAdd.Created,
+	}
+
+	err = article.ArticleService.Insert(conn, addArticle)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, id)
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, nil)
 }
 
 // GetByArtID gets articles by ArtID.
 func GetByArtID(this *server.Context) error {
 	var (
 		req struct {
-			ArtID string `json:"artID"`
+			ArtID string `json:"artid"`
 		}
+
+		reply *replyInfo
 	)
 
 	if err := this.JSONBody(&req); err != nil {
@@ -90,21 +181,26 @@ func GetByArtID(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	list, err := article.ArticleService.GetByArtID(bson.ObjectIdHex(req.ArtID))
+	art, err := article.ArticleService.GetByArtID(req.ArtID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
+	reply, err = Reply(*art)
+	if err != nil {
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, reply)
 }
 
-// GetByModuleID gets articles by ModuleID.
-func GetByModuleID(this *server.Context) error {
+// GetByCategoryID gets articles by CategoryID.
+func GetByCategoryID(this *server.Context) error {
 	var (
 		req struct {
-			Page   int    `json:"page"`
-			Module string `json:"module"`
+			Page       int    `json:"page"`
+			CategoryID string `json:"categoryid"    validate:"required"`
 		}
 	)
 
@@ -113,22 +209,37 @@ func GetByModuleID(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	list, err := article.ArticleService.GetByModuleID(req.Page, req.Module)
+	if err := this.Validate(&req); err != nil {
+		logger.Error("Validate():", err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	info, err := article.ArticleService.GetByCategoryID(req.Page, req.CategoryID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
+	var reply = make([]replyInfo, len(info))
+	for i, art := range info {
+		r, err := Reply(art)
+		if err != nil {
+			return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+		}
+
+		reply[i] = *r
+	}
+
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, reply)
 }
 
-// GetByThemeID - gets articles by ThemeID.
-func GetByThemeID(this *server.Context) error {
+// GetByTagID - gets articles by TagID.
+func GetByTagID(this *server.Context) error {
 	var (
 		req struct {
-			Page   int    `json:"page"`
-			Module string `json:"module"`
-			Theme  string `json:"theme"`
+			Page       int    `json:"page"`
+			CategoryID string `json:"categoryid"    validate:"required"`
+			TagID      string `json:"tagid"       validate:"required"`
 		}
 	)
 
@@ -137,17 +248,32 @@ func GetByThemeID(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	list, err := article.ArticleService.GetByThemeID(req.Page, req.Module, req.Theme)
+	if err := this.Validate(&req); err != nil {
+		logger.Error("Validate():", err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	info, err := article.ArticleService.GetByTagID(req.Page, req.CategoryID, req.TagID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
+	var reply = make([]replyInfo, len(info))
+	for i, art := range info {
+		r, err := Reply(art)
+		if err != nil {
+			return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+		}
+
+		reply[i] = *r
+	}
+
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, reply)
 }
 
-// GetByTitle - gets articles by title.
-func GetByTitle(this *server.Context) error {
+// SearchByTitle - gets articles by title.
+func SearchByTitle(this *server.Context) error {
 	var (
 		title title
 	)
@@ -157,20 +283,30 @@ func GetByTitle(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	list, err := article.ArticleService.GetByTitle(title.Title)
+	info, err := article.ArticleService.SearchByTitle(title.Title)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
+	var reply = make([]replyInfo, len(info))
+	for i, art := range info {
+		r, err := Reply(art)
+		if err != nil {
+			return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+		}
+
+		reply[i] = *r
+	}
+
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, reply)
 }
 
 // GetByUserID - gets articles by userID.
 func GetByUserID(this *server.Context) error {
 	var (
 		user struct {
-			UserID uint32 `json:"userID"`
+			UserID uint32 `json:"userid"`
 		}
 	)
 
@@ -191,15 +327,17 @@ func GetByUserID(this *server.Context) error {
 // DeleteArt deletes article.
 func DeleteArt(this *server.Context) error {
 	var (
-		title title
+		artid struct {
+			ArtID string `json:"artid"`
+		}
 	)
 
-	if err := this.JSONBody(&title); err != nil {
+	if err := this.JSONBody(&artid); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	err := article.ArticleService.Delete(title.Title)
+	err := article.ArticleService.Delete(artid.ArtID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -208,26 +346,31 @@ func DeleteArt(this *server.Context) error {
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, nil)
 }
 
-// UpdateTimes update times.
-func UpdateTimes(this *server.Context) error {
+// UpdateVisit update visitNum.
+func UpdateVisit(this *server.Context) error {
 	var (
-		times struct {
+		visit struct {
 			Num   int64  `json:"num"`
-			ArtID string `json:"artID"`
+			ArtID string `json:"artid"`
 		}
 	)
 
-	if err := this.JSONBody(&times); err != nil {
+	if err := this.JSONBody(&visit); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	if !bson.IsObjectIdHex(times.ArtID) {
+	if err := this.Validate(&visit); err != nil {
+		logger.Error("Validate():", err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	if !bson.IsObjectIdHex(visit.ArtID) {
 		logger.Error(bbs.InvalidObjectId)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	err := article.ArticleService.UpdateTimes(times.Num, times.ArtID)
+	err := article.ArticleService.UpdateVisit(visit.Num, visit.ArtID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -249,11 +392,68 @@ func Recommend(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	list, err := article.ArticleService.Recommend(req.Page)
+	info, err := article.ArticleService.Recommend(req.Page)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
+	var reply = make([]replyInfo, len(info))
+	for i, art := range info {
+		r, err := Reply(art)
+		if err != nil {
+			return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+		}
+
+		reply[i] = *r
+	}
+
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, reply)
+}
+
+// Reply return a struct of replyInfo.
+func Reply(art article.Article) (*replyInfo, error) {
+	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error("Can't get mysql connection:", err)
+		return nil, err
+	}
+
+	author, err := user.UserService.GetUserByID(conn, art.AuthorID)
+	if err != nil {
+		return nil, err
+	}
+
+	category, err := article.CategoryService.GetCategoryByID(art.CategoryID.Hex())
+	if err != nil {
+		return nil, err
+	}
+
+	tag, err := article.CategoryService.GetTagByID(art.CategoryID.Hex(), art.TagID.Hex())
+	if err != nil {
+		return nil, err
+	}
+
+	commentNum, err := article.CommentService.NumByArt(art.Id.Hex())
+	if err != nil {
+		return nil, err
+	}
+
+	reply := &replyInfo{
+		Id:         art.Id,
+		Title:      art.Title,
+		Brief:      art.Brief,
+		Content:    art.Content,
+		Author:     author.UserName,
+		AuthorID:   art.AuthorID,
+		Category:   category.Name,
+		Tag:        tag.Name,
+		CommentNum: commentNum,
+		VisitNum:   art.VisitNum,
+		Image:      art.Image,
+		Created:    art.Created,
+	}
+
+	return reply, nil
 }

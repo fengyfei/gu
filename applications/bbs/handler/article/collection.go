@@ -40,7 +40,7 @@ import (
 // AddCollection - add collection.
 func AddCollection(this *server.Context) error {
 	var (
-		reqAdd article.CreateColl
+		reqAdd article.Collection
 	)
 
 	if err := this.JSONBody(&reqAdd); err != nil {
@@ -65,8 +65,8 @@ func AddCollection(this *server.Context) error {
 func UnCollection(this *server.Context) error {
 	var (
 		req struct {
-			UserID uint32 `json:"userID"`
-			ArtID  string `json:"artID"`
+			UserID uint32 `json:"userid"`
+			ArtID  string `json:"artid"`
 		}
 	)
 
@@ -88,10 +88,10 @@ func UnCollection(this *server.Context) error {
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, nil)
 }
 
-func GetByUser (this *server.Context) error {
+func GetByUser(this *server.Context) error {
 	var (
 		req struct {
-			UserID uint32 `json:"userID"`
+			UserID uint32 `json:"userid"`
 		}
 	)
 
@@ -108,5 +108,6 @@ func GetByUser (this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
+	reply := list.ArtID
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, reply)
 }

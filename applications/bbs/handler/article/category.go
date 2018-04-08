@@ -41,56 +41,46 @@ import (
 )
 
 type (
-	moduleView struct {
-		Num    int64  `json:"num"`
-		Module string `json:"module"`
+	categoryVisit struct {
+		Num        int64  `json:"num"           validate:"required"`
+		CategoryID string `json:"categoryid"`
 	}
 
-	createTheme struct {
-		Module string `json:"module"`
-		Theme  string `json:"theme"`
+	createTag struct {
+		CategoryID string `json:"categoryid"`
+		Tag        string `json:"tag"`
 	}
 
-	module struct {
-		ModuleID string `json:"moduleID"`
+	category struct {
+		CategoryID string `json:"categoryid"`
+	}
+
+	createCategory struct {
+		Name string `json:"name" validate:"required"`
 	}
 )
 
-// AddModule add module.
-func AddModule(this *server.Context) error {
-	module := article.CreateModule{}
-
-	if err := this.JSONBody(&module); err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
-	}
-
-	if err := this.Validate(&module); err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
-	}
-
-	err := article.ModuleService.CreateModule(module)
-	if err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
-	}
-
-	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, nil)
-}
-
-// UpdateModuleView updates ModuleView.
-func UpdateModuleView(this *server.Context) error {
+// AddCategory add category.
+func AddCategory(this *server.Context) error {
 	var (
-		moduleView moduleView
+		create createCategory
 	)
 
-	if err := this.JSONBody(&moduleView); err != nil {
+	if err := this.JSONBody(&create); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	err := article.ModuleService.UpdateModuleView(moduleView.Num, moduleView.Module)
+	if err := this.Validate(&create); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	category := &article.Category{
+		Name: create.Name,
+	}
+
+	err := article.CategoryService.CreateCategory(category)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -99,23 +89,23 @@ func UpdateModuleView(this *server.Context) error {
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, nil)
 }
 
-// AddTheme add theme.
-func AddTheme(this *server.Context) error {
+// UpdateCategoryVisit updates CategoryVisit.
+func UpdateCategoryVisit(this *server.Context) error {
 	var (
-		createTheme createTheme
+		visit categoryVisit
 	)
 
-	if err := this.JSONBody(&createTheme); err != nil {
+	if err := this.JSONBody(&visit); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	if err := this.Validate(&createTheme); err != nil {
-		logger.Error(err)
+	if err := this.Validate(&visit); err != nil {
+		logger.Error("Validate():", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	err := article.ModuleService.CreateTheme(createTheme.Module, createTheme.Theme)
+	err := article.CategoryService.UpdateCategoryVisit(visit.Num, visit.CategoryID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -124,18 +114,23 @@ func AddTheme(this *server.Context) error {
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, nil)
 }
 
-// DeleteModule delete module.
-func DeleteModule(this *server.Context) error {
+// AddTag add tag.
+func AddTag(this *server.Context) error {
 	var (
-		module module
+		createTag createTag
 	)
 
-	if err := this.JSONBody(&module); err != nil {
+	if err := this.JSONBody(&createTag); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	err := article.ModuleService.DeleteModule(module.ModuleID)
+	if err := this.Validate(&createTag); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	err := article.CategoryService.CreateTag(createTag.CategoryID, createTag.Tag)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -144,26 +139,45 @@ func DeleteModule(this *server.Context) error {
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, nil)
 }
 
-// DeleteTheme delete theme.
-func DeleteTheme(this *server.Context) error {
+// DeleteCategory delete category.
+func DeleteCategory(this *server.Context) error {
 	var (
-		theme struct {
-			ModuleID string `json:"moduleID"`
-			ThemeID  string `json:"themeID"`
+		category category
+	)
+
+	if err := this.JSONBody(&category); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	err := article.CategoryService.DeleteCategory(category.CategoryID)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, nil)
+}
+
+// DeleteTag delete tag.
+func DeleteTag(this *server.Context) error {
+	var (
+		tag struct {
+			CategoryID string `json:"categoryid"`
+			TagID      string `json:"tagid"`
 		}
 	)
-
-	if err := this.JSONBody(&theme); err != nil {
+	if err := this.JSONBody(&tag); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	if !bson.IsObjectIdHex(theme.ModuleID) || !bson.IsObjectIdHex(theme.ThemeID) {
+	if !bson.IsObjectIdHex(tag.CategoryID) || !bson.IsObjectIdHex(tag.TagID) {
 		logger.Error(bbs.InvalidObjectId)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	err := article.ModuleService.DeleteTheme(theme.ModuleID, theme.ThemeID)
+	err := article.CategoryService.DeleteTag(tag.CategoryID, tag.TagID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -172,49 +186,56 @@ func DeleteTheme(this *server.Context) error {
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, nil)
 }
 
-// ModuleInfo return module's information.
-func ModuleInfo(this *server.Context) error {
+// CategoryInfo return category's information.
+func ListTags(this *server.Context) error {
 	var (
-		module module
+		category category
 	)
 
-	if err := this.JSONBody(&module); err != nil {
+	if err := this.JSONBody(&category); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	if !bson.IsObjectIdHex(module.ModuleID) {
+	if !bson.IsObjectIdHex(category.CategoryID) {
 		logger.Error(bbs.InvalidObjectId)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	list, err := article.ModuleService.ListInfo(module.ModuleID)
+	list, err := article.CategoryService.ListInfo(category.CategoryID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, list)
+	tags := make([]string, len(list.Tags))
+	for i, tag := range list.Tags {
+		if tag.Active == true {
+			tags[i] = tag.Name
+		}
+	}
+
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, tags)
 }
 
-// AllModules returns all modules.
-func AllModules(this *server.Context) error {
-	list, err := article.ModuleService.AllModules()
+// AllCategories returns all categories.
+func AllCategories(this *server.Context) error {
+	list, err := article.CategoryService.AllCategories()
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, list)
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
 }
 
-// ListRecommend return recommended module.
+// ListRecommend return recommended category.
 func ListRecommend(this *server.Context) error {
-	list, err := article.ModuleService.ListRecommend()
+	list, err := article.CategoryService.ListRecommend()
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, list)
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
 }

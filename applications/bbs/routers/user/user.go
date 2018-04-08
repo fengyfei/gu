@@ -30,9 +30,9 @@
 package user
 
 import (
-	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/applications/bbs/handler/article"
 	"github.com/fengyfei/gu/applications/bbs/handler/user"
+	"github.com/fengyfei/gu/libs/http/server"
 )
 
 var (
@@ -59,22 +59,22 @@ func InitRouter(u *server.Router) {
 
 	u.Post("/bbs/article/insert", article.AddArticle)
 	u.Post("/bbs/article/delete", article.DeleteArt)
-	u.Post("/bbs/article/module", article.GetByModuleID)
-	u.Post("/bbs/article/theme", article.GetByThemeID)
-	u.Post("/bbs/article/title", article.GetByTitle)
+	u.Post("/bbs/article/category", article.GetByCategoryID)
+	u.Post("/bbs/article/tag", article.GetByTagID)
+	u.Post("/bbs/article/title", article.SearchByTitle)
 	u.Post("/bbs/article/artid", article.GetByArtID)
 	u.Post("/bbs/article/userid", article.GetByUserID)
-	u.Post("/bbs/article/updatetimes", article.UpdateTimes)
+	u.Post("/bbs/article/updatevisit", article.UpdateVisit)
 	u.Post("/bbs/article/recommend", article.Recommend)
 
-	u.Post("/bbs/module/insert", article.AddModule)
-	u.Post("/bbs/module/theme/insert", article.AddTheme)
-	u.Post("/bbs/module/delete", article.DeleteModule)
-	u.Post("/bbs/module/theme/delete", article.DeleteTheme)
-	u.Post("/bbs/module/oneinfo", article.ModuleInfo)
-	u.Get("/bbs/module/allinfo", article.AllModules)
-	u.Get("/bbs/module/recommend", article.ListRecommend)
-	u.Post("/bbs/module/updateview", article.UpdateModuleView)
+	u.Post("/bbs/category/insert", article.AddCategory)
+	u.Post("/bbs/category/tag/insert", article.AddTag)
+	u.Post("/bbs/category/delete", article.DeleteCategory)
+	u.Post("/bbs/category/tag/delete", article.DeleteTag)
+	u.Post("/bbs/category/tags", article.ListTags)
+	u.Post("/bbs/category/updatevisit", article.UpdateCategoryVisit)
+	u.Get("/bbs/category/all", article.AllCategories)
+	u.Get("/bbs/category/recommend", article.ListRecommend)
 
 	u.Post("/bbs/comment/insert", article.AddComment)
 	u.Post("/bbs/comment/delete", article.DeleteComment)
@@ -89,5 +89,4 @@ func InitRouter(u *server.Router) {
 	u.Post("/bbs/collection/collect", article.AddCollection)
 	u.Post("/bbs/collection/uncollect", article.UnCollection)
 	u.Post("/bbs/collection/user", article.GetByUser)
-
 }

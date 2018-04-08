@@ -32,6 +32,7 @@ package article
 import (
 	"gopkg.in/mgo.v2/bson"
 
+	"fmt"
 	mysql "github.com/fengyfei/gu/applications/bbs/initialize"
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/libs/constants"
@@ -39,28 +40,69 @@ import (
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/models/bbs"
 	"github.com/fengyfei/gu/models/bbs/article"
+	"github.com/fengyfei/gu/models/user"
 )
 
 type (
 	commentID struct {
-		CommentID string `json:"commentID"`
+		CommentID string `json:"commentid"`
 	}
 
-	user struct {
-		UserID uint32 `json:"userID"`
+	userid struct {
+		UserID uint32 `json:"userid"`
+	}
+
+	// createComment represents the article information when created.
+	createComment struct {
+		//CreatorID uint32 `json:"creatorid"`
+		RepliedID uint32 `json:"repliedid"`
+		ParentID  string `json:"parentid"`
+		ArtID     string `json:"artid"`
+		Content   string `json:"content"     validate:"required"`
+		Created   string `json:"created"     validate:"required"`
+	}
+
+	// showComment return the comment's information which is showed to user.
+	showComment struct {
+		ID       bson.ObjectId     `json:"id"`
+		Creator  string            `json:"creator"`
+		Replier  string            `json:"replier"`
+		Content  string            `json:"content"`
+		Created  string            `json:"created"`
+		SubComms []article.Comment `json:"subcomms"`
+	}
+
+	// createReply return the information when inserting comment.
+	createReply struct {
+		CreatorID uint32 `json:"creatorid"`
+		Creator   string `json:"creator"`
+		RepliedID uint32 `json:"repliedid"`
+		Replier   string `json:"replier"`
+	}
+
+	// UserReply represents the information about someone's reply.
+	userReply struct {
+		Title    string `json:"title"`
+		Creator  string `json:"creator"`
+		Replier  string `json:"replier"`
+		Category string `json:"category"`
+		Content  string `json:"content"`
+		Created  string `json:"created"`
 	}
 )
 
 // AddComment create comment.
 func AddComment(this *server.Context) error {
 	var (
-		req article.CreateComment
+		req createComment
 	)
 
 	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
+
+	fmt.Println("%+v", req)
 
 	if !bson.IsObjectIdHex(req.ArtID) {
 		logger.Error(bbs.InvalidObjectId)
@@ -75,11 +117,46 @@ func AddComment(this *server.Context) error {
 	}
 
 	//userID := this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(float64)
+	userID := uint32(1000)
 
-	info, err := article.CommentService.Create(conn, req)
+	creator, err := user.UserService.GetUserByID(conn, userID)
+	if err != nil {
+		return err
+	}
+
+	replier, err := user.UserService.GetUserByID(conn, req.RepliedID)
+	if err != nil {
+		return err
+	}
+
+	err = article.ArticleService.IfExist(req.ArtID)
+	if err != nil {
+		return err
+	}
+
+	addcomment := &article.Comment{
+		CreatorID: userID,
+		Creator:   creator.UserName,
+		RepliedID: req.RepliedID,
+		Replier:   replier.UserName,
+		ParentID:  bson.ObjectIdHex(req.ParentID),
+		ArtID:     bson.ObjectIdHex(req.ArtID),
+		Content:   req.Content,
+		Created:   req.Created,
+	}
+
+	err = article.CommentService.Create(conn, addcomment)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	fmt.Println("5555555")
+	info := &createReply{
+		CreatorID: userID,
+		Creator:   creator.UserName,
+		RepliedID: req.RepliedID,
+		Replier:   replier.UserName,
 	}
 
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, info)
@@ -146,10 +223,35 @@ func UserReply(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	list, err := article.CommentService.UserReply(user.UserID)
+	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error("Can't get mysql connection:", err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
+	}
+
+	comments, err := article.CommentService.UserReply(conn, user.UserID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	list := make([]userReply, len(comments))
+	for i, comment := range comments {
+		art, err := article.ArticleService.GetByArtID(comment.ArtID.Hex())
+		if err != nil {
+			return err
+		}
+
+		category, err := article.CategoryService.ListInfo(art.CategoryID.Hex())
+		list[i] = userReply{
+			Title:    art.Title,
+			Creator:  comment.Creator,
+			Replier:  comment.Replier,
+			Category: category.Name,
+			Content:  comment.Content,
+			Created:  comment.Created,
+		}
 	}
 
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
@@ -158,7 +260,7 @@ func UserReply(this *server.Context) error {
 // GetByArticle return comments by articleId.
 func GetByArticle(this *server.Context) error {
 	var artID struct {
-		ArtID string `json:"artID"`
+		ArtID string `json:"artid"`
 	}
 
 	if err := this.JSONBody(&artID); err != nil {
@@ -171,10 +273,34 @@ func GetByArticle(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	list, err := article.CommentService.GetByArtID(artID.ArtID)
+	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error("Can't get mysql connection:", err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
+	}
+
+	comments, err := article.CommentService.GetByArtID(conn, artID.ArtID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
+	list := make([]showComment, len(comments))
+	for i, comment := range comments {
+		subcomment, err := article.CommentService.SubComment(comment.Id)
+		if err != nil {
+			return err
+		}
+
+		list[i] = showComment{
+			ID:       comment.Id,
+			Creator:  comment.Creator,
+			Replier:  comment.Replier,
+			Content:  comment.Content,
+			Created:  comment.Created,
+			SubComms: subcomment,
+		}
 	}
 
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, list)
@@ -183,7 +309,7 @@ func GetByArticle(this *server.Context) error {
 // HistoryMessage return the message which is read by userid.
 func HistoryMessage(this *server.Context) error {
 	var (
-		user user
+		user userid
 	)
 
 	if err := this.JSONBody(&user); err != nil {
@@ -203,7 +329,7 @@ func HistoryMessage(this *server.Context) error {
 // UnreadMessage return the unread message by userid.
 func UnreadMessage(this *server.Context) error {
 	var (
-		user user
+		user userid
 	)
 
 	if err := this.JSONBody(&user); err != nil {

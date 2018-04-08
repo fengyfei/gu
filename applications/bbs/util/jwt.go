@@ -37,14 +37,12 @@ import (
 
 const (
 	tokenKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
-	UserId   = "userid"
 )
 
-func NewToken(userId uint32, sessionKey string, isAdmin bool) (string, error) {
+func NewToken(userId uint32, isAdmin bool) (string, error) {
 	claims := make(jwt.MapClaims)
-	claims[UserId] = userId
+	claims["userid"] = userId
 	claims["user"] = isAdmin
-	claims["SessionKey"] = sessionKey
 	claims["exp"] = time.Now().Add(time.Hour * 480).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 

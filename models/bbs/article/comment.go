@@ -33,11 +33,10 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
-	"github.com/fengyfei/gu/applications/bbs/conf"
+	"github.com/fengyfei/gu/applications/bbs/initialize"
 	"github.com/fengyfei/gu/libs/mongo"
 	"github.com/fengyfei/gu/libs/orm"
 	"github.com/fengyfei/gu/models/bbs"
-	"github.com/fengyfei/gu/models/user"
 )
 
 type commentServiceProvider struct{}
@@ -52,129 +51,88 @@ type (
 	// Comment represents the comment information.
 	Comment struct {
 		Id        bson.ObjectId `bson:"_id,omitempty"  json:"id"`
-		ArtID     bson.ObjectId `bson:"artID"          json:"artID"`
-		CreatorID uint32        `bson:"creatorID"      json:"creatorID"`
-		Creator   string        `bson:"creator"        json:"creator"`
-		ReplierID uint32        `bson:"replierID"      json:"replierID"`
-		Replier   string        `bson:"replier"        json:"replier"`
-		ParentID  bson.ObjectId `bson:"parentID"       json:"parentID"`
+		ArtID     bson.ObjectId `bson:"artID"          json:"artid"`
 		Content   string        `bson:"content"        json:"content"`
+		CreatorID uint32        `bson:"creatorID"      json:"creatorid"`
+		Creator   string        `bson:"creator"        json:"creator"`
+		RepliedID uint32        `bson:"repliedID"      json:"repliedid"`
+		Replier   string        `bson:"replier"        json:"replier"`
+		ParentID  bson.ObjectId `bson:"parentID"       json:"parentid"`
 		Created   string        `bson:"created"        json:"created"`
 		Status    int8          `bson:"status"         json:"status"`
-	}
-
-	// CreateComment represents the article information when created.
-	CreateComment struct {
-		Creator   string `json:"creator"`
-		CreatorID uint32 `json:"creatorID"`
-		ReplierID uint32 `json:"replierID"`
-		ParentID  string `json:"parentID"`
-		ArtID     string `json:"artID"`
-		Content   string `json:"content"`
-		Created   string `json:"created"`
-	}
-
-	// ShowComment return the comment's information which is showed to user.
-	ShowComment struct {
-		ID        bson.ObjectId `json:"ID"`
-		CreatorID uint32        `json:"creatorID"`
-		Creator   string        `json:"creator"`
-		ReplierID uint32        `json:"replierID"`
-		Replier   string        `json:"replier"`
-		Content   string        `json:"content"`
-		Created   string        `json:"created"`
-		SubComms  []Comment     `json:"subComms"`
-	}
-
-	// CreateReply return the information when inserting comment.
-	CreateReply struct {
-		CreatorID uint32 `json:"creatorID"`
-		Creator   string `json:"creator"`
-		ReplierID uint32 `json:"replierID"`
-		Replier   string `json:"replier"`
 	}
 )
 
 func init() {
 	const (
-		CollComment = "comment"
+		cname = "comment"
 	)
 
-	url := conf.BBSConfig.MongoURL + "/" + bbs.Database
-	s, err := mgo.Dial(url)
-	if err != nil {
-		panic(err)
-	}
+	initialize.S.DB(bbs.Database).C(cname).EnsureIndex(mgo.Index{
+		Key:        []string{"creatorID"},
+		Unique:     false,
+		Background: true,
+		Sparse:     true,
+	})
 
-	s.SetMode(mgo.Monotonic, true)
-	commentSession = mongo.NewConnection(s, bbs.Database, CollComment)
+	initialize.S.DB(bbs.Database).C(cname).EnsureIndex(mgo.Index{
+		Key:        []string{"artID"},
+		Unique:     false,
+		Background: true,
+		Sparse:     true,
+	})
+
+	initialize.S.DB(bbs.Database).C(cname).EnsureIndex(mgo.Index{
+		Key:        []string{"repliedID"},
+		Unique:     false,
+		Background: true,
+		Sparse:     true,
+	})
+
+	commentSession = mongo.NewConnection(initialize.S, bbs.Database, cname)
 }
 
 // Create insert comment.
-func (sp *commentServiceProvider) Create(con orm.Connection, comment CreateComment) (*CreateReply, error) {
+func (sp *commentServiceProvider) Create(con orm.Connection, comment *Comment) error {
 	var (
 		comm Comment
-		info *CreateReply
 	)
 
 	conn := commentSession.Connect()
 	defer conn.Disconnect()
 
-	//creator, err := user.UserServer.GetUserByID(con, comment.CreatorID)
+	//creator, err := user.UserService.GetUserByID(con, comment.CreatorID)
 	//if err != nil {
-	//	return nil, err
+	//	return err
+	//}
+	//
+	//replier, err := user.UserService.GetUserByID(con, comment.RepliedID)
+	//if err != nil {
+	//	return err
 	//}
 
-	replier, err := user.UserServer.GetUserByID(con, comment.ReplierID)
-	if err != nil {
-		return nil, err
-	}
-
 	comm = Comment{
-		CreatorID: comment.CreatorID,
-		//Creator:   creator.UserName,
-		Creator:   comment.Creator,
-		ArtID:     bson.ObjectIdHex(comment.ArtID),
+		ArtID:     comment.ArtID,
 		Content:   comment.Content,
+		CreatorID: comment.CreatorID,
+		Creator:   comment.Creator,
+		RepliedID: comment.RepliedID,
+		Replier:   comment.Replier,
+		ParentID:  comment.ParentID,
 		Created:   comment.Created,
-		ReplierID: comment.ReplierID,
-		ParentID:  bson.ObjectIdHex(comment.ParentID),
-		Replier:   replier.UserName,
 		Status:    bbs.CommentUnread,
 	}
 
-	err = conn.Insert(&comm)
+	err := conn.Insert(&comm)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	err = ArticleService.UpdateCommentNum(comm.ArtID, bbs.Increase)
-	if err != nil {
-		return nil, err
-	}
-
-	//err = ArticleService.UpdateLastComment(comment.ArtID, creator.UserName)
-	err = ArticleService.UpdateLastComment(comment.ArtID, comment.Creator)
-	if err != nil {
-		return nil, err
-	}
-
-	info = &CreateReply{
-		CreatorID: comm.CreatorID,
-		ReplierID: comm.ReplierID,
-		Creator:   comm.Creator,
-		Replier:   comm.Replier,
-	}
-
-	return info, nil
+	return ArticleService.UpdateCommentNum(comm.ArtID, bbs.Increase)
 }
 
 // Delete delete comment.
 func (sp *commentServiceProvider) Delete(commentID bson.ObjectId) error {
-	var (
-		last Comment
-	)
-
 	conn := commentSession.Connect()
 	defer conn.Disconnect()
 
@@ -189,18 +147,7 @@ func (sp *commentServiceProvider) Delete(commentID bson.ObjectId) error {
 		return err
 	}
 
-	err = ArticleService.UpdateCommentNum(comment.ArtID, bbs.Decrease)
-	if err != nil {
-		return err
-	}
-
-	query := bson.M{"artID": comment.ArtID, "status": bson.M{"$ne": bbs.CommentDeleted}}
-	err = conn.Collection().Find(query).Sort("-created").One(&last)
-	if err != nil {
-		return err
-	}
-
-	return ArticleService.UpdateLastComment(last.ArtID.Hex(), last.Creator)
+	return ArticleService.UpdateCommentNum(comment.ArtID, bbs.Decrease)
 }
 
 // ListInfo return comment's information.
@@ -222,10 +169,9 @@ func (sp *commentServiceProvider) ListInfo(commentID bson.ObjectId) (*Comment, e
 }
 
 // GetByArtID return comments by artID
-func (sp *commentServiceProvider) GetByArtID(artID string) ([]*ShowComment, error) {
+func (sp *commentServiceProvider) GetByArtID(con orm.Connection, artID string) ([]Comment, error) {
 	var (
 		comments []Comment
-		list     = make([]*ShowComment, len(comments))
 	)
 
 	conn := commentSession.Connect()
@@ -239,29 +185,11 @@ func (sp *commentServiceProvider) GetByArtID(artID string) ([]*ShowComment, erro
 		return nil, err
 	}
 
-	for i, comment := range comments {
-		subcomment, err := sp.SubComment(comment.Id)
-		if err != nil {
-			return nil, err
-		}
-
-		list[i] = &ShowComment{
-			ID:        comment.Id,
-			Creator:   comment.Creator,
-			CreatorID: comment.CreatorID,
-			Replier:   comment.Replier,
-			ReplierID: comment.ReplierID,
-			Content:   comment.Content,
-			Created:   comment.Created,
-			SubComms:  subcomment,
-		}
-	}
-
-	return list, nil
+	return comments, nil
 }
 
-// GetByUserID return comments by userID
-func (sp *commentServiceProvider) GetByUserID(userID uint32) ([]Comment, error) {
+// UserReply return the information about someone's reply.
+func (sp *commentServiceProvider) UserReply(con orm.Connection, userID uint32) ([]Comment, error) {
 	var (
 		comments []Comment
 	)
@@ -278,33 +206,6 @@ func (sp *commentServiceProvider) GetByUserID(userID uint32) ([]Comment, error) 
 	}
 
 	return comments, nil
-}
-
-// UserReply return the information about someone's reply.
-func (sp *commentServiceProvider) UserReply(userID uint32) ([]UserReply, error) {
-	comments, err := sp.GetByUserID(userID)
-	if err != nil {
-		return nil, err
-	}
-
-	list := make([]UserReply, len(comments))
-	for i, comment := range comments {
-		art, err := ArticleService.GetByArtID(comment.ArtID)
-		if err != nil {
-			return nil, err
-		}
-
-		list[i] = UserReply{
-			Title:   art.Title,
-			Creator: comment.Creator,
-			Replier: comment.Replier,
-			Module:  art.Module,
-			Content: comment.Content,
-			Created: comment.Created,
-		}
-	}
-
-	return list, nil
 }
 
 // CommentNum return the number of someone's comment.
@@ -351,7 +252,7 @@ func (sp *commentServiceProvider) HistoryMessage(userID uint32) ([]Comment, erro
 	conn := commentSession.Connect()
 	defer conn.Disconnect()
 
-	query := bson.M{"replierID": userID, "status": bbs.CommentRead}
+	query := bson.M{"repliedID": userID, "status": bbs.CommentRead}
 
 	err := conn.GetMany(query, &list)
 	if err != nil {
@@ -370,7 +271,7 @@ func (sp *commentServiceProvider) UnreadMessage(userID uint32) ([]Comment, error
 	conn := commentSession.Connect()
 	defer conn.Disconnect()
 
-	query := bson.M{"replierID": userID, "status": bbs.CommentUnread}
+	query := bson.M{"repliedID": userID, "status": bbs.CommentUnread}
 
 	err := conn.GetMany(query, &list)
 	if err != nil {
@@ -380,7 +281,7 @@ func (sp *commentServiceProvider) UnreadMessage(userID uint32) ([]Comment, error
 	return list, err
 }
 
-// MessageRead modify the status of messsage when read.
+// MessageRead modify the status of message when read.
 func (sp *commentServiceProvider) MessageRead(commentID string) error {
 	conn := commentSession.Connect()
 	defer conn.Disconnect()
@@ -388,4 +289,50 @@ func (sp *commentServiceProvider) MessageRead(commentID string) error {
 	query := bson.M{"_id": bson.ObjectIdHex(commentID)}
 
 	return conn.Update(query, bson.M{"$set": bson.M{"status": bbs.CommentRead}})
+}
+
+// LastComment returns the last comment of the article.
+func (sp *commentServiceProvider) LastComment(artID string) (*Comment, error) {
+	var (
+		lastComment Comment
+	)
+	conn := commentSession.Connect()
+	defer conn.Disconnect()
+
+	query := bson.M{"artID": bson.ObjectIdHex(artID), "status": bson.M{"$ne": bbs.CommentDeleted}}
+	err := conn.Collection().Find(query).Sort("created").One(&lastComment)
+	if err != nil {
+		return nil, err
+	}
+
+	return &lastComment, nil
+}
+
+// IsExist checks whether the id exists.
+func (sp *commentServiceProvider) IfExist(id string) error {
+	conn := commentSession.Connect()
+	defer conn.Disconnect()
+
+	num, err := conn.Collection().Find(bson.M{"_id": bson.ObjectIdHex(id)}).Count()
+	if err != nil {
+		return err
+	}
+
+	if num == 0 {
+		return ErrNotFound
+	}
+
+	return nil
+}
+
+func (sp *commentServiceProvider) NumByArt(artid string) (int, error) {
+	conn := commentSession.Connect()
+	defer conn.Disconnect()
+
+	num, err := conn.Collection().Find(bson.M{"artID": bson.ObjectIdHex(artid), "active": true}).Count()
+	if err != nil {
+		return 0, err
+	}
+
+	return num, err
 }

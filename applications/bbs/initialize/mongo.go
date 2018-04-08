@@ -24,59 +24,31 @@
 
 /*
  * Revision History:
- *     Initial: 2018/04/07        Tong Yuehong
+ *     Initial: 2018/03/22        Tong Yuehong
  */
 
-package workqueue
+package initialize
 
 import (
-	"fmt"
-	"testing"
+	"gopkg.in/mgo.v2"
+
+	"github.com/fengyfei/gu/applications/bbs/conf"
 )
 
-func TestParallelize(t *testing.T) {
-	f := func(i int) {
-		fmt.Println("a")
+var (
+	S *mgo.Session
+)
+
+func init() {
+	var (
+		err error
+		url = conf.BBSConfig.MongoURL + "/" + conf.BBSConfig.MongoDB
+	)
+
+	S, err = mgo.Dial(url)
+	if err != nil {
+		panic(err)
 	}
 
-	Parallelize(-1, 3, f)
-
-	Parallelize(-1, -1, f)
-
-	Parallelize(3, -1, f)
-}
-
-func TestParallelize2(t *testing.T) {
-	var num = []int{1, 2, 3}
-	var numb = []int{3, 2, 1}
-	var sum = make([]int, 3)
-
-	f := func(i int) {
-		sum[i] = num[i] + numb[i]
-	}
-
-	Parallelize(3, 3, f)
-	fmt.Println(sum)
-
-	Parallelize(2, 3, f)
-	fmt.Println(sum)
-
-	Parallelize(5, 3, f)
-	fmt.Println(sum)
-}
-
-func TestParallelize3(t *testing.T) {
-	var num = []int{1, 2, 3}
-	var numb = []int{3, 2, 1}
-	var sum = make([]int, 3)
-
-	f := func(i int) {
-		if i == 2 {
-			panic("panic")
-		}
-		sum[i] = num[i] + numb[i]
-	}
-
-	Parallelize(3, 3, f)
-	fmt.Println(sum)
+	S.SetMode(mgo.Monotonic, true)
 }

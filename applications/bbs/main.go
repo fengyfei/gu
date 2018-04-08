@@ -30,6 +30,10 @@
 package main
 
 import (
+	"net/http"
+
+	"github.com/robfig/cron"
+
 	"github.com/fengyfei/gu/applications/bbs/conf"
 	_ "github.com/fengyfei/gu/applications/bbs/initialize"
 	"github.com/fengyfei/gu/applications/bbs/routers/user"
@@ -39,7 +43,28 @@ import (
 	"github.com/fengyfei/gu/models/bbs/article"
 )
 
+type handler struct {
+	h http.Handler
+}
+
 func main() {
+	var (
+		c, i handler
+	)
+	go func() {
+		c.h = http.StripPrefix("/content/",
+			http.FileServer(http.Dir("./content")))
+		http.Handle("/content/", c)
+
+		i.h = http.StripPrefix("/image/",
+			http.FileServer(http.Dir("./image")))
+		http.Handle("/image/", i)
+
+		if err := http.ListenAndServe(":8080", nil); err != nil {
+			logger.Error(err)
+		}
+	}()
+
 	startServer()
 }
 
@@ -54,6 +79,14 @@ func customSkipper(c *server.Context) bool {
 	return false
 }
 
+func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("content-type", "application/json")
+
+	h.h.ServeHTTP(w, r)
+}
+
 var (
 	URLMap    = make(map[string]struct{})
 	claimsKey = "user"
@@ -63,10 +96,20 @@ var (
 	jwtConfig    = middleware.JWTConfig{
 		Skipper:    customSkipper,
 		SigningKey: []byte(tokenHMACKey),
-		// use to extract claims from context
 		ContextKey: claimsKey,
 	}
 )
+
+// Cron execute UpdateCommend every two hours.
+func Cron() {
+	c := cron.New()
+	cronTime := "* * */2 * * ?"
+
+	c.AddFunc(cronTime, article.UpdateRecommend)
+	c.Start()
+
+	select {}
+}
 
 // startServer starts a HTTP server.
 func startServer() {
@@ -74,7 +117,7 @@ func startServer() {
 		Address: conf.BBSConfig.Address,
 	}
 
-	go article.Cron()
+	go Cron()
 
 	ep = server.NewEntrypoint(serverConfig, nil)
 
@@ -84,8 +127,9 @@ func startServer() {
 	ep.AttachMiddleware(middleware.NegroniRecoverHandler())
 	ep.AttachMiddleware(middleware.NegroniLoggerHandler())
 	ep.AttachMiddleware(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowedOrigins: conf.BBSConfig.CorsHosts,
-		AllowedMethods: []string{server.GET, server.POST},
+		AllowCredentials: false,
+		AllowedOrigins:   conf.BBSConfig.CorsHosts,
+		AllowedMethods:   []string{server.GET, server.POST},
 	}))
 
 	//ep.AttachMiddleware(jwtMiddleware)
