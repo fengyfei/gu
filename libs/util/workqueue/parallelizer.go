@@ -16,8 +16,7 @@ package workqueue
 import (
 	"sync"
 
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"fmt"
+	utilruntime "github.com/fengyfei/gu/libs/util/runtime"
 )
 
 type DoWorkPieceFunc func(piece int)
@@ -25,12 +24,6 @@ type DoWorkPieceFunc func(piece int)
 // Parallelize is a very simple framework that allow for parallelizing
 // N independent pieces of work.
 func Parallelize(workers, pieces int, doWorkPiece DoWorkPieceFunc) {
-	defer func() {
-		if err := recover();err != nil {
-			fmt.Println(err)
-		}
-	}()
-
 	toProcess := make(chan int, pieces)
 	for i := 0; i < pieces; i++ {
 		toProcess <- i

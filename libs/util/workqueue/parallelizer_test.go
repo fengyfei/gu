@@ -31,22 +31,61 @@ package workqueue
 
 import (
 	"fmt"
+	"time"
 	"testing"
+
+	"github.com/fengyfei/gu/libs/util/runtime"
 )
 
-func TestParallelize(t *testing.T) {
-	f := func(i int) {
-		fmt.Println("a")
+func TestNilFunc(t *testing.T) {
+	var err interface{}
+
+	f := func(r interface{}) {
+		err = r
 	}
 
-	Parallelize(-1, 3, f)
+	runtime.PanicHandlers = append(runtime.PanicHandlers, f)
 
-	Parallelize(-1, -1, f)
+	Parallelize(1, 1, nil)
 
-	Parallelize(3, -1, f)
+	fmt.Println(err)
+	time.Sleep(1e9)
 }
 
-func TestParallelize2(t *testing.T) {
+func TestSimple(t *testing.T) {
+		f := func(i int) {
+			fmt.Println("a")
+		}
+
+		defer func() {
+			if err := recover(); err != nil {
+				fmt.Println(err)
+			}
+		}()
+
+		defer func() {
+			Parallelize(-1, 3, f)
+		}()
+
+		defer func() {
+			if err := recover(); err != nil {
+				fmt.Println(err)
+			}
+		}()
+
+		defer func() {
+			Parallelize(-1, -1, f)
+		}()
+
+		defer func() {
+			if err := recover(); err != nil {
+				fmt.Println(err)
+			}
+		}()
+		Parallelize(1, -1, f)
+}
+
+func TestCompare(t *testing.T) {
 	var num = []int{1, 2, 3}
 	var numb = []int{3, 2, 1}
 	var sum = make([]int, 3)
@@ -65,13 +104,13 @@ func TestParallelize2(t *testing.T) {
 	fmt.Println(sum)
 }
 
-func TestParallelize3(t *testing.T) {
+func TestHandleCrash(t *testing.T) {
 	var num = []int{1, 2, 3}
 	var numb = []int{3, 2, 1}
 	var sum = make([]int, 3)
 
 	f := func(i int) {
-		if i == 2 {
+		if i == 1 {
 			panic("panic")
 		}
 		sum[i] = num[i] + numb[i]
