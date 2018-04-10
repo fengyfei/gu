@@ -33,23 +33,27 @@ package article
 
 import (
 	jwtgo "github.com/dgrijalva/jwt-go"
+	"gopkg.in/mgo.v2/bson"
 
+	"github.com/fengyfei/gu/applications/blog/mysql"
+	"github.com/fengyfei/gu/applications/blog/util"
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/models/blog/article"
-	"github.com/fengyfei/gu/models/blog"
+	"github.com/fengyfei/gu/models/blog/tag"
+	"github.com/fengyfei/gu/models/staff"
 )
 
 // CreateArticle - insert article.
 func CreateArticle(this *server.Context) error {
 	var req struct {
-		Title    string   `json:"title"`
-		Content  string   `json:"content"`
-		Abstract string   `json:"abstract"`
-		Tags     []string `json:"tags"`
-		Image    string   `json:"image"`
+		Title   string          `json:"title" validate:"required,max=32"`
+		Content string          `json:"content" validate:"required"`
+		Brief   string          `json:"brief" validate:"max=64"`
+		TagsID  []bson.ObjectId `json:"tagsid"`
+		Image   string          `json:"image"`
 	}
 
 	if err := this.JSONBody(&req); err != nil {
@@ -67,9 +71,9 @@ func CreateArticle(this *server.Context) error {
 	a := &article.Article{
 		AuthorID: AuthorID,
 		Title:    req.Title,
-		Abstract: req.Abstract,
+		Brief:    req.Brief,
 		Content:  req.Content,
-		Tags:     req.Tags,
+		TagsID:   req.TagsID,
 		Image:    req.Image,
 	}
 
@@ -78,7 +82,7 @@ func CreateArticle(this *server.Context) error {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
-	req.Image, err = blog.SavePicture(req.Image, "/image", id)
+	req.Image, err = util.SavePicture(req.Image, "/image", id)
 
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, id)
 }
@@ -86,7 +90,7 @@ func CreateArticle(this *server.Context) error {
 // ArticleByID return article by articleID.
 func ArticleByID(this *server.Context) error {
 	var req struct {
-		ID string `json:"aid" validate:"required,alphanum,len=24"`
+		ID string `json:"aid" validate:"required"`
 	}
 
 	if err := this.JSONBody(&req); err != nil {
@@ -142,7 +146,7 @@ func ListApproval(this *server.Context) error {
 // ModifyStatus modify the article status.
 func ModifyStatus(this *server.Context) error {
 	var req struct {
-		ArticleID string `json:"aid"`
+		ArticleID string `json:"aid" validate:"required"`
 		Status    int8   `json:"status"`
 	}
 
@@ -165,7 +169,7 @@ func ModifyStatus(this *server.Context) error {
 // Delete delete article.
 func Delete(this *server.Context) error {
 	var req struct {
-		ArticleID string `json:"aid"`
+		ArticleID string `json:"aid" validate:"required,len=24"`
 	}
 
 	if err := this.JSONBody(&req); err != nil {
@@ -191,17 +195,17 @@ func Delete(this *server.Context) error {
 
 // UpdateView update article's view.
 func UpdateView(this *server.Context) error {
-	var view struct {
+	var req struct {
 		ArticleID string `json:"aid"`
-		View      uint32 `json:"view"`
+		Views     uint32 `json:"views"`
 	}
 
-	if err := this.JSONBody(&view); err != nil {
+	if err := this.JSONBody(&req); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	err := article.ArticleService.UpdateView(&view.ArticleID, view.View)
+	err := article.ArticleService.UpdateView(&req.ArticleID, req.Views)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -213,12 +217,12 @@ func UpdateView(this *server.Context) error {
 // ModifyArticle modify article.
 func ModifyArticle(this *server.Context) error {
 	var req struct {
-		ArticleID string   `json:"aid"`
-		Title     string   `json:"title"`
-		Abstract  string   `json:"abstract"`
-		Content   string   `json:"content"`
-		Tags      []string `json:"tags"`
-		Image     string   `json:"image"`
+		ArticleID string          `json:"aid" validate:"required"`
+		Title     string          `json:"title" validate:"required,max=32"`
+		Brief     string          `json:"brief" validate:"max=64"`
+		Content   string          `json:"content" validate:"required"`
+		TagsID    []bson.ObjectId `json:"tagsid"`
+		Image     string          `json:"image"`
 	}
 
 	if err := this.JSONBody(&req); err != nil {
@@ -232,12 +236,12 @@ func ModifyArticle(this *server.Context) error {
 		AuditorID: AuditorID,
 		Title:     req.Title,
 		Content:   req.Content,
-		Abstract:  req.Abstract,
-		Tags:      req.Tags,
+		Brief:     req.Brief,
+		TagsID:    req.TagsID,
 		Image:     req.Image,
 	}
 
-	err := article.ArticleService.ModifyArticle(req.ArticleID, *a)
+	err := article.ArticleService.ModifyArticle(req.ArticleID, a)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -249,7 +253,7 @@ func ModifyArticle(this *server.Context) error {
 // GetByTag get article by tag.
 func GetByTag(c *server.Context) error {
 	var req struct {
-		Tag string `json:"tag"`
+		TagId string `json:"tid" validate:"required"`
 	}
 
 	if err := c.JSONBody(&req); err != nil {
@@ -262,7 +266,7 @@ func GetByTag(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	res, err := article.ArticleService.GetByTag(req.Tag)
+	res, err := article.ArticleService.GetByTagId(req.TagId)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
@@ -293,4 +297,60 @@ func GetByAuthorID(c *server.Context) error {
 	}
 
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, resp)
+}
+
+type respArticle struct {
+	ID      string
+	Author  string
+	Auditor string
+	Title   string
+	Brief   string
+	Content string
+	Image   string
+	Tags    []string
+	Views   float64
+	Created string
+	Updated string
+	Status  int8
+}
+
+//
+func reply(a *article.Article) (*respArticle, error) {
+	var tags []string
+
+	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		return nil, err
+	}
+
+	author, err := staff.Service.GetByID(conn, a.AuthorID)
+	if err != nil {
+		return nil, err
+	}
+	autior, err := staff.Service.GetByID(conn, a.AuditorID)
+	if err != nil {
+		return nil, err
+	}
+	for _, tid := range a.TagsID {
+		id := tid.Hex()
+		t, _ := tag.TagService.GetByID(&id)
+		tags = append(tags, t.Tag)
+	}
+
+	art := &respArticle{
+		ID:      a.ID.Hex(),
+		Author:  author.Name,
+		Auditor: autior.Name,
+		Title:   a.Title,
+		Brief:   a.Brief,
+		Content: a.Content,
+		Image:   a.Image,
+		Tags:    tags,
+		Views:   a.Views,
+		Created: a.Created.String(),
+		Updated: a.Updated.String(),
+		Status:  a.Status,
+	}
+	return art, nil
 }

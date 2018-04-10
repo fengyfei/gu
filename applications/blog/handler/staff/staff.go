@@ -44,8 +44,8 @@ import (
 func Login(this *server.Context) error {
 	var (
 		login struct {
-			Name string `json:"name"`
-			Pass string `json:"pass"`
+			Name string `json:"name" validate:"required"`
+			Pass string `json:"pass" validate:"required,min=6,max=30"`
 		}
 	)
 

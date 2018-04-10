@@ -61,7 +61,7 @@ func init() {
 	s.SetMode(mgo.Monotonic, true)
 
 	s.DB(blog.Database).C(cname).EnsureIndex(mgo.Index{
-		Key:        []string{"Tag"},
+		Key:        []string{"tag"},
 		Unique:     true,
 		Background: true,
 		Sparse:     true,
@@ -75,8 +75,8 @@ type (
 	// Tag represents the tag information.
 	Tag struct {
 		TagID  bson.ObjectId `bson:"_id,omitempty" json:"id"`
-		Tag    string        `bson:"Tag"           json:"tag"`
-		Active bool          `bson:"Active"        json:"active"`
+		Tag    string        `bson:"tag"           json:"tag"`
+		Active bool          `bson:"active"        json:"active"`
 	}
 )
 
@@ -105,7 +105,7 @@ func (sp *tagServiceProvider) GetActiveTags() ([]Tag, error) {
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	err = conn.GetMany(bson.M{"Active": true}, &tags)
+	err = conn.GetMany(bson.M{"active": true}, &tags)
 
 	return tags, err
 }
@@ -139,7 +139,7 @@ func (sp *tagServiceProvider) Create(tag *string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	conn.GetUniqueOne(bson.M{"Tag": tag}, tagInfo)
+	conn.GetUniqueOne(bson.M{"tag": tag}, tagInfo)
 	return tagInfo.TagID.Hex(), nil
 }
 
@@ -150,11 +150,11 @@ func (sp *tagServiceProvider) Modify(id, tag *string, active *bool) error {
 
 	updater := bson.M{}
 	if tag != nil {
-		updater["Tag"] = *tag
+		updater["tag"] = *tag
 	}
 
 	if active != nil {
-		updater["Active"] = *active
+		updater["active"] = *active
 	}
 
 	return conn.Update(bson.M{"_id": bson.ObjectIdHex(*id)}, updater)
@@ -167,7 +167,7 @@ func (sp *tagServiceProvider) GetID(tag []string) (bson.ObjectId, error) {
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	query := bson.M{"Tag": tag, "Active": true}
+	query := bson.M{"tag": tag, "active": true}
 
 	err := conn.GetUniqueOne(query, &tagInfo)
 	if err != nil {
@@ -175,9 +175,4 @@ func (sp *tagServiceProvider) GetID(tag []string) (bson.ObjectId, error) {
 	}
 
 	return tagInfo.TagID, nil
-}
-
-// Exist check if the Tag exists.
-func (sp *tagServiceProvider) Exist(tag Tag)  {
-
 }

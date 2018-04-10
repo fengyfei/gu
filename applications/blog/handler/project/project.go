@@ -35,15 +35,16 @@ import (
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
-	"github.com/fengyfei/gu/models/blog/project"
 	"gopkg.in/mgo.v2/bson"
+
+	"github.com/fengyfei/gu/models/blog/project"
 )
 
 func Create(c *server.Context) error {
 	var req struct {
-		Title    string `json:"title"`
-		Abstract string `json:"abstract"`
-		Content  string `json:"content"`
+		Title    string `json:"title" validate:"required,max=32"`
+		Abstract string `json:"abstract" validate:"max=64"`
+		Content  string `json:"content" validate:"required"`
 		Image    string `json:"image"`
 	}
 
@@ -101,10 +102,10 @@ func Delete(c *server.Context) error {
 
 func Modify(c *server.Context) error {
 	var req struct {
-		ID       bson.ObjectId `json:"id"`
-		Title    string        `json:"title"`
+		ID       bson.ObjectId `json:"id" validate:"required"`
+		Title    string        `json:"title" validate:"required,max=32"`
 		Abstract string        `json:"abstract"`
-		Content  string        `json:"content"`
+		Content  string        `json:"content" validate:"required"`
 		Image    string        `json:"image"`
 	}
 
@@ -136,7 +137,7 @@ func Modify(c *server.Context) error {
 
 func GetID(c *server.Context) error {
 	var req struct {
-		Title string `json:"title"`
+		Title string `json:"title" validate:"required"`
 	}
 	if err := c.JSONBody(&req); err != nil {
 		logger.Error(err)
@@ -159,7 +160,7 @@ func GetID(c *server.Context) error {
 
 func GetByID(c *server.Context) error {
 	var req struct {
-		ID string `json:"id"`
+		ID string `json:"id" validate:"required"`
 	}
 	if err := c.JSONBody(&req); err != nil {
 		logger.Error(err)

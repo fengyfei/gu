@@ -75,25 +75,25 @@ func init() {
 type (
 	// Article represents the article information.
 	Article struct {
-		ID        bson.ObjectId `bson:"_id,omitempty"`
-		AuthorID  int32         `bson:"AuthorID"`
-		AuditorID int32         `bson:"AuditorID"`
-		Title     string        `bson:"Title"`
-		Abstract  string        `bson:"Abstract"`
-		Content   string        `bson:"Content"`
-		Image     string        `bson:"Image"`
-		Tags      []string      `bson:"Tags"`
-		View      uint32        `bson:"view"`
-		CreatedAt time.Time     `bson:"CreatedAt"`
-		UpdatedAt time.Time     `bson:"UpdatedAt"`
-		Status    int8          `bson:"status"`
+		ID        bson.ObjectId   `bson:"_id,omitempty"`
+		AuthorID  int32           `bson:"authorid"`
+		AuditorID int32           `bson:"auditorid"`
+		Title     string          `bson:"title"`
+		Brief     string          `bson:"brief"`
+		Content   string          `bson:"content"`
+		Image     string          `bson:"image"`
+		TagsID    []bson.ObjectId `bson:"tagsid"`
+		Views     float64         `bson:"views"`
+		Created   time.Time       `bson:"created"`
+		Updated   time.Time       `bson:"updated"`
+		Status    int8            `bson:"status"`
 	}
 	// Art is Article response struct.
 	Art struct {
-		ID       bson.ObjectId `bson:"_id,omitempty"`
-		Title    string        `bson:"Title"`
-		Abstract string        `bson:"Abstract"`
-		Image    string        `bson:"Image"`
+		ID    bson.ObjectId `bson:"_id,omitempty"`
+		Title string        `bson:"title"`
+		Brief string        `bson:"brief"`
+		Image string        `bson:"image"`
 	}
 )
 
@@ -102,14 +102,14 @@ func (sp *articleServiceProvider) Create(art *Article) (string, error) {
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	art.CreatedAt = time.Now()
-	art.UpdatedAt = art.CreatedAt
+	art.Created = time.Now()
+	art.Updated = art.Created
 
 	err := conn.Insert(art)
 	if err != nil {
 		return "", err
 	}
-	query := bson.M{"Title": art.Title}
+	query := bson.M{"title": art.Title}
 	conn.GetUniqueOne(query, &art)
 
 	return art.ID.Hex(), nil
@@ -152,7 +152,7 @@ func (sp *articleServiceProvider) ModifyStatus(articleID string, status int8, st
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	updater := bson.M{"$set": bson.M{"status": status, "AuditorID": staffID}}
+	updater := bson.M{"$set": bson.M{"status": status, "auditorid": staffID, "updated": time.Now()}}
 	return conn.Update(bson.M{"_id": bson.ObjectIdHex(articleID)}, updater)
 }
 
@@ -206,27 +206,27 @@ func (sp *articleServiceProvider) AddTags(articleID string, tags []string) error
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	return conn.Update(bson.M{"_id": bson.ObjectIdHex(articleID)}, bson.M{"$pushAll": bson.M{"Tag": tags}})
+	return conn.Update(bson.M{"_id": bson.ObjectIdHex(articleID)}, bson.M{"$pushAll": bson.M{"tagsid": tags}})
 }
 
 // RemoveTags remove tags from specified article.
-func (sp *articleServiceProvider) RemoveTags(articleID string, tags []string) error {
+func (sp *articleServiceProvider) RemoveTags(articleID string, tagsid []bson.ObjectId) error {
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	return conn.Update(bson.M{"_id": bson.ObjectIdHex(articleID)}, bson.M{"$pullAll": bson.M{"Tag": tags}})
+	return conn.Update(bson.M{"_id": bson.ObjectIdHex(articleID)}, bson.M{"$pullAll": bson.M{"tagsid": tagsid}})
 }
 
 // ModifyArticle update article.
-func (sp *articleServiceProvider) ModifyArticle(articleID string, article Article) error {
+func (sp *articleServiceProvider) ModifyArticle(articleID string, article *Article) error {
 	conn := session.Connect()
 	defer conn.Disconnect()
 
 	updater := bson.M{"$set": bson.M{
-		"Title":    article.Title,
-		"Content":  article.Content,
-		"Abstract": article.Abstract,
-		"Tag":      article.Tags,
+		"title":   article.Title,
+		"content": article.Content,
+		"brief":   article.Brief,
+		"tagsid":  article.TagsID,
 	}}
 	return conn.Update(bson.M{"_id": bson.ObjectIdHex(articleID)}, updater)
 }
@@ -241,12 +241,12 @@ func (sp *articleServiceProvider) UpdateView(articleID *string, num uint32) erro
 }
 
 // GetByTag get article by tag.
-func (s *articleServiceProvider) GetByTag(tag string) ([]Art, error) {
+func (s *articleServiceProvider) GetByTagId(tid string) ([]Art, error) {
 	conn := session.Connect()
 	defer conn.Disconnect()
 
 	var art []Art
-	q := bson.M{"Tags": tag, "status": blog.Approval}
+	q := bson.M{"tagsid": tid, "status": blog.Approval}
 	err := conn.GetMany(q, &art)
 	if err != nil {
 		return nil, err
@@ -260,7 +260,7 @@ func (s *articleServiceProvider) GetByAuthorID(id int32) ([]Art, error) {
 	defer conn.Disconnect()
 
 	var art []Art
-	q := bson.M{"AuthorID": id, "status": blog.Approval}
+	q := bson.M{"authorid": id, "status": blog.Approval}
 	err := conn.GetMany(q, &art)
 	if err != nil {
 		return nil, err
