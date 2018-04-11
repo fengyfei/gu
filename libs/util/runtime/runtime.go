@@ -33,7 +33,7 @@ var (
 )
 
 // PanicHandlers is a list of functions which will be invoked when a panic happens.
-var PanicHandlers = []func(interface{}){}
+var PanicHandlers = []func(interface{}){logPanic}
 
 // HandleCrash simply catches a crash and logs an error. Meant to be called via
 // defer.  Additional context-specific handlers can be provided, and will be

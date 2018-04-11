@@ -30,84 +30,127 @@
 package workqueue
 
 import (
-	"fmt"
-	"time"
+	"sync"
 	"testing"
-
-	"github.com/fengyfei/gu/libs/util/runtime"
+	"time"
 )
 
-func TestNilFunc(t *testing.T) {
-	var err interface{}
-
-	f := func(r interface{}) {
-		err = r
+func TestParam(t *testing.T) {
+	f := func(i int) {
 	}
 
-	runtime.PanicHandlers = append(runtime.PanicHandlers, f)
+	err := Parallelize(-1, 3, f)
+	if err == nil {
+		t.Fatalf("error")
+	}
+	err = Parallelize(-1, -1, f)
+	if err == nil {
+		t.Fatalf("error")
+	}
 
-	Parallelize(1, 1, nil)
-
-	fmt.Println(err)
-	time.Sleep(1e9)
-}
-
-func TestSimple(t *testing.T) {
-		f := func(i int) {
-			fmt.Println("a")
-		}
-
-		defer func() {
-			if err := recover(); err != nil {
-				fmt.Println(err)
-			}
-		}()
-
-		defer func() {
-			Parallelize(-1, 3, f)
-		}()
-
-		defer func() {
-			if err := recover(); err != nil {
-				fmt.Println(err)
-			}
-		}()
-
-		defer func() {
-			Parallelize(-1, -1, f)
-		}()
-
-		defer func() {
-			if err := recover(); err != nil {
-				fmt.Println(err)
-			}
-		}()
-		Parallelize(1, -1, f)
+	err = Parallelize(1, -1, f)
+	if err == nil {
+		t.Fatalf("error")
+	}
+	err = Parallelize(1, 1, nil)
+	if err == nil {
+		t.Fatalf("error")
+	}
 }
 
 func TestCompare(t *testing.T) {
-	var num = []int{1, 2, 3}
-	var numb = []int{3, 2, 1}
-	var sum = make([]int, 3)
+	var (
+		err    error
+		num    = []int{1, 2, 3}
+		numb   = []int{3, 2, 1}
+		sum    = make([]int, 3)
+		result = []int{4, 4, 4}
+	)
 
 	f := func(i int) {
 		sum[i] = num[i] + numb[i]
 	}
 
-	Parallelize(3, 3, f)
-	fmt.Println(sum)
+	err = Parallelize(3, 3, f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := range sum {
+		if sum[i] != result[i] {
+			t.Fatalf("error")
+		}
+	}
 
-	Parallelize(2, 3, f)
-	fmt.Println(sum)
+	err = Parallelize(2, 3, f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := range sum {
+		if sum[i] != result[i] {
+			t.Fatalf("error")
+		}
+	}
 
-	Parallelize(5, 3, f)
-	fmt.Println(sum)
+	err = Parallelize(5, 3, f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := range sum {
+		if sum[i] != result[i] {
+			t.Fatalf("error")
+		}
+	}
+}
+
+func TestMap(t *testing.T) {
+	var (
+		m = map[string]int{
+			"first":  1,
+			"second": 2,
+			"third":  3,
+		}
+		err  error
+		keys []string
+		n    = make(map[string]int)
+		mu   = sync.Mutex{}
+	)
+
+	for key := range m {
+		keys = append(keys, key)
+	}
+
+	f := func(i int) {
+		mu.Lock()
+		defer mu.Unlock()
+
+		n[keys[i]] = m[keys[i]]
+	}
+
+	err = Parallelize(3, 3, f)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for k := range m {
+		if m[k] != n[k] {
+			t.Fatalf("error")
+		}
+	}
 }
 
 func TestHandleCrash(t *testing.T) {
-	var num = []int{1, 2, 3}
-	var numb = []int{3, 2, 1}
-	var sum = make([]int, 3)
+	var (
+		err    error
+		num    = []int{1, 2, 3}
+		numb   = []int{3, 2, 1}
+		sum    = make([]int, 3)
+		result = []int{4, 0, 4}
+		e      interface{}
+	)
+
+	errHandler := func(err interface{}) {
+		e = err
+	}
 
 	f := func(i int) {
 		if i == 1 {
@@ -116,6 +159,16 @@ func TestHandleCrash(t *testing.T) {
 		sum[i] = num[i] + numb[i]
 	}
 
-	Parallelize(3, 3, f)
-	fmt.Println(sum)
+	err = Parallelize(3, 3, f, errHandler)
+
+	if err != nil {
+		t.Fatalf("error")
+	}
+	for i := range sum {
+		if sum[i] != result[i] {
+			t.Fatalf("error")
+		}
+	}
+
+	time.Sleep(1e9)
 }

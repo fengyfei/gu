@@ -15,15 +15,26 @@ package workqueue
 
 import (
 	"sync"
+	"errors"
 
 	utilruntime "github.com/fengyfei/gu/libs/util/runtime"
+	"github.com/fengyfei/gu/libs/logger"
 )
 
 type DoWorkPieceFunc func(piece int)
 
+var (
+	invalidParam = errors.New("Invalid Param")
+)
+
 // Parallelize is a very simple framework that allow for parallelizing
 // N independent pieces of work.
-func Parallelize(workers, pieces int, doWorkPiece DoWorkPieceFunc) {
+func Parallelize(workers, pieces int, doWorkPiece DoWorkPieceFunc, additionalHandlers ...func(interface{})) error{
+	if workers <= 0 || pieces <= 0 || doWorkPiece == nil {
+		logger.Error(invalidParam)
+		return invalidParam
+	}
+
 	toProcess := make(chan int, pieces)
 	for i := 0; i < pieces; i++ {
 		toProcess <- i
@@ -38,7 +49,7 @@ func Parallelize(workers, pieces int, doWorkPiece DoWorkPieceFunc) {
 	wg.Add(workers)
 	for i := 0; i < workers; i++ {
 		go func() {
-			defer utilruntime.HandleCrash()
+			defer utilruntime.HandleCrash(additionalHandlers...)
 			defer wg.Done()
 			for piece := range toProcess {
 				doWorkPiece(piece)
@@ -46,4 +57,5 @@ func Parallelize(workers, pieces int, doWorkPiece DoWorkPieceFunc) {
 		}()
 	}
 	wg.Wait()
+	return nil
 }
