@@ -45,6 +45,8 @@ import (
 type UserServiceProvider struct{}
 
 const (
+	// invalid sex
+	NilSex = 0
 	// WeChat
 	WeChat = iota
 	// Mobile
@@ -66,7 +68,7 @@ type User struct {
 	UserID    uint32    `gorm:"column:id;primary_key;auto_increment" json:"user_id"`
 	UserName  string    `gorm:"column:username;type:varchar(128)" json:"user_name"`
 	Avatar    string    `gorm:"column:avatar" json:"avatar"`
-	Sex       uint8     `gorm:"column:sex" json:"sex"` // 0 -> male, 1 -> female
+	Sex       uint8     `gorm:"column:sex" json:"sex"` // 1 -> male, 2 -> female
 	Password  string    `gorm:"column:password;type:varchar(128)" json:"password"`
 	Phone     string    `gorm:"type:varchar(16)" json:"phone"`
 	Type      int       `gorm:"column:type"` // 0 -> Wechat, 1 -> Mobile
@@ -164,7 +166,9 @@ func (this *UserServiceProvider) ChangeInfo(conn orm.Connection, id uint32, user
 	}
 
 	user.UserName = userName
-	user.Sex = sex
+	if sex != NilSex {
+		user.Sex = sex
+	}
 
 	return db.Save(&user).Error
 }
