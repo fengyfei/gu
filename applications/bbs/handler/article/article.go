@@ -30,8 +30,6 @@
 package article
 
 import (
-	"net"
-	"os"
 	"strings"
 
 	"gopkg.in/mgo.v2/bson"
@@ -53,8 +51,8 @@ type (
 	}
 
 	createArticle struct {
-		Title      string `json:"title"       validate:"required"`
-		Content    string `json:"content"     validate:"required"`
+		Title      string `json:"title"       validate:"required,max=50,min=20"`
+		Content    string `json:"content"     validate:"required,min=20"`
 		AuthorID   uint32 `json:"authorid"`
 		CategoryID string `json:"categoryid"  validate:"required"`
 		TagID      string `json:"tagid"       validate:"required"`
@@ -117,7 +115,7 @@ func AddArticle(this *server.Context) error {
 	}
 
 	if reqAdd.Image != "" {
-		imgpath, err = util.Save(userID, reqAdd.Image, util.Image)
+		imgpath, err = util.SaveImg(userID, reqAdd.Image, util.Image)
 		if err != nil {
 			return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 		}
@@ -127,24 +125,26 @@ func AddArticle(this *server.Context) error {
 
 	brief := util.GetBrief(reqAdd.Content)
 
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		logger.Error(err)
-		os.Exit(1)
-	}
+	//addrs, err := net.InterfaceAddrs()
+	//if err != nil {
+	//	logger.Error(err)
+	//	os.Exit(1)
+	//}
+	//
+	//for _, address := range addrs {
+	//	if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+	//		if ipnet.IP.To4() != nil {
+	//			ip = ipnet.IP.String()
+	//			fmt.Println(ip)
+	//		}
+	//
+	//	}
+	//}
 
-	for _, address := range addrs {
-		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				ip = ipnet.IP.String()
-			}
-
-		}
-	}
-
-	ip = "http://" + ip + ":8080"
+	ip = "http://192.168.0.105:8080"
 	path := strings.Replace(conpath, ".", ip, 1)
 	imgpath = strings.Replace(imgpath, ".", ip, 1)
+
 
 	addArticle := &article.Article{
 		Title:      reqAdd.Title,

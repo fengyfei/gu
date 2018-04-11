@@ -24,8 +24,7 @@
 
 /*
  * Revision History:
- *     Initial: 2018/01/21        Chen Yanchen
- *     Modify : 2018/03/25        Tong Yuehong
+ *    Initial : 2018/03/25        Tong Yuehong
  */
 
 package user
@@ -49,10 +48,10 @@ import (
 )
 
 const (
-	WechatURL = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=%s&secret=%s&code=%s&grant_type=authorization_code"
+	WechatURL   = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=%s&secret=%s&code=%s&grant_type=authorization_code"
 	UserInfoURL = "https://api.weixin.qq.com/sns/userinfo?access_token=%s&openid=%s&lang=zh_CN"
-	APPID     = ""
-	SECRET    = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+	APPID       = ""
+	SECRET      = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
 )
 
 type (
@@ -68,12 +67,12 @@ type (
 	}
 
 	wechatCode struct {
-		Code     string `json:"code" validate:"required"`
+		Code string `json:"code" validate:"required"`
 	}
 
 	wechatData struct {
-		AccessToken  string
-		OpenID       string
+		AccessToken string
+		OpenID      string
 	}
 
 	userData struct {
@@ -89,13 +88,20 @@ type (
 
 	changeInfo struct {
 		UserName string `json:"username"`
-		Sex      uint8  `json:"sex"`
-		Avatar   string `json:"avatar"`
+		Sex    uint8 `json:"sex"`
+	}
+
+	changeAvatar struct {
+		Avatar string `json:"avatar"`
 	}
 
 	changePass struct {
 		OldPass string `json:"oldpass" validate:"required,min=6,max=30"`
 		NewPass string `json:"newpass" validate:"required,min=6,max=30"`
+	}
+
+	userid struct {
+		UserID uint32 `json:"userid"`
 	}
 )
 
@@ -210,44 +216,36 @@ func AddPhone(c *server.Context) error {
 }
 
 // ChangeUserInfo  changes user's information.
-func ChangeUserInfo(this *server.Context) error {
+func ChangeUserInfo(c *server.Context) error {
 	var (
-		changeInfo changeInfo
+		info changeInfo
 	)
 
-	if err := this.JSONBody(&changeInfo); err != nil {
+	if err := c.JSONBody(&info); err != nil {
 		logger.Error(err)
-		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	if err := this.Validate(&changeInfo); err != nil {
+	if err := c.Validate(&info); err != nil {
 		logger.Error(err)
-		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	userid := uint32(this.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(float64))
+	userid := uint32(c.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(float64))
 
 	conn, err := initialize.Pool.Get()
 	defer initialize.Pool.Release(conn)
 	if err != nil {
 		logger.Error("Can not connected mysql.", err)
-		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	if len(changeInfo.Avatar) > 0 {
-		changeInfo.Avatar, err = user.SavePicture(changeInfo.Avatar, "./avatar/", userid)
-		if err != nil {
-			logger.Error(err)
-			return core.WriteStatusAndDataJSON(this, constants.ErrInternalServerError, nil)
-		}
-	}
-
-	err = user.UserService.ChangeInfo(conn, userid, changeInfo.UserName, changeInfo.Sex)
+	err = user.UserService.ChangeInfo(conn, userid, info.UserName, info.Sex)
 	if err != nil {
 		logger.Error(err)
 	}
 
-	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, nil)
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
 // ChangePassword changes password.
@@ -282,9 +280,21 @@ func ChangePassword(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
 }
 
-// BbsUserInfo get user info in bbs.
-func BbsUserInfo(c *server.Context) error {
-	userid := uint32(c.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(float64))
+// ChangeAvatar changes avatar.
+func ChangeAvatar(c *server.Context) error {
+	var avatar changeAvatar
+
+	if err := c.JSONBody(&avatar); err != nil {
+		logger.Error("JsonBody Error.", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	if err := c.Validate(&avatar); err != nil {
+		logger.Error("Validate Error.", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	userid := c.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(uint32)
 
 	conn, err := initialize.Pool.Get()
 	defer initialize.Pool.Release(conn)
@@ -293,26 +303,55 @@ func BbsUserInfo(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	u, err := user.UserService.GetUserByID(conn, userid)
+	path, err := user.SavePicture(avatar.Avatar, "./bbs/", userid)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInternalServerError, nil)
+	}
+
+	err = user.UserService.ChangeAvatar(conn, userid, path)
+
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, nil)
+}
+
+// BbsUserInfo get user info in bbs.
+func BbsUserInfo(c *server.Context) error {
+	var (
+		userid userid
+	)
+
+	if err := c.JSONBody(&userid); err != nil {
+		logger.Error("JsonBody Error.", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	conn, err := initialize.Pool.Get()
+	defer initialize.Pool.Release(conn)
+	if err != nil {
+		logger.Error("Can not connected mysql.", err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
+	}
+
+	u, err := user.UserService.GetUserByID(conn, userid.UserID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	artNum, err := article.ArticleService.ArtNum(userid)
+	artNum, err := article.ArticleService.ArtNum(userid.UserID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
 	}
 
-	comNum, err := article.CommentService.CommentNum(userid)
+	comNum, err := article.CommentService.CommentNum(userid.UserID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
 	}
 
 	bbsUserInfo := &bbsUserInfo{
-		UserID:     userid,
+		UserID:     userid.UserID,
 		Username:   u.UserName,
 		Phone:      u.Phone,
 		Avatar:     u.Avatar,

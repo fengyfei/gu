@@ -38,12 +38,14 @@ import (
 	"time"
 
 	"github.com/fengyfei/gu/libs/logger"
+	"encoding/base64"
 )
 
 var (
 	content = "./content/"
 	image   = "./image/"
-	suffix  = "txt"
+	consuffix  = "txt"
+	imgsuffix = "jpg"
 	Content = 0
 	Image   = 1
 )
@@ -57,9 +59,9 @@ func fileName(userID uint32, diff int) string {
 	id := strconv.FormatUint(uint64(userID), 10)
 
 	if diff == Content {
-		return content + time + id + "." + suffix
+		return content + time + id + "." + consuffix
 	} else {
-		return image + time + id + "." + suffix
+		return image + time + id + "." + imgsuffix
 	}
 }
 
@@ -67,6 +69,18 @@ func Save(userID uint32, content string, diff int) (string, error) {
 	fileName := fileName(userID, diff)
 
 	err := ioutil.WriteFile(fileName, []byte(content), 0777)
+	if err != nil {
+		logger.Error(err)
+	}
+
+	return fileName, err
+}
+
+func SaveImg(userID uint32, image string, diff int) (string, error) {
+	fileName := fileName(userID, diff)
+
+	img,  _ := base64.StdEncoding.DecodeString(image)
+	err := ioutil.WriteFile(fileName, []byte(img), 0777)
 	if err != nil {
 		logger.Error(err)
 	}

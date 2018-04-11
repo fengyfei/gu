@@ -291,7 +291,7 @@ func (sp *articleServiceProvider) ArtNum(userID uint32) (int, error) {
 	conn := articleSession.Connect()
 	defer conn.Disconnect()
 
-	query := bson.M{"userID": userID, "Active": true}
+	query := bson.M{"authorID": userID, "Active": true}
 
 	artNum, err := conn.Collection().Find(query).Count()
 	if err != nil {

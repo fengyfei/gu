@@ -213,7 +213,7 @@ func (sp *commentServiceProvider) CommentNum(userID uint32) (int, error) {
 	conn := commentSession.Connect()
 	defer conn.Disconnect()
 
-	query := bson.M{"creatorID": userID, "status": bson.M{"$ne": bbs.CommentDeleted}}
+	query := bson.M{"repliedID": userID, "status": bson.M{"$ne": bbs.CommentDeleted}}
 
 	userComment, err := conn.Collection().Find(query).Count()
 	if err != nil {
