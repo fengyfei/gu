@@ -141,7 +141,7 @@ func AddArticle(this *server.Context) error {
 	//	}
 	//}
 
-	ip = "http://192.168.0.105:8080"
+	ip = "http://192.168.0.107:8080"
 	path := strings.Replace(conpath, ".", ip, 1)
 	imgpath = strings.Replace(imgpath, ".", ip, 1)
 

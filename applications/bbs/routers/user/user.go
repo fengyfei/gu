@@ -54,7 +54,6 @@ func InitRouter(u *server.Router) {
 	u.Post("/bbs/user/changeinfo", user.ChangeUserInfo)
 	u.Post("/bbs/user/changepassword", user.ChangePassword)
 	u.Post("/bbs/user/changeavatar", user.ChangeAvatar)
-
 	u.Post("/bbs/user/info", user.BbsUserInfo)
 
 	u.Post("/bbs/article/insert", article.AddArticle)

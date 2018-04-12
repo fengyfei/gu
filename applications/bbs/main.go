@@ -60,6 +60,10 @@ func main() {
 			http.FileServer(http.Dir("./image")))
 		http.Handle("/image/", i)
 
+		i.h = http.StripPrefix("/img/",
+			http.FileServer(http.Dir("./img")))
+		http.Handle("/img/", i)
+
 		if err := http.ListenAndServe(":8080", nil); err != nil {
 			logger.Error(err)
 		}

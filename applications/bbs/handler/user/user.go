@@ -33,6 +33,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	jwtgo "github.com/dgrijalva/jwt-go"
 
@@ -87,7 +88,7 @@ type (
 	}
 
 	changeInfo struct {
-		UserName string `json:"username"`
+		Name string `json:"name"`
 		Sex    uint8 `json:"sex"`
 	}
 
@@ -231,7 +232,8 @@ func ChangeUserInfo(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	userid := uint32(c.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(float64))
+	//userid := uint32(c.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(float64))
+	userid := uint32(1000)
 
 	conn, err := initialize.Pool.Get()
 	defer initialize.Pool.Release(conn)
@@ -240,7 +242,7 @@ func ChangeUserInfo(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = user.UserService.ChangeInfo(conn, userid, info.UserName, info.Sex)
+	err = user.UserService.ChangeInfo(conn, userid, info.Name, info.Sex)
 	if err != nil {
 		logger.Error(err)
 	}
@@ -294,8 +296,8 @@ func ChangeAvatar(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	userid := c.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(uint32)
-
+	//userid := c.Request().Context().Value("user").(jwtgo.MapClaims)["userid"].(uint32)
+	userid := uint32(1000)
 	conn, err := initialize.Pool.Get()
 	defer initialize.Pool.Release(conn)
 	if err != nil {
@@ -303,11 +305,14 @@ func ChangeAvatar(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	path, err := user.SavePicture(avatar.Avatar, "./bbs/", userid)
+	path, err := user.SavePicture(avatar.Avatar, "bbs/", userid)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInternalServerError, nil)
 	}
+
+	ip := "http://192.168.0.107:8080"
+	path = strings.Replace(path, ".", ip, 1)
 
 	err = user.UserService.ChangeAvatar(conn, userid, path)
 
