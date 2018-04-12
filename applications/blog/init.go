@@ -59,11 +59,13 @@ func customSkipper(c *server.Context) bool {
 	URLMap["/blog/article/approval"] = struct{}{}
 	URLMap["/blog/article/getbyid"] = struct{}{}
 	URLMap["/blog/article/updateview"] = struct{}{}
+	URLMap["/blog/article/getbyauthorid"] = struct{}{}
+	URLMap["/blog/article/getbytag"] = struct{}{}
 
-	URLMap["/blog/tag/list"] = struct{}{}
 	URLMap["/blog/tag/activelist"] = struct{}{}
 	URLMap["/blog/tag/info"] = struct{}{}
 
+	URLMap["/blog/project/list"] = struct{}{}
 	URLMap["/blog/project/getid"] = struct{}{}
 	URLMap["/blog/project/getbyid"] = struct{}{}
 

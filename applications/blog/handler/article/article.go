@@ -69,7 +69,7 @@ func CreateArticle(this *server.Context) error {
 	AuthorID := int32(this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64))
 
 	a := &article.Article{
-		AuthorID: AuthorID,
+		AuthorId: AuthorID,
 		Title:    req.Title,
 		Brief:    req.Brief,
 		Content:  req.Content,
@@ -90,7 +90,7 @@ func CreateArticle(this *server.Context) error {
 // ArticleByID return article by articleID.
 func ArticleByID(this *server.Context) error {
 	var req struct {
-		ID string `json:"aid" validate:"required"`
+		ID string `json:"aid" validate:"required,len=24"`
 	}
 
 	if err := this.JSONBody(&req); err != nil {
@@ -103,24 +103,39 @@ func ArticleByID(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	articles, err := article.ArticleService.GetByID(req.ID)
+	a, err := article.ArticleService.GetByID(req.ID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
+	resp, err := replyArticle(&a)
+	if err != nil {
+		logger.Error(err)
+		return err
+	}
 
-	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, articles)
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, &resp)
 }
 
 // ListCreated return articles which are waiting for checking.
 func ListCreated(this *server.Context) error {
+	var resp []respArticle
+
 	articles, err := article.ArticleService.ListCreated()
+	for _, v := range articles {
+		a, err := replyArticle(&v)
+		if err != nil {
+			return err
+		}
+		resp = append(resp, *a)
+	}
+
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, articles)
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, resp)
 }
 
 // ListApproval returns the articles which are passed.
@@ -155,9 +170,9 @@ func ModifyStatus(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	StaffID := int32(this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64))
+	StaffId := int32(this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64))
 
-	err := article.ArticleService.ModifyStatus(req.ArticleID, req.Status, StaffID)
+	err := article.ArticleService.ModifyStatus(req.ArticleID, req.Status, StaffId)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -230,15 +245,14 @@ func ModifyArticle(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	AuditorID := int32(this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64))
+	// AuditorID := int32(this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64))
 
 	a := &article.Article{
-		AuditorID: AuditorID,
-		Title:     req.Title,
-		Content:   req.Content,
-		Brief:     req.Brief,
-		TagsID:    req.TagsID,
-		Image:     req.Image,
+		Title:   req.Title,
+		Content: req.Content,
+		Brief:   req.Brief,
+		TagsID:  req.TagsID,
+		Image:   req.Image,
 	}
 
 	err := article.ArticleService.ModifyArticle(req.ArticleID, a)
@@ -300,57 +314,61 @@ func GetByAuthorID(c *server.Context) error {
 }
 
 type respArticle struct {
-	ID      string
-	Author  string
-	Auditor string
-	Title   string
-	Brief   string
-	Content string
-	Image   string
-	Tags    []string
-	Views   float64
-	Created string
-	Updated string
-	Status  int8
+	ID        string
+	AuthorId  int32
+	Author    string
+	AuditorId int32
+	Title     string
+	Brief     string
+	Content   string
+	Image     string
+	TagsId    []bson.ObjectId
+	Tags      []string
+	Views     float64
+	Created   string
+	Updated   string
+	Status    int8
 }
 
-//
-func reply(a *article.Article) (*respArticle, error) {
+// replyArticle return the article details.
+func replyArticle(a *article.Article) (*respArticle, error) {
 	var tags []string
 
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
+		logger.Error(err)
 		return nil, err
 	}
 
-	author, err := staff.Service.GetByID(conn, a.AuthorID)
+	author, err := staff.Service.GetByID(conn, a.AuthorId)
 	if err != nil {
-		return nil, err
+		author.Name = ""
 	}
-	autior, err := staff.Service.GetByID(conn, a.AuditorID)
-	if err != nil {
-		return nil, err
-	}
-	for _, tid := range a.TagsID {
-		id := tid.Hex()
-		t, _ := tag.TagService.GetByID(&id)
+
+	for _, v := range a.TagsID {
+		tid := v.Hex()
+		t, err := tag.TagService.GetByID(&tid)
+		if err != nil {
+			return nil, err
+		}
 		tags = append(tags, t.Tag)
 	}
-
 	art := &respArticle{
-		ID:      a.ID.Hex(),
-		Author:  author.Name,
-		Auditor: autior.Name,
-		Title:   a.Title,
-		Brief:   a.Brief,
-		Content: a.Content,
-		Image:   a.Image,
-		Tags:    tags,
-		Views:   a.Views,
-		Created: a.Created.String(),
-		Updated: a.Updated.String(),
-		Status:  a.Status,
+		ID:        a.ID.Hex(),
+		AuthorId:  a.AuthorId,
+		Author:    author.Name,
+		AuditorId: a.AuditorId,
+		Title:     a.Title,
+		Brief:     a.Brief,
+		Content:   a.Content,
+		Image:     a.Image,
+		TagsId:    a.TagsID,
+		Tags:      tags,
+		Views:     a.Views,
+		Created:   a.Created.String(),
+		Updated:   a.Updated.String(),
+		Status:    a.Status,
 	}
 	return art, nil
 }
