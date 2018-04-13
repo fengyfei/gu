@@ -56,7 +56,8 @@ func CreateArticle(this *server.Context) error {
 		Image   string          `json:"image"`
 	}
 
-	if err := this.JSONBody(&req); err != nil {
+	err := this.JSONBody(&req)
+	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
@@ -67,6 +68,12 @@ func CreateArticle(this *server.Context) error {
 	}
 
 	AuthorID := int32(this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64))
+
+	req.Image, err = util.SavePicture(req.Image, "image/", req.Title)
+	if err != nil {
+		logger.Error("Save image failed.")
+		return core.WriteStatusAndDataJSON(this, 120, nil)
+	}
 
 	a := &article.Article{
 		AuthorId: AuthorID,
@@ -82,7 +89,6 @@ func CreateArticle(this *server.Context) error {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
-	req.Image, err = util.SavePicture(req.Image, "/image", id)
 
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, id)
 }
