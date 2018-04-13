@@ -67,12 +67,12 @@ func AddCategory(this *server.Context) error {
 	)
 
 	if err := this.JSONBody(&create); err != nil {
-		logger.Error(err)
+		logger.Error("AddCategory json", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
 	if err := this.Validate(&create); err != nil {
-		logger.Error(err)
+		logger.Error("AddCategory Validate()", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
@@ -96,12 +96,12 @@ func UpdateCategoryVisit(this *server.Context) error {
 	)
 
 	if err := this.JSONBody(&visit); err != nil {
-		logger.Error(err)
+		logger.Error("UpdateCategoryVisit json", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
 	if err := this.Validate(&visit); err != nil {
-		logger.Error("Validate():", err)
+		logger.Error("UpdateCategoryVisit Validate():", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
@@ -121,12 +121,12 @@ func AddTag(this *server.Context) error {
 	)
 
 	if err := this.JSONBody(&createTag); err != nil {
-		logger.Error(err)
+		logger.Error("AddTag", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
 	if err := this.Validate(&createTag); err != nil {
-		logger.Error(err)
+		logger.Error("AddTag Validate():", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
@@ -146,7 +146,7 @@ func DeleteCategory(this *server.Context) error {
 	)
 
 	if err := this.JSONBody(&category); err != nil {
-		logger.Error(err)
+		logger.Error("DeleteCategory json", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
@@ -168,7 +168,7 @@ func DeleteTag(this *server.Context) error {
 		}
 	)
 	if err := this.JSONBody(&tag); err != nil {
-		logger.Error(err)
+		logger.Error("DeleteTag json: ", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
@@ -186,14 +186,14 @@ func DeleteTag(this *server.Context) error {
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, nil)
 }
 
-// CategoryInfo return category's information.
+// ListTags return all tags.
 func ListTags(this *server.Context) error {
 	var (
 		category category
 	)
 
 	if err := this.JSONBody(&category); err != nil {
-		logger.Error(err)
+		logger.Error("ListTags json: ", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 

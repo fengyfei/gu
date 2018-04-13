@@ -37,17 +37,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fengyfei/gu/libs/logger"
 	"encoding/base64"
+	"github.com/fengyfei/gu/libs/logger"
 )
 
 var (
-	content = "./content/"
-	image   = "./image/"
-	consuffix  = "txt"
+	content   = "./content/"
+	image     = "./image/"
+	consuffix = "txt"
 	imgsuffix = "jpg"
-	Content = 0
-	Image   = 1
+	Content   = 0
+	Image     = 1
 )
 
 func fileName(userID uint32, diff int) string {
@@ -79,7 +79,7 @@ func Save(userID uint32, content string, diff int) (string, error) {
 func SaveImg(userID uint32, image string, diff int) (string, error) {
 	fileName := fileName(userID, diff)
 
-	img,  _ := base64.StdEncoding.DecodeString(image)
+	img, _ := base64.StdEncoding.DecodeString(image)
 	err := ioutil.WriteFile(fileName, []byte(img), 0777)
 	if err != nil {
 		logger.Error(err)

@@ -98,11 +98,9 @@ func AddComment(this *server.Context) error {
 	)
 
 	if err := this.JSONBody(&req); err != nil {
-		logger.Error(err)
+		logger.Error("AddComment json: ", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
-
-	fmt.Println("%+v", req)
 
 	if !bson.IsObjectIdHex(req.ArtID) {
 		logger.Error(bbs.InvalidObjectId)
@@ -112,7 +110,7 @@ func AddComment(this *server.Context) error {
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
-		logger.Error("Can't get mysql connection:", err)
+		logger.Error("AddComment Can't get mysql connection:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
 	}
 
@@ -151,7 +149,6 @@ func AddComment(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	fmt.Println("5555555")
 	info := &createReply{
 		CreatorID: userID,
 		Creator:   creator.UserName,
@@ -169,7 +166,7 @@ func DeleteComment(this *server.Context) error {
 	)
 
 	if err := this.JSONBody(&commentID); err != nil {
-		logger.Error(err)
+		logger.Error("DeleteComment json: ", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
@@ -194,7 +191,7 @@ func CommentInfo(this *server.Context) error {
 	)
 
 	if err := this.JSONBody(&commentID); err != nil {
-		logger.Error(err)
+		logger.Error("CommentInfo json: ", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
@@ -214,23 +211,23 @@ func CommentInfo(this *server.Context) error {
 
 // UserReply return the information about someone's reply.
 func UserReply(this *server.Context) error {
-	var user struct {
+	var userid struct {
 		UserID uint32 `json:"userID"`
 	}
 
-	if err := this.JSONBody(&user); err != nil {
-		logger.Error(err)
+	if err := this.JSONBody(&userid); err != nil {
+		logger.Error("UserReply json ", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
-		logger.Error("Can't get mysql connection:", err)
+		logger.Error("UserReply Can't get mysql connection:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
 	}
 
-	comments, err := article.CommentService.UserReply(conn, user.UserID)
+	comments, err := article.CommentService.UserReply(conn, userid.UserID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -264,7 +261,7 @@ func GetByArticle(this *server.Context) error {
 	}
 
 	if err := this.JSONBody(&artID); err != nil {
-		logger.Error(err)
+		logger.Error("GetByArticle json: ", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
@@ -276,7 +273,7 @@ func GetByArticle(this *server.Context) error {
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
-		logger.Error("Can't get mysql connection:", err)
+		logger.Error("GetByArticle Can't get mysql connection:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
 	}
 
@@ -309,15 +306,15 @@ func GetByArticle(this *server.Context) error {
 // HistoryMessage return the message which is read by userid.
 func HistoryMessage(this *server.Context) error {
 	var (
-		user userid
+		userid userid
 	)
 
-	if err := this.JSONBody(&user); err != nil {
-		logger.Error(err)
+	if err := this.JSONBody(&userid); err != nil {
+		logger.Error("HistoryMessage json", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	list, err := article.CommentService.HistoryMessage(user.UserID)
+	list, err := article.CommentService.HistoryMessage(userid.UserID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -329,15 +326,15 @@ func HistoryMessage(this *server.Context) error {
 // UnreadMessage return the unread message by userid.
 func UnreadMessage(this *server.Context) error {
 	var (
-		user userid
+		userid userid
 	)
 
-	if err := this.JSONBody(&user); err != nil {
-		logger.Error(err)
+	if err := this.JSONBody(&userid); err != nil {
+		logger.Error("UnreadMessage json: ", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	list, err := article.CommentService.UnreadMessage(user.UserID)
+	list, err := article.CommentService.UnreadMessage(userid.UserID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -353,7 +350,7 @@ func MessageRead(this *server.Context) error {
 	)
 
 	if err := this.JSONBody(&comment); err != nil {
-		logger.Error(err)
+		logger.Error("MessageRead json: ", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 

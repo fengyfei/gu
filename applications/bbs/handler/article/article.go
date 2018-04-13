@@ -85,19 +85,19 @@ func AddArticle(this *server.Context) error {
 	)
 
 	if err := this.JSONBody(&reqAdd); err != nil {
-		logger.Error(err)
+		logger.Error("AddArticle json", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
 	if err := this.Validate(&reqAdd); err != nil {
-		logger.Error("Validate():", err)
+		logger.Error("AddArticle Validate():", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
-		logger.Error("Can't get mysql connection:", err)
+		logger.Error("AddArticle Can't get mysql connection:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
 	}
 
@@ -145,7 +145,6 @@ func AddArticle(this *server.Context) error {
 	path := strings.Replace(conpath, ".", ip, 1)
 	imgpath = strings.Replace(imgpath, ".", ip, 1)
 
-
 	addArticle := &article.Article{
 		Title:      reqAdd.Title,
 		Brief:      brief,
@@ -177,7 +176,7 @@ func GetByArtID(this *server.Context) error {
 	)
 
 	if err := this.JSONBody(&req); err != nil {
-		logger.Error(err)
+		logger.Error("GetByArtID json", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
@@ -205,12 +204,12 @@ func GetByCategoryID(this *server.Context) error {
 	)
 
 	if err := this.JSONBody(&req); err != nil {
-		logger.Error(err)
+		logger.Error("GetByCategoryID json", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
 	if err := this.Validate(&req); err != nil {
-		logger.Error("Validate():", err)
+		logger.Error("GetByCategoryID Validate():", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
@@ -244,12 +243,12 @@ func GetByTagID(this *server.Context) error {
 	)
 
 	if err := this.JSONBody(&req); err != nil {
-		logger.Error(err)
+		logger.Error("GetByTagID", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
 	if err := this.Validate(&req); err != nil {
-		logger.Error("Validate():", err)
+		logger.Error("GetByTagID Validate():", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
@@ -279,7 +278,7 @@ func SearchByTitle(this *server.Context) error {
 	)
 
 	if err := this.JSONBody(&title); err != nil {
-		logger.Error(err)
+		logger.Error("SearchByTitle json", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
@@ -305,17 +304,17 @@ func SearchByTitle(this *server.Context) error {
 // GetByUserID - gets articles by userID.
 func GetByUserID(this *server.Context) error {
 	var (
-		user struct {
+		userid struct {
 			UserID uint32 `json:"userid"`
 		}
 	)
 
-	if err := this.JSONBody(&user); err != nil {
-		logger.Error(err)
+	if err := this.JSONBody(&userid); err != nil {
+		logger.Error("GetByUserID json", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	list, err := article.ArticleService.GetByUserID(user.UserID)
+	list, err := article.ArticleService.GetByUserID(userid.UserID)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -333,7 +332,7 @@ func DeleteArt(this *server.Context) error {
 	)
 
 	if err := this.JSONBody(&artid); err != nil {
-		logger.Error(err)
+		logger.Error("DeleteArt json", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
@@ -356,12 +355,12 @@ func UpdateVisit(this *server.Context) error {
 	)
 
 	if err := this.JSONBody(&visit); err != nil {
-		logger.Error(err)
+		logger.Error("UpdateVisit json", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
 	if err := this.Validate(&visit); err != nil {
-		logger.Error("Validate():", err)
+		logger.Error("UpdateVisit Validate():", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
@@ -388,7 +387,7 @@ func Recommend(this *server.Context) error {
 	)
 
 	if err := this.JSONBody(&req); err != nil {
-		logger.Error(err)
+		logger.Error("Recommend json", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 

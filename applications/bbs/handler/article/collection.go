@@ -44,7 +44,7 @@ func AddCollection(this *server.Context) error {
 	)
 
 	if err := this.JSONBody(&reqAdd); err != nil {
-		logger.Error(err)
+		logger.Error("AddCollection json:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
@@ -96,7 +96,7 @@ func GetByUser(this *server.Context) error {
 	)
 
 	if err := this.JSONBody(&req); err != nil {
-		logger.Error(err)
+		logger.Error("GetByUser json:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 

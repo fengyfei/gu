@@ -89,7 +89,7 @@ type (
 
 	changeInfo struct {
 		Name string `json:"name"`
-		Sex    uint8 `json:"sex"`
+		Sex  uint8  `json:"sex"`
 	}
 
 	changeAvatar struct {
