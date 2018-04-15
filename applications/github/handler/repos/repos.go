@@ -30,6 +30,7 @@
 package repos
 
 import (
+	"net/http"
 	"time"
 
 	"gopkg.in/mgo.v2"
@@ -72,6 +73,16 @@ type (
 		Lang    []string  `json:"lang"`
 		Created time.Time `json:"created"`
 		Active  bool      `json:"active"`
+	}
+
+	// readMeReq - The request struct that gets the URL of the repository README.md file.
+	readMeReq struct {
+		RepoName *string `json:"reponame" validate:"required"`
+	}
+
+	// readMeResp - The response struct that gets the URL of the repository README.md file.
+	readMeResp struct {
+		URL string `json:"url"`
 	}
 )
 
@@ -244,4 +255,55 @@ func Info(c *server.Context) error {
 	}
 
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, resp)
+}
+
+// ReadmeURL - Gets the URL of the repository README.md file.
+func ReadmeURL(c *server.Context) error {
+	var (
+		err  error
+		req  readMeReq
+		resp readMeResp
+	)
+
+	if err = c.JSONBody(&req); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	if err = c.Validate(&req); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	resp = readMeResp{
+		URL: jointURL(req.RepoName),
+	}
+
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, resp)
+}
+
+func jointURL(reponame *string) string {
+	const (
+		head     = "https://raw.githubusercontent.com/"
+		tail     = "/master/README.md"
+		emptyURL = ""
+	)
+
+	if reponame == nil {
+		return emptyURL
+	}
+
+	fullURL := head + *reponame + tail
+
+	resp, err := http.Get(fullURL)
+	if err != nil {
+		logger.Debug("jointURL returned error:", err)
+		return emptyURL
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return emptyURL
+	}
+
+	return fullURL
 }
