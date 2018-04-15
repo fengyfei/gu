@@ -46,22 +46,14 @@ var ProjectServer *projectProviceServer
 
 type (
 	Project struct {
-		ID       bson.ObjectId `bson:"_id,omitempty"`
-		AuthorID int32         `bson:"authorid"`
-		Title    string        `bson:"title"`
-		Abstract string        `bson:"abstract"`
-		Content  string        `bson:"content"`
-		Image    string        `bson:"image"`
-		Created  time.Time     `bson:"created"`
-		Updated  time.Time     `bson:"updated"`
-		Status   int8          `bson:"status"`
-	}
-	// Pro is Project response struct.
-	Pro struct {
-		ID       bson.ObjectId `bson:"_id"`
-		Title    string        `bson:"title"`
-		AuthorID int32         `bson:"authorid"`
-		Abstract string        `bson:"abstract"`
+		ID      bson.ObjectId `bson:"_id,omitempty"`
+		Title   string        `bson:"title"`
+		Author  string        `bson:"author"`
+		Detail  string        `bson:"detail"`
+		Link    string        `bson:"link"`
+		Image   string        `bson:"image"`
+		Created time.Time     `bson:"created"`
+		Status  int8          `bson:"status"`
 	}
 )
 
@@ -91,10 +83,9 @@ func init() {
 // Creat a project's document.
 func (sp *projectProviceServer) Creat(p *Project) error {
 	conn := session.Connect()
-	defer session.Disconnect()
+	defer conn.Disconnect()
 
 	p.Created = time.Now()
-	p.Updated = p.Created
 
 	err := conn.Insert(&p)
 	return err
@@ -103,7 +94,7 @@ func (sp *projectProviceServer) Creat(p *Project) error {
 // Delete modify the status.
 func (sp *projectProviceServer) Delete(id string) error {
 	conn := session.Connect()
-	defer session.Disconnect()
+	defer conn.Disconnect()
 
 	err := conn.Update(bson.M{"_id": bson.ObjectIdHex(id)}, bson.M{"$set": bson.M{"status": blog.Delete}})
 	return err
@@ -111,9 +102,8 @@ func (sp *projectProviceServer) Delete(id string) error {
 
 func (sp *projectProviceServer) Modify(p *Project) error {
 	conn := session.Connect()
-	defer session.Disconnect()
+	defer conn.Disconnect()
 
-	p.Updated = time.Now()
 	err := conn.Update(bson.M{"_id": p.ID}, &p)
 	return err
 }
@@ -121,7 +111,7 @@ func (sp *projectProviceServer) Modify(p *Project) error {
 // GetID use 'title' find out ID.
 func (sp *projectProviceServer) GetID(title string) (bson.ObjectId, error) {
 	conn := session.Connect()
-	defer session.Disconnect()
+	defer conn.Disconnect()
 
 	var p Project
 	err := conn.GetUniqueOne(bson.M{"title": title}, &p)
@@ -134,7 +124,7 @@ func (sp *projectProviceServer) GetID(title string) (bson.ObjectId, error) {
 // GetByID get project by ID.
 func (sp *projectProviceServer) GetByID(id bson.ObjectId) (*Project, error) {
 	conn := session.Connect()
-	defer session.Disconnect()
+	defer conn.Disconnect()
 
 	var p Project
 	err := conn.GetByID(id, &p)
@@ -145,11 +135,11 @@ func (sp *projectProviceServer) GetByID(id bson.ObjectId) (*Project, error) {
 }
 
 // AbstractList get all approval project.
-func (sp *projectProviceServer) AbstractList() ([]Pro, error) {
+func (sp *projectProviceServer) AbstractList() ([]Project, error) {
 	conn := session.Connect()
-	defer session.Disconnect()
+	defer conn.Disconnect()
 
-	var res []Pro
+	var res []Project
 	err := conn.GetMany(bson.M{"status": blog.Approval}, &res)
 	if err != nil {
 		return nil, err

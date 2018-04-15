@@ -58,21 +58,21 @@ func CreateArticle(this *server.Context) error {
 
 	err := this.JSONBody(&req)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("Request error:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
 	if err := this.Validate(&req); err != nil {
-		logger.Error(err)
+		logger.Error("Validate error:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
 	AuthorID := int32(this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64))
 
-	req.Image, err = util.SavePicture(req.Image, "image/", req.Title)
+	req.Image, err = util.SavePicture(req.Image, "article/", req.Title)
 	if err != nil {
-		logger.Error("Save image failed.")
-		return core.WriteStatusAndDataJSON(this, 120, nil)
+		logger.Error("Save image failed.", err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
 	a := &article.Article{
@@ -86,7 +86,7 @@ func CreateArticle(this *server.Context) error {
 
 	id, err := article.ArticleService.Create(a)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("Create false:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
@@ -96,22 +96,22 @@ func CreateArticle(this *server.Context) error {
 // ArticleByID return article by articleID.
 func ArticleByID(this *server.Context) error {
 	var req struct {
-		ID string `json:"aid" validate:"required,len=24"`
+		ID string `json:"id" validate:"required,len=24"`
 	}
 
 	if err := this.JSONBody(&req); err != nil {
-		logger.Error(err)
+		logger.Error("Request error:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
 	if err := this.Validate(&req); err != nil {
-		logger.Error(err)
+		logger.Error("Validate error:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
 	a, err := article.ArticleService.GetByID(req.ID)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("Not found article:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 	resp, err := replyArticle(&a)
@@ -128,6 +128,11 @@ func ListCreated(this *server.Context) error {
 	var resp []respArticle
 
 	articles, err := article.ArticleService.ListCreated()
+	if err != nil {
+		logger.Error("Request error:", err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
+	}
+
 	for _, v := range articles {
 		a, err := replyArticle(&v)
 		if err != nil {
@@ -135,12 +140,6 @@ func ListCreated(this *server.Context) error {
 		}
 		resp = append(resp, *a)
 	}
-
-	if err != nil {
-		logger.Error(err)
-		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
-	}
-
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, resp)
 }
 
@@ -151,17 +150,27 @@ func ListApproval(this *server.Context) error {
 	}
 
 	if err := this.JSONBody(&page); err != nil {
-		logger.Error(err)
+		logger.Error("Request error:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
 	articles, err := article.ArticleService.ListApproval(page.Page)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("Get articles false:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, articles)
+	resp := make([]*respArticle, len(articles))
+	for k, _ := range articles {
+		a, err := replyArticle(&articles[k])
+		if err != nil {
+			logger.Error("Error in ListApproval:", err)
+			return err
+		}
+		resp[k] = a
+	}
+
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, resp)
 }
 
 // ModifyStatus modify the article status.
@@ -172,15 +181,19 @@ func ModifyStatus(this *server.Context) error {
 	}
 
 	if err := this.JSONBody(&req); err != nil {
-		logger.Error(err)
+		logger.Error("Request error:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
+	if err := this.Validate(&req); err != nil {
+		logger.Error("Validate error:", err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
 	StaffId := int32(this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64))
 
 	err := article.ArticleService.ModifyStatus(req.ArticleID, req.Status, StaffId)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("Modify status false:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
@@ -194,12 +207,12 @@ func Delete(this *server.Context) error {
 	}
 
 	if err := this.JSONBody(&req); err != nil {
-		logger.Error(err)
+		logger.Error("Request error:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
 	if err := this.Validate(&req); err != nil {
-		logger.Error(err)
+		logger.Error("Validate error:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
@@ -207,7 +220,7 @@ func Delete(this *server.Context) error {
 
 	err := article.ArticleService.Delete(req.ArticleID, StaffID)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("Delete article false:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
@@ -222,13 +235,18 @@ func UpdateView(this *server.Context) error {
 	}
 
 	if err := this.JSONBody(&req); err != nil {
-		logger.Error(err)
+		logger.Error("Request error:", err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	if err := this.Validate(&req); err != nil {
+		logger.Error("Validate error:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
 	err := article.ArticleService.UpdateView(&req.ArticleID, req.Views)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("Update views false:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
@@ -247,11 +265,21 @@ func ModifyArticle(this *server.Context) error {
 	}
 
 	if err := this.JSONBody(&req); err != nil {
-		logger.Error(err)
+		logger.Error("Request error:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	// AuditorID := int32(this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64))
+	err := this.Validate(&req)
+	if err != nil {
+		logger.Error("Validate error:", err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+
+	req.Image, err = util.SavePicture(req.Image, "article/", req.Title)
+	if err != nil {
+		logger.Error("Save image failed.")
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
 
 	a := &article.Article{
 		Title:   req.Title,
@@ -261,9 +289,9 @@ func ModifyArticle(this *server.Context) error {
 		Image:   req.Image,
 	}
 
-	err := article.ArticleService.ModifyArticle(req.ArticleID, a)
+	err = article.ArticleService.ModifyArticle(req.ArticleID, a)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("Modify article false:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
@@ -273,22 +301,22 @@ func ModifyArticle(this *server.Context) error {
 // GetByTag get article by tag.
 func GetByTag(c *server.Context) error {
 	var req struct {
-		TagId string `json:"tid" validate:"required"`
+		TagId string `json:"id" validate:"required"`
 	}
 
 	if err := c.JSONBody(&req); err != nil {
-		logger.Error(err)
+		logger.Error("Request error:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
 	if err := c.Validate(&req); err != nil {
-		logger.Error(err)
+		logger.Error("Validate error:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
 	res, err := article.ArticleService.GetByTagId(req.TagId)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("Get articles false:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
 	}
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, res)
@@ -301,18 +329,18 @@ func GetByAuthorID(c *server.Context) error {
 	}
 
 	if err := c.JSONBody(&req); err != nil {
-		logger.Error(err)
+		logger.Error("Request error:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
 	if err := c.Validate(&req); err != nil {
-		logger.Error(err)
+		logger.Error("Validate error:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
 	resp, err := article.ArticleService.GetByAuthorID(req.AuthorID)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("Get articles false:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
 	}
 
@@ -343,19 +371,20 @@ func replyArticle(a *article.Article) (*respArticle, error) {
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("Can't connect mysql:", err)
 		return nil, err
 	}
 
 	author, err := staff.Service.GetByID(conn, a.AuthorId)
 	if err != nil {
-		author.Name = ""
+		logger.Error("Can't find author name:", err)
 	}
 
 	for _, v := range a.TagsID {
 		tid := v.Hex()
 		t, err := tag.TagService.GetByID(&tid)
 		if err != nil {
+			logger.Error("Can't find tag:", err)
 			return nil, err
 		}
 		tags = append(tags, t.Tag)

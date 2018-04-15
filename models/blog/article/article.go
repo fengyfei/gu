@@ -259,3 +259,16 @@ func (s *articleServiceProvider) GetByAuthorID(id int32) ([]Article, error) {
 	}
 	return art, nil
 }
+
+// CountByTag
+func (sp *articleServiceProvider) CountByTag(id string) (int, error) {
+	conn := session.Connect()
+	defer conn.Disconnect()
+
+	q := bson.M{"tagsid": id}
+	num, err := conn.Collection().Find(q).Count()
+	if err != nil {
+		return 0, err
+	}
+	return num, nil
+}

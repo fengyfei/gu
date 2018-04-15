@@ -30,25 +30,27 @@
 package project
 
 import (
-	"github.com/dgrijalva/jwt-go"
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
 	"gopkg.in/mgo.v2/bson"
 
+	"github.com/fengyfei/gu/applications/blog/util"
 	"github.com/fengyfei/gu/models/blog/project"
 )
 
 func Create(c *server.Context) error {
 	var req struct {
-		Title    string `json:"title" validate:"required,max=32"`
-		Abstract string `json:"abstract" validate:"max=64"`
-		Content  string `json:"content" validate:"required"`
-		Image    string `json:"image"`
+		Title  string `json:"title" validate:"required,max=32"`
+		Author string `json:"author" validate:"max=64"`
+		Detail string `json:"detail" validate:"required"`
+		Image  string `json:"image"`
+		Link   string `json:"link"`
 	}
 
-	if err := c.JSONBody(&req); err != nil {
+	err := c.JSONBody(&req)
+	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
@@ -58,16 +60,21 @@ func Create(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	authorID := c.Request().Context().Value("staff").(jwt.MapClaims)["staffid"].(float64)
+	req.Image, err = util.SavePicture(req.Image, "project/", req.Title)
+	if err != nil {
+		logger.Error("Save image failed.")
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
 
 	p := &project.Project{
-		AuthorID: int32(authorID),
-		Title:    req.Title,
-		Abstract: req.Abstract,
-		Content:  req.Content,
-		Image:    req.Image,
+		Author: req.Author,
+		Title:  req.Title,
+		Detail: req.Detail,
+		Link:   req.Link,
+		Image:  req.Image,
 	}
-	err := project.ProjectServer.Creat(p)
+
+	err = project.ProjectServer.Creat(p)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
@@ -102,14 +109,16 @@ func Delete(c *server.Context) error {
 
 func Modify(c *server.Context) error {
 	var req struct {
-		ID       bson.ObjectId `json:"id" validate:"required"`
-		Title    string        `json:"title" validate:"required,max=32"`
-		Abstract string        `json:"abstract"`
-		Content  string        `json:"content" validate:"required"`
-		Image    string        `json:"image"`
+		ID     bson.ObjectId `json:"id" validate:"required"`
+		Title  string        `json:"title" validate:"required,max=32"`
+		Author string        `json:"author"`
+		Detail string        `json:"detail" validate:"required"`
+		Link   string        `json:"link"`
+		Image  string        `json:"image"`
 	}
 
-	if err := c.JSONBody(&req); err != nil {
+	err := c.JSONBody(&req)
+	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
@@ -119,14 +128,19 @@ func Modify(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	p := &project.Project{
-		ID:       req.ID,
-		Title:    req.Title,
-		Abstract: req.Abstract,
-		Content:  req.Content,
-		Image:    req.Image,
+	req.Image, err = util.SavePicture(req.Image, "project/", req.Title)
+	if err != nil {
+		logger.Error("Save image failed.")
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
-	err := project.ProjectServer.Modify(p)
+
+	p := &project.Project{
+		ID:     req.ID,
+		Title:  req.Title,
+		Detail: req.Detail,
+		Image:  req.Image,
+	}
+	err = project.ProjectServer.Modify(p)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)

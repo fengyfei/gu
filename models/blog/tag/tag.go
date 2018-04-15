@@ -76,6 +76,7 @@ type (
 	Tag struct {
 		TagID  bson.ObjectId `bson:"_id,omitempty" json:"id"`
 		Tag    string        `bson:"tag"           json:"tag"`
+		Count  int           `bson:"count"`
 		Active bool          `bson:"active"        json:"active"`
 	}
 )
