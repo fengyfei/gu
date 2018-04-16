@@ -216,7 +216,6 @@ func (sp *articleServiceProvider) ModifyArticle(articleID string, article *Artic
 	updater := bson.M{"$set": bson.M{
 		"title":   article.Title,
 		"content": article.Content,
-		"brief":   article.Brief,
 		"tagsid":  article.TagsID,
 		"update":  time.Now(),
 	}}
@@ -261,7 +260,7 @@ func (s *articleServiceProvider) GetByAuthorID(id int32) ([]Article, error) {
 }
 
 // CountByTag
-func (sp *articleServiceProvider) CountByTag(id string) (int, error) {
+func (sp *articleServiceProvider) CountByTag(id bson.ObjectId) (int, error) {
 	conn := session.Connect()
 	defer conn.Disconnect()
 

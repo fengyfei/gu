@@ -37,17 +37,25 @@ import (
 	"time"
 
 	"github.com/fengyfei/gu/libs/logger"
+	"regexp"
 	"strings"
 )
 
 const (
-	picturePath = "./img/"
-	suffix      = "jpg"
+	filePath  = "./file/"
+	imagePath = "img/"
+	mdPath    = "md/"
+	mdsuffix  = "md"
+	imgsuffix = "jpg"
 )
 
-func nameImage(name string) string {
+func nameImage() string {
+	return strconv.FormatInt(time.Now().Unix(), 10) + "." + imgsuffix
+}
+
+func nameMd(name string) string {
 	name = strings.Replace(name, " ", "", 32)
-	return name + strconv.FormatInt(time.Now().Unix(), 10) + "." + suffix
+	return name + strconv.FormatInt(time.Now().Unix(), 10) + "." + mdsuffix
 }
 
 func checkDir(path string) error {
@@ -66,9 +74,9 @@ func checkDir(path string) error {
 	return nil
 }
 
-func SavePicture(base64Str string, path, name string) (string, error) {
-	fileName := nameImage(name)
-	path = picturePath + path
+func SaveImage(base64Str string, path string) (string, error) {
+	fileName := nameImage()
+	path = filePath + imagePath + path
 
 	img, err := base64.StdEncoding.DecodeString(base64Str)
 	if err != nil {
@@ -78,14 +86,48 @@ func SavePicture(base64Str string, path, name string) (string, error) {
 
 	err = checkDir(path)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("Check dir false:", err)
 		return "", err
 	}
 
 	err = ioutil.WriteFile(path+fileName, img, 0777)
 	if err != nil {
-		logger.Error(err)
+		logger.Error("WriteFile false:", err)
 	}
 
 	return path + fileName, err
+}
+
+func SaveMarkdown(content, name, path string) (string, error) {
+	fileName := nameMd(name)
+	path = filePath + mdPath + path
+
+	err := checkDir(path)
+	if err != nil {
+		logger.Error("Check dir false:", err)
+		return "", err
+	}
+
+	err = ioutil.WriteFile(path+fileName, []byte(content), 0777)
+	if err != nil {
+		logger.Error("WriteFile false:", err)
+	}
+	return path + fileName, err
+}
+
+func Delete(name string) bool {
+	_, err := os.Stat(name)
+	if err == nil || os.IsExist(err) {
+		err = os.Remove(name)
+		if err != nil {
+			return false
+		}
+	}
+	return true
+}
+
+func GetBrief(content string) string {
+	reg, _ := regexp.Compile("\\<[\\S\\s]+?\\>")
+	brief := reg.ReplaceAllString(content, "")
+	return brief
 }

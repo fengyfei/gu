@@ -74,10 +74,10 @@ func init() {
 type (
 	// Tag represents the tag information.
 	Tag struct {
-		TagID  bson.ObjectId `bson:"_id,omitempty" json:"id"`
-		Tag    string        `bson:"tag"           json:"tag"`
+		TagID  bson.ObjectId `bson:"_id,omitempty"`
+		Tag    string        `bson:"tag"`
 		Count  int           `bson:"count"`
-		Active bool          `bson:"active"        json:"active"`
+		Active bool          `bson:"active"`
 	}
 )
 
@@ -176,4 +176,14 @@ func (sp *tagServiceProvider) GetID(tag []string) (bson.ObjectId, error) {
 	}
 
 	return tagInfo.TagID, nil
+}
+
+// UpdateCount update Tag.Count
+func (sp *tagServiceProvider) UpdateCount(id bson.ObjectId, num int) error {
+	conn := session.Connect()
+	defer conn.Disconnect()
+
+	q := bson.M{"_id": id}
+	err := conn.Update(q, bson.M{"$set": bson.M{"count": num}})
+	return err
 }

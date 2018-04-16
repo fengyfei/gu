@@ -34,6 +34,7 @@ package article
 import (
 	jwtgo "github.com/dgrijalva/jwt-go"
 	"gopkg.in/mgo.v2/bson"
+	"strings"
 
 	"github.com/fengyfei/gu/applications/blog/mysql"
 	"github.com/fengyfei/gu/applications/blog/util"
@@ -51,7 +52,6 @@ func CreateArticle(this *server.Context) error {
 	var req struct {
 		Title   string          `json:"title" validate:"required,max=32"`
 		Content string          `json:"content" validate:"required"`
-		Brief   string          `json:"brief" validate:"max=64"`
 		TagsID  []bson.ObjectId `json:"tagsid"`
 		Image   string          `json:"image"`
 	}
@@ -69,19 +69,39 @@ func CreateArticle(this *server.Context) error {
 
 	AuthorID := int32(this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64))
 
-	req.Image, err = util.SavePicture(req.Image, "article/", req.Title)
+	brief := util.GetBrief(req.Content)
+	req.Content, err = util.SaveMarkdown(req.Content, req.Title, "article/")
 	if err != nil {
-		logger.Error("Save image failed.", err)
-		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+		logger.Error("Save markdown failed:", err)
 	}
 
+	if req.Image == "" {}
+	req.Image, err = util.SaveImage(req.Image, "article/")
+	if err != nil {
+		logger.Error("Save image failed:", err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+	/*
+		addr, err := net.InterfaceAddrs()
+		for _, address := range addr {
+			if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+				if ipnet.IP.To4() != nil {
+					ip := ipnet.IP.String()
+				}
+			}
+		}
+	*/
+
+	ip := "http://192.168.0.102:21002"
+	mdpath := strings.Replace(req.Content, "./file", ip, 1)
+	imgpath := strings.Replace(req.Image, "./file", ip, 1)
 	a := &article.Article{
 		AuthorId: AuthorID,
 		Title:    req.Title,
-		Brief:    req.Brief,
-		Content:  req.Content,
+		Brief:    brief,
+		Content:  mdpath,
 		TagsID:   req.TagsID,
-		Image:    req.Image,
+		Image:    imgpath,
 	}
 
 	id, err := article.ArticleService.Create(a)
@@ -90,6 +110,13 @@ func CreateArticle(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
+	for i, _ := range req.TagsID {
+		num, err := article.ArticleService.CountByTag(req.TagsID[i])
+		if err != nil {
+			return err
+		}
+		tag.TagService.UpdateCount(req.TagsID[i], num)
+	}
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, id)
 }
 
@@ -125,11 +152,18 @@ func ArticleByID(this *server.Context) error {
 
 // ListCreated return articles which are waiting for checking.
 func ListCreated(this *server.Context) error {
-	var resp []respArticle
+	var req struct {
+		Page int `json:"page"`
+	}
+	var resp []completeArticle
+
+	if err := this.JSONBody(&req); err != nil {
+		logger.Error("Request error:", err)
+	}
 
 	articles, err := article.ArticleService.ListCreated()
 	if err != nil {
-		logger.Error("Request error:", err)
+		logger.Error("Not found articles:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
@@ -156,11 +190,11 @@ func ListApproval(this *server.Context) error {
 
 	articles, err := article.ArticleService.ListApproval(page.Page)
 	if err != nil {
-		logger.Error("Get articles false:", err)
+		logger.Error("Not found articles:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	resp := make([]*respArticle, len(articles))
+	resp := make([]*completeArticle, len(articles))
 	for k, _ := range articles {
 		a, err := replyArticle(&articles[k])
 		if err != nil {
@@ -258,7 +292,6 @@ func ModifyArticle(this *server.Context) error {
 	var req struct {
 		ArticleID string          `json:"aid" validate:"required"`
 		Title     string          `json:"title" validate:"required,max=32"`
-		Brief     string          `json:"brief" validate:"max=64"`
 		Content   string          `json:"content" validate:"required"`
 		TagsID    []bson.ObjectId `json:"tagsid"`
 		Image     string          `json:"image"`
@@ -275,16 +308,20 @@ func ModifyArticle(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	req.Image, err = util.SavePicture(req.Image, "article/", req.Title)
+	req.Content, err = util.SaveMarkdown(req.Content, req.Title, "article")
 	if err != nil {
-		logger.Error("Save image failed.")
+		logger.Error("Save markdown failed:", err)
+		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	}
+	req.Image, err = util.SaveImage(req.Image, "article/")
+	if err != nil {
+		logger.Error("Save image failed.", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
 	a := &article.Article{
 		Title:   req.Title,
 		Content: req.Content,
-		Brief:   req.Brief,
 		TagsID:  req.TagsID,
 		Image:   req.Image,
 	}
@@ -347,7 +384,7 @@ func GetByAuthorID(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, resp)
 }
 
-type respArticle struct {
+type completeArticle struct {
 	ID        string
 	AuthorId  int32
 	Author    string
@@ -365,7 +402,7 @@ type respArticle struct {
 }
 
 // replyArticle return the article details.
-func replyArticle(a *article.Article) (*respArticle, error) {
+func replyArticle(a *article.Article) (*completeArticle, error) {
 	var tags []string
 
 	conn, err := mysql.Pool.Get()
@@ -389,7 +426,7 @@ func replyArticle(a *article.Article) (*respArticle, error) {
 		}
 		tags = append(tags, t.Tag)
 	}
-	art := &respArticle{
+	art := &completeArticle{
 		ID:        a.ID.Hex(),
 		AuthorId:  a.AuthorId,
 		Author:    author.Name,
@@ -406,4 +443,10 @@ func replyArticle(a *article.Article) (*respArticle, error) {
 		Status:    a.Status,
 	}
 	return art, nil
+}
+
+type simpleArticle struct {
+	Id string
+	Author string
+
 }

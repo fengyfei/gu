@@ -60,7 +60,7 @@ func Create(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	req.Image, err = util.SavePicture(req.Image, "project/", req.Title)
+	req.Image, err = util.SaveImage(req.Image, "project/")
 	if err != nil {
 		logger.Error("Save image failed.")
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
@@ -128,7 +128,7 @@ func Modify(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	req.Image, err = util.SavePicture(req.Image, "project/", req.Title)
+	req.Image, err = util.SaveImage(req.Image, "project/")
 	if err != nil {
 		logger.Error("Save image failed.")
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)

@@ -37,6 +37,7 @@ import (
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/http/server/middleware"
 	"github.com/fengyfei/gu/libs/logger"
+	"net/http"
 )
 
 var (
@@ -76,8 +77,18 @@ func customSkipper(c *server.Context) bool {
 	return false
 }
 
+// fileServer start file server.
+func fileServer() {
+	h := http.FileServer(http.Dir("./file"))
+	err := http.ListenAndServe(":21002", h)
+	if err != nil {
+		logger.Error("File server failed:", err)
+	}
+}
+
 // startServer starts a HTTP server.
 func startServer() {
+	go fileServer()
 	serverConfig := &server.Configuration{
 		Address: conf.Config.Address,
 	}
