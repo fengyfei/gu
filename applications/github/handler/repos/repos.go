@@ -30,6 +30,7 @@
 package repos
 
 import (
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -75,14 +76,14 @@ type (
 		Active  bool      `json:"active"`
 	}
 
-	// readMeReq - The request struct that gets the URL of the repository README.md file.
-	readMeReq struct {
+	// readmeReq - The request struct that gets the content of the repository README.md file.
+	readmeReq struct {
 		RepoName *string `json:"reponame" validate:"required"`
 	}
 
-	// readMeResp - The response struct that gets the URL of the repository README.md file.
-	readMeResp struct {
-		URL string `json:"url"`
+	// readmeResp - The response struct that gets the content of the repository README.md file.
+	readmeResp struct {
+		Content string `json:"content"`
 	}
 )
 
@@ -261,8 +262,8 @@ func Info(c *server.Context) error {
 func ReadmeURL(c *server.Context) error {
 	var (
 		err  error
-		req  readMeReq
-		resp readMeResp
+		req  readmeReq
+		resp readmeResp
 	)
 
 	if err = c.JSONBody(&req); err != nil {
@@ -275,35 +276,42 @@ func ReadmeURL(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	resp = readMeResp{
-		URL: jointURL(req.RepoName),
+	resp = readmeResp{
+		Content: getReadme(req.RepoName),
 	}
 
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, resp)
 }
 
-func jointURL(reponame *string) string {
+func getReadme(reponame *string) string {
 	const (
 		head     = "https://raw.githubusercontent.com/"
 		tail     = "/master/README.md"
-		emptyURL = ""
+		emptyStr = ""
 	)
 
 	if reponame == nil {
-		return emptyURL
+		return emptyStr
 	}
 
 	fullURL := head + *reponame + tail
 
 	resp, err := http.Get(fullURL)
 	if err != nil {
-		logger.Debug("jointURL returned error:", err)
-		return emptyURL
+		logger.Debug("getReadme http.Get returned error:", err)
+		return emptyStr
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusOK {
+		bodyByte, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			logger.Debug("getReadme ReadAll returned error:", err)
+			return emptyStr
+		}
+
+		return string(bodyByte)
 	}
 
-	if resp.StatusCode == http.StatusNotFound {
-		return emptyURL
-	}
-
-	return fullURL
+	return emptyStr
 }
