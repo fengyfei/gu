@@ -40,6 +40,7 @@ import (
 	"github.com/fengyfei/gu/applications/blog/conf"
 	"github.com/fengyfei/gu/libs/mongo"
 	"github.com/fengyfei/gu/models/blog"
+	"regexp"
 )
 
 type articleServiceProvider struct{}
@@ -82,7 +83,7 @@ type Article struct {
 	Content   string          `bson:"content"`
 	Image     string          `bson:"image"`
 	TagsID    []bson.ObjectId `bson:"tagsid"`
-	Views     float64         `bson:"views"`
+	Views     uint64          `bson:"views"`
 	Created   time.Time       `bson:"created"`
 	Updated   time.Time       `bson:"updated"`
 	Status    int8            `bson:"status"`
@@ -123,14 +124,14 @@ func (sp *articleServiceProvider) ListApproval(page int) ([]Article, error) {
 }
 
 // ListCreated return articles which are waiting for checking.
-func (sp *articleServiceProvider) ListCreated() ([]Article, error) {
+func (sp *articleServiceProvider) ListCreated(page int) ([]Article, error) {
 	var art []Article
 
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	query := bson.M{"status": blog.Created}
-	err := conn.GetMany(query, &art)
+	q := bson.M{"status": blog.Created}
+	err := conn.Collection().Find(q).Limit(blog.Skip).Skip(page * blog.Skip).All(&art)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +224,7 @@ func (sp *articleServiceProvider) ModifyArticle(articleID string, article *Artic
 }
 
 // UpdateView update view of article.
-func (sp *articleServiceProvider) UpdateView(articleID *string, num uint32) error {
+func (sp *articleServiceProvider) UpdateView(articleID *string, num uint64) error {
 	conn := session.Connect()
 	defer conn.Disconnect()
 
@@ -232,13 +233,13 @@ func (sp *articleServiceProvider) UpdateView(articleID *string, num uint32) erro
 }
 
 // GetByTag get article by tag.
-func (s *articleServiceProvider) GetByTagId(tid string) ([]Article, error) {
+func (s *articleServiceProvider) GetByTagId(id string, page int) ([]Article, error) {
 	conn := session.Connect()
 	defer conn.Disconnect()
 
 	var art []Article
-	q := bson.M{"tagsid": bson.ObjectIdHex(tid), "status": blog.Approval}
-	err := conn.GetMany(q, &art)
+	q := bson.M{"tagsid": bson.ObjectIdHex(id), "status": blog.Approval}
+	err := conn.Collection().Find(q).Limit(blog.Skip).Skip(page * blog.Skip).All(&art)
 	if err != nil {
 		return nil, err
 	}
@@ -270,4 +271,11 @@ func (sp *articleServiceProvider) CountByTag(id bson.ObjectId) (int, error) {
 		return 0, err
 	}
 	return num, nil
+}
+
+// GetBrief get the first line from content.
+func (sp *articleServiceProvider) GetBrief(content string) string {
+	reg, _ := regexp.Compile("\\<[\\S\\s]+?\\>")
+	brief := reg.ReplaceAllString(content, "")
+	return brief
 }

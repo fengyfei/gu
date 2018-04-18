@@ -69,17 +69,12 @@ func CreateArticle(this *server.Context) error {
 
 	AuthorID := int32(this.Request().Context().Value("staff").(jwtgo.MapClaims)["staffid"].(float64))
 
-	brief := util.GetBrief(req.Content)
-	req.Content, err = util.SaveMarkdown(req.Content, req.Title, "article/")
-	if err != nil {
-		logger.Error("Save markdown failed:", err)
-	}
-
-	if req.Image == "" {}
-	req.Image, err = util.SaveImage(req.Image, "article/")
-	if err != nil {
-		logger.Error("Save image failed:", err)
-		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+	if req.Image != "" {
+		req.Image, err = util.SaveImage(req.Image, "article/")
+		if err != nil {
+			logger.Error("Save image failed:", err)
+			return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
+		}
 	}
 	/*
 		addr, err := net.InterfaceAddrs()
@@ -91,15 +86,13 @@ func CreateArticle(this *server.Context) error {
 			}
 		}
 	*/
-
 	ip := "http://192.168.0.102:21002"
-	mdpath := strings.Replace(req.Content, "./file", ip, 1)
 	imgpath := strings.Replace(req.Image, "./file", ip, 1)
 	a := &article.Article{
 		AuthorId: AuthorID,
 		Title:    req.Title,
-		Brief:    brief,
-		Content:  mdpath,
+		Brief:    article.ArticleService.GetBrief(req.Content),
+		Content:  req.Content,
 		TagsID:   req.TagsID,
 		Image:    imgpath,
 	}
@@ -117,6 +110,7 @@ func CreateArticle(this *server.Context) error {
 		}
 		tag.TagService.UpdateCount(req.TagsID[i], num)
 	}
+
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, id)
 }
 
@@ -161,7 +155,7 @@ func ListCreated(this *server.Context) error {
 		logger.Error("Request error:", err)
 	}
 
-	articles, err := article.ArticleService.ListCreated()
+	articles, err := article.ArticleService.ListCreated(req.Page)
 	if err != nil {
 		logger.Error("Not found articles:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -194,14 +188,14 @@ func ListApproval(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	resp := make([]*completeArticle, len(articles))
-	for k, _ := range articles {
-		a, err := replyArticle(&articles[k])
+	resp := make([]*simpleArticle, len(articles))
+	for i, _ := range articles {
+		a, err := replyArt(&articles[i])
 		if err != nil {
 			logger.Error("Error in ListApproval:", err)
 			return err
 		}
-		resp[k] = a
+		resp[i] = a
 	}
 
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, resp)
@@ -265,7 +259,7 @@ func Delete(this *server.Context) error {
 func UpdateView(this *server.Context) error {
 	var req struct {
 		ArticleID string `json:"aid"`
-		Views     uint32 `json:"views"`
+		Views     uint64 `json:"views"`
 	}
 
 	if err := this.JSONBody(&req); err != nil {
@@ -308,19 +302,15 @@ func ModifyArticle(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	req.Content, err = util.SaveMarkdown(req.Content, req.Title, "article")
-	if err != nil {
-		logger.Error("Save markdown failed:", err)
-		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
-	}
 	req.Image, err = util.SaveImage(req.Image, "article/")
 	if err != nil {
-		logger.Error("Save image failed.", err)
+		logger.Error("Save image failed:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
 	a := &article.Article{
 		Title:   req.Title,
+		Brief:   article.ArticleService.GetBrief(req.Content),
 		Content: req.Content,
 		TagsID:  req.TagsID,
 		Image:   req.Image,
@@ -339,6 +329,7 @@ func ModifyArticle(this *server.Context) error {
 func GetByTag(c *server.Context) error {
 	var req struct {
 		TagId string `json:"id" validate:"required"`
+		Page int `json:"page"`
 	}
 
 	if err := c.JSONBody(&req); err != nil {
@@ -351,12 +342,23 @@ func GetByTag(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	res, err := article.ArticleService.GetByTagId(req.TagId)
+	articles, err := article.ArticleService.GetByTagId(req.TagId, req.Page)
 	if err != nil {
 		logger.Error("Get articles false:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
 	}
-	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, res)
+
+	resp := make([]simpleArticle, len(articles))
+	for i, _ := range articles {
+		a, err := replyArt(&articles[i])
+		if err != nil {
+			logger.Error("Can't reply article:", err)
+			return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
+		}
+		resp[i] = *a
+	}
+
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, resp)
 }
 
 // GetByAuthorID
@@ -375,30 +377,38 @@ func GetByAuthorID(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	resp, err := article.ArticleService.GetByAuthorID(req.AuthorID)
+	articles, err := article.ArticleService.GetByAuthorID(req.AuthorID)
 	if err != nil {
 		logger.Error("Get articles false:", err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
+	}
+
+	resp := make([]simpleArticle, len(articles))
+	for i, _ := range articles {
+		a, err := replyArt(&articles[i])
+		if err != nil {
+			logger.Error("Can't reply article:", err)
+			return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
+		}
+		resp[i] = *a
 	}
 
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, resp)
 }
 
 type completeArticle struct {
-	ID        string
-	AuthorId  int32
-	Author    string
-	AuditorId int32
-	Title     string
-	Brief     string
-	Content   string
-	Image     string
-	TagsId    []bson.ObjectId
-	Tags      []string
-	Views     float64
-	Created   string
-	Updated   string
-	Status    int8
+	ID       string
+	AuthorId int32
+	Author   string
+	Title    string
+	Content  string
+	Image    string
+	TagsId   []bson.ObjectId
+	Tags     []string
+	Views    uint64
+	Created  string
+	Updated  string
+	Status   int8
 }
 
 // replyArticle return the article details.
@@ -427,26 +437,64 @@ func replyArticle(a *article.Article) (*completeArticle, error) {
 		tags = append(tags, t.Tag)
 	}
 	art := &completeArticle{
-		ID:        a.ID.Hex(),
-		AuthorId:  a.AuthorId,
-		Author:    author.Name,
-		AuditorId: a.AuditorId,
-		Title:     a.Title,
-		Brief:     a.Brief,
-		Content:   a.Content,
-		Image:     a.Image,
-		TagsId:    a.TagsID,
-		Tags:      tags,
-		Views:     a.Views,
-		Created:   a.Created.String(),
-		Updated:   a.Updated.String(),
-		Status:    a.Status,
+		ID:       a.ID.Hex(),
+		AuthorId: a.AuthorId,
+		Author:   author.Name,
+		Title:    a.Title,
+		Content:  a.Content,
+		Image:    a.Image,
+		TagsId:   a.TagsID,
+		Tags:     tags,
+		Views:    a.Views,
+		Created:  a.Created.String(),
 	}
 	return art, nil
 }
 
 type simpleArticle struct {
-	Id string
-	Author string
+	Id      string
+	Title   string
+	Author  string
+	Brief   string
+	Tags    []string
+	Views   uint64
+	Created string
+	Image   string
+}
 
+func replyArt(a *article.Article) (*simpleArticle, error) {
+	var tags []string
+
+	conn, err := mysql.Pool.Get()
+	defer mysql.Pool.Release(conn)
+	if err != nil {
+		logger.Error("Can't connect mysql:", err)
+		return nil, err
+	}
+
+	author, err := staff.Service.GetByID(conn, a.AuthorId)
+	if err != nil {
+		logger.Error("Can't find author name:", err)
+	}
+
+	for i, _ := range a.TagsID {
+		tid := a.TagsID[i].Hex()
+		t, err := tag.TagService.GetByID(&tid)
+		if err != nil {
+			logger.Error("Can't find tag:", err)
+			return nil, err
+		}
+		tags = append(tags, t.Tag)
+	}
+	art := &simpleArticle{
+		Id:      a.ID.Hex(),
+		Title:   a.Title,
+		Author:  author.Name,
+		Brief:   a.Brief,
+		Image:   a.Image,
+		Tags:    tags,
+		Views:   a.Views,
+		Created: a.Created.String(),
+	}
+	return art, nil
 }

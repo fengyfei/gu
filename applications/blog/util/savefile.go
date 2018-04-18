@@ -34,11 +34,10 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/fengyfei/gu/libs/logger"
-	"regexp"
-	"strings"
 )
 
 const (
@@ -124,10 +123,4 @@ func Delete(name string) bool {
 		}
 	}
 	return true
-}
-
-func GetBrief(content string) string {
-	reg, _ := regexp.Compile("\\<[\\S\\s]+?\\>")
-	brief := reg.ReplaceAllString(content, "")
-	return brief
 }
