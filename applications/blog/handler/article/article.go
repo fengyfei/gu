@@ -103,12 +103,9 @@ func CreateArticle(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	for i, _ := range req.TagsID {
-		num, err := article.ArticleService.CountByTag(req.TagsID[i])
-		if err != nil {
-			return err
-		}
-		tag.TagService.UpdateCount(req.TagsID[i], num)
+	err = tag.TagService.Count()
+	if err != nil {
+		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, id)
 	}
 
 	return core.WriteStatusAndIDJSON(this, constants.ErrSucceed, id)
@@ -329,7 +326,7 @@ func ModifyArticle(this *server.Context) error {
 func GetByTag(c *server.Context) error {
 	var req struct {
 		TagId string `json:"id" validate:"required"`
-		Page int `json:"page"`
+		Page  int    `json:"page"`
 	}
 
 	if err := c.JSONBody(&req); err != nil {

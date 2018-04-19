@@ -35,6 +35,7 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
+	"fmt"
 	"github.com/fengyfei/gu/applications/blog/conf"
 	"github.com/fengyfei/gu/libs/mongo"
 	"github.com/fengyfei/gu/models/blog"
@@ -82,7 +83,7 @@ type (
 )
 
 // GetList get all the tags.
-func (sp *tagServiceProvider) GetList() ([]Tag, error) {
+func (sp *tagServiceProvider) All() ([]Tag, error) {
 	var (
 		tags []Tag
 		err  error
@@ -178,12 +179,41 @@ func (sp *tagServiceProvider) GetID(tag []string) (bson.ObjectId, error) {
 	return tagInfo.TagID, nil
 }
 
-// UpdateCount update Tag.Count
-func (sp *tagServiceProvider) UpdateCount(id bson.ObjectId, num int) error {
-	conn := session.Connect()
-	defer conn.Disconnect()
+// Count refresh Tag.Count
+func (*tagServiceProvider) Count() error {
+	type query struct {
+		Id    bson.ObjectId `bson:"_id"`
+		Count int           `bson:"count"`
+	}
+	s, err := mgo.Dial("localhost:27017")
+	if err != nil {
+		panic(err)
+	}
+	defer s.Close()
 
-	q := bson.M{"_id": id}
-	err := conn.Update(q, bson.M{"$set": bson.M{"count": num}})
-	return err
+	var q []query
+	c := s.DB("blog").C("tag")
+	err = c.Find(nil).All(&q)
+	for i, _ := range q {
+		fmt.Println(q[i].Id, q[i].Count)
+	}
+
+	c = s.DB("blog").C("article")
+	for i, _ := range q {
+		q[i].Count, err = c.Find(bson.M{"tagsid": q[i].Id}).Count()
+		if err != nil {
+			return err
+		}
+		fmt.Println(q[i].Count)
+	}
+
+	c = s.DB("blog").C("tag")
+	for i, _ := range q {
+		err = c.Update(bson.M{"_id": q[i].Id}, bson.M{"$set": bson.M{"count": q[i].Count}})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

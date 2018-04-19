@@ -66,7 +66,7 @@ type (
 
 // ListTags list all tags.
 func ListTags(this *server.Context) error {
-	tagList, err := tag.TagService.GetList()
+	tagList, err := tag.TagService.All()
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)

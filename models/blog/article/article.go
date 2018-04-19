@@ -260,19 +260,6 @@ func (s *articleServiceProvider) GetByAuthorID(id int32) ([]Article, error) {
 	return art, nil
 }
 
-// CountByTag
-func (sp *articleServiceProvider) CountByTag(id bson.ObjectId) (int, error) {
-	conn := session.Connect()
-	defer conn.Disconnect()
-
-	q := bson.M{"tagsid": id}
-	num, err := conn.Collection().Find(q).Count()
-	if err != nil {
-		return 0, err
-	}
-	return num, nil
-}
-
 // GetBrief get the first line from content.
 func (sp *articleServiceProvider) GetBrief(content string) string {
 	reg, _ := regexp.Compile("\\<[\\S\\s]+?\\>")
