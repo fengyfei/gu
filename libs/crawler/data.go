@@ -29,11 +29,47 @@
 
 package crawler
 
-type Data struct {
-	Source   string
-	Date     string
-	Title    string
-	URL      string
-	Text     string
+import "fmt"
+
+// Data -
+type Data interface {
+	String() string
+	File() (string, string, string)
+	IsFile() bool
+}
+
+// DefaultData -
+type DefaultData struct {
+	// Source -
+	Source string
+	// Date -
+	Date string
+	// Title -
+	Title string
+	// URL -
+	URL string
+	// Text -
+	Text string
+	// FileType -
 	FileType string
+}
+
+func (data *DefaultData) String() string {
+	if data.IsFile() {
+		return fmt.Sprintf("Source: %s\nDate: %s\nTitle: %s\nURL: %s\n", data.Source, data.Date, data.Title, data.URL)
+	}
+	return fmt.Sprintf("Source: %s\nDate: %s\nTitle: %s\nURL: %s\n%s", data.Source, data.Date, data.Title, data.URL, data.Text)
+}
+
+// File return title, filetype and content if data is a file type.
+func (data *DefaultData) File() (title, filetype, content string) {
+	if data.IsFile() {
+		return data.Title, data.FileType, data.Text
+	}
+	return "", "", ""
+}
+
+// IsFile return true if field FileType is not "".
+func (data *DefaultData) IsFile() bool {
+	return data.FileType != ""
 }
