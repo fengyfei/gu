@@ -88,21 +88,6 @@ func SaveImg(userID uint32, image string, diff int) (string, error) {
 	return fileName, err
 }
 
-func DeleteFile(userID uint32, diff int) bool {
-	path := fileName(userID, diff)
-	_, err := os.Stat(path)
-
-	if err == nil || os.IsExist(err) {
-		err = os.Remove(path)
-		if err != nil {
-			return false
-		}
-		return true
-	}
-
-	return os.IsNotExist(err)
-}
-
 func GetBrief(content string) string {
 	re, _ := regexp.Compile("\\<[\\S\\s]+?\\>")
 	brief := re.ReplaceAllString(content, "")

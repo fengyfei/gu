@@ -61,7 +61,7 @@ type (
 		VisitNum   int64         `bson:"visitNum"`
 		Created    string        `bson:"created"`
 		Image      string        `bson:"image"`
-		Active     bool          `bson:"Active"`
+		Active     bool          `bson:"active"`
 	}
 )
 
@@ -121,7 +121,7 @@ func (sp *articleServiceProvider) GetByCategoryID(page int, categoryID string) (
 	conn := articleSession.Connect()
 	defer conn.Disconnect()
 
-	query := bson.M{"categoryID": bson.ObjectIdHex(categoryID), "Active": true}
+	query := bson.M{"categoryID": bson.ObjectIdHex(categoryID), "active": true}
 	err := conn.Collection().Find(query).Limit(conf.BBSConfig.Pages).Skip(page * conf.BBSConfig.Pages).All(&list)
 	if err != nil {
 		return nil, err
@@ -139,7 +139,7 @@ func (sp *articleServiceProvider) GetByTagID(page int, categoryID, tagID string)
 	conn := articleSession.Connect()
 	defer conn.Disconnect()
 
-	query := bson.M{"categoryID": bson.ObjectIdHex(categoryID), "tagID": bson.ObjectIdHex(tagID), "Active": true}
+	query := bson.M{"categoryID": bson.ObjectIdHex(categoryID), "tagID": bson.ObjectIdHex(tagID), "active": true}
 	err := conn.Collection().Find(query).Limit(conf.BBSConfig.Pages).Skip(page * conf.BBSConfig.Pages).All(&list)
 	if err != nil {
 		return nil, err
@@ -159,7 +159,7 @@ func (sp *articleServiceProvider) SearchByTitle(title string) ([]Article, error)
 
 	sort := "-created"
 
-	query := bson.M{"title": bson.M{"$regex": title, "$options": "$i"}, "Active": true}
+	query := bson.M{"title": bson.M{"$regex": title, "$options": "$i"}, "active": true}
 	err := conn.GetMany(query, &list, sort)
 	if err != nil {
 		return nil, err
@@ -177,7 +177,7 @@ func (sp *articleServiceProvider) GetByArtID(artID string) (*Article, error) {
 	conn := articleSession.Connect()
 	defer conn.Disconnect()
 
-	query := bson.M{"_id": bson.ObjectIdHex(artID), "Active": true}
+	query := bson.M{"_id": bson.ObjectIdHex(artID), "active": true}
 	err := conn.GetUniqueOne(query, &list)
 	if err != nil {
 		return nil, err
@@ -197,7 +197,7 @@ func (sp *articleServiceProvider) GetByUserID(userID uint32) ([]Article, error) 
 
 	sort := "created"
 
-	query := bson.M{"authorID": userID, "Active": true}
+	query := bson.M{"authorID": userID, "active": true}
 	err := conn.GetMany(query, &list, sort)
 	if err != nil {
 		return nil, err
@@ -221,7 +221,7 @@ func (sp *articleServiceProvider) Delete(artID string) error {
 		return err
 	}
 
-	updater := bson.M{"$set": bson.M{"Active": false}}
+	updater := bson.M{"$set": bson.M{"active": false}}
 	return conn.Update(bson.M{"_id": bson.ObjectIdHex(artID)}, updater)
 }
 
@@ -242,7 +242,7 @@ func (sp *articleServiceProvider) UpdateVisit(num int64, artID string) error {
 
 	updater := bson.M{"$set": bson.M{"visitNum": num}}
 
-	return conn.Update(bson.M{"_id": bson.ObjectIdHex(artID), "Active": true}, updater)
+	return conn.Update(bson.M{"_id": bson.ObjectIdHex(artID), "active": true}, updater)
 }
 
 // DeleteByCategory delete the articles that belong to the deleted category.
@@ -250,7 +250,7 @@ func (sp *articleServiceProvider) DeleteByCategory(categoryID string) error {
 	conn := articleSession.Connect()
 	defer conn.Disconnect()
 
-	updater := bson.M{"$set": bson.M{"Active": false}}
+	updater := bson.M{"$set": bson.M{"active": false}}
 
 	_, err := conn.Collection().UpdateAll(bson.M{"categoryID": bson.ObjectIdHex(categoryID)}, updater)
 	return err
@@ -261,7 +261,7 @@ func (sp *articleServiceProvider) DeleteByTag(categoryID, tagID string) error {
 	conn := articleSession.Connect()
 	defer conn.Disconnect()
 
-	updater := bson.M{"$set": bson.M{"Active": false}}
+	updater := bson.M{"$set": bson.M{"status": false}}
 
 	_, err := conn.Collection().UpdateAll(bson.M{"categoryID": bson.ObjectIdHex(categoryID), "tagID": bson.ObjectIdHex(tagID)}, updater)
 	return err
@@ -276,7 +276,7 @@ func (sp *articleServiceProvider) Recommend(page int) ([]Article, error) {
 	conn := articleSession.Connect()
 	defer conn.Disconnect()
 
-	query := bson.M{"Active": true}
+	query := bson.M{"active": true}
 
 	err := conn.Collection().Find(query).Limit(conf.BBSConfig.Pages).Skip(page * conf.BBSConfig.Pages).Sort("-visitNum").All(&list)
 	if err != nil {
@@ -291,7 +291,7 @@ func (sp *articleServiceProvider) ArtNum(userID uint32) (int, error) {
 	conn := articleSession.Connect()
 	defer conn.Disconnect()
 
-	query := bson.M{"authorID": userID, "Active": true}
+	query := bson.M{"authorID": userID, "active": true}
 
 	artNum, err := conn.Collection().Find(query).Count()
 	if err != nil {

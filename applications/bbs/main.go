@@ -49,20 +49,17 @@ type handler struct {
 
 func main() {
 	var (
-		c, i handler
+		fileServe handler
 	)
 	go func() {
-		c.h = http.StripPrefix("/content/",
-			http.FileServer(http.Dir("./content")))
-		http.Handle("/content/", c)
+		fileServe.h = http.StripPrefix("/content/", http.FileServer(http.Dir("./content")))
+		http.Handle("/content/", fileServe)
 
-		i.h = http.StripPrefix("/image/",
-			http.FileServer(http.Dir("./image")))
-		http.Handle("/image/", i)
+		fileServe.h = http.StripPrefix("/image/", http.FileServer(http.Dir("./image")))
+		http.Handle("/image/", fileServe)
 
-		i.h = http.StripPrefix("/img/",
-			http.FileServer(http.Dir("./img")))
-		http.Handle("/img/", i)
+		fileServe.h = http.StripPrefix("/img/", http.FileServer(http.Dir("./img")))
+		http.Handle("/img/", fileServe)
 
 		if err := http.ListenAndServe(":8080", nil); err != nil {
 			logger.Error(err)

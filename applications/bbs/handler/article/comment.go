@@ -32,7 +32,6 @@ package article
 import (
 	"gopkg.in/mgo.v2/bson"
 
-	"fmt"
 	mysql "github.com/fengyfei/gu/applications/bbs/initialize"
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/libs/constants"

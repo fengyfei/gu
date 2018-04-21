@@ -46,6 +46,7 @@ type categoryServiceProvider struct{}
 var (
 	// ErrNotFound - No result found
 	ErrNotFound = errors.New("No result found")
+	ErrExist = errors.New("Already exist")
 	// CategoryService expose serviceProvider
 	CategoryService *categoryServiceProvider
 	categorySession *mongo.Connection
@@ -96,21 +97,39 @@ func (sp *categoryServiceProvider) CreateCategory(category *Category) error {
 	conn := categorySession.Connect()
 	defer conn.Disconnect()
 
+	num, err := conn.Collection().Find(bson.M{"name": cate.Name}).Count()
+	if err != nil {
+		return err
+	}
+
+	if num != 0 {
+		return ErrExist
+	}
+
 	return conn.Insert(cate)
 }
 
 // CreateTag add tag.
 func (sp *categoryServiceProvider) CreateTag(categoryID, tagName string) error {
+	conn := categorySession.Connect()
+	defer conn.Disconnect()
+
 	tag := Tag{
 		Id:     bson.NewObjectId(),
 		Name:   tagName,
 		Active: true,
 	}
 
-	updater := bson.M{"$addToSet": bson.M{"tags": tag}}
+	num, err := conn.Collection().Find(bson.M{"name": tag.Name}).Count()
+	if err != nil {
+		return err
+	}
 
-	conn := categorySession.Connect()
-	defer conn.Disconnect()
+	if num != 0 {
+		return ErrExist
+	}
+
+	updater := bson.M{"$addToSet": bson.M{"tags": tag}}
 
 	return conn.Update(bson.M{"_id": bson.ObjectIdHex(categoryID)}, updater)
 }
