@@ -34,6 +34,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	jwtgo "github.com/dgrijalva/jwt-go"
 
@@ -45,7 +46,6 @@ import (
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/models/bbs/article"
 	"github.com/fengyfei/gu/models/user"
-	"time"
 )
 
 const (
@@ -130,6 +130,7 @@ func WechatLogin(this *server.Context) error {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrWechatAuth, nil)
 	}
+	defer wechatRes.Body.Close()
 
 	if wechatRes.StatusCode != http.StatusOK {
 		logger.Error("Can't get session key from weixin server: response status code", wechatRes.StatusCode)
@@ -148,6 +149,7 @@ func WechatLogin(this *server.Context) error {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrWechatAuth, nil)
 	}
+	defer tokenRes.Body.Close()
 
 	if tokenRes.StatusCode != http.StatusOK {
 		logger.Error("Can't get session key from weixin server: response status code", wechatRes.StatusCode)

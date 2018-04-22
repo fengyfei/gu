@@ -30,14 +30,13 @@
 package util
 
 import (
+	"encoding/base64"
 	"io/ioutil"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
-	"encoding/base64"
 	"github.com/fengyfei/gu/libs/logger"
 )
 

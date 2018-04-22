@@ -30,10 +30,11 @@
 package initialize
 
 import (
+	"time"
+
 	"gopkg.in/mgo.v2"
 
 	"github.com/fengyfei/gu/applications/bbs/conf"
-	"time"
 )
 
 var (
@@ -46,7 +47,7 @@ func init() {
 		url = conf.BBSConfig.MongoURL + "/" + conf.BBSConfig.MongoDB
 	)
 
-	S, err = mgo.DialWithTimeout(url, 5 * time.Second)
+	S, err = mgo.DialWithTimeout(url, 5*time.Second)
 	if err != nil {
 		panic(err)
 	}

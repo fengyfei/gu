@@ -46,7 +46,7 @@ type categoryServiceProvider struct{}
 var (
 	// ErrNotFound - No result found
 	ErrNotFound = errors.New("No result found")
-	ErrExist = errors.New("Already exist")
+	ErrExist    = errors.New("Already exist")
 	// CategoryService expose serviceProvider
 	CategoryService *categoryServiceProvider
 	categorySession *mongo.Connection

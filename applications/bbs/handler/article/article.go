@@ -167,7 +167,7 @@ func GetByArtID(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	reply, err := Reply(1, *art)
+	reply, err := Reply(*art)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -201,7 +201,7 @@ func GetByCategoryID(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	reply, err := Reply(len(info), info...)
+	reply, err := Reply(info...)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -236,7 +236,7 @@ func GetByTagID(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	reply, err := Reply(len(info), info...)
+	reply, err := Reply(info...)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -262,7 +262,7 @@ func SearchByTitle(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	reply, err := Reply(len(info), info...)
+	reply, err := Reply(info...)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -371,7 +371,7 @@ func Recommend(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	reply, err := Reply(len(info), info...)
+	reply, err := Reply(info...)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
@@ -381,7 +381,7 @@ func Recommend(this *server.Context) error {
 }
 
 // Reply return a struct of replyInfo.
-func Reply(len int, info ...article.Article) ([]*replyInfo, error) {
+func Reply(info ...article.Article) ([]*replyInfo, error) {
 	conn, err := mysql.Pool.Get()
 	defer mysql.Pool.Release(conn)
 	if err != nil {
@@ -389,7 +389,7 @@ func Reply(len int, info ...article.Article) ([]*replyInfo, error) {
 		return nil, err
 	}
 
-	var reply = make([]*replyInfo, len)
+	var reply = make([]*replyInfo, len(info))
 	for i, art := range info {
 		author, err := user.UserService.GetUserByID(conn, art.AuthorID)
 		if err != nil {
