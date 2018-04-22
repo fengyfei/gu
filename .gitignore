@@ -9,3 +9,4 @@ applications/beego/shop/img
 */.DS_Store
 applications/shop/shop
 *test.db
+libs/crawler/vuejs/crawler.db

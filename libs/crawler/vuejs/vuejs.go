@@ -36,14 +36,14 @@ import (
 
 	"github.com/fengyfei/gu/libs/crawler"
 	"github.com/fengyfei/gu/libs/crawler/util/bolt"
+	"github.com/fengyfei/gu/libs/logger"
 )
 
 type vuejsCrawler struct {
-	collector *colly.Collector
-
-	dataCh   chan crawler.Data
-	finishCh chan struct{}
-
+	collector  *colly.Collector
+	dataCh     chan crawler.Data
+	finishCh   chan struct{}
+	errCh      chan error
 	db         *bolt.DB
 	earlierURL string
 	currentURL string
@@ -61,18 +61,21 @@ func NewVuejsCrawler(dataCh chan crawler.Data, finishCh chan struct{}) crawler.C
 		collector: colly.NewCollector(),
 		dataCh:    dataCh,
 		finishCh:  finishCh,
+		errCh:     make(chan error),
 	}
 }
 
 func (c *vuejsCrawler) prepare() error {
 	db, err := bolt.Open(crawler.CrawlerPath)
 	if err != nil {
+		logger.Error("error in opening a boltdb", err)
 		return err
 	}
 	c.db = db
 
 	value, err := c.db.Get([]byte(crawler.CrawlerBucket), []byte(key))
 	if err != nil {
+		logger.Error("error in getting earlier url", err)
 		return err
 	}
 	c.earlierURL = string(value)
@@ -80,44 +83,76 @@ func (c *vuejsCrawler) prepare() error {
 }
 
 func (c *vuejsCrawler) shutdown() error {
-	fmt.Println("-=-=-=-=-=-=-=-shutdown=-=-=-=-=-=-=-=-")
-
 	return c.db.Set([]byte(crawler.CrawlerBucket), []byte(key), []byte(c.currentURL))
 }
 
 // Crawler interface Init
 func (c *vuejsCrawler) Init() error {
-	c.collector.OnHTML("a.issue-nav-link.issue-nav-link--next", c.visitNext)
 	c.collector.OnHTML("article.issue", c.parseNews)
+	c.collector.OnHTML("div.issues-nav", c.visitNext)
 
 	return c.prepare()
 }
 
 // Crawler interface Start
 func (c *vuejsCrawler) Start() error {
-	return c.collector.Visit(site)
+	go func() {
+		err := c.collector.Visit(site)
+		if err != nil {
+			logger.Error("error in starting a visit", err)
+			c.errCh <- err
+		}
+	}()
+
+	for err := range c.errCh {
+		close(c.errCh)
+		return err
+	}
+
+	close(c.errCh)
+	return nil
 }
 
 func (c *vuejsCrawler) visitNext(e *colly.HTMLElement) {
-	if e.Attr("href") == "" {
-		c.shutdown()
-		fmt.Println("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
-
-		c.finishCh <- struct{}{}
-		close(c.finishCh)
+	subURL, exist := e.DOM.Find("a.issue-nav-link.issue-nav-link--next").Attr("href")
+	if exist {
+		err := c.collector.Visit(e.Request.AbsoluteURL(subURL))
+		if err != nil {
+			logger.Error("error in starting a visit", err)
+			c.errCh <- err
+		}
+	} else {
+		defer close(c.finishCh)
+		defer close(c.dataCh)
+		err := c.shutdown()
+		if err != nil {
+			logger.Error("error in shutdown", err)
+			c.errCh <- err
+		}
 	}
-	c.collector.Visit(e.Request.AbsoluteURL(e.Attr("href")))
 }
 
 func (c *vuejsCrawler) parseNews(e *colly.HTMLElement) {
+	defer func() {
+		if err := recover(); err != nil {
+			logger.Error("panic when parsing vuejs news", err)
+			c.errCh <- fmt.Errorf("%v", err)
+		}
+	}()
+
 	if e.Request.URL.String() == site {
 		c.currentURL, _ = e.DOM.Find("a").Eq(0).Attr("href")
 	}
 	subURL, _ := e.DOM.Find("a").Eq(0).Attr("href")
 	if subURL == c.earlierURL {
-		c.shutdown()
-		c.finishCh <- struct{}{}
-		close(c.finishCh)
+		defer close(c.finishCh)
+		defer close(c.dataCh)
+		err := c.shutdown()
+		if err != nil {
+			logger.Error("error in shutdown", err)
+			c.errCh <- err
+		}
+		return
 	}
 
 	data := crawler.DefaultData{

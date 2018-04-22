@@ -33,6 +33,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/fengyfei/gu/libs/logger"
+
 	"github.com/fengyfei/gu/libs/crawler"
 )
 
@@ -45,7 +47,7 @@ func TestVuejsCrawler(t *testing.T) {
 	go func() {
 		err := crawler.StartCrawler(c)
 		if err != nil {
-			panic(err)
+			logger.Error(err)
 		}
 	}()
 
@@ -54,7 +56,6 @@ func TestVuejsCrawler(t *testing.T) {
 		case data := <-dataCh:
 			fmt.Println(data.(*crawler.DefaultData).URL)
 		case <-finishCh:
-			fmt.Println("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
 			return
 		}
 	}
