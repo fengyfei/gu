@@ -31,138 +31,101 @@ package vuejs
 
 import (
 	"fmt"
-	"net/http"
-	"strconv"
 
 	"github.com/asciimoo/colly"
-	"github.com/dgraph-io/badger"
-	"github.com/dgraph-io/badger/options"
+
 	"github.com/fengyfei/gu/libs/crawler"
-	"github.com/fengyfei/gu/libs/logger"
-	store "github.com/fengyfei/gu/libs/store/badger"
+	"github.com/fengyfei/gu/libs/crawler/util/bolt"
 )
 
 type vuejsCrawler struct {
 	collector *colly.Collector
 
-	dataCh   chan *crawler.Data
+	dataCh   chan crawler.Data
 	finishCh chan struct{}
 
-	ready          bool
-	visitSiteReady chan struct{}
-	crawlerFinish  chan struct{}
-
-	db      *store.BadgerDB
-	oldIncr string
-	newIncr string
+	db         *bolt.DB
+	earlierURL string
+	currentURL string
 }
 
 const (
-	defaultOldIncr = "0"
-	site           = "https://news.vuejs.org/issues/"
+	key      = "vuejs"
+	site     = "https://news.vuejs.org/"
+	previous = "a.issue-nav-link.issue-nav-link--next"
 )
 
 // NewVuejsCrawler generates a crawler for vuejs news.
-func NewVuejsCrawler(dataCh chan *crawler.Data, finishCh chan struct{}) crawler.Crawler {
+func NewVuejsCrawler(dataCh chan crawler.Data, finishCh chan struct{}) crawler.Crawler {
 	return &vuejsCrawler{
 		collector: colly.NewCollector(),
 		dataCh:    dataCh,
 		finishCh:  finishCh,
-
-		visitSiteReady: make(chan struct{}),
-		crawlerFinish:  make(chan struct{}),
-	}
-}
-
-// Crawler interface Init
-func (c *vuejsCrawler) Init() error {
-	c.collector.OnHTML("article.issue", c.parse)
-
-	err := c.prepare()
-	if err != nil {
-		logger.Error("Error in preparing to start:", err)
-		return err
-	}
-	return nil
-}
-
-// Crawler interface Start
-func (c *vuejsCrawler) Start() error {
-	go func() {
-		c.visitSiteReady <- struct{}{}
-	}()
-
-	incr, _ := strconv.Atoi(c.oldIncr)
-
-	for {
-		select {
-		case <-c.visitSiteReady:
-			go func() {
-				err := c.collector.Visit(fmt.Sprintf("%s%d", site, incr))
-				if err != nil {
-					if c.ready && err.Error() == http.StatusText(http.StatusNotFound) {
-						c.crawlerFinish <- struct{}{}
-						return
-					} else if err.Error() != http.StatusText(http.StatusNotFound) {
-						logger.Error("Error in crawling the news:", err)
-					}
-				}
-
-				if !c.ready {
-					c.visitSiteReady <- struct{}{}
-				}
-				incr++
-			}()
-		case <-c.crawlerFinish:
-			err := c.finish()
-			if err != nil {
-				logger.Error("Error in the end:", err)
-			}
-			c.finishCh <- struct{}{}
-			return nil
-		}
 	}
 }
 
 func (c *vuejsCrawler) prepare() error {
-	db, err := store.NewBadgerDB(options.FileIO, "vuejs-news-badger", true)
+	db, err := bolt.Open(crawler.CrawlerPath)
 	if err != nil {
 		return err
 	}
 	c.db = db
 
-	value, err := db.Get([]byte("increment-key"))
-	if len(value) != 0 && err == nil {
-		c.oldIncr = string(value)
-		return nil
-	}
-
-	if err != badger.ErrKeyNotFound {
+	value, err := c.db.Get([]byte(crawler.CrawlerBucket), []byte(key))
+	if err != nil {
 		return err
 	}
-
-	c.oldIncr = defaultOldIncr
+	c.earlierURL = string(value)
 	return nil
 }
 
-func (c *vuejsCrawler) finish() error {
-	return c.db.Set([]byte("increment-key"), []byte(c.newIncr))
+func (c *vuejsCrawler) shutdown() error {
+	fmt.Println("-=-=-=-=-=-=-=-shutdown=-=-=-=-=-=-=-=-")
+
+	return c.db.Set([]byte(crawler.CrawlerBucket), []byte(key), []byte(c.currentURL))
 }
 
-func (c *vuejsCrawler) parse(e *colly.HTMLElement) {
-	c.ready = true
-	c.newIncr = e.Request.URL.String()[len(site):]
-	if c.oldIncr == c.newIncr {
-		c.crawlerFinish <- struct{}{}
-		return
+// Crawler interface Init
+func (c *vuejsCrawler) Init() error {
+	c.collector.OnHTML("a.issue-nav-link.issue-nav-link--next", c.visitNext)
+	c.collector.OnHTML("article.issue", c.parseNews)
+
+	return c.prepare()
+}
+
+// Crawler interface Start
+func (c *vuejsCrawler) Start() error {
+	return c.collector.Visit(site)
+}
+
+func (c *vuejsCrawler) visitNext(e *colly.HTMLElement) {
+	if e.Attr("href") == "" {
+		c.shutdown()
+		fmt.Println("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-")
+
+		c.finishCh <- struct{}{}
+		close(c.finishCh)
+	}
+	c.collector.Visit(e.Request.AbsoluteURL(e.Attr("href")))
+}
+
+func (c *vuejsCrawler) parseNews(e *colly.HTMLElement) {
+	if e.Request.URL.String() == site {
+		c.currentURL, _ = e.DOM.Find("a").Eq(0).Attr("href")
+	}
+	subURL, _ := e.DOM.Find("a").Eq(0).Attr("href")
+	if subURL == c.earlierURL {
+		c.shutdown()
+		c.finishCh <- struct{}{}
+		close(c.finishCh)
 	}
 
-	data := crawler.Data{
+	data := crawler.DefaultData{
 		Source: "Vuejs News",
 		Date:   e.DOM.Find("span.issue-date").Text(),
 		Title:  e.DOM.Find("div.issue-title").Text(),
-		URL:    e.Request.URL.String(),
-		Text:   "Description: " + e.DOM.Find("p.issue-description").Text() + "\nContent:\n",
+		URL:    e.Request.AbsoluteURL(subURL),
+		Text:   "Description: " + e.DOM.Find("div.issue-description").Text() + "\nContent:\n",
 	}
 
 	data.Text += "Story\n"
@@ -186,5 +149,4 @@ func (c *vuejsCrawler) parse(e *colly.HTMLElement) {
 	}
 
 	c.dataCh <- &data
-	c.visitSiteReady <- struct{}{}
 }
