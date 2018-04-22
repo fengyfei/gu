@@ -54,10 +54,10 @@ func InitConfig() {
 	logger.Info("Successfully read the configuration.")
 }
 
-func RefashConfig() {
-	sCh := make(chan os.Signal)
-	signal.Notify(sCh, syscall.SIGALRM)
-	for range sCh {
+func ReflashConfig() {
+	signalCh := make(chan os.Signal)
+	signal.Notify(signalCh, syscall.SIGALRM)
+	for range signalCh {
 		InitConfig()
 	}
 }

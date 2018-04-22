@@ -40,8 +40,8 @@ import (
 
 type Client struct {
 	Crawler   crawler.Crawler
-	DataCh    *chan *crawler.Data
-	FinishCh  *chan struct{}
+	DataCh    chan *crawler.Data
+	FinishCh  chan struct{}
 	DB        string
 	C         string
 	BotsToken string
@@ -99,21 +99,15 @@ func (c *Client) store(data *crawler.Data) error {
 	return err
 }
 
-func (c *Client) release(data *crawler.Data) error {
+func (c *Client) release(data crawler.Data) error {
 	cli := slack.NewClient(c.BotsToken)
 
-	if data.FileType != "" {
-		text := fmt.Sprintf("Source: %s\nDate: %s\nTitle: %s\nURL: %s\n", data.Source, data.Date, data.Title, data.URL)
-
-		err := cli.PostMessage(c.Channel, text)
+	if data.IsFile() {
+		err := cli.PostMessage(c.Channel, data.String())
 		if err != nil {
 			return err
 		}
-
-		return cli.UploadFile(c.Channel, data.Title, data.FileType, data.Text)
 	}
 
-	text := fmt.Sprintf("Source: %s\nDate: %s\nTitle: %s\nURL: %s\n%s", data.Source, data.Date, data.Title, data.URL, data.Text)
-
-	return cli.PostMessage(c.Channel, text)
+	return cli.PostMessage(c.Channel, data.String())
 }

@@ -30,8 +30,9 @@
 package client
 
 import (
-	"github.com/fengyfei/gu/libs/logger"
 	mgo "gopkg.in/mgo.v2"
+
+	"github.com/fengyfei/gu/libs/logger"
 )
 
 var (
