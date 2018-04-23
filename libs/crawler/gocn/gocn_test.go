@@ -24,10 +24,10 @@
 
 /*
  * Revision History:
- *     Initial: 2018/04/22        Li Zebang
+ *     Initial: 2018/04/23        Li Zebang
  */
 
-package vuejs
+package gocn
 
 import (
 	"fmt"
@@ -36,12 +36,12 @@ import (
 	"github.com/fengyfei/gu/libs/crawler"
 )
 
-func TestVuejsCrawler(t *testing.T) {
+func TestSegmentCrawler(t *testing.T) {
 	var (
 		dataCh   = make(chan crawler.Data)
 		finishCh = make(chan struct{})
 	)
-	c := NewVuejsCrawler(dataCh, finishCh)
+	c := NewGoCNCrawler(dataCh, finishCh)
 	go func() {
 		err := crawler.StartCrawler(c)
 		if err != nil {

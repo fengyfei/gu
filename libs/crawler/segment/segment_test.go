@@ -24,24 +24,25 @@
 
 /*
  * Revision History:
- *     Initial: 2018/04/22        Li Zebang
+ *     Initial: 2018/04/23        Li Zebang
  */
 
-package vuejs
+package segment
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/fengyfei/gu/libs/crawler"
 )
 
-func TestVuejsCrawler(t *testing.T) {
+func TestSegmentCrawler(t *testing.T) {
 	var (
 		dataCh   = make(chan crawler.Data)
 		finishCh = make(chan struct{})
 	)
-	c := NewVuejsCrawler(dataCh, finishCh)
+	c := NewSegmentCrawler(dataCh, finishCh)
 	go func() {
 		err := crawler.StartCrawler(c)
 		if err != nil {
@@ -49,11 +50,24 @@ func TestVuejsCrawler(t *testing.T) {
 		}
 	}()
 
+	err := os.MkdirAll("blog", 0755)
+	if err != nil {
+		panic(err)
+	}
 	for {
 		select {
 		case data := <-dataCh:
-			fmt.Println(data)
+			blog := data.(*SegmentData)
+			file, err := os.OpenFile(fmt.Sprintf("blog/%s.md", blog.Title), os.O_CREATE|os.O_WRONLY, 0644)
+			if err != nil {
+				panic(err)
+			}
+			n, err := file.Write([]byte(blog.Text))
+			if n != len(blog.Text) || err != nil {
+				panic(err)
+			}
 		case <-finishCh:
+			fmt.Println(2)
 			return
 		}
 	}

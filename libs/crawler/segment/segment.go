@@ -30,166 +30,134 @@
 package segment
 
 import (
-	"fmt"
-	"net/http"
-
 	"github.com/asciimoo/colly"
-	"github.com/dgraph-io/badger"
-	"github.com/dgraph-io/badger/options"
+
 	"github.com/fengyfei/gu/libs/crawler"
+	"github.com/fengyfei/gu/libs/crawler/util/bolt"
 	"github.com/fengyfei/gu/libs/logger"
-	store "github.com/fengyfei/gu/libs/store/badger"
 )
 
 type segmentCrawler struct {
-	collector *colly.Collector
-
-	dataCh   chan *crawler.Data
-	finishCh chan struct{}
-
-	errCh   chan error
-	blogURL chan *string
-
-	visitSiteReady  chan struct{}
-	visitSiteFinish chan struct{}
-	crawlerFinish   chan struct{}
-
-	db      *store.BadgerDB
-	oldIncr string
-	newIncr string
+	collector  *colly.Collector
+	dataCh     chan crawler.Data
+	finishCh   chan struct{}
+	errCh      chan error
+	db         *bolt.DB
+	earlierURL string
+	currentURL string
 }
 
 const (
-	site           = "https://segment.com"
-	defaultOldIncr = "default-old-increment"
+	key  = "segment"
+	site = "https://segment.com/blog/"
 )
 
 // NewSegmentCrawler generates a crawler for Segment blogs.
-func NewSegmentCrawler(dataCh chan *crawler.Data, finishCh chan struct{}) crawler.Crawler {
+func NewSegmentCrawler(dataCh chan crawler.Data, finishCh chan struct{}) crawler.Crawler {
+	c := colly.NewCollector()
 	return &segmentCrawler{
-		collector: colly.NewCollector(),
-
-		dataCh:   dataCh,
-		finishCh: finishCh,
-
-		errCh:   make(chan error),
-		blogURL: make(chan *string),
-
-		visitSiteReady:  make(chan struct{}),
-		visitSiteFinish: make(chan struct{}),
-		crawlerFinish:   make(chan struct{}),
-	}
-}
-
-// Crawler interface Init
-func (c *segmentCrawler) Init() error {
-	c.collector.OnHTML("body", c.parseURL)
-
-	err := c.prepare()
-	if err != nil {
-		logger.Error("Error in preparing to start:", err)
-		return err
-	}
-	return nil
-}
-
-// Crawler interface Start
-func (c *segmentCrawler) Start() error {
-
-	go func() {
-		c.visitSiteReady <- struct{}{}
-	}()
-
-	go c.startBlog()
-
-	var page int
-	for {
-		select {
-		case <-c.visitSiteReady:
-			var url string
-			page++
-			if page == 1 {
-				url = site + "/blog/"
-			} else {
-				url = fmt.Sprintf("%s/blog/page/%d", site, page)
-			}
-			err := c.collector.Visit(url)
-			if err != nil {
-				if err.Error() == http.StatusText(http.StatusNotFound) {
-					err := c.finish()
-					if err != nil {
-						logger.Error("Error in the end:", err)
-					}
-					c.finishCh <- struct{}{}
-					return nil
-				}
-				logger.Error("Error in getting blog url", err)
-				return err
-			}
-		case err := <-c.errCh:
-			return err
-		case <-c.visitSiteFinish:
-			return nil
-		}
+		collector: c,
+		dataCh:    dataCh,
+		finishCh:  finishCh,
+		errCh:     make(chan error),
 	}
 }
 
 func (c *segmentCrawler) prepare() error {
-	db, err := store.NewBadgerDB(options.FileIO, "segment-blog-badger", true)
+	db, err := bolt.Open(crawler.CrawlerPath)
 	if err != nil {
+		logger.Error("error in opening a boltdb", err)
 		return err
 	}
 	c.db = db
 
-	value, err := c.db.Get([]byte("increment-key"))
-	if len(value) != 0 && err == nil {
-		c.oldIncr = string(value)
-		return nil
-	}
-
-	if err != badger.ErrKeyNotFound {
+	value, err := c.db.Get([]byte(crawler.CrawlerBucket), []byte(key))
+	if err != nil {
+		logger.Error("error in getting earlier url", err)
 		return err
 	}
-
-	c.oldIncr = defaultOldIncr
+	c.earlierURL = string(value)
 	return nil
 }
 
-func (c *segmentCrawler) finish() error {
-	return c.db.Set([]byte("increment-key"), []byte(c.newIncr))
+func (c *segmentCrawler) shutdown() error {
+	return c.db.Set([]byte(crawler.CrawlerBucket), []byte(key), []byte(c.currentURL))
 }
 
-func (c *segmentCrawler) parseURL(e *colly.HTMLElement) {
-	if e.Request.URL.String() == "https://segment.com/blog/" {
-		u, _ := e.DOM.Find("a.Link--primary.Link--animatedHover.ArticleInList-readMoreLink").Eq(0).Attr("href")
-		c.newIncr = site + u
-	}
+// Crawler interface Init
+func (c *segmentCrawler) Init() error {
+	c.collector.OnHTML("section.Articles-list.clearfix", c.visitBlog)
+	c.collector.OnHTML("div.Pagination", c.visitNext)
 
-	if _, ready := e.DOM.Find("a.Link--primary.Link--animatedHover.ArticleInList-readMoreLink").Eq(0).Attr("href"); !ready {
-		c.visitSiteFinish <- struct{}{}
-	}
+	return c.prepare()
+}
+
+// Crawler interface Start
+func (c *segmentCrawler) Start() error {
+	defer close(c.dataCh)
 
 	go func() {
-		c.visitSiteReady <- struct{}{}
+		err := c.collector.Visit(site)
+		if err != nil {
+			logger.Error("error in starting a visit", err)
+			c.errCh <- err
+		}
 	}()
 
-	for i := 0; ; i++ {
-		u, ready := e.DOM.Find("a.Link--primary.Link--animatedHover.ArticleInList-readMoreLink").Eq(i).Attr("href")
-		if !ready {
-			return
+	for err := range c.errCh {
+		close(c.errCh)
+		return err
+	}
+
+	close(c.errCh)
+	return nil
+}
+
+func (c *segmentCrawler) visitNext(e *colly.HTMLElement) {
+	subURL, exist := e.DOM.Find("a.Link--primary.Link--animatedHover.Pagination-older").Attr("href")
+	if exist {
+		err := c.collector.Visit(e.Request.AbsoluteURL(subURL))
+		if err != nil {
+			logger.Error("error in starting a visit", err)
+			c.errCh <- err
 		}
-		url := site + u
-		if url == c.oldIncr {
-			err := c.finish()
+	} else {
+		defer close(c.finishCh)
+		err := c.shutdown()
+		if err != nil {
+			logger.Error("error in shutdown", err)
+			c.errCh <- err
+		}
+	}
+}
+
+func (c *segmentCrawler) visitBlog(e *colly.HTMLElement) {
+	selector := "a.Link--primary.Link--animatedHover.ArticleInList-readMoreLink"
+	if e.Request.URL.String() == site {
+		c.currentURL, _ = e.DOM.Find(selector).Eq(0).Attr("href")
+	}
+	if c.currentURL == c.earlierURL {
+		defer close(c.finishCh)
+		err := c.shutdown()
+		if err != nil {
+			logger.Error("error in shutdown", err)
+			c.errCh <- err
+		}
+		return
+	}
+
+	var (
+		subURL = ""
+		ok     = true
+	)
+	for index := 0; ok; index++ {
+		subURL, ok = e.DOM.Find(selector).Eq(index).Attr("href")
+		if ok {
+			err := c.parseBlog(e.Request.AbsoluteURL(subURL))
 			if err != nil {
-				logger.Error("Error in the end:", err)
+				logger.Error("error in visiting a blog", err)
 				c.errCh <- err
-				return
 			}
-			c.visitSiteFinish <- struct{}{}
-			return
 		}
-		c.blogURL <- &url
-		<-c.crawlerFinish
 	}
 }

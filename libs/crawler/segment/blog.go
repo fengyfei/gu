@@ -35,33 +35,50 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/fengyfei/gu/libs/crawler"
 	"github.com/fengyfei/gu/libs/logger"
 )
 
-type parser struct{}
+// SegmentData -
+type SegmentData struct {
+	// Source -
+	Source string
+	// Date -
+	Date string
+	// Title -
+	Title string
+	// Tag -
+	Tag string
+	// URL -
+	URL string
+	// Text -
+	Text string
+	// FileType -
+	FileType string
+}
+
+func (data *SegmentData) String() string {
+	return fmt.Sprintf("Source: %s\nDate: %s\nTitle: %s\nURL: %s\n", data.Source, data.Date, data.Title, data.URL)
+}
+
+// File return title, filetype and content.
+func (data *SegmentData) File() (title, filetype, content string) {
+	return data.Title, data.FileType, data.Text
+}
+
+// IsFile return true.
+func (data *SegmentData) IsFile() bool {
+	return true
+}
 
 var (
 	topMap  = map[string]string{"&amp;": "&", "&#x27;": "'", "\n": ""}
 	bodyMap = map[string]string{"&#x27;": "'", "&amp;": "&", "&quot;": "\"", "&lt;": "<", "&gt;": ">"}
 )
 
-func (c *segmentCrawler) startBlog() {
-	for {
-		if url, ready := <-c.blogURL; ready {
-			err := c.getBlog(url)
-			if err != nil {
-				c.errCh <- err
-			}
-			c.crawlerFinish <- struct{}{}
-		}
-	}
-}
-
-func (c *segmentCrawler) getBlog(url *string) error {
+func (c *segmentCrawler) parseBlog(url string) error {
 	cli := &http.Client{}
 
-	req, err := http.NewRequest("GET", *url, nil)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		logger.Error("error in getting blog", err)
 		return err
@@ -80,36 +97,37 @@ func (c *segmentCrawler) getBlog(url *string) error {
 		return err
 	}
 
-	data := &crawler.Data{
+	data := &SegmentData{
 		Source:   "Segment Blog",
-		URL:      *url,
+		URL:      url,
 		FileType: "markdown",
 	}
 
-	var parser = &parser{}
-	parser.parseBlog(data, string(d))
+	parseBlog(data, string(d))
 
 	c.dataCh <- data
 
 	return nil
 }
 
-func (p *parser) parseBlog(d *crawler.Data, s string) {
+func parseBlog(d *SegmentData, s string) {
 	defer func() {
 		if err := recover(); err != nil {
 			logger.Error(err, d.URL)
 		}
 	}()
 
+	s = strings.SplitN(s, "<a class=\"Category Category--", 2)[1]
+	d.Tag = strings.SplitN(s, " ", 2)[0]
 	s = strings.SplitN(s, "<h1 class=\"Article-title\" data-reactid=\"39\">", 2)[1]
 	s = strings.SplitN(s, "<footer class=\"Article-footer\" data-reactid=\"", 2)[0]
 	data := strings.SplitN(s, "<div class=\"Article-body Content\" data-swiftype-name=\"body\" data-swiftype-type=\"text\" data-reactid=", 2)
 
-	p.parseTop(d, data[0])
-	p.parseBody(d, data[1])
+	parseTop(d, data[0])
+	parseBody(d, data[1])
 }
 
-func (p *parser) parseTop(d *crawler.Data, s string) {
+func parseTop(d *SegmentData, s string) {
 	text := strings.SplitN(s, "</h1>", 2)
 	d.Title = text[0]
 	for k, v := range topMap {
@@ -137,7 +155,7 @@ func (p *parser) parseTop(d *crawler.Data, s string) {
 	d.Text = fmt.Sprintf("%s on %s\n", d.Text, d.Date)
 }
 
-func (p *parser) parseBody(d *crawler.Data, s string) {
+func parseBody(d *SegmentData, s string) {
 	s = s[5 : len(s)-6]
 	s = strings.Replace(s, "<hr/>", "\n---\n\n", -1)
 	s = strings.Replace(s, "<br/>", "\n", -1)

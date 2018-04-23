@@ -50,9 +50,8 @@ type vuejsCrawler struct {
 }
 
 const (
-	key      = "vuejs"
-	site     = "https://news.vuejs.org/"
-	previous = "a.issue-nav-link.issue-nav-link--next"
+	key  = "vuejs"
+	site = "https://news.vuejs.org/"
 )
 
 // NewVuejsCrawler generates a crawler for vuejs news.
@@ -96,6 +95,8 @@ func (c *vuejsCrawler) Init() error {
 
 // Crawler interface Start
 func (c *vuejsCrawler) Start() error {
+	defer close(c.dataCh)
+
 	go func() {
 		err := c.collector.Visit(site)
 		if err != nil {
@@ -113,25 +114,6 @@ func (c *vuejsCrawler) Start() error {
 	return nil
 }
 
-func (c *vuejsCrawler) visitNext(e *colly.HTMLElement) {
-	subURL, exist := e.DOM.Find("a.issue-nav-link.issue-nav-link--next").Attr("href")
-	if exist {
-		err := c.collector.Visit(e.Request.AbsoluteURL(subURL))
-		if err != nil {
-			logger.Error("error in starting a visit", err)
-			c.errCh <- err
-		}
-	} else {
-		defer close(c.finishCh)
-		defer close(c.dataCh)
-		err := c.shutdown()
-		if err != nil {
-			logger.Error("error in shutdown", err)
-			c.errCh <- err
-		}
-	}
-}
-
 func (c *vuejsCrawler) parseNews(e *colly.HTMLElement) {
 	defer func() {
 		if err := recover(); err != nil {
@@ -146,7 +128,6 @@ func (c *vuejsCrawler) parseNews(e *colly.HTMLElement) {
 	subURL, _ := e.DOM.Find("a").Eq(0).Attr("href")
 	if subURL == c.earlierURL {
 		defer close(c.finishCh)
-		defer close(c.dataCh)
 		err := c.shutdown()
 		if err != nil {
 			logger.Error("error in shutdown", err)
@@ -184,4 +165,22 @@ func (c *vuejsCrawler) parseNews(e *colly.HTMLElement) {
 	}
 
 	c.dataCh <- &data
+}
+
+func (c *vuejsCrawler) visitNext(e *colly.HTMLElement) {
+	subURL, exist := e.DOM.Find("a.issue-nav-link.issue-nav-link--next").Attr("href")
+	if exist {
+		err := c.collector.Visit(e.Request.AbsoluteURL(subURL))
+		if err != nil {
+			logger.Error("error in starting a visit", err)
+			c.errCh <- err
+		}
+	} else {
+		defer close(c.finishCh)
+		err := c.shutdown()
+		if err != nil {
+			logger.Error("error in shutdown", err)
+			c.errCh <- err
+		}
+	}
 }

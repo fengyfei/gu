@@ -53,8 +53,8 @@ func NewVuejsClient() *client.Client {
 
 	return &client.Client{
 		Crawler:   crawler,
-		DataCh:    &dataCh,
-		FinishCh:  &finishCh,
+		DataCh:    dataCh,
+		FinishCh:  finishCh,
 		DB:        "Crawler",
 		C:         "Vuejs News",
 		BotsToken: "xoxb-312476598064-97wqE4OJeqhv4mTX1g2c9LZs",
