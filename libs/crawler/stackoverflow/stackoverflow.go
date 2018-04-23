@@ -24,49 +24,46 @@
 
 /*
  * Revision History:
- *     Initial: 2018/4/23        Zhang Hao
+ *     Initial: 2018/4/21        Zhang Hao
  */
 
-package xteam
+package stackoverflow
 
 import (
 	"fmt"
 	"strings"
-
-	"github.com/PuerkitoBio/goquery"
-	"github.com/fengyfei/gu/libs/crawler"
 	"github.com/fengyfei/gu/libs/crawler/util/bolt"
 	"github.com/gocolly/colly"
+	"github.com/fengyfei/gu/libs/crawler"
 )
 
 type Blog struct {
-	Source  string   `bson:"source"`
-	Title   string   `bson:"title"`
-	Author  string   `bson:"author"`
-	Date    string   `bson:"date"`
-	Photo   string   `bson:"photo"`
-	Content string   `bson:"content"`
-	Tags    []string `bson:"tags"`
+	Source  string `bson:"source"`
+	Title   string `bson:"title"`
+	Author  string `bson:"author"`
+	Date    string `bson:"date"`
+	Photo   string `bson:"photo"`
+	Content string `bson:"content"`
 }
 
-type xteamCrawler struct {
+type stackOverFlowCrawler struct {
 	collector       *colly.Collector
 	detailCollector *colly.Collector
 	db              *bolt.DB
-	lastUrl         string
 	newestUrl       string
+	lastUrl         string
 	counter         int64
 	isAllDateGet    bool
 	dataCh          chan crawler.Data
 	finishCh        chan struct{}
 }
 
-func NewXteam(dataCh chan crawler.Data, finishCh chan struct{}) *xteamCrawler {
+func NewStackOverFlow(dataCh chan crawler.Data, finishCh chan struct{}) *stackOverFlowCrawler {
 	boltDB, err := initBoltDB()
 	if err != nil {
 		panic(err)
 	}
-	return &xteamCrawler{
+	return &stackOverFlowCrawler{
 		collector:       colly.NewCollector(),
 		detailCollector: colly.NewCollector(),
 		db:              boltDB,
@@ -81,86 +78,82 @@ func initBoltDB() (*bolt.DB, error) {
 	return bolt.Open(crawler.CrawlerPath)
 }
 
-func (xc *xteamCrawler) closeBoltDB() {
-	err := xc.db.Close()
+func (sc *stackOverFlowCrawler) closeBoltDB() {
+	err := sc.db.Close()
 	if err != nil {
-		defer close(xc.dataCh)
-		defer close(xc.finishCh)
+		defer close(sc.dataCh)
+		defer close(sc.finishCh)
 		panic(err)
 	}
 }
 
-func (xc *xteamCrawler) prepare() error {
-	lastUrlSlice, err := xc.db.Get([]byte(crawler.CrawlerBucket), []byte("xteamLastUrl"))
+func (sc *stackOverFlowCrawler) preUpdate() error {
+	lastUrlSlice, err := sc.db.Get([]byte(crawler.CrawlerBucket), []byte("stackoverflowLastUrl"))
 	if err != nil {
 		return err
 	}
 	if lastUrlSlice == nil {
-		xc.lastUrl = ""
+		sc.lastUrl = ""
 		fmt.Println("*** Starting to crawl for the first time. ***")
 	} else {
-		xc.lastUrl = string(lastUrlSlice)
+		sc.lastUrl = string(lastUrlSlice)
 	}
 	return nil
 }
 
-func (xc *xteamCrawler) putLastUrl() error {
-	err := xc.db.Set([]byte(crawler.CrawlerBucket), []byte("xteamLastUrl"), []byte(xc.newestUrl))
+func (sc *stackOverFlowCrawler) putLastUrl() error {
+	err := sc.db.Set([]byte(crawler.CrawlerBucket), []byte("stackoverflowLastUrl"), []byte(sc.newestUrl))
 	return err
 }
 
-func (xc *xteamCrawler) visit(url string) error {
-	err := xc.collector.Visit(url)
+func (sc *stackOverFlowCrawler) visit(url string) error {
+	err := sc.collector.Visit(url)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (xc *xteamCrawler) onRequest() {
-	xc.collector.OnRequest(func(r *colly.Request) {
+func (sc *stackOverFlowCrawler) onRequest() {
+	sc.collector.OnRequest(func(r *colly.Request) {
 		fmt.Println("Visiting", r.URL.String())
 	})
 }
 
-func (xc *xteamCrawler) onHtml() {
-	xc.collector.OnHTML("main article h2 a", xc.parse)
+func (sc *stackOverFlowCrawler) onHtml() {
+	sc.collector.OnHTML("article div.m-post-card__content-column", sc.parse)
 }
 
-func (xc *xteamCrawler) detailOnHtml() {
-	xc.detailCollector.OnHTML("main article", xc.parseDetail)
+func (sc *stackOverFlowCrawler) detailOnHtml() {
+	sc.detailCollector.OnHTML("main#main.site-main", sc.parseDetail)
 }
 
-func (xc *xteamCrawler) parse(e *colly.HTMLElement) {
-	if xc.counter == 0 {
-		xc.newestUrl = e.Attr("href")
+func (sc *stackOverFlowCrawler) parse(e *colly.HTMLElement) {
+	if sc.counter == 0 {
+		sc.newestUrl, _ = e.DOM.Find("h2 a").Attr("href")
 	}
-	link := e.Attr("href")
-	if link != xc.lastUrl && (xc.isAllDateGet == false) {
-		xc.detailCollector.Visit("https://x-team.com" + link)
+	link, _ := e.DOM.Find("h2 a").Attr("href")
+	if link != sc.lastUrl && (sc.isAllDateGet == false) {
+		sc.detailCollector.Visit(link)
 	} else {
-		xc.isAllDateGet = true
+		sc.isAllDateGet = true
 	}
-	xc.counter++
+	sc.counter++
 }
 
-func (xc *xteamCrawler) parseDetail(e *colly.HTMLElement) {
+func (sc *stackOverFlowCrawler) parseDetail(e *colly.HTMLElement) {
 	var Blog = &Blog{}
-	Blog.Source = "x-team blog"
-	Blog.Title = strings.TrimSpace(e.DOM.Find("h1.wrapper-m.title.post-title").Text())
-	Blog.Photo, _ = e.DOM.Find("img.post-author-avatar").Attr("src")
-	Blog.Author = e.DOM.Find("ul li.post-author-name span[itemprop]").Text()
-	Blog.Date = e.DOM.Find("ul li.post-date span").Text()
-	Blog.Content = e.DOM.Find("section div.kg-card-markdown").Text()
-	e.DOM.Find("ul.button-action li ul.option-list li a[title]").Each(func(i int, selection *goquery.Selection) {
-		tag, _ := selection.Attr("title")
-		Blog.Tags = append(Blog.Tags, tag)
-	})
-	xc.dataCh <- Blog
+	Blog.Source = "stackOverFlow blog"
+	Blog.Title = strings.TrimSpace(e.DOM.Find("div.column h1.section-title").Text())
+	Blog.Photo, _ = e.DOM.Find("div span span a img.avatar__image").Attr("src")
+	Blog.Author = e.DOM.Find("div.m-post__meta span.author-name a").Text()
+	Blog.Date = e.DOM.Find("div.m-post__meta span.date time.entry-date").Text()
+	Blog.Content = e.DOM.Find("div.m-post-content").Text()
+	sc.dataCh <- Blog
 }
 
 func (b *Blog) String() string {
-	return fmt.Sprintf("Source: %s\nTitle: %s\nAuthor: %s\nDate: %s\nPhoto: %s\nTags: %s\nContent: %s\n", b.Source, b.Title, b.Author, b.Date, b.Photo, b.Tags, b.Content)
+	return fmt.Sprintf("Source: %s\nTitle: %s\nAuthor: %s\nDate: %s\nPhoto: %s\nContent: %s\n", b.Source, b.Title, b.Author, b.Date, b.Photo, b.Content)
 }
 
 func (b *Blog) File() (title, filetype, content string) {

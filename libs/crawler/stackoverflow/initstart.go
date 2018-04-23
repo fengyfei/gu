@@ -24,39 +24,39 @@
 
 /*
  * Revision History:
- *     Initial: 2018/4/23        Zhang Hao
+ *     Initial: 2018/4/21        Zhang Hao
  */
 
-package xteam
+package stackoverflow
 
 import (
 	"fmt"
 )
 
 const (
-	site = "https://x-team.com/blog/page/%d/"
+	site = "https://stackoverflow.blog/company/page/"
 )
 
-func (xc *xteamCrawler) Init() error {
-	err := xc.prepare()
+func (sc *stackOverFlowCrawler) Init() error {
+	err := sc.preUpdate()
 	if err != nil {
-		defer close(xc.dataCh)
-		defer close(xc.finishCh)
+		defer close(sc.dataCh)
+		defer close(sc.finishCh)
 		return err
 	}
-	xc.onRequest()
-	xc.onHtml()
-	xc.detailOnHtml()
+	sc.onRequest()
+	sc.onHtml()
+	sc.detailOnHtml()
 	return nil
 }
 
-func (xc *xteamCrawler) Start() error {
-	defer close(xc.dataCh)
-	defer close(xc.finishCh)
-	defer xc.closeBoltDB()
-	for pageNumber := 1; !xc.isAllDateGet; pageNumber++ {
-		url := fmt.Sprintf(site, pageNumber)
-		err := xc.visit(url)
+func (sc *stackOverFlowCrawler) Start() error {
+	defer close(sc.dataCh)
+	defer close(sc.finishCh)
+	defer sc.closeBoltDB()
+	for pageNumber := 1; !sc.isAllDateGet; pageNumber++ {
+		url := fmt.Sprint(site, pageNumber)
+		err := sc.visit(url)
 		if err != nil {
 			if err.Error() == "Not Found" {
 				break
@@ -65,6 +65,6 @@ func (xc *xteamCrawler) Start() error {
 			}
 		}
 	}
-	err := xc.putLastUrl()
+	err := sc.putLastUrl()
 	return err
 }
