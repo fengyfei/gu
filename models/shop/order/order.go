@@ -68,7 +68,7 @@ type (
 	}
 
 	OrderItem struct {
-		WareId uint32  `json:"ware_id"" validate:"required"`
+		WareId uint32  `json:"ware_id" validate:"required"`
 		Count  uint8   `json:"count" validate:"required"`
 		Price  float32 `json:"price" validate:"required"`
 	}

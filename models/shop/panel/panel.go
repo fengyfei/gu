@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 SmartestEE Co., Ltd..
+ * Copyright (c) 2018 SmartestEE Co., Ltd..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@
 
 /*
  * Revision History:
- *     Initial: 2017/11/30        Wang RiYu
+ *     Initial: 2018/04/05        Shi Ruitao
  */
 
 package panel
@@ -46,13 +46,13 @@ var (
 type (
 	Panel struct {
 		ID        uint32    `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
-		Title     string    `gorm:"type:varchar(50)" json:"title"`
+		Title     string    `gorm:"type:varchar(50)" validate:"required" json:"title"`
 		Desc      string    `gorm:"type:varchar(100)" json:"desc"`
-		Type      uint8     `gorm:"type:TINYINT;not null" json:"type"` // 1 promotion && flash sale;2 recommends && advertising;3 second-hand && other things
+		Type      uint8     `gorm:"type:TINYINT;not null" validate:"eq=1|eq=2|eq=3" json:"type"` // 1 promotion && flash sale;2 recommends && advertising;3 second-hand && other things
 		Status    uint8     `gorm:"type:TINYINT;default:1" json:"status"`
 		Sequence  uint8     `gorm:"unique_index;not null" json:"sequence"`
-		UpdatedAt time.Time `json:"updated_at"`
-		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `gorm:"column:updatedat"`
+		CreatedAt time.Time `gorm:"column:createdat"`
 	}
 
 	PanelsPage struct {
@@ -67,19 +67,12 @@ type (
 	}
 
 	Detail struct {
-		ID        uint      `gorm:"primary_key;AUTO_INCREMENT"`
+		ID        uint32    `gorm:"primary_key;AUTO_INCREMENT"`
 		Belong    uint      `gorm:"unique_index;not null"`
 		Picture   string    `gorm:"type:varchar(100)"`
 		Content   string    `gorm:"type:LONGTEXT"`
-		UpdatedAt time.Time `json:"updatedAt"`
-		CreatedAt time.Time `json:"createdAt"`
-	}
-
-	PanelReq struct {
-		Title    string `json:"title" validate:"required"`
-		Desc     string `json:"desc"`
-		Type     uint8  `json:"type" validate:"eq=1|eq=2|eq=3"`
-		Sequence uint8  `json:"sequence"`
+		UpdatedAt time.Time `gorm:"column:updatedat" json:"updatedAt"`
+		CreatedAt time.Time `gorm:"column:createdat" json:"createdAt"`
 	}
 
 	PromotionReq struct {
@@ -94,33 +87,27 @@ type (
 	}
 )
 
-// add panel
-func (sp *serviceProvider) CreatePanel(conn orm.Connection, panelReq PanelReq) error {
-	panel := &Panel{}
-	panel.Title = panelReq.Title
-	panel.Desc = panelReq.Desc
-	panel.Type = panelReq.Type
-	panel.Sequence = panelReq.Sequence
-
+// CreatePanel add panel
+func (sp *serviceProvider) CreatePanel(conn orm.Connection, panel *Panel) error {
+	panel.UpdatedAt = time.Now()
 	db := conn.(*gorm.DB).Exec("USE shop")
-	err := db.Model(&Panel{}).Create(panel).Error
 
-	return err
+	return db.Table("panel").Create(panel).Error
 }
 
-// add promotion list
+// AddPromotionList add promotion list
 func (sp *serviceProvider) AddPromotionList(conn orm.Connection, promotionReq PromotionReq) error {
 	promotion := &Detail{}
 	promotion.Belong = promotionReq.Belong
 	promotion.Content = promotionReq.Content
 
 	db := conn.(*gorm.DB).Exec("USE shop")
-	err := db.Model(&Detail{}).Create(promotion).Error
+	err := db.Table("detail").Create(promotion).Error
 
 	return err
 }
 
-// add recommend
+// AddRecommend add recommend
 func (sp *serviceProvider) AddRecommend(conn orm.Connection, recommendReq RecommendReq) error {
 	recommend := &Detail{}
 	recommend.Belong = recommendReq.Belong
@@ -133,7 +120,7 @@ func (sp *serviceProvider) AddRecommend(conn orm.Connection, recommendReq Recomm
 	return err
 }
 
-// get panels
+// GetPanels get panels
 func (sp *serviceProvider) GetPanels(conn orm.Connection) ([]PanelsPage, error) {
 	var (
 		list []PanelsPage
@@ -145,7 +132,7 @@ func (sp *serviceProvider) GetPanels(conn orm.Connection) ([]PanelsPage, error) 
 	return list, res.Error
 }
 
-// get detail of panel
+// GetDetail get detail of panel
 func (sp *serviceProvider) GetDetail(conn orm.Connection, id uint) (Detail, error) {
 	var (
 		detail Detail

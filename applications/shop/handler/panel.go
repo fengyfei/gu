@@ -24,7 +24,7 @@
 
 /*
  * Revision History:
- *     Initial: 2017/3/16        Shi Ruitao
+ *     Initial: 2018/03/16        Shi Ruitao
  */
 
 package handler
@@ -50,7 +50,7 @@ import (
 func AddPanel(c *server.Context) error {
 	var (
 		err    error
-		addReq panel.PanelReq
+		addReq panel.Panel
 		conn   orm.Connection
 	)
 
@@ -79,7 +79,7 @@ func AddPanel(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
 	}
 
-	err = panel.Service.CreatePanel(conn, addReq)
+	err = panel.Service.CreatePanel(conn, &addReq)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMysql, nil)
