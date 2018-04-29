@@ -235,7 +235,7 @@ func (sp *articleServiceProvider) UpdateCommentNum(artID bson.ObjectId, operatio
 	return conn.Update(bson.M{"_id": artID}, updater)
 }
 
-//  Updatevisit update visitNum.
+// Updatevisit update visitNum.
 func (sp *articleServiceProvider) UpdateVisit(num int64, artID string) error {
 	conn := articleSession.Connect()
 	defer conn.Disconnect()

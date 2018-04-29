@@ -217,3 +217,16 @@ func (*tagServiceProvider) Count() error {
 
 	return nil
 }
+
+func (*tagServiceProvider) Counter(tagsid []bson.ObjectId) error {
+	conn := session.Connect()
+	defer conn.Disconnect()
+
+	for i, _ := range tagsid{
+		err := conn.Update(bson.M{"_id": tagsid[i]}, bson.M{"$inc":bson.M{"count": +1}})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}

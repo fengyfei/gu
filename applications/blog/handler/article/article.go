@@ -32,9 +32,10 @@
 package article
 
 import (
+	"strings"
+
 	jwtgo "github.com/dgrijalva/jwt-go"
 	"gopkg.in/mgo.v2/bson"
-	"strings"
 
 	"github.com/fengyfei/gu/applications/blog/mysql"
 	"github.com/fengyfei/gu/applications/blog/util"
@@ -103,7 +104,7 @@ func CreateArticle(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, nil)
 	}
 
-	err = tag.TagService.Count()
+	err = tag.TagService.Counter(req.TagsID)
 	if err != nil {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMongoDB, id)
 	}

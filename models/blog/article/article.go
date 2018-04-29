@@ -94,6 +94,7 @@ func (sp *articleServiceProvider) Create(art *Article) (string, error) {
 	conn := session.Connect()
 	defer conn.Disconnect()
 
+	art.ID = bson.NewObjectId()
 	art.Created = time.Now()
 	art.Updated = art.Created
 
@@ -101,8 +102,6 @@ func (sp *articleServiceProvider) Create(art *Article) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	query := bson.M{"title": art.Title}
-	conn.GetUniqueOne(query, &art)
 
 	return art.ID.Hex(), nil
 }
@@ -157,7 +156,7 @@ func (sp *articleServiceProvider) Delete(articleID string, staffID int32) error 
 	return conn.Update(bson.M{"_id": bson.ObjectIdHex(articleID)}, updater)
 }
 
-//ListDenied return articles which are denied.
+// ListDenied return articles which are denied.
 func (sp *articleServiceProvider) ListDenied() ([]Article, error) {
 	var (
 		articles []Article
@@ -189,6 +188,7 @@ func (sp *articleServiceProvider) GetByID(articleID string) (Article, error) {
 	if err != nil {
 		return article, err
 	}
+	err = conn.Update(bson.M{"_id": bson.ObjectIdHex(articleID)},bson.M{"$inc":bson.M{"views": +1}})
 
 	return article, nil
 }
