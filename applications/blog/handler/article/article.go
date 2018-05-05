@@ -32,8 +32,6 @@
 package article
 
 import (
-	"encoding/base64"
-	"net"
 	"strings"
 
 	jwtgo "github.com/dgrijalva/jwt-go"
@@ -54,7 +52,6 @@ import (
 func CreateArticle(this *server.Context) error {
 	var req struct {
 		Title   string          `json:"title" validate:"required,max=32"`
-		Brief   string          `json:"brief" validate:"max=64"`
 		Content string          `json:"content" validate:"required"`
 		TagsID  []bson.ObjectId `json:"tagsid"`
 		Image   string          `json:"image"`
@@ -80,33 +77,22 @@ func CreateArticle(this *server.Context) error {
 			return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 		}
 	}
-
-	// ip := "http://192.168.0.102:21002"
-	var ip string
-	addr, err := net.InterfaceAddrs()
-	for _, address := range addr {
-		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				ip = ipnet.IP.String()
+	/*
+		addr, err := net.InterfaceAddrs()
+		for _, address := range addr {
+			if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+				if ipnet.IP.To4() != nil {
+					ip := ipnet.IP.String()
+				}
 			}
 		}
-	}
-	imgpath := strings.Replace(req.Image, "./file", "http://"+ip+":21002", 1)
-
-	// encode content
-	req.Content = base64.StdEncoding.EncodeToString([]byte(req.Content))
-	// decode content
-	content, err := base64.StdEncoding.DecodeString(req.Content)
-	if err != nil {
-		logger.Error("Can't decode content", err)
-		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
-	}
-	req.Content = string(content)
-
+	*/
+	ip := "http://192.168.0.102:21002"
+	imgpath := strings.Replace(req.Image, "./file", ip, 1)
 	a := &article.Article{
 		AuthorId: AuthorID,
 		Title:    req.Title,
-		Brief:    req.Brief,
+		Brief:    article.ArticleService.GetBrief(req.Content),
 		Content:  req.Content,
 		TagsID:   req.TagsID,
 		Image:    imgpath,
@@ -298,7 +284,6 @@ func ModifyArticle(this *server.Context) error {
 	var req struct {
 		ArticleID string          `json:"aid" validate:"required"`
 		Title     string          `json:"title" validate:"required,max=32"`
-		Brief     string          `json:"brief" validate:"max=64"`
 		Content   string          `json:"content" validate:"required"`
 		TagsID    []bson.ObjectId `json:"tagsid"`
 		Image     string          `json:"image"`
@@ -315,16 +300,6 @@ func ModifyArticle(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	// encode content
-	req.Content = base64.StdEncoding.EncodeToString([]byte(req.Content))
-	// decode content
-	content, err := base64.StdEncoding.DecodeString(req.Content)
-	if err != nil {
-		logger.Error("Can't decode content", err)
-		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
-	}
-	req.Content = string(content)
-
 	req.Image, err = util.SaveImage(req.Image, "article/")
 	if err != nil {
 		logger.Error("Save image failed:", err)
@@ -333,7 +308,7 @@ func ModifyArticle(this *server.Context) error {
 
 	a := &article.Article{
 		Title:   req.Title,
-		Brief:   req.Brief,
+		Brief:   article.ArticleService.GetBrief(req.Content),
 		Content: req.Content,
 		TagsID:  req.TagsID,
 		Image:   req.Image,
