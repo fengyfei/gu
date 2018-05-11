@@ -33,6 +33,7 @@ import (
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/applications/github/filter"
 	"github.com/fengyfei/gu/applications/github/handler/article"
+	"github.com/fengyfei/gu/applications/github/handler/issues"
 	"github.com/fengyfei/gu/applications/github/handler/repos"
 	"github.com/fengyfei/gu/applications/github/handler/trending"
 	"github.com/fengyfei/gu/libs/http/server"
@@ -58,6 +59,7 @@ func register(r *server.Router) {
 	core.URLMap["/api/v1/techcats/repos/info"] = struct{}{}
 	core.URLMap["/api/v1/techcats/repos/readme"] = struct{}{}
 	core.URLMap["/api/v1/techcats/trending/lang"] = struct{}{}
+	core.URLMap["/api/v1/techcats/issues/get"] = struct{}{}
 
 	// Article
 	r.Post("/api/v1/techcats/article/create", article.Create, filter.LoginFilter)
@@ -73,6 +75,9 @@ func register(r *server.Router) {
 	r.Get("/api/v1/techcats/repos/activelist", repos.ActiveList)
 	r.Post("/api/v1/techcats/repos/info", repos.Info)
 	r.Post("/api/v1/techcats/repos/readme", repos.ReadmeURL)
+
+	// Issues
+	r.Get("/api/v1/techcats/issues/get", issues.Issues)
 
 	// Trending
 	r.Post("/api/v1/techcats/trending/lang", trending.LangInfo)
