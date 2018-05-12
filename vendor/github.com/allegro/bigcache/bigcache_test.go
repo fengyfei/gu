@@ -2,11 +2,48 @@ package bigcache
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 )
+
+var sink []byte
+
+func TestParallel(t *testing.T) {
+	t.Parallel()
+
+	// given
+	cache, _ := NewBigCache(DefaultConfig(5 * time.Second))
+	value := []byte("value")
+	var wg sync.WaitGroup
+	wg.Add(3)
+	keys := 1337
+
+	// when
+	go func() {
+		defer wg.Done()
+		for i := 0; i < keys; i++ {
+			cache.Set(fmt.Sprintf("key%d", i), value)
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		for i := 0; i < keys; i++ {
+			sink, _ = cache.Get(fmt.Sprintf("key%d", i))
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		for i := 0; i < keys; i++ {
+			cache.Delete(fmt.Sprintf("key%d", i))
+		}
+	}()
+
+	// then
+	wg.Wait()
+}
 
 func TestWriteAndGetOnCache(t *testing.T) {
 	t.Parallel()
@@ -177,14 +214,78 @@ func TestCacheLen(t *testing.T) {
 		MaxEntrySize:       256,
 	})
 	keys := 1337
-	// when
 
+	// when
 	for i := 0; i < keys; i++ {
 		cache.Set(fmt.Sprintf("key%d", i), []byte("value"))
 	}
 
 	// then
 	assert.Equal(t, keys, cache.Len())
+}
+
+func TestCacheStats(t *testing.T) {
+	t.Parallel()
+
+	// given
+	cache, _ := NewBigCache(Config{
+		Shards:             8,
+		LifeWindow:         time.Second,
+		MaxEntriesInWindow: 1,
+		MaxEntrySize:       256,
+	})
+
+	// when
+	for i := 0; i < 100; i++ {
+		cache.Set(fmt.Sprintf("key%d", i), []byte("value"))
+	}
+
+	for i := 0; i < 10; i++ {
+		value, err := cache.Get(fmt.Sprintf("key%d", i))
+		assert.Nil(t, err)
+		assert.Equal(t, string(value), "value")
+	}
+	for i := 100; i < 110; i++ {
+		_, err := cache.Get(fmt.Sprintf("key%d", i))
+		assert.Error(t, err)
+	}
+	for i := 10; i < 20; i++ {
+		err := cache.Delete(fmt.Sprintf("key%d", i))
+		assert.Nil(t, err)
+	}
+	for i := 110; i < 120; i++ {
+		err := cache.Delete(fmt.Sprintf("key%d", i))
+		assert.Error(t, err)
+	}
+
+	// then
+	stats := cache.Stats()
+	assert.Equal(t, stats.Hits, int64(10))
+	assert.Equal(t, stats.Misses, int64(10))
+	assert.Equal(t, stats.DelHits, int64(10))
+	assert.Equal(t, stats.DelMisses, int64(10))
+}
+
+func TestCacheDel(t *testing.T) {
+	t.Parallel()
+
+	// given
+	cache, _ := NewBigCache(DefaultConfig(time.Second))
+
+	// when
+	err := cache.Delete("nonExistingKey")
+
+	// then
+	assert.Equal(t, err.Error(), "Entry \"nonExistingKey\" not found")
+
+	// and when
+	cache.Set("existingKey", nil)
+	err = cache.Delete("existingKey")
+	cachedValue, _ := cache.Get("existingKey")
+
+	// then
+	assert.Nil(t, err)
+	assert.Len(t, cachedValue, 0)
 }
 
 func TestCacheReset(t *testing.T) {
@@ -365,12 +466,13 @@ func TestEntryBiggerThanMaxShardSizeError(t *testing.T) {
 	err := cache.Set("key1", blob('a', 1024*1025))
 
 	// then
-	assert.EqualError(t, err, "Entry is bigger than max shard size.")
+	assert.EqualError(t, err, "entry is bigger than max shard size")
 }
 
 func TestHashCollision(t *testing.T) {
 	t.Parallel()
 
+	ml := &mockedLogger{}
 	// given
 	cache, _ := NewBigCache(Config{
 		Shards:             16,
@@ -379,6 +481,7 @@ func TestHashCollision(t *testing.T) {
 		MaxEntrySize:       256,
 		Verbose:            true,
 		Hasher:             hashStub(5),
+		Logger:             ml,
 	})
 
 	// when
@@ -403,6 +506,56 @@ func TestHashCollision(t *testing.T) {
 	// then
 	assert.Error(t, err)
 	assert.Nil(t, cachedValue)
+
+	assert.NotEqual(t, "", ml.lastFormat)
+	assert.Equal(t, cache.Stats().Collisions, int64(1))
+}
+
+func TestNilValueCaching(t *testing.T) {
+	t.Parallel()
+
+	// given
+	cache, _ := NewBigCache(Config{
+		Shards:             1,
+		LifeWindow:         5 * time.Second,
+		MaxEntriesInWindow: 1,
+		MaxEntrySize:       1,
+		HardMaxCacheSize:   1,
+	})
+
+	// when
+	cache.Set("Kierkegaard", []byte{})
+	cachedValue, err := cache.Get("Kierkegaard")
+
+	// then
+	assert.NoError(t, err)
+	assert.Equal(t, []byte{}, cachedValue)
+
+	// when
+	cache.Set("Sartre", nil)
+	cachedValue, err = cache.Get("Sartre")
+
+	// then
+	assert.NoError(t, err)
+	assert.Equal(t, []byte{}, cachedValue)
+
+	// when
+	cache.Set("Nietzsche", []byte(nil))
+	cachedValue, err = cache.Get("Nietzsche")
+
+	// then
+	assert.NoError(t, err)
+	assert.Equal(t, []byte{}, cachedValue)
+}
+
+type mockedLogger struct {
+	lastFormat string
+	lastArgs   []interface{}
+}
+
+func (ml *mockedLogger) Printf(format string, v ...interface{}) {
+	ml.lastFormat = format
+	ml.lastArgs = v
 }
 
 type mockedClock struct {

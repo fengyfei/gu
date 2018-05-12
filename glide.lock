@@ -1,8 +1,8 @@
-hash: 9d1db5dbab91776e13b41b25fed988210b36a838bdccfdf868b8a65240d9dc5e
-updated: 2018-03-03T15:21:28.964793+08:00
+hash: d191b04f7e68a40f45df39c078da049d077729c46ddf0c50646b73cf85360d6f
+updated: 2018-05-12T17:54:03.545048+08:00
 imports:
 - name: github.com/allegro/bigcache
-  version: aa76879d59fa5d93c43680238227dbf7a53f5c28
+  version: f31987a23e44c5121ef8c8b2f2ea2e8ffa37b068
   subpackages:
   - queue
 - name: github.com/AndreasBriese/bbloom
@@ -25,6 +25,8 @@ imports:
   - session
   - toolbox
   - utils
+- name: github.com/boltdb/bolt
+  version: 2f1ce7a837dcb8da3ec595b1dac9d0632f0f99e8
 - name: github.com/cespare/xxhash
   version: 5c37fe3735342a2e0d01c87a907579987c8936cc
 - name: github.com/chanxuehong/rand
@@ -48,7 +50,7 @@ imports:
   subpackages:
   - spew
 - name: github.com/dgraph-io/badger
-  version: 69611218c7078be6de16f4ea13fb256e701b6b73
+  version: 3ff1bfbb11c02c78c11269096669396c2d2cbbd3
   subpackages:
   - options
   - protos
@@ -62,7 +64,7 @@ imports:
 - name: github.com/fsnotify/fsnotify
   version: 4da3e2cfbabc9f751898f250b49f2439785783a1
 - name: github.com/go-ini/ini
-  version: 32e4c1e6bc4e7d0d8451aa6b75200d19e37a536a
+  version: 6529cf7c58879c08d927016dde4477f18a0634cb
 - name: github.com/go-playground/locales
   version: e4cbcb5d0652150d40ad0646651076b6bd2be4f6
   subpackages:
@@ -95,6 +97,8 @@ imports:
   - gogoproto
   - proto
   - protoc-gen-gogo/descriptor
+- name: github.com/golang/glog
+  version: 44145f04b68cf362d9c4df2182967c2275eaefed
 - name: github.com/golang/groupcache
   version: 02826c3e79038b59d737d3b1c0a1d937f71a4433
   subpackages:
@@ -110,6 +114,14 @@ imports:
   - ptypes/timestamp
 - name: github.com/golang/snappy
   version: 553a641470496b2327abcac10b36396bd98e45c9
+- name: github.com/google/go-github
+  version: e48060a28fac52d0f1cb758bc8b87c07bac4a87d
+  subpackages:
+  - github
+- name: github.com/google/go-querystring
+  version: 53e6ce116135b80d037921a7fdd5138cf32d7a8a
+  subpackages:
+  - query
 - name: github.com/google/gops
   version: 57e77c5c37da1f4e1af49f9d1fe760f146c1579e
   subpackages:
@@ -123,7 +135,7 @@ imports:
 - name: github.com/gorilla/websocket
   version: ea4d1f681babbce9545c9c5f3d5194a789c89f5b
 - name: github.com/grpc-ecosystem/go-grpc-middleware
-  version: eb23b08d08bbe930113a6512a7a829050341448c
+  version: c250d6563d4d4c20252cd865923440e829844f4e
   subpackages:
   - recovery
 - name: github.com/hashicorp/golang-lru
@@ -152,7 +164,7 @@ imports:
 - name: github.com/kennygrant/sanitize
   version: 2e6820834a1f36c626bf19a253b7d3cc060e9b8b
 - name: github.com/labstack/echo
-  version: b338075a0fc6e1a0683dbf03d09b4957a289e26f
+  version: a5d81b8d4a627f3f49dcb3164ef2bb5239682227
   subpackages:
   - '...'
 - name: github.com/magiconair/properties
@@ -177,12 +189,12 @@ imports:
   subpackages:
   - pb
 - name: github.com/nats-io/nats
-  version: 0718c1ca33e1241468625341ef25b317b08341cd
+  version: 997d01c243192e6c27011e674fd5992072f6f8d7
   subpackages:
   - encoders/builtin
   - util
 - name: github.com/nats-io/nuid
-  version: 33c603157d6fd1b0ac2599bcc4a286b36479a06d
+  version: 3e58d42c9cfe5cd9429f1a21ad8f35cd859ba829
 - name: github.com/nlopes/slack
   version: 8ab4d0b364ef1e9af5d102531da20d5ec902b6c4
 - name: github.com/nsqio/go-nsq
@@ -216,7 +228,7 @@ imports:
   subpackages:
   - assert
 - name: github.com/syndtr/goleveldb
-  version: c7a14d4b00e222eab6111b4cd1af829c13f53ec2
+  version: ae970a0732be3a1f5311da86118d37b9f4bd2a5a
   subpackages:
   - leveldb
   - leveldb/cache
@@ -256,6 +268,10 @@ imports:
   - internal/timeseries
   - lex/httplex
   - trace
+- name: golang.org/x/oauth2
+  version: a6bd8cefa1811bd24b86f8902872e4e8225f74c4
+  subpackages:
+  - internal
 - name: golang.org/x/sys
   version: abf9c25f54453410d0c6668e519582a9e1115027
   subpackages:
@@ -323,7 +339,7 @@ imports:
   - tap
   - transport
 - name: gopkg.in/go-playground/validator.v9
-  version: 150fe5b6a4ccc9cd6ffdbf5d184b67fbea75efcc
+  version: ffe836d7363bc7ab3f56d2fc90ce09bfb5a0c2c5
 - name: gopkg.in/mgo.v2
   version: 3f83fa5005286a7fe593b055f0d7771a7dce4655
   subpackages:

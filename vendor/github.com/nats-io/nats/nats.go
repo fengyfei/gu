@@ -1,4 +1,15 @@
-// Copyright 2012-2017 Apcera Inc. All rights reserved.
+// Copyright 2012-2018 The NATS Authors
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 // A Go client for the NATS messaging system (https://nats.io).
 package nats
@@ -11,6 +22,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"math/rand"
 	"net"
@@ -28,7 +40,7 @@ import (
 
 // Default Constants
 const (
-	Version                 = "1.3.1"
+	Version                 = "1.5.0"
 	DefaultURL              = "nats://localhost:4222"
 	DefaultPort             = 4222
 	DefaultMaxReconnect     = 60
@@ -530,6 +542,14 @@ func ReconnectWait(t time.Duration) Option {
 func MaxReconnects(max int) Option {
 	return func(o *Options) error {
 		o.MaxReconnect = max
+		return nil
+	}
+}
+
+// PingInterval is an Option to set the period for client ping commands
+func PingInterval(t time.Duration) Option {
+	return func(o *Options) error {
+		o.PingInterval = t
 		return nil
 	}
 }
@@ -1243,44 +1263,69 @@ func (nc *Conn) sendConnect() error {
 		return err
 	}
 
-	// Now read the response from the server.
-	br := bufio.NewReaderSize(nc.conn, defaultBufSize)
-	line, err := br.ReadString('\n')
+	// We don't want to read more than we need here, otherwise
+	// we would need to transfer the excess read data to the readLoop.
+	// Since in normal situations we just are looking for a PONG\r\n,
+	// reading byte-by-byte here is ok.
+	proto, err := nc.readProto()
 	if err != nil {
 		return err
 	}
 
 	// If opts.Verbose is set, handle +OK
-	if nc.Opts.Verbose && line == okProto {
+	if nc.Opts.Verbose && proto == okProto {
 		// Read the rest now...
-		line, err = br.ReadString('\n')
+		proto, err = nc.readProto()
 		if err != nil {
 			return err
 		}
 	}
 
 	// We expect a PONG
-	if line != pongProto {
+	if proto != pongProto {
 		// But it could be something else, like -ERR
 
 		// Since we no longer use ReadLine(), trim the trailing "\r\n"
-		line = strings.TrimRight(line, "\r\n")
+		proto = strings.TrimRight(proto, "\r\n")
 
 		// If it's a server error...
-		if strings.HasPrefix(line, _ERR_OP_) {
+		if strings.HasPrefix(proto, _ERR_OP_) {
 			// Remove -ERR, trim spaces and quotes, and convert to lower case.
-			line = normalizeErr(line)
-			return errors.New("nats: " + line)
+			proto = normalizeErr(proto)
+			return errors.New("nats: " + proto)
 		}
 
 		// Notify that we got an unexpected protocol.
-		return fmt.Errorf("nats: expected '%s', got '%s'", _PONG_OP_, line)
+		return fmt.Errorf("nats: expected '%s', got '%s'", _PONG_OP_, proto)
 	}
 
 	// This is where we are truly connected.
 	nc.status = CONNECTED
 
 	return nil
+}
+
+// reads a protocol one byte at a time.
+func (nc *Conn) readProto() (string, error) {
+	var (
+		_buf     = [10]byte{}
+		buf      = _buf[:0]
+		b        = [1]byte{}
+		protoEnd = byte('\n')
+	)
+	for {
+		if _, err := nc.conn.Read(b[:1]); err != nil {
+			// Do not report EOF error
+			if err == io.EOF {
+				return string(buf), nil
+			}
+			return "", err
+		}
+		buf = append(buf, b[0])
+		if b[0] == protoEnd {
+			return string(buf), nil
+		}
+	}
 }
 
 // A control protocol line.
@@ -1848,8 +1893,18 @@ func (nc *Conn) processInfo(info string) error {
 	if info == _EMPTY_ {
 		return nil
 	}
-	if err := json.Unmarshal([]byte(info), &nc.info); err != nil {
+	ncInfo := serverInfo{}
+	if err := json.Unmarshal([]byte(info), &ncInfo); err != nil {
 		return err
+	}
+	// Copy content into connection's info structure.
+	nc.info = ncInfo
+	// The array could be empty/not present on initial connect,
+	// if advertise is disabled on that server, or servers that
+	// did not include themselves in the async INFO protocol.
+	// If empty, do not remove the implicit servers from the pool.
+	if len(ncInfo.ConnectURLs) == 0 {
+		return nil
 	}
 	// Note about pool randomization: when the pool was first created,
 	// it was randomized (if allowed). We keep the order the same (removing
@@ -1874,9 +1929,9 @@ func (nc *Conn) processInfo(info string) error {
 		// Remove from the temp map so that at the end we are left with only
 		// new (or restarted) servers that need to be added to the pool.
 		delete(tmp, curl)
-		// Keep the implicit one if we are currently connected to it.
+		// Keep servers that were set through Options, but also the one that
+		// we are currently connected to (even if it is a discovered server).
 		if !srv.isImplicit || srv.url == nc.url {
-			delete(tmp, curl)
 			continue
 		}
 		if !inInfo {
@@ -3077,12 +3132,11 @@ func (nc *Conn) TLSRequired() bool {
 // the call.
 func (nc *Conn) Barrier(f func()) error {
 	nc.mu.Lock()
-	defer nc.mu.Unlock()
 	if nc.isClosed() {
+		nc.mu.Unlock()
 		return ErrConnectionClosed
 	}
 	nc.subsMu.Lock()
-	defer nc.subsMu.Unlock()
 	// Need to figure out how many non chan subscriptions there are
 	numSubs := 0
 	for _, sub := range nc.subs {
@@ -3091,6 +3145,8 @@ func (nc *Conn) Barrier(f func()) error {
 		}
 	}
 	if numSubs == 0 {
+		nc.subsMu.Unlock()
+		nc.mu.Unlock()
 		f()
 		return nil
 	}
@@ -3110,5 +3166,7 @@ func (nc *Conn) Barrier(f func()) error {
 		}
 		sub.mu.Unlock()
 	}
+	nc.subsMu.Unlock()
+	nc.mu.Unlock()
 	return nil
 }

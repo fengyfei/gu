@@ -1,3 +1,16 @@
+// Copyright 2012-2018 The NATS Authors
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package test
 
 import (
@@ -652,7 +665,7 @@ func (d *checkPoolUpdatedDialer) Dial(network, address string) (net.Conn, error)
 }
 
 func TestServerPoolUpdatedWhenRouteGoesAway(t *testing.T) {
-	if err := serverVersionAtLeast(1, 0, 6); err != nil {
+	if err := serverVersionAtLeast(1, 0, 7); err != nil {
 		t.Skipf(err.Error())
 	}
 	s1Opts := test.DefaultTestOptions
@@ -702,25 +715,27 @@ func TestServerPoolUpdatedWhenRouteGoesAway(t *testing.T) {
 		// so try again on failure.
 		var (
 			ds      []string
-			timeout = time.Now().Add(3 * time.Second)
+			timeout = time.Now().Add(5 * time.Second)
 		)
 		for time.Now().Before(timeout) {
-		startCheck:
 			ds = nc.Servers()
 			if len(ds) == len(expected) {
 				m := make(map[string]struct{}, len(ds))
 				for _, url := range ds {
 					m[url] = struct{}{}
 				}
+				ok := true
 				for _, url := range expected {
 					if _, present := m[url]; !present {
-						time.Sleep(15 * time.Millisecond)
-						goto startCheck
+						ok = false
+						break
 					}
 				}
-				// we are good
-				return
+				if ok {
+					return
+				}
 			}
+			time.Sleep(50 * time.Millisecond)
 		}
 		stackFatalf(t, "Expected %v, got %v", expected, ds)
 	}
