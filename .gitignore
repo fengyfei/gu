@@ -15,3 +15,4 @@ libs/crawler/vuejs/test.txt
 libs/crawler/segment/crawler.db
 libs/crawler/gocn/test.txt
 libs/crawler/gocn/crawler.db
+*.linux
