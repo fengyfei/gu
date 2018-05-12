@@ -37,12 +37,62 @@ import (
 	"github.com/fengyfei/gu/models/github/issues"
 )
 
-func Issues(c *server.Context) error {
-	resp, err := issues.Service.GetIssues()
-	if err != nil {
+// List get issues list by author.
+// send req.Author parameter to filter author's issues.
+func List(c *server.Context) error {
+	var (
+		err error
+		req struct {
+				Token string `json:"token"`
+				Owner string `json:"owner"`
+				Repo  string `json:"repo"`
+				Author string`json:"author"`
+			}
+	)
+
+	if err = c.JSONBody(&req); err != nil {
 		logger.Error(err)
-		return core.WriteStatusAndDataJSON(c, constants.ErrSubNats, nil)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, resp)
+	if err = c.Validate(&req); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	list, err := issues.Service.List(req.Token,req.Owner,req.Repo,req.Author)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInternalServerError, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, list)
+}
+
+// Get issues.
+func Get(c *server.Context) error {
+	var req struct {
+		Token string `json:"token"`
+		Owner string `json:"owner"`
+		Repo  string `json:"repo"`
+		Num   int    `json:"num"`
+	}
+
+	if err := c.JSONBody(&req); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	if err := c.Validate(&req); err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	issus, err := issues.Service.Get(req.Token,req.Owner,req.Repo, req.Num)
+	if err != nil {
+		logger.Error(err)
+		return core.WriteStatusAndDataJSON(c, constants.ErrInternalServerError, nil)
+	}
+
+	return core.WriteStatusAndDataJSON(c, constants.ErrInternalServerError, issus)
 }

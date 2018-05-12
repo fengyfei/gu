@@ -285,33 +285,44 @@ func ReadmeURL(c *server.Context) error {
 
 func getReadme(reponame *string) string {
 	const (
-		head     = "https://raw.githubusercontent.com/"
-		tail     = "/master/README.md"
+		head     = "https://raw.githubusercontent.com/master/"
 		emptyStr = ""
+	)
+
+	var (
+		suffix   = []string{"/README.md", "/Readme.md", "/README"}
+		bodyByte []byte
 	)
 
 	if reponame == nil {
 		return emptyStr
 	}
 
-	fullURL := head + *reponame + tail
+	for _, v := range suffix {
+		fullURL := head + *reponame + v
 
-	resp, err := http.Get(fullURL)
-	if err != nil {
-		logger.Debug("getReadme http.Get returned error:", err)
-		return emptyStr
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusOK {
-		bodyByte, err := ioutil.ReadAll(resp.Body)
+		resp, err := http.Get(fullURL)
 		if err != nil {
-			logger.Debug("getReadme ReadAll returned error:", err)
-			return emptyStr
+			logger.Debug("getReadme http.Get returned error:", err)
+			goto finish
 		}
 
-		return string(bodyByte)
-	}
+		if resp.StatusCode != http.StatusOK {
+			logger.Error(resp.StatusCode)
+			goto finish
+		}
 
+		bodyByte, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			logger.Debug("getReadme ReadAll returned error:", err)
+			goto finish
+		}
+
+		resp.Body.Close()
+		return string(bodyByte)
+
+	finish:
+		resp.Body.Close()
+	}
 	return emptyStr
 }

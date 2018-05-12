@@ -30,30 +30,53 @@
 package issues
 
 import (
-	"io/ioutil"
-	"log"
-	"net/http"
+	"context"
+
+	"github.com/google/go-github/github"
+	"golang.org/x/oauth2"
 )
 
 type serviceProvider struct{}
 
 var Service *serviceProvider
 
-var url = "https://api.github.com/repos/ShiChao1996/myBlog/issues/events?access_token=9a7d1bda80e539f1ced7c6a1e0b7ffa7bbd64195"
+// ListByAuthor get issues list.
+func (*serviceProvider) List(token, owner, repo, creator string) ([]*github.Issue, error) {
+	ctx := context.Background()
+	tokenService := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: token},
+	)
+	tokenClient := oauth2.NewClient(ctx, tokenService)
 
-func (sp *serviceProvider) GetIssues() (string, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		log.Println(err)
-		return "", err
+	client := github.NewClient(tokenClient)
+
+	opt := &github.IssueListByRepoOptions{
+		Creator: creator,
+		State:   "open",
 	}
 
-	s, err := ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
+	list, _, err := client.Issues.ListByRepo(ctx, owner, repo, opt)
 	if err != nil {
-		log.Println(err)
-		return "", err
+		return nil, err
 	}
 
-	return string(s), nil
+	return list, nil
+}
+
+// Get issues.
+func (sp *serviceProvider) Get(token, owner, repo string, num int) (*github.Issue, error) {
+	ctx := context.Background()
+	tokenService := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: token},
+	)
+	tokenClient := oauth2.NewClient(ctx, tokenService)
+
+	client := github.NewClient(tokenClient)
+
+	issue, _, err := client.Issues.Get(ctx, owner, repo, num)
+	if err != nil {
+		return nil, err
+	}
+
+	return issue, nil
 }

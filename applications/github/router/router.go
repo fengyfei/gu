@@ -59,6 +59,7 @@ func register(r *server.Router) {
 	core.URLMap["/api/v1/techcats/repos/info"] = struct{}{}
 	core.URLMap["/api/v1/techcats/repos/readme"] = struct{}{}
 	core.URLMap["/api/v1/techcats/trending/lang"] = struct{}{}
+	core.URLMap["/api/v1/techcats/issues/list"] = struct{}{}
 	core.URLMap["/api/v1/techcats/issues/get"] = struct{}{}
 
 	// Article
@@ -77,7 +78,8 @@ func register(r *server.Router) {
 	r.Post("/api/v1/techcats/repos/readme", repos.ReadmeURL)
 
 	// Issues
-	r.Get("/api/v1/techcats/issues/get", issues.Issues)
+	r.Post("/api/v1/techcats/issues/list", issues.List)
+	r.Post("/api/v1/techcats/issues/get", issues.Get)
 
 	// Trending
 	r.Post("/api/v1/techcats/trending/lang", trending.LangInfo)
