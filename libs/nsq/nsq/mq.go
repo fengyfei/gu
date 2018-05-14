@@ -30,13 +30,9 @@
 package nsq
 
 import (
-	"fmt"
-	"log"
-	"strconv"
-
 	"github.com/nsqio/go-nsq"
-	"github.com/pquerna/ffjson/ffjson"
-)
+	json "github.com/json-iterator/go"
+	)
 
 type Mq struct {
 	Conf *nsq.Config
@@ -78,14 +74,10 @@ func (p *Producer) Pub(topic string, message interface{}) error {
 
 	err := p.Ping()
 	if err != nil {
-		log.Fatal("should not be able to ping after Stop()")
 		return err
 	}
 
-	msg, err := marshalMsg(message)
-	if err != nil {
-		return err
-	}
+	msg, err := json.Marshal(message)
 
 	err = p.Publish(topic, msg)
 	if err != nil {
@@ -120,7 +112,6 @@ func (m *Mq) CreateConsumer(topic, channel, addr string, handler nsq.Handler) (*
 	c.AddHandler(handler)
 	err = c.ConnectToNSQD(addr)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
@@ -131,21 +122,4 @@ func (m *Mq) CreateConsumer(topic, channel, addr string, handler nsq.Handler) (*
 
 func (c *Consumer) Stop() {
 	c.Stop()
-}
-
-func marshalMsg(msg interface{}) (m []byte, err error) {
-	switch t := msg.(type) {
-	case []byte:
-		m = t
-	case float64:
-		m = []byte(strconv.FormatFloat(t, 'f', -1, 64))
-	case int64:
-		m = []byte(strconv.FormatInt(t, 10))
-	case string:
-		m = []byte(t)
-	default:
-		m, err = ffjson.Marshal(msg)
-	}
-
-	return
 }

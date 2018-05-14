@@ -33,6 +33,7 @@ import (
 	"github.com/nsqio/go-nsq"
 	"testing"
 	"fmt"
+	"time"
 )
 
 func TestMq_NewConf(t *testing.T) {
@@ -54,7 +55,7 @@ func TestMq_NewConf(t *testing.T) {
 
 	h := func (message *nsq.Message) error {
 		msg := string(message.Body)
-		fmt.Println(msg)
+		fmt.Println("message", msg)
 		return nil
 	}
 
@@ -62,4 +63,6 @@ func TestMq_NewConf(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	time.Sleep(1 * time.Second)
 }
