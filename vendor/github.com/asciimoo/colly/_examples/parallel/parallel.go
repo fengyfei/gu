@@ -8,19 +8,20 @@ import (
 
 func main() {
 	// Instantiate default collector
-	c := colly.NewCollector()
+	c := colly.NewCollector(
+		// MaxDepth is 2, so only the links on the scraped page
+		// and links on those pages are visited
+		colly.MaxDepth(2),
+		colly.Async(true),
+	)
 
-	// Limit the maximum parallelism to 5
+	// Limit the maximum parallelism to 2
 	// This is necessary if the goroutines are dynamically
 	// created to control the limit of simultaneous requests.
 	//
 	// Parallelism can be controlled also by spawning fixed
 	// number of go routines.
-	c.Limit(&colly.LimitRule{DomainGlob: "*", Parallelism: 5})
-
-	// MaxDepth is 2, so only the links on the scraped page
-	// and links on those pages are visited
-	c.MaxDepth = 2
+	c.Limit(&colly.LimitRule{DomainGlob: "*", Parallelism: 2})
 
 	// On every a element which has href attribute call callback
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
@@ -28,7 +29,7 @@ func main() {
 		// Print link
 		fmt.Println(link)
 		// Visit link found on page on a new thread
-		go e.Request.Visit(link)
+		e.Request.Visit(link)
 	})
 
 	// Start scraping on https://en.wikipedia.org

@@ -1,3 +1,16 @@
+// Copyright 2012-2018 The NATS Authors
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package nats
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -7,17 +20,18 @@ package nats
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
 
-	"encoding/json"
 	"github.com/nats-io/gnatsd/server"
 	gnatsd "github.com/nats-io/gnatsd/test"
-	"runtime"
 )
 
 // Dumb wait program to sync on callbacks, etc... Will timeout
@@ -40,7 +54,7 @@ func stackFatalf(t *testing.T, f string, args ...interface{}) {
 	lines = append(lines, msg)
 
 	// Generate the Stack of callers: Skip us and verify* frames.
-	for i := 2; true; i++ {
+	for i := 1; true; i++ {
 		_, file, line, ok := runtime.Caller(i)
 		if !ok {
 			break
@@ -49,6 +63,23 @@ func stackFatalf(t *testing.T, f string, args ...interface{}) {
 		lines = append(lines, msg)
 	}
 	t.Fatalf("%s", strings.Join(lines, "\n"))
+}
+
+func TestVersionMatchesTag(t *testing.T) {
+	tag := os.Getenv("TRAVIS_TAG")
+	if tag == "" {
+		t.SkipNow()
+	}
+	// We expect a tag of the form vX.Y.Z. If that's not the case,
+	// we need someone to have a look. So fail if first letter is not
+	// a `v`
+	if tag[0] != 'v' {
+		t.Fatalf("Expect tag to start with `v`, tag is: %s", tag)
+	}
+	// Strip the `v` from the tag for the version comparison.
+	if Version != tag[1:] {
+		t.Fatalf("Version (%s) does not match tag (%s)", Version, tag[1:])
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -191,7 +222,7 @@ var testServers = []string{
 }
 
 func TestServersRandomize(t *testing.T) {
-	opts := DefaultOptions
+	opts := GetDefaultOptions()
 	opts.Servers = testServers
 	nc := &Conn{Opts: opts}
 	if err := nc.setupServerPool(); err != nil {
@@ -208,7 +239,7 @@ func TestServersRandomize(t *testing.T) {
 	}
 
 	// Now test that we do not randomize if proper flag is set.
-	opts = DefaultOptions
+	opts = GetDefaultOptions()
 	opts.Servers = testServers
 	opts.NoRandomize = true
 	nc = &Conn{Opts: opts}
@@ -228,7 +259,7 @@ func TestServersRandomize(t *testing.T) {
 	// set, Opts.Servers is not (and vice versa), the behavior
 	// is that Opts.Url is always first, even when randomization
 	// is enabled. So make sure that this is still the case.
-	opts = DefaultOptions
+	opts = GetDefaultOptions()
 	opts.Url = DefaultURL
 	opts.Servers = testServers
 	nc = &Conn{Opts: opts}
@@ -250,7 +281,7 @@ func TestServersRandomize(t *testing.T) {
 }
 
 func TestSelectNextServer(t *testing.T) {
-	opts := DefaultOptions
+	opts := GetDefaultOptions()
 	opts.Servers = testServers
 	opts.NoRandomize = true
 	nc := &Conn{Opts: opts}
@@ -779,7 +810,9 @@ func TestParserSplitMsg(t *testing.T) {
 	}
 
 	buf = []byte("\r\n")
-	err = nc.parse(buf)
+	if err := nc.parse(buf); err != nil {
+		t.Fatalf("Unexpected error during parsing: %v", err)
+	}
 	if (nc.Statistics.InMsgs != expectedCount) || (nc.Statistics.InBytes != expectedSize) {
 		t.Fatalf("Wrong stats: %d - %d instead of %d - %d", nc.Statistics.InMsgs, nc.Statistics.InBytes, expectedCount, expectedSize)
 	}
@@ -830,7 +863,7 @@ func TestNormalizeError(t *testing.T) {
 }
 
 func TestAsyncINFO(t *testing.T) {
-	opts := DefaultOptions
+	opts := GetDefaultOptions()
 	c := &Conn{Opts: opts}
 
 	c.ps = &parseState{}
@@ -888,6 +921,10 @@ func TestAsyncINFO(t *testing.T) {
 		MaxPayload:   2 * 1024 * 1024,
 		ConnectURLs:  []string{"localhost:5222", "localhost:6222"},
 	}
+	// Set NoRandomize so that the check with expectedServer info
+	// matches.
+	c.Opts.NoRandomize = true
+
 	b, _ := json.Marshal(expectedServer)
 	info = []byte(fmt.Sprintf("INFO %s\r\n", b))
 	if c.ps.state != OP_START {
@@ -937,29 +974,21 @@ func TestAsyncINFO(t *testing.T) {
 		if len(c.urls) != len(urls) {
 			stackFatalf(t, "Map should have %d elements, has %d", len(urls), len(c.urls))
 		}
-		for i, url := range urls {
-			if c.Opts.NoRandomize {
-				if c.srvPool[i].url.Host != url {
-					stackFatalf(t, "Pool should have %q at index %q, has %q", url, i, c.srvPool[i].url.Host)
-				}
-			} else {
-				if _, present := c.urls[url]; !present {
-					stackFatalf(t, "Pool should have %q", url)
-				}
+		for _, url := range urls {
+			if _, present := c.urls[url]; !present {
+				stackFatalf(t, "Pool should have %q", url)
 			}
 		}
 	}
 
 	// Now test the decoding of "connect_urls"
 
-	// No randomize for now
-	c.Opts.NoRandomize = true
 	// Reset the pool
 	c.setupServerPool()
 	// Reinitialize the parser
 	c.ps = &parseState{}
 
-	info = []byte("INFO {\"connect_urls\":[\"localhost:5222\"]}\r\n")
+	info = []byte("INFO {\"connect_urls\":[\"localhost:4222\", \"localhost:5222\"]}\r\n")
 	err = c.parse(info)
 	if err != nil || c.ps.state != OP_START {
 		t.Fatalf("Unexpected: %d : %v\n", c.ps.state, err)
@@ -976,7 +1005,7 @@ func TestAsyncINFO(t *testing.T) {
 	checkPool("localhost:4222", "localhost:5222")
 
 	// Receive a new URL
-	info = []byte("INFO {\"connect_urls\":[\"localhost:6222\"]}\r\n")
+	info = []byte("INFO {\"connect_urls\":[\"localhost:4222\", \"localhost:5222\", \"localhost:6222\"]}\r\n")
 	err = c.parse(info)
 	if err != nil || c.ps.state != OP_START {
 		t.Fatalf("Unexpected: %d : %v\n", c.ps.state, err)
@@ -984,70 +1013,46 @@ func TestAsyncINFO(t *testing.T) {
 	// Pool now should contain localhost:4222 (the default URL) localhost:5222 and localhost:6222
 	checkPool("localhost:4222", "localhost:5222", "localhost:6222")
 
-	// Receive more than 1 URL at once
-	info = []byte("INFO {\"connect_urls\":[\"localhost:7222\", \"localhost:8222\"]}\r\n")
-	err = c.parse(info)
-	if err != nil || c.ps.state != OP_START {
-		t.Fatalf("Unexpected: %d : %v\n", c.ps.state, err)
-	}
-	// Pool now should contain localhost:4222 (the default URL) localhost:5222, localhost:6222
-	// localhost:7222 and localhost:8222
-	checkPool("localhost:4222", "localhost:5222", "localhost:6222", "localhost:7222", "localhost:8222")
-
-	// Test with pool randomization now
+	// Check that pool may be randomized on setup, but new URLs are always
+	// added at end of pool.
 	c.Opts.NoRandomize = false
+	c.Opts.Servers = testServers
+	// Reset the pool
 	c.setupServerPool()
-
-	info = []byte("INFO {\"connect_urls\":[\"localhost:5222\"]}\r\n")
-	err = c.parse(info)
-	if err != nil || c.ps.state != OP_START {
-		t.Fatalf("Unexpected: %d : %v\n", c.ps.state, err)
+	// Reinitialize the parser
+	c.ps = &parseState{}
+	// Capture the pool sequence after randomization
+	urlsAfterPoolSetup := make([]string, 0, len(c.srvPool))
+	for _, srv := range c.srvPool {
+		urlsAfterPoolSetup = append(urlsAfterPoolSetup, srv.url.Host)
 	}
-	// Pool now should contain localhost:4222 (the default URL) and localhost:5222
-	checkPool("localhost:4222", "localhost:5222")
-
-	// Make sure that if client receives the same, it is not added again.
-	err = c.parse(info)
-	if err != nil || c.ps.state != OP_START {
-		t.Fatalf("Unexpected: %d : %v\n", c.ps.state, err)
-	}
-	// Pool should still contain localhost:4222 (the default URL) and localhost:5222
-	checkPool("localhost:4222", "localhost:5222")
-
-	// Receive a new URL
-	info = []byte("INFO {\"connect_urls\":[\"localhost:6222\"]}\r\n")
-	err = c.parse(info)
-	if err != nil || c.ps.state != OP_START {
-		t.Fatalf("Unexpected: %d : %v\n", c.ps.state, err)
-	}
-	// Pool now should contain localhost:4222 (the default URL) localhost:5222 and localhost:6222
-	checkPool("localhost:4222", "localhost:5222", "localhost:6222")
-
-	// Receive more than 1 URL at once
-	info = []byte("INFO {\"connect_urls\":[\"localhost:7222\", \"localhost:8222\"]}\r\n")
-	err = c.parse(info)
-	if err != nil || c.ps.state != OP_START {
-		t.Fatalf("Unexpected: %d : %v\n", c.ps.state, err)
-	}
-	// Pool now should contain localhost:4222 (the default URL) localhost:5222, localhost:6222
-	// localhost:7222 and localhost:8222
-	checkPool("localhost:4222", "localhost:5222", "localhost:6222", "localhost:7222", "localhost:8222")
-
-	// Finally, check that the pool should be randomized.
-	allUrls := []string{"localhost:4222", "localhost:5222", "localhost:6222", "localhost:7222", "localhost:8222"}
-	same := 0
-	for i, url := range c.srvPool {
-		if url.url.Host == allUrls[i] {
-			same++
+	checkPoolOrderDidNotChange := func() {
+		for i := 0; i < len(urlsAfterPoolSetup); i++ {
+			if c.srvPool[i].url.Host != urlsAfterPoolSetup[i] {
+				stackFatalf(t, "Pool should have %q at index %q, has %q", urlsAfterPoolSetup[i], i, c.srvPool[i].url.Host)
+			}
 		}
 	}
-	if same == len(allUrls) {
-		t.Fatal("Pool does not seem to be randomized")
+	// Add new urls
+	newURLs := []string{
+		"localhost:6222",
+		"localhost:7222",
+		"localhost:8222\", \"localhost:9222",
+		"localhost:10222\", \"localhost:11222\", \"localhost:12222,",
+	}
+	for _, newURL := range newURLs {
+		info = []byte("INFO {\"connect_urls\":[\"" + newURL + "]}\r\n")
+		err = c.parse(info)
+		if err != nil || c.ps.state != OP_START {
+			t.Fatalf("Unexpected: %d : %v\n", c.ps.state, err)
+		}
+		// Check that pool order does not change up to the new addition(s).
+		checkPoolOrderDidNotChange()
 	}
 }
 
 func TestConnServers(t *testing.T) {
-	opts := DefaultOptions
+	opts := GetDefaultOptions()
 	c := &Conn{Opts: opts}
 	c.ps = &parseState{}
 	c.setupServerPool()
@@ -1095,4 +1100,33 @@ func TestConnServers(t *testing.T) {
 	c.setupServerPool()
 
 	validateURLs(c.Servers(), "nats://localhost:4333", "nats://localhost:4444")
+}
+
+func TestProcessErrAuthorizationError(t *testing.T) {
+	ach := make(chan asyncCB, 1)
+	called := make(chan error, 1)
+	c := &Conn{
+		ach: ach,
+		Opts: Options{
+			AsyncErrorCB: func(nc *Conn, sub *Subscription, err error) {
+				called <- err
+			},
+		},
+	}
+	c.processErr("Authorization Violation")
+	select {
+	case cb := <-ach:
+		cb()
+	default:
+		t.Fatal("Expected callback on channel")
+	}
+
+	select {
+	case err := <-called:
+		if err != ErrAuthorization {
+			t.Fatalf("Expected ErrAuthorization, got: %v", err)
+		}
+	default:
+		t.Fatal("Expected error on channel")
+	}
 }

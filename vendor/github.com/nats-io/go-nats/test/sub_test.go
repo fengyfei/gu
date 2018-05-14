@@ -1,3 +1,16 @@
+// Copyright 2013-2018 The NATS Authors
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package test
 
 import (
@@ -8,7 +21,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nats-io/nats"
+	"github.com/nats-io/go-nats"
 )
 
 // More advanced tests on subscriptions
@@ -371,6 +384,9 @@ func TestIsValidSubscriber(t *testing.T) {
 	defer nc.Close()
 
 	sub, err := nc.SubscribeSync("foo")
+	if err != nil {
+		t.Fatalf("Error on subscribe: %v", err)
+	}
 	if !sub.IsValid() {
 		t.Fatalf("Subscription should be valid")
 	}
@@ -502,7 +518,7 @@ func TestAsyncErrHandler(t *testing.T) {
 	s := RunDefaultServer()
 	defer s.Shutdown()
 
-	opts := nats.DefaultOptions
+	opts := nats.GetDefaultOptions()
 
 	nc, err := opts.Connect()
 	if err != nil {
@@ -581,7 +597,7 @@ func TestAsyncErrHandlerChanSubscription(t *testing.T) {
 	s := RunDefaultServer()
 	defer s.Shutdown()
 
-	opts := nats.DefaultOptions
+	opts := nats.GetDefaultOptions()
 
 	nc, err := opts.Connect()
 	if err != nil {
@@ -850,6 +866,8 @@ func TestChanSubscriberPendingLimits(t *testing.T) {
 
 	nc := NewDefaultConnection(t)
 	defer nc.Close()
+	ncp := NewDefaultConnection(t)
+	defer ncp.Close()
 
 	// There was a defect that prevented to receive more than
 	// the default pending message limit. Trying to send more
@@ -876,11 +894,12 @@ func TestChanSubscriberPendingLimits(t *testing.T) {
 				t.Fatalf("Unexpected error on subscribe: %v", err)
 			}
 			defer sub.Unsubscribe()
+			nc.Flush()
 
-			// Send some messages to ourselves.
+			// Send some messages
 			go func() {
 				for i := 0; i < total; i++ {
-					if err := nc.Publish("foo", []byte("Hello")); err != nil {
+					if err := ncp.Publish("foo", []byte("Hello")); err != nil {
 						t.Fatalf("Unexpected error on publish: %v", err)
 					}
 				}

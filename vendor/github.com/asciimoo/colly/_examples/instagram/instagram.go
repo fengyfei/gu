@@ -12,7 +12,7 @@ import (
 
 // found in https://www.instagram.com/static/bundles/en_US_Commons.js/68e7390c5938.js
 // included from profile page
-const instagramQueryId string = "17888483320059182"
+const instagramQueryId = "17888483320059182"
 
 // "id": user id, "after": end cursor
 const nextPageURLTemplate string = `https://www.instagram.com/graphql/query/?query_id=17888483320059182&variables={"id":"%s","first":12,"after":"%s"}`
@@ -32,9 +32,10 @@ func main() {
 	instagramAccount := os.Args[1]
 	outputDir := fmt.Sprintf("./instagram_%s/", instagramAccount)
 
-	c := colly.NewCollector()
-	c.CacheDir = "./_instagram_cache/"
-	c.UserAgent = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36"
+	c := colly.NewCollector(
+		colly.CacheDir("./_instagram_cache/"),
+		colly.UserAgent("Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36"),
+	)
 
 	c.OnHTML("body > script:first-of-type", func(e *colly.HTMLElement) {
 		jsonData := e.Text[strings.Index(e.Text, "{") : len(e.Text)-1]

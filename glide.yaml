@@ -76,6 +76,7 @@ import:
   version: v2.0.2
 - package: github.com/google/go-github
   version: v15.0.0
+- package: github.com/kaelanb/newsapi-go
 testImport:
 - package: github.com/smartystreets/goconvey
   version: 1.6.3

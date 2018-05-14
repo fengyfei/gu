@@ -1,3 +1,16 @@
+// Copyright 2013-2018 The NATS Authors
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package test
 
 import (
@@ -7,7 +20,7 @@ import (
 	"time"
 
 	"github.com/nats-io/gnatsd/server"
-	"github.com/nats-io/nats"
+	"github.com/nats-io/go-nats"
 )
 
 func startReconnectServer(t *testing.T) *server.Server {
@@ -15,7 +28,7 @@ func startReconnectServer(t *testing.T) *server.Server {
 }
 
 func TestReconnectTotalTime(t *testing.T) {
-	opts := nats.DefaultOptions
+	opts := nats.GetDefaultOptions()
 	totalReconnectTime := time.Duration(opts.MaxReconnect) * opts.ReconnectWait
 	if totalReconnectTime < (2 * time.Minute) {
 		t.Fatalf("Total reconnect time should be at least 2 mins: Currently %v\n",
@@ -28,7 +41,7 @@ func TestReconnectDisallowedFlags(t *testing.T) {
 	defer ts.Shutdown()
 
 	ch := make(chan bool)
-	opts := nats.DefaultOptions
+	opts := nats.GetDefaultOptions()
 	opts.Url = "nats://localhost:22222"
 	opts.AllowReconnect = false
 	opts.ClosedCB = func(_ *nats.Conn) {
@@ -52,7 +65,7 @@ func TestReconnectAllowedFlags(t *testing.T) {
 	defer ts.Shutdown()
 	ch := make(chan bool)
 	dch := make(chan bool)
-	opts := nats.DefaultOptions
+	opts := nats.GetDefaultOptions()
 	opts.Url = "nats://localhost:22222"
 	opts.AllowReconnect = true
 	opts.MaxReconnect = 2
@@ -414,7 +427,7 @@ func TestIsReconnectingAndStatus(t *testing.T) {
 
 	disconnectedch := make(chan bool)
 	reconnectch := make(chan bool)
-	opts := nats.DefaultOptions
+	opts := nats.GetDefaultOptions()
 	opts.Url = "nats://localhost:22222"
 	opts.AllowReconnect = true
 	opts.MaxReconnect = 10000
@@ -483,7 +496,7 @@ func TestFullFlushChanDuringReconnect(t *testing.T) {
 
 	reconnectch := make(chan bool)
 
-	opts := nats.DefaultOptions
+	opts := nats.GetDefaultOptions()
 	opts.Url = "nats://localhost:22222"
 	opts.AllowReconnect = true
 	opts.MaxReconnect = 10000
@@ -544,7 +557,7 @@ func TestReconnectVerbose(t *testing.T) {
 	s := RunDefaultServer()
 	defer s.Shutdown()
 
-	o := nats.DefaultOptions
+	o := nats.GetDefaultOptions()
 	o.Verbose = true
 	rch := make(chan bool)
 	o.ReconnectedCB = func(_ *nats.Conn) {
@@ -576,11 +589,26 @@ func TestReconnectVerbose(t *testing.T) {
 	}
 }
 
+func TestReconnectBufSizeOption(t *testing.T) {
+	s := RunDefaultServer()
+	defer s.Shutdown()
+
+	nc, err := nats.Connect("nats://localhost:4222", nats.ReconnectBufSize(32))
+	if err != nil {
+		t.Fatalf("Should have connected ok: %v", err)
+	}
+	defer nc.Close()
+
+	if nc.Opts.ReconnectBufSize != 32 {
+		t.Fatalf("ReconnectBufSize should be 32 but it is %d", nc.Opts.ReconnectBufSize)
+	}
+}
+
 func TestReconnectBufSize(t *testing.T) {
 	s := RunDefaultServer()
 	defer s.Shutdown()
 
-	o := nats.DefaultOptions
+	o := nats.GetDefaultOptions()
 	o.ReconnectBufSize = 32 // 32 bytes
 
 	dch := make(chan bool)
@@ -617,7 +645,7 @@ func TestReconnectBufSize(t *testing.T) {
 
 	// This should fail since we have exhausted the backing buffer.
 	if err := nc.Publish("foo", msg); err == nil {
-		//		t.Fatalf("Expected to fail to publish message: got no error\n")
+		t.Fatalf("Expected to fail to publish message: got no error\n")
 	}
 	nc.Buffered()
 }

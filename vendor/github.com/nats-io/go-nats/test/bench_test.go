@@ -1,3 +1,16 @@
+// Copyright 2012-2018 The NATS Authors
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package test
 
 import (
@@ -5,7 +18,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nats-io/nats"
+	"github.com/nats-io/go-nats"
 )
 
 func BenchmarkPublishSpeed(b *testing.B) {
@@ -112,6 +125,30 @@ func BenchmarkRequest(b *testing.B) {
 	s := RunDefaultServer()
 	defer s.Shutdown()
 	nc := NewDefaultConnection(b)
+	defer nc.Close()
+	ok := []byte("ok")
+	nc.Subscribe("req", func(m *nats.Msg) {
+		nc.Publish(m.Reply, ok)
+	})
+	b.StartTimer()
+	b.ReportAllocs()
+	q := []byte("q")
+	for i := 0; i < b.N; i++ {
+		_, err := nc.Request("req", q, 1*time.Second)
+		if err != nil {
+			b.Fatalf("Err %v\n", err)
+		}
+	}
+}
+
+func BenchmarkOldRequest(b *testing.B) {
+	b.StopTimer()
+	s := RunDefaultServer()
+	defer s.Shutdown()
+	nc, err := nats.Connect(nats.DefaultURL, nats.UseOldRequestStyle())
+	if err != nil {
+		b.Fatalf("Failed to connect: %v", err)
+	}
 	defer nc.Close()
 	ok := []byte("ok")
 	nc.Subscribe("req", func(m *nats.Msg) {

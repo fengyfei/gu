@@ -78,6 +78,7 @@ func Read(p []byte) {
 			p[6] = byte(n)
 			return
 		default: // len(p) > 8
+			_ = p[8]
 			p[0] = byte(n >> 56)
 			p[1] = byte(n >> 48)
 			p[2] = byte(n >> 40)

@@ -1,3 +1,17 @@
+// Copyright 2018 Adam Tauber
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package main
 
 import (
@@ -10,7 +24,7 @@ import (
 	"github.com/jawher/mow.cli"
 )
 
-var scraperHeadTemplate string = `package main
+var scraperHeadTemplate = `package main
 
 import (
 	"log"
@@ -22,30 +36,30 @@ func main() {
 	c := colly.NewCollector()
 `
 
-var scraperEndTemplate string = `
+var scraperEndTemplate = `
 	c.Visit("https://yourdomain.com/")
 }
 `
 
-var htmlCallbackTemplate string = `
+var htmlCallbackTemplate = `
 	c.OnHTML("element-selector", func(e *colly.HTMLElement) {
 		log.Println(e.Text)
 	})
 `
 
-var requestCallbackTemplate string = `
+var requestCallbackTemplate = `
 	c.OnRequest("element-selector", func(r *colly.Request) {
 		log.Println("Visiting", r.URL)
 	})
 `
 
-var responseCallbackTemplate string = `
+var responseCallbackTemplate = `
 	c.OnResponse("element-selector", func(r *colly.Response) {
 		log.Println("Visited", r.Request.URL, r.StatusCode)
 	})
 `
 
-var errorCallbackTemplate string = `
+var errorCallbackTemplate = `
 	c.OnError("element-selector", func(r *colly.Response, err error) {
 		log.Printf("Error on %s: %s", r.Request.URL, err)
 	})

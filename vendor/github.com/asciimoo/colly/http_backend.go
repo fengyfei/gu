@@ -1,14 +1,27 @@
+// Copyright 2018 Adam Tauber
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package colly
 
 import (
 	"crypto/sha1"
 	"encoding/gob"
 	"encoding/hex"
-	"errors"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
-	"net/http/cookiejar"
 	"os"
 	"path"
 	"regexp"
@@ -37,6 +50,8 @@ type LimitRule struct {
 	DomainGlob string
 	// Delay is the duration to wait before creating a new request to the matching domains
 	Delay time.Duration
+	// RandomDelay is the extra randomized duration to wait added to Delay before creating a new request
+	RandomDelay time.Duration
 	// Parallelism is the number of the maximum allowed concurrent requests of the matching domains
 	Parallelism    int
 	waitChan       chan bool
@@ -69,14 +84,13 @@ func (r *LimitRule) Init() error {
 		hasPattern = true
 	}
 	if !hasPattern {
-		return errors.New("No pattern defined in LimitRule")
+		return ErrNoPattern
 	}
 	return nil
 }
 
-func (h *httpBackend) Init() {
-	h.LimitRules = make([]*LimitRule, 0, 8)
-	jar, _ := cookiejar.New(nil)
+func (h *httpBackend) Init(jar http.CookieJar) {
+	rand.Seed(time.Now().UnixNano())
 	h.Client = &http.Client{
 		Jar:     jar,
 		Timeout: 10 * time.Second,
@@ -97,6 +111,9 @@ func (r *LimitRule) Match(domain string) bool {
 }
 
 func (h *httpBackend) GetMatchingRule(domain string) *LimitRule {
+	if h.LimitRules == nil {
+		return nil
+	}
 	h.lock.RLock()
 	defer h.lock.RUnlock()
 	for _, r := range h.LimitRules {
@@ -133,13 +150,14 @@ func (h *httpBackend) Cache(request *http.Request, bodySize int, cacheDir string
 		}
 	}
 	file, err := os.Create(filename + "~")
-	defer file.Close()
 	if err != nil {
 		return resp, err
 	}
 	if err := gob.NewEncoder(file).Encode(resp); err != nil {
+		file.Close()
 		return resp, err
 	}
+	file.Close()
 	return resp, os.Rename(filename+"~", filename)
 }
 
@@ -148,7 +166,11 @@ func (h *httpBackend) Do(request *http.Request, bodySize int) (*Response, error)
 	if r != nil {
 		r.waitChan <- true
 		defer func(r *LimitRule) {
-			time.Sleep(r.Delay)
+			randomDelay := time.Duration(0)
+			if r.RandomDelay != 0 {
+				randomDelay = time.Duration(rand.Intn(int(r.RandomDelay)))
+			}
+			time.Sleep(r.Delay + randomDelay)
 			<-r.waitChan
 		}(r)
 	}
@@ -157,6 +179,7 @@ func (h *httpBackend) Do(request *http.Request, bodySize int) (*Response, error)
 	if err != nil {
 		return nil, err
 	}
+	*request = *res.Request
 
 	var bodyReader io.Reader = res.Body
 	if bodySize > 0 {
@@ -176,6 +199,9 @@ func (h *httpBackend) Do(request *http.Request, bodySize int) (*Response, error)
 
 func (h *httpBackend) Limit(rule *LimitRule) error {
 	h.lock.Lock()
+	if h.LimitRules == nil {
+		h.LimitRules = make([]*LimitRule, 0, 8)
+	}
 	h.LimitRules = append(h.LimitRules, rule)
 	h.lock.Unlock()
 	return rule.Init()

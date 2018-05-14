@@ -2,11 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
+	"os"
 	"strings"
 
-	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly"
 )
 
@@ -25,14 +24,14 @@ type Course struct {
 
 func main() {
 	// Instantiate default collector
-	c := colly.NewCollector()
+	c := colly.NewCollector(
+		// Visit only domains: coursera.org, www.coursera.org
+		colly.AllowedDomains("coursera.org", "www.coursera.org"),
 
-	// Visit only domains: coursera.org, www.coursera.org
-	c.AllowedDomains = []string{"coursera.org", "www.coursera.org"}
-
-	// Cache responses to prevent multiple download of pages
-	// even if the collector is restarted
-	c.CacheDir = "./coursera_cache"
+		// Cache responses to prevent multiple download of pages
+		// even if the collector is restarted
+		colly.CacheDir("./coursera_cache"),
+	)
 
 	// Create another collector to scrape course details
 	detailCollector := c.Clone()
@@ -41,7 +40,7 @@ func main() {
 
 	// On every a element which has href attribute call callback
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
-		// If attribute class of a is this long string return from callback
+		// If attribute class is this long string return from callback
 		// As this a is irrelevant
 		if e.Attr("class") == "Button_1qxkboh-o_O-primary_cv02ee-o_O-md_28awn8-o_O-primaryLink_109aggg" {
 			return
@@ -84,18 +83,18 @@ func main() {
 		}
 		// Iterate over rows of the table which contains different information
 		// about the course
-		e.DOM.Find("table.basic-info-table tr").Each(func(_ int, s *goquery.Selection) {
-			switch s.Find("td:first-child").Text() {
+		e.ForEach("table.basic-info-table tr", func(_ int, el *colly.HTMLElement) {
+			switch el.ChildText("td:first-child") {
 			case "Language":
-				course.Language = s.Find("td:nth-child(2)").Text()
+				course.Language = el.ChildText("td:nth-child(2)")
 			case "Level":
-				course.Level = s.Find("td:nth-child(2)").Text()
+				course.Level = el.ChildText("td:nth-child(2)")
 			case "Commitment":
-				course.Commitment = s.Find("td:nth-child(2)").Text()
+				course.Commitment = el.ChildText("td:nth-child(2)")
 			case "How To Pass":
-				course.HowToPass = s.Find("td:nth-child(2)").Text()
+				course.HowToPass = el.ChildText("td:nth-child(2)")
 			case "User Ratings":
-				course.Rating = s.Find("td:nth-child(2) div:nth-of-type(2)").Text()
+				course.Rating = el.ChildText("td:nth-child(2) div:nth-of-type(2)")
 			}
 		})
 		courses = append(courses, course)
@@ -104,12 +103,9 @@ func main() {
 	// Start scraping on http://coursera.com/browse
 	c.Visit("https://coursera.org/browse")
 
-	// Convert results to JSON data if the scraping job has finished
-	jsonData, err := json.MarshalIndent(courses, "", "  ")
-	if err != nil {
-		panic(err)
-	}
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
 
-	// Dump json to the standard output (can be redirected to a file)
-	fmt.Println(string(jsonData))
+	// Dump json to the standard output
+	enc.Encode(courses)
 }

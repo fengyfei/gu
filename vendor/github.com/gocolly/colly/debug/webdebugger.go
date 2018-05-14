@@ -1,3 +1,17 @@
+// Copyright 2018 Adam Tauber
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package debug
 
 import (
@@ -17,12 +31,12 @@ type WebDebugger struct {
 }
 
 type requestInfo struct {
-	Url            string
+	URL            string
 	Started        time.Time
 	Duration       time.Duration
 	ResponseStatus string
-	Id             uint32
-	CollectorId    uint32
+	ID             uint32
+	CollectorID    uint32
 }
 
 // Init initializes the WebDebugger
@@ -49,18 +63,18 @@ func (w *WebDebugger) Init() error {
 func (w *WebDebugger) Event(e *Event) {
 	switch e.Type {
 	case "request":
-		w.CurrentRequests[e.RequestId] = requestInfo{
-			Url:         e.Values["url"],
+		w.CurrentRequests[e.RequestID] = requestInfo{
+			URL:         e.Values["url"],
 			Started:     time.Now(),
-			Id:          e.RequestId,
-			CollectorId: e.CollectorId,
+			ID:          e.RequestID,
+			CollectorID: e.CollectorID,
 		}
 	case "response", "error":
-		r := w.CurrentRequests[e.RequestId]
+		r := w.CurrentRequests[e.RequestID]
 		r.Duration = time.Since(r.Started)
 		r.ResponseStatus = e.Values["status"]
 		w.RequestLog = append(w.RequestLog, r)
-		delete(w.CurrentRequests, e.RequestId)
+		delete(w.CurrentRequests, e.RequestID)
 	}
 }
 

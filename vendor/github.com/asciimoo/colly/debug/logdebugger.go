@@ -1,3 +1,17 @@
+// Copyright 2018 Adam Tauber
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package debug
 
 import (
@@ -36,5 +50,5 @@ func (l *LogDebugger) Init() error {
 // Event receives Collector events and prints them to STDERR
 func (l *LogDebugger) Event(e *Event) {
 	i := atomic.AddInt32(&l.counter, 1)
-	l.logger.Printf("[%06d] %d [%6d - %s] %q (%s)\n", i, e.CollectorId, e.RequestId, e.Type, e.Values, time.Since(l.start))
+	l.logger.Printf("[%06d] %d [%6d - %s] %q (%s)\n", i, e.CollectorID, e.RequestID, e.Type, e.Values, time.Since(l.start))
 }
