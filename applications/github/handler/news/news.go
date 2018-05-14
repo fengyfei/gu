@@ -27,29 +27,37 @@
  *     Initial: 2018/05/14        Tong Yuehong
  */
 
-package topHeadlines
+package news
 
 import (
+	newsapi "github.com/kaelanb/newsapi-go"
+
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
-	newsapi "github.com/kaelanb/newsapi-go"
 )
 
-func GetNews(this *server.Context) error {
-	var query struct {
-		Query []string `json:"query"`
-	}
-	apikey := "cb49c9acbcb64a91b049f272b54b2554"
-	client := newsapi.New(apikey)
+type query struct {
+	Query []string `json:"query"`
+}
+
+var (
+	apikey = "cb49c9acbcb64a91b049f272b54b2554"
+	client = newsapi.New(apikey)
+)
+
+func Everything(this *server.Context) error {
+	var (
+		query query
+	)
 
 	if err := this.JSONBody(&query); err != nil {
 		logger.Error("Query json", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	newsResponse, err := client.GetTopHeadlines(query.Query)
+	newsResponse, err := client.GetEverything(query.Query)
 	if err != nil {
 		return err
 	}

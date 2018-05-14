@@ -37,6 +37,7 @@ import (
 	"github.com/fengyfei/gu/applications/github/handler/repos"
 	"github.com/fengyfei/gu/applications/github/handler/trending"
 	"github.com/fengyfei/gu/libs/http/server"
+	"github.com/fengyfei/gu/applications/github/handler/news"
 )
 
 var (
@@ -68,6 +69,9 @@ func register(r *server.Router) {
 	r.Get("/api/v1/techcats/article/list", article.List)
 	r.Get("/api/v1/techcats/article/activelist", article.ActiveList)
 	r.Post("/api/v1/techcats/article/info", article.Info)
+
+	// News
+	r.Post("/api/v1/techcats/news/info", news.Everything)
 
 	// Repos
 	r.Post("/api/v1/techcats/repos/create", repos.Create, filter.LoginFilter)
