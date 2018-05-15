@@ -71,7 +71,7 @@ func register(r *server.Router) {
 	r.Post("/api/v1/techcats/article/info", article.Info)
 
 	// News
-	r.Post("/api/v1/techcats/news/info", news.Everything)
+	r.Post("/api/v1/techcats/news/info", news.Everything, filter.LoginFilter)
 
 	// Repos
 	r.Post("/api/v1/techcats/repos/create", repos.Create, filter.LoginFilter)

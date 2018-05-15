@@ -53,12 +53,13 @@ func Everything(this *server.Context) error {
 	)
 
 	if err := this.JSONBody(&query); err != nil {
-		logger.Error("Query json", err)
+		logger.Error("[newsapi][everything] parameters error:", err)
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
 	newsResponse, err := client.GetEverything(query.Query)
 	if err != nil {
+		logger.Error("[newsapi][everything] query error:", err)
 		return err
 	}
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, newsResponse)
