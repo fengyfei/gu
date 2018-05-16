@@ -50,6 +50,8 @@ var (
 func Everything(this *server.Context) error {
 	var (
 		query query
+		newsResponse *newsapi.NewsResponse
+		err error
 	)
 
 	if err := this.JSONBody(&query); err != nil {
@@ -57,10 +59,19 @@ func Everything(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	newsResponse, err := client.GetEverything(query.Query)
-	if err != nil {
-		logger.Error("[newsapi][everything] query error:", err)
-		return err
+	for i := 0; i < 3; i++ {
+		newsResponse, err = client.GetEverything(query.Query)
+		if err != nil {
+			logger.Error("[newsapi][everything] query error:", err)
+			continue
+		} else {
+			break
+		}
 	}
+
+	if err != nil {
+		return core.WriteStatusAndDataJSON(this, constants.ErrInternalServerError, nil)
+	}
+
 	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, newsResponse)
 }
