@@ -63,4 +63,7 @@ const (
 
 	// ErrMysql - Mysql operations error.
 	ErrMysql = 700
+
+	ErrDuplicate = 800
+	ErrNotFound  = 801
 )

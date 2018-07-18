@@ -32,12 +32,13 @@ package trending
 import (
 	"time"
 
+	"github.com/TechCatsLab/apix/http/server"
+
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/applications/github/crawler"
 	"github.com/fengyfei/gu/applications/nats"
 	"github.com/fengyfei/gu/libs/constants"
 	"github.com/fengyfei/gu/libs/crawler/github"
-	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
 	nc "github.com/fengyfei/gu/libs/nats"
 )

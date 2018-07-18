@@ -30,13 +30,14 @@
 package crawler
 
 import (
+	gonc "github.com/nats-io/go-nats"
+
 	"github.com/fengyfei/gu/applications/nats"
 	"github.com/fengyfei/gu/libs/crawler"
 	"github.com/fengyfei/gu/libs/crawler/github"
 	"github.com/fengyfei/gu/libs/logger"
 	nc "github.com/fengyfei/gu/libs/nats"
 	"github.com/fengyfei/gu/models/github/trending"
-	gonc "github.com/nats-io/go-nats"
 )
 
 var (

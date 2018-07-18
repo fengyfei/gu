@@ -30,6 +30,7 @@
 package repos
 
 import (
+	"errors"
 	"time"
 
 	"gopkg.in/mgo.v2"
@@ -38,10 +39,6 @@ import (
 	"github.com/fengyfei/gu/applications/github/conf"
 	"github.com/fengyfei/gu/libs/mongo"
 	"github.com/fengyfei/gu/models/github"
-)
-
-const (
-	listSize = 10
 )
 
 type serviceProvider struct{}
@@ -75,16 +72,62 @@ func init() {
 	Service = &serviceProvider{}
 }
 
-// Repos represents the GitHub repository information.
-type Repos struct {
-	ID      bson.ObjectId `bson:"_id,omitempty"`
-	Avatar  string        `bson:"Avatar"`
-	Name    string        `bson:"Name"`
-	Image   string        `bson:"Image"`
-	Intro   string        `bson:"Intro"`
-	Lang    []string      `bson:"Lang"`
-	Active  bool          `bson:"Active"`
-	Created time.Time     `bson:"Created"`
+const (
+	listSize = 10
+)
+
+type (
+	// Repos - represents the GitHub repository information.
+	Repos struct {
+		ID        bson.ObjectId `bson:"_id,omitempty" json:"id"`
+		Owner     *string       `bson:"Owner" json:"owner"`
+		Avatar    *string       `bson:"Avatar" json:"avatar"`
+		Name      *string       `bson:"Name" json:"name"`
+		Image     *string       `bson:"Image" json:"image"`
+		Intro     *string       `bson:"Intro" json:"intro"`
+		Readme    *string       `bson:"Readme" json:"readme"`
+		Stars     *int          `bson:"Stars" json:"stars"`
+		Forks     *int          `bson:"Forks" json:"forks"`
+		Topics    []string      `bson:"Topics" json:"topics"`
+		Languages []Language    `bson:"Languages" json:"languages"`
+		Active    bool          `bson:"Active" json:"active"`
+		Created   time.Time     `bson:"Created" json:"created"`
+	}
+
+	// Language - represents the GitHub repository program language information.
+	Language struct {
+		Language   string  `bson:"Language" json:"language"`
+		Proportion float32 `bson:"Proportion" json:"proportion"`
+	}
+)
+
+// Create create repos information.
+func (sp *serviceProvider) Create(owner, avatar, name, image, intro, readme *string, stars, forks *int, topics []string, languages []Language) (string, error) {
+	repos := Repos{
+		ID:        bson.NewObjectId(),
+		Owner:     owner,
+		Avatar:    avatar,
+		Name:      name,
+		Image:     image,
+		Intro:     intro,
+		Readme:    readme,
+		Stars:     stars,
+		Forks:     forks,
+		Topics:    topics,
+		Languages: languages,
+		Active:    true,
+		Created:   time.Now(),
+	}
+
+	conn := session.Connect()
+	defer conn.Disconnect()
+
+	err := conn.Insert(&repos)
+	if err != nil {
+		return "", err
+	}
+
+	return repos.ID.Hex(), nil
 }
 
 // List get all the repos.
@@ -120,21 +163,21 @@ func (sp *serviceProvider) ActiveList() ([]Repos, error) {
 }
 
 // GetByID get a list of records that are greater than the specified ID.
-func (SP *serviceProvider) GetByID(id string) ([]Repos, error) {
+func (sp *serviceProvider) GetByID(id *string) ([]Repos, error) {
 	var (
 		err   error
 		list  []Repos
 		query bson.M
-		sort  string = "-Created"
+		sort  = "-Created"
 	)
 
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	if id == "" {
+	if id == nil || *id == "" {
 		query = nil
 	} else {
-		query = bson.M{"_id": bson.M{"$gt": bson.ObjectIdHex(id)}}
+		query = bson.M{"_id": bson.M{"$gt": bson.ObjectIdHex(*id)}}
 	}
 
 	err = conn.GetLimitedRecords(query, listSize, &list, sort)
@@ -142,35 +185,28 @@ func (SP *serviceProvider) GetByID(id string) ([]Repos, error) {
 	return list, err
 }
 
-// Create create repos information.
-func (sp *serviceProvider) Create(avatar, name, image, intro *string, lang []string) (string, error) {
-	repos := Repos{
-		ID:      bson.NewObjectId(),
-		Avatar:  *avatar,
-		Name:    *name,
-		Image:   *image,
-		Intro:   *intro,
-		Lang:    lang,
-		Active:  true,
-		Created: time.Now(),
-	}
+// GetByName get a record by name.
+func (sp *serviceProvider) GetByName(name *string) (*Repos, error) {
+	var (
+		err error
+		doc Repos
+	)
 
 	conn := session.Connect()
 	defer conn.Disconnect()
 
-	err := conn.Insert(&repos)
-	if err != nil {
-		return "", err
+	if name == nil || *name == "" {
+		return nil, errors.New("name cann't be empty")
 	}
 
-	return repos.ID.Hex(), nil
+	err = conn.GetUniqueOne(bson.M{"Name": *name}, &doc)
+
+	return &doc, err
 }
 
 // ModifyActive modify repos status.
 func (sp *serviceProvider) ModifyActive(id *string, active bool) error {
-	updater := bson.M{"$set": bson.M{
-		"Active": active,
-	}}
+	updater := bson.M{"$set": bson.M{"Active": active}}
 
 	conn := session.Connect()
 	defer conn.Disconnect()

@@ -34,9 +34,10 @@ import (
 
 	"gopkg.in/mgo.v2"
 
+	"github.com/TechCatsLab/apix/http/server"
+
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/libs/constants"
-	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/models/github/article"
 )

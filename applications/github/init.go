@@ -30,11 +30,13 @@
 package main
 
 import (
+	"github.com/TechCatsLab/apix/http/server"
+	"github.com/TechCatsLab/apix/http/server/middleware"
+
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/applications/github/conf"
+	"github.com/fengyfei/gu/applications/github/pool"
 	"github.com/fengyfei/gu/applications/github/router"
-	"github.com/fengyfei/gu/libs/http/server"
-	"github.com/fengyfei/gu/libs/http/server/middleware"
 	"github.com/fengyfei/gu/libs/logger"
 )
 
@@ -50,20 +52,18 @@ func startServer() {
 		Address: conf.GithubConfig.Address,
 	}
 
+	err := pool.InitGithubPool()
+	if err != nil {
+		panic(err)
+	}
+
 	ep = server.NewEntrypoint(serverConfig, nil)
 
 	// add middlewares
 	ep.AttachMiddleware(middleware.NegroniRecoverHandler())
 	ep.AttachMiddleware(middleware.NegroniLoggerHandler())
-	ep.AttachMiddleware(middleware.JWTWithConfig(middleware.JWTConfig{
-		Skipper:    core.CustomSkipper,
-		SigningKey: []byte(core.TokenHMACKey),
-		ContextKey: core.ClaimsKey,
-	}))
-	ep.AttachMiddleware(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowedOrigins: conf.GithubConfig.CorsHosts,
-		AllowedMethods: []string{server.GET, server.POST},
-	}))
+	ep.AttachMiddleware(middleware.NegroniJwtHandler(core.TokenHMACKey, core.Skipper, nil, core.JwtErrHandler))
+	ep.AttachMiddleware(middleware.NegroniCorsAllowAll())
 
 	if err := ep.Start(router.Router.Handler()); err != nil {
 		logger.Error(err)

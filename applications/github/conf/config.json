@@ -1,17 +1,17 @@
 {
-  "server": {
-    "address": ":21001",
-    "natsurl": "nats://localhost:4223"
-  },
-  "middleware": {
-    "cors": {
-      "hosts": ["*"]
-    }
-  },
-  "mongo": {
-    "url": "mongodb://127.0.0.1:27017"
-  },
-  "jwt": {
-    "tokenkey": "PXL0we7gqrgskjnPwiXXwVeXY4pFGvcnq4zImdN1L4"
-  }
+	"server": {
+		"address": ":21001",
+		"natsurl": "nats://localhost:4223"
+	},
+	"middleware": {
+		"cors": {
+			"hosts": ["*"]
+		}
+	},
+	"mongo": {
+		"url": "mongodb://127.0.0.1:27017"
+	},
+	"jwt": {
+		"tokenkey": "PXL0we7gqrgskjnPwiXXwVeXY4pFGvcnq4zImdN1L4"
+	}
 }

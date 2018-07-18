@@ -30,10 +30,12 @@
 package core
 
 import (
+	"net/http"
 	"time"
 
+	"github.com/TechCatsLab/apix/http/server"
 	jwtgo "github.com/dgrijalva/jwt-go"
-	"github.com/fengyfei/gu/libs/http/server"
+	"github.com/fengyfei/gu/libs/logger"
 )
 
 const (
@@ -66,13 +68,19 @@ func InitHMACKey(key string) {
 	TokenHMACKey = key
 }
 
-// CustomSkipper used for custom middleware skipper.
-func CustomSkipper(c *server.Context) bool {
-	if _, ok := URLMap[c.Request().RequestURI]; ok {
+// Skipper -
+func Skipper(path string) bool {
+	if _, ok := URLMap[path]; ok {
 		return true
 	}
 
 	return false
+}
+
+// JwtErrHandler -
+func JwtErrHandler(w http.ResponseWriter, r *http.Request, err string) {
+	logger.Error(err)
+	http.Error(w, err, 401)
 }
 
 // NewToken generates a JWT token based on uid.

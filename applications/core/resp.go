@@ -30,8 +30,9 @@
 package core
 
 import (
+	"github.com/TechCatsLab/apix/http/server"
+
 	"github.com/fengyfei/gu/libs/constants"
-	"github.com/fengyfei/gu/libs/http/server"
 )
 
 // WriteStatusAndDataJSON send JSON encoding status (and data) response.

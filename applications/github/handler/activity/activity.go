@@ -34,9 +34,10 @@ import (
 
 	"gopkg.in/mgo.v2"
 
+	"github.com/TechCatsLab/apix/http/server"
+
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/libs/constants"
-	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/models/github/activity"
 )
@@ -44,9 +45,9 @@ import (
 type (
 	// createReq - The request struct that create activity information.
 	createReq struct {
-		Title  *string `json:"title" validate:"required,min=1,max=256"`
-		Image  *string `json:"image"`
-		Intro  *string `json:"intro"`
+		Title *string `json:"title" validate:"required,min=1,max=256"`
+		Image *string `json:"image"`
+		Intro *string `json:"intro"`
 	}
 
 	// activateReq - The request struct that modify activity status.

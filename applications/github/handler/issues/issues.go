@@ -30,9 +30,10 @@
 package issues
 
 import (
+	"github.com/TechCatsLab/apix/http/server"
+
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/libs/constants"
-	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/models/github/issues"
 )
@@ -43,11 +44,11 @@ func List(c *server.Context) error {
 	var (
 		err error
 		req struct {
-				Token string `json:"token"`
-				Owner string `json:"owner"`
-				Repo  string `json:"repo"`
-				Author string`json:"author"`
-			}
+			Token  string `json:"token"`
+			Owner  string `json:"owner"`
+			Repo   string `json:"repo"`
+			Author string `json:"author"`
+		}
 	)
 
 	if err = c.JSONBody(&req); err != nil {
@@ -60,7 +61,7 @@ func List(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	list, err := issues.Service.List(req.Token,req.Owner,req.Repo,req.Author)
+	list, err := issues.Service.List(req.Token, req.Owner, req.Repo, req.Author)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInternalServerError, nil)
@@ -88,7 +89,7 @@ func Get(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	issus, err := issues.Service.Get(req.Token,req.Owner,req.Repo, req.Num)
+	issus, err := issues.Service.Get(req.Token, req.Owner, req.Repo, req.Num)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrInternalServerError, nil)

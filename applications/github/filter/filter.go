@@ -30,9 +30,19 @@
 package filter
 
 import (
+	"errors"
+	"fmt"
+	"strings"
+
+	"github.com/TechCatsLab/apix/http/server"
+	jwtgo "github.com/dgrijalva/jwt-go"
+
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/libs/constants"
-	"github.com/fengyfei/gu/libs/http/server"
+)
+
+const (
+	claimUID = "uid"
 )
 
 var (
@@ -42,7 +52,7 @@ var (
 // LoginFilter check if the user is logged in.
 func LoginFilter(c *server.Context) bool {
 	if c.Request().RequestURI != loginURI {
-		uid := core.GetUID(c)
+		uid, _ := getUID(c)
 		if uid == core.InvalidUID {
 			core.WriteStatusAndDataJSON(c, constants.ErrPermission, nil)
 			return false
@@ -50,4 +60,51 @@ func LoginFilter(c *server.Context) bool {
 	}
 
 	return true
+}
+
+// getUID check whether the token is valid, it returns user identity if valid.
+func getUID(ctx *server.Context) (int32, error) {
+	claims, err := checkJWT(ctx)
+	if err != nil {
+		return core.InvalidUID, err
+	}
+
+	rawUID := claims[claimUID].(float64)
+	uid := int32(rawUID)
+
+	return uid, nil
+}
+
+// checkJWT check whether the token is valid, it returns claims if valid.
+func checkJWT(ctx *server.Context) (jwtgo.MapClaims, error) {
+	var (
+		err error
+	)
+
+	authString := ctx.Request().Header.Get("Authorization")
+	kv := strings.Split(authString, " ")
+
+	if len(kv) != 2 || kv[0] != "Bearer" {
+		err = errors.New("invalid token authorization string")
+		return nil, err
+	}
+
+	tokenString := kv[1]
+
+	token, _ := jwtgo.Parse(tokenString, func(token *jwtgo.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwtgo.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+
+		return []byte(core.TokenHMACKey), nil
+	})
+
+	claims, ok := token.Claims.(jwtgo.MapClaims)
+
+	if !ok || !token.Valid {
+		err = errors.New("invalid token")
+		return nil, err
+	}
+
+	return claims, nil
 }

@@ -35,11 +35,10 @@ import (
 
 // githubConfig represents the server config struct.
 type githubConfig struct {
-	Address   string
-	NatsURL   string
-	MongoURL  string
-	TokenKey  string
-	CorsHosts []string
+	Address  string
+	NatsURL  string
+	MongoURL string
+	TokenKey string
 }
 
 var (
@@ -60,10 +59,9 @@ func load() {
 	}
 
 	GithubConfig = &githubConfig{
-		Address:   viper.GetString("server.address"),
-		NatsURL:   viper.GetString("server.natsurl"),
-		MongoURL:  viper.GetString("mongo.url"),
-		TokenKey:  viper.GetString("jwt.tokenkey"),
-		CorsHosts: viper.GetStringSlice("middleware.cors.hosts"),
+		Address:  viper.GetString("server.address"),
+		NatsURL:  viper.GetString("server.natsurl"),
+		MongoURL: viper.GetString("mongo.url"),
+		TokenKey: viper.GetString("jwt.tokenkey"),
 	}
 }

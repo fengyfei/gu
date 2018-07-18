@@ -1,79 +1,60 @@
 /*
- * MIT License
- *
- * Copyright (c) 2017 SmartestEE Co., Ltd.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
-/*
  * Revision History:
- *     Initial: 2017/12/28        Jia Chenhui
+ *     Initial: 2018/06/29        Li Zebang
  */
 
 package repos
 
 import (
-	"io/ioutil"
-	"net/http"
+	"context"
+	"strings"
+	"sync"
 	"time"
 
+	"github.com/TechCatsLab/apix/http/server"
+	"github.com/TechCatsLab/firmness/github/base"
 	"gopkg.in/mgo.v2"
 
 	"github.com/fengyfei/gu/applications/core"
+	"github.com/fengyfei/gu/applications/github/pool"
 	"github.com/fengyfei/gu/libs/constants"
-	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
 	"github.com/fengyfei/gu/models/github/repos"
 )
 
+const (
+	githubURL = "https://github.com/"
+)
+
 type (
+	// infoRepos -
+	infoRepos struct {
+		Owner     *string          `json:"owner"`
+		Avatar    *string          `json:"avatar"`
+		Name      *string          `json:"name"`
+		Stars     *int             `json:"stars"`
+		Forks     *int             `json:"forks"`
+		Intro     *string          `json:"intro"`
+		Readme    *string          `json:"readme"`
+		Topics    []string         `json:"topics"`
+		Languages []repos.Language `json:"languages"`
+	}
+
 	// createReq - The request struct that create repos information.
 	createReq struct {
-		Avatar *string  `json:"avatar" validate:"required,url"`
-		Name   *string  `json:"name" validate:"required,printascii,excludesall=;0x2C"`
-		Image  *string  `json:"image"`
-		Intro  *string  `json:"intro"`
-		Lang   []string `json:"lang"`
+		URL   *string `json:"url" validate:"required,url"`
+		Image *string `json:"image"`
 	}
 
 	// activateReq - The request struct that modify repos status.
 	activateReq struct {
-		ID     string `json:"id" validate:"required,alphanum,len=24"`
-		Active bool   `json:"active"`
+		ID     *string `json:"id" validate:"required,alphanum,len=24"`
+		Active bool    `json:"active"`
 	}
 
 	// infoReq - The request struct that get a list of repos detail information.
 	infoReq struct {
 		ID string `json:"id"`
-	}
-
-	// infoResp - The more detail of repos.
-	infoResp struct {
-		ID      string    `json:"id"`
-		Avatar  string    `json:"avatar"`
-		Name    string    `json:"name"`
-		Image   string    `json:"image"`
-		Intro   string    `json:"intro"`
-		Lang    []string  `json:"lang"`
-		Created time.Time `json:"created"`
-		Active  bool      `json:"active"`
 	}
 
 	// readmeReq - The request struct that gets the content of the repository README.md file.
@@ -83,16 +64,100 @@ type (
 
 	// readmeResp - The response struct that gets the content of the repository README.md file.
 	readmeResp struct {
-		Content string `json:"content"`
+		Content *string `json:"content"`
+	}
+
+	// infoResp - The more detail of repos.
+	infoResp struct {
+		ID        string           `json:"id"`
+		Owner     *string          `json:"owner"`
+		Avatar    *string          `json:"avatar"`
+		Image     *string          `json:"image"`
+		Name      *string          `json:"name"`
+		Stars     *int             `json:"stars"`
+		Forks     *int             `json:"forks"`
+		Intro     *string          `json:"intro"`
+		Readme    *string          `json:"readme"`
+		Topics    []string         `json:"topics"`
+		Languages []repos.Language `json:"languages"`
+		Active    bool             `json:"active"`
+		Created   time.Time        `json:"created"`
 	}
 )
+
+func getRepositoryInformation(owner, repo, tag string) (*infoRepos, error) {
+	ctx := context.Background()
+	wg := &sync.WaitGroup{}
+	wg.Add(4)
+
+	var (
+		getReturn           = &base.RepositoriesGetReturn{}
+		getReadmeReturn     = &base.RepositoriesGetReadmeReturn{}
+		listAllTopicsReturn = &base.RepositoriesListAllTopicsReturn{}
+		listLanguagesReturn = &base.RepositoriesListLanguagesReturn{}
+	)
+	go base.RepositoriesGet(ctx, owner, repo, pool.Tag, pool.GithubPool, wg, getReturn)
+	go base.RepositoriesGetReadme(ctx, owner, repo, pool.Tag, nil, pool.GithubPool, wg, getReadmeReturn)
+	go base.RepositoriesListAllTopics(ctx, owner, repo, pool.Tag, pool.GithubPool, wg, listAllTopicsReturn)
+	go base.RepositoriesListLanguages(ctx, owner, repo, pool.Tag, pool.GithubPool, wg, listLanguagesReturn)
+
+	wg.Wait()
+
+	if getReturn.Err != nil {
+		return nil, getReturn.Err
+	}
+	if getReadmeReturn.Err != nil {
+		return nil, getReadmeReturn.Err
+	}
+	if listAllTopicsReturn.Err != nil {
+		return nil, listAllTopicsReturn.Err
+	}
+	if listLanguagesReturn.Err != nil {
+		return nil, listLanguagesReturn.Err
+	}
+
+	var (
+		ls    = make([]repos.Language, len(listLanguagesReturn.Languages))
+		sum   float32
+		index int
+	)
+	for key, val := range listLanguagesReturn.Languages {
+		ls[index] = repos.Language{
+			Language:   key,
+			Proportion: float32(val),
+		}
+		sum += ls[index].Proportion
+		index++
+	}
+	for index := range ls {
+		ls[index].Proportion /= sum
+	}
+	for out := 0; out < len(ls)-1; out++ {
+		for in := out + 1; in < len(ls); in++ {
+			if ls[out].Proportion < ls[in].Proportion {
+				ls[out], ls[in] = ls[in], ls[out]
+			}
+		}
+	}
+
+	return &infoRepos{
+		Owner:     &owner,
+		Avatar:    getReturn.Repository.Owner.AvatarURL,
+		Name:      &repo,
+		Stars:     getReturn.Repository.StargazersCount,
+		Forks:     getReturn.Repository.ForksCount,
+		Intro:     getReturn.Repository.Description,
+		Readme:    getReadmeReturn.RepositoryContent.DownloadURL,
+		Topics:    listAllTopicsReturn.Topics,
+		Languages: ls,
+	}, nil
+}
 
 // Create - Create repos information.
 func Create(c *server.Context) error {
 	var (
-		err      error
-		req      createReq
-		emptyStr = new(string)
+		err error
+		req createReq
 	)
 
 	if err = c.JSONBody(&req); err != nil {
@@ -105,16 +170,34 @@ func Create(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	switch {
-	case req.Image == nil:
-		req.Image = emptyStr
-	case req.Intro == nil:
-		req.Intro = emptyStr
-	case req.Lang == nil:
-		req.Lang = make([]string, 0)
+	if !strings.HasPrefix(*req.URL, githubURL) {
+		logger.Error(*req.URL, "is not on github")
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	id, err := repos.Service.Create(req.Avatar, req.Name, req.Image, req.Intro, req.Lang)
+	slice := strings.Split(strings.TrimPrefix(*req.URL, githubURL), "/")
+	if len(slice) < 2 || slice[0] == "" || slice[1] == "" {
+		logger.Error(*req.URL, "is invalid")
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	_, err = repos.Service.GetByName(&slice[1])
+	if err != mgo.ErrNotFound {
+		return core.WriteStatusAndDataJSON(c, constants.ErrNotFound, nil)
+	} else if err == nil {
+		return core.WriteStatusAndDataJSON(c, constants.ErrDuplicate, nil)
+	}
+
+	ri, err := getRepositoryInformation(slice[0], slice[1], pool.Tag)
+	if err != nil {
+		logger.Error("cann't get infomation from github", err)
+		if strings.Contains(err.Error(), "404 Not Found") {
+			return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+		}
+		return core.WriteStatusAndDataJSON(c, constants.ErrInternalServerError, nil)
+	}
+
+	id, err := repos.Service.Create(ri.Owner, ri.Avatar, ri.Name, req.Image, ri.Intro, ri.Readme, ri.Stars, ri.Forks, ri.Topics, ri.Languages)
 	if err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
@@ -140,7 +223,7 @@ func ModifyActive(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	if err = repos.Service.ModifyActive(&req.ID, req.Active); err != nil {
+	if err = repos.Service.ModifyActive(req.ID, req.Active); err != nil {
 		logger.Error(err)
 		return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
 	}
@@ -150,28 +233,32 @@ func ModifyActive(c *server.Context) error {
 
 // List - Get all the repos.
 func List(c *server.Context) error {
-	var resp = make([]infoResp, 0)
-
-	rlist, err := repos.Service.List()
+	list, err := repos.Service.List()
 	if err != nil {
 		logger.Error(err)
 		if err == mgo.ErrNotFound {
-			return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
+			return core.WriteStatusAndDataJSON(c, constants.ErrNotFound, nil)
 		}
 
 		return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
 	}
 
-	for _, r := range rlist {
+	resp := make([]infoResp, 0, len(list))
+	for _, r := range list {
 		info := infoResp{
-			ID:      r.ID.Hex(),
-			Avatar:  r.Avatar,
-			Name:    r.Name,
-			Image:   r.Image,
-			Intro:   r.Intro,
-			Lang:    r.Lang,
-			Created: r.Created,
-			Active:  r.Active,
+			ID:        r.ID.Hex(),
+			Owner:     r.Owner,
+			Avatar:    r.Avatar,
+			Image:     r.Image,
+			Name:      r.Name,
+			Stars:     r.Stars,
+			Forks:     r.Forks,
+			Intro:     r.Intro,
+			Readme:    r.Readme,
+			Topics:    r.Topics,
+			Languages: r.Languages,
+			Active:    r.Active,
+			Created:   r.Created,
 		}
 
 		resp = append(resp, info)
@@ -182,28 +269,32 @@ func List(c *server.Context) error {
 
 // ActiveList - Get all the active repos.
 func ActiveList(c *server.Context) error {
-	var resp = make([]infoResp, 0)
-
-	rlist, err := repos.Service.ActiveList()
+	list, err := repos.Service.ActiveList()
 	if err != nil {
 		logger.Error(err)
 		if err == mgo.ErrNotFound {
-			return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
+			return core.WriteStatusAndDataJSON(c, constants.ErrNotFound, nil)
 		}
 
 		return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
 	}
 
-	for _, r := range rlist {
+	resp := make([]infoResp, 0, len(list))
+	for _, r := range list {
 		info := infoResp{
-			ID:      r.ID.Hex(),
-			Avatar:  r.Avatar,
-			Name:    r.Name,
-			Image:   r.Image,
-			Intro:   r.Intro,
-			Lang:    r.Lang,
-			Created: r.Created,
-			Active:  r.Active,
+			ID:        r.ID.Hex(),
+			Owner:     r.Owner,
+			Avatar:    r.Avatar,
+			Image:     r.Image,
+			Name:      r.Name,
+			Stars:     r.Stars,
+			Forks:     r.Forks,
+			Intro:     r.Intro,
+			Readme:    r.Readme,
+			Topics:    r.Topics,
+			Languages: r.Languages,
+			Active:    r.Active,
+			Created:   r.Created,
 		}
 
 		resp = append(resp, info)
@@ -215,9 +306,8 @@ func ActiveList(c *server.Context) error {
 // Info - Get ten records that are greater than the specified ID.
 func Info(c *server.Context) error {
 	var (
-		err  error
-		req  infoReq
-		resp = make([]infoResp, 0)
+		err error
+		req infoReq
 	)
 
 	if err = c.JSONBody(&req); err != nil {
@@ -230,26 +320,32 @@ func Info(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	rlist, err := repos.Service.GetByID(req.ID)
+	list, err := repos.Service.GetByID(&req.ID)
 	if err != nil {
 		logger.Error(err)
 		if err == mgo.ErrNotFound {
-			return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
+			return core.WriteStatusAndDataJSON(c, constants.ErrNotFound, nil)
 		}
 
 		return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
 	}
 
-	for _, r := range rlist {
+	resp := make([]infoResp, 0, len(list))
+	for _, r := range list {
 		info := infoResp{
-			ID:      r.ID.Hex(),
-			Avatar:  r.Avatar,
-			Name:    r.Name,
-			Image:   r.Image,
-			Intro:   r.Intro,
-			Lang:    r.Lang,
-			Created: r.Created,
-			Active:  r.Active,
+			ID:        r.ID.Hex(),
+			Owner:     r.Owner,
+			Avatar:    r.Avatar,
+			Image:     r.Image,
+			Name:      r.Name,
+			Stars:     r.Stars,
+			Forks:     r.Forks,
+			Intro:     r.Intro,
+			Readme:    r.Readme,
+			Topics:    r.Topics,
+			Languages: r.Languages,
+			Active:    r.Active,
+			Created:   r.Created,
 		}
 
 		resp = append(resp, info)
@@ -264,6 +360,7 @@ func ReadmeURL(c *server.Context) error {
 		err  error
 		req  readmeReq
 		resp readmeResp
+		r    *repos.Repos
 	)
 
 	if err = c.JSONBody(&req); err != nil {
@@ -276,53 +373,16 @@ func ReadmeURL(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	resp = readmeResp{
-		Content: getReadme(req.RepoName),
+	r, err = repos.Service.GetByName(req.RepoName)
+	if err != nil {
+		logger.Error(err)
+		if err == mgo.ErrNotFound {
+			return core.WriteStatusAndDataJSON(c, constants.ErrNotFound, nil)
+		}
+
+		return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
 	}
 
+	resp.Content = r.Readme
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, resp)
-}
-
-func getReadme(reponame *string) string {
-	const (
-		head     = "https://raw.githubusercontent.com/"
-		emptyStr = ""
-	)
-
-	var (
-		suffix   = []string{"README.md", "Readme.md", "README"}
-		bodyByte []byte
-	)
-
-	if reponame == nil {
-		return emptyStr
-	}
-
-	for _, v := range suffix {
-		fullURL := head + *reponame + "/master/" + v
-
-		resp, err := http.Get(fullURL)
-		if err != nil {
-			logger.Error("[Github Readme] error ", fullURL, err)
-			goto finish
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			logger.Error("[Github Readme] invalid status: ", resp.StatusCode, " for ", fullURL)
-			goto finish
-		}
-
-		bodyByte, err = ioutil.ReadAll(resp.Body)
-		if err != nil {
-			logger.Error("[Github Readme] read content: ", err, " for ", fullURL)
-			goto finish
-		}
-
-		resp.Body.Close()
-		return string(bodyByte)
-
-	finish:
-		resp.Body.Close()
-	}
-	return emptyStr
 }

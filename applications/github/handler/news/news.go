@@ -32,9 +32,10 @@ package news
 import (
 	newsapi "github.com/kaelanb/newsapi-go"
 
+	"github.com/TechCatsLab/apix/http/server"
+
 	"github.com/fengyfei/gu/applications/core"
 	"github.com/fengyfei/gu/libs/constants"
-	"github.com/fengyfei/gu/libs/http/server"
 	"github.com/fengyfei/gu/libs/logger"
 )
 
@@ -49,9 +50,9 @@ var (
 
 func Everything(this *server.Context) error {
 	var (
-		query query
+		query        query
 		newsResponse *newsapi.NewsResponse
-		err error
+		err          error
 	)
 
 	if err := this.JSONBody(&query); err != nil {
