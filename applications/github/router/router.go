@@ -56,15 +56,13 @@ func register(r *server.Router) {
 	core.URLMap["/api/v1/techcats/article/list"] = struct{}{}
 	core.URLMap["/api/v1/techcats/article/activelist"] = struct{}{}
 	core.URLMap["/api/v1/techcats/article/info"] = struct{}{}
+	core.URLMap["/api/v1/techcats/repos/list"] = struct{}{}
 	core.URLMap["/api/v1/techcats/repos/activelist"] = struct{}{}
+	core.URLMap["/api/v1/techcats/repos/info"] = struct{}{}
+	core.URLMap["/api/v1/techcats/repos/readme"] = struct{}{}
 	core.URLMap["/api/v1/techcats/trending/lang"] = struct{}{}
 	core.URLMap["/api/v1/techcats/issues/list"] = struct{}{}
 	core.URLMap["/api/v1/techcats/issues/get"] = struct{}{}
-	// v2
-	core.URLMap["/api/v2/techcats/repos/list"] = struct{}{}
-	core.URLMap["/api/v2/techcats/repos/activelist"] = struct{}{}
-	core.URLMap["/api/v2/techcats/repos/info"] = struct{}{}
-	core.URLMap["/api/v2/techcats/repos/readme"] = struct{}{}
 
 	// Article
 	r.Post("/api/v1/techcats/article/create", article.Create, filter.LoginFilter)
@@ -76,15 +74,14 @@ func register(r *server.Router) {
 	// News
 	r.Post("/api/v1/techcats/news/info", news.Everything, filter.LoginFilter)
 
-	// ReposV1 - for Wechat Mini Programs
+	// just for Wechat Mini Programs
 	r.Get("/api/v1/techcats/repos/activelist", repos.ActiveListV1)
-	// ReposV2
-	r.Post("/api/v2/techcats/repos/create", repos.Create, filter.LoginFilter)
-	r.Post("/api/v2/techcats/repos/modify/active", repos.ModifyActive, filter.LoginFilter)
-	r.Get("/api/v2/techcats/repos/list", repos.List)
-	r.Get("/api/v2/techcats/repos/activelist", repos.ActiveList)
-	r.Post("/api/v2/techcats/repos/info", repos.Info)
-	r.Post("/api/v2/techcats/repos/readme", repos.ReadmeURL)
+	// Repos New
+	r.Post("/api/v1/techcats/repos/create", repos.Create, filter.LoginFilter)
+	r.Post("/api/v1/techcats/repos/modify/active", repos.ModifyActive, filter.LoginFilter)
+	r.Get("/api/v1/techcats/repos/list", repos.List)
+	r.Post("/api/v1/techcats/repos/info", repos.Info)
+	r.Post("/api/v1/techcats/repos/readme", repos.ReadmeURL)
 
 	// Issues
 	r.Post("/api/v1/techcats/issues/list", issues.List)

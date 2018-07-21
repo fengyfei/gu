@@ -8,6 +8,8 @@ package repos
 
 import (
 	"context"
+	"io/ioutil"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -41,6 +43,18 @@ type (
 		Languages []repos.Language `json:"languages"`
 	}
 
+	// infoRespV1 - for Wechat Mini Programs
+	infoRespV1 struct {
+		ID      string    `json:"id"`
+		Avatar  *string   `json:"avatar"`
+		Name    *string   `json:"name"`
+		Image   *string   `json:"image"`
+		Intro   *string   `json:"intro"`
+		Lang    []string  `json:"lang"`
+		Created time.Time `json:"created"`
+		Active  bool      `json:"active"`
+	}
+
 	// createReq - The request struct that create repos information.
 	createReq struct {
 		URL   *string `json:"url" validate:"required,url"`
@@ -60,8 +74,7 @@ type (
 
 	// readmeReq - The request struct that gets the content of the repository README.md file.
 	readmeReq struct {
-		RepoOwner *string `json:"repoowner" validate:"required"`
-		RepoName  *string `json:"reponame" validate:"required"`
+		RepoName *string `json:"reponame" validate:"required"`
 	}
 
 	// readmeResp - The response struct that gets the content of the repository README.md file.
@@ -269,34 +282,39 @@ func List(c *server.Context) error {
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, resp)
 }
 
-// ActiveList - Get all the active repos.
-func ActiveList(c *server.Context) error {
-	list, err := repos.Service.ActiveList()
+// ActiveListV1 - for Wechat Mini Programs
+// just for Wechat Mini Programs
+func ActiveListV1(c *server.Context) error {
+	var resp = make([]infoRespV1, 0)
+
+	rlist, err := repos.Service.ActiveList()
 	if err != nil {
 		logger.Error(err)
 		if err == mgo.ErrNotFound {
-			return core.WriteStatusAndDataJSON(c, constants.ErrNotFound, nil)
+			return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
 		}
 
 		return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
 	}
 
-	resp := make([]infoResp, 0, len(list))
-	for _, r := range list {
-		info := infoResp{
-			ID:        r.ID.Hex(),
-			Owner:     r.Owner,
-			Avatar:    r.Avatar,
-			Image:     r.Image,
-			Name:      r.Name,
-			Stars:     r.Stars,
-			Forks:     r.Forks,
-			Intro:     r.Intro,
-			Readme:    r.Readme,
-			Topics:    r.Topics,
-			Languages: r.Languages,
-			Active:    r.Active,
-			Created:   r.Created,
+	for _, r := range rlist {
+		lang := make([]string, 0)
+		for index := range r.Languages {
+			if r.Languages[index].Proportion < 0.3 {
+				break
+			}
+			lang = append(lang, r.Languages[index].Language)
+		}
+		repoName := *r.Owner + "/" + *r.Name
+		info := infoRespV1{
+			ID:      r.ID.Hex(),
+			Avatar:  r.Avatar,
+			Name:    &repoName,
+			Image:   r.Image,
+			Intro:   r.Intro,
+			Lang:    lang,
+			Created: r.Created,
+			Active:  r.Active,
 		}
 
 		resp = append(resp, info)
@@ -375,7 +393,13 @@ func ReadmeURL(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	r, err = repos.Service.GetByOwnerAndName(req.RepoOwner, req.RepoName)
+	slice := strings.Split(*req.RepoName, "/")
+	if len(slice) != 2 || slice[0] == "" || slice[1] == "" {
+		logger.Error(*req.RepoName, "is invalid")
+		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
+	}
+
+	r, err = repos.Service.GetByOwnerAndName(&slice[0], &slice[1])
 	if err != nil {
 		logger.Error(err)
 		if err == mgo.ErrNotFound {
@@ -385,6 +409,22 @@ func ReadmeURL(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
 	}
 
-	resp.Content = r.Readme
+	if r.Readme == nil || *r.Readme == "" {
+		resp.Content = r.Readme
+	} else {
+		r, err := http.Get(*r.Readme)
+		if err != nil {
+			logger.Error(err)
+			return core.WriteStatusAndDataJSON(c, constants.ErrInternalServerError, nil)
+		}
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			logger.Error(err)
+			return core.WriteStatusAndDataJSON(c, constants.ErrInternalServerError, nil)
+		}
+		b := string(body)
+		resp.Content = &b
+	}
+
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, resp)
 }
