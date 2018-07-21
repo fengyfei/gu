@@ -1,6 +1,7 @@
 /*
  * Revision History:
- *     Initial: 2018/06/29        Li Zebang
+ *     Initial: 2017/12/28        Jia Chenhui
+ *     Modify:  2018/06/29        Li Zebang
  */
 
 package repos
@@ -59,7 +60,8 @@ type (
 
 	// readmeReq - The request struct that gets the content of the repository README.md file.
 	readmeReq struct {
-		RepoName *string `json:"reponame" validate:"required"`
+		RepoOwner *string `json:"repoowner" validate:"required"`
+		RepoName  *string `json:"reponame" validate:"required"`
 	}
 
 	// readmeResp - The response struct that gets the content of the repository README.md file.
@@ -181,11 +183,11 @@ func Create(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	_, err = repos.Service.GetByName(&slice[1])
-	if err != mgo.ErrNotFound {
-		return core.WriteStatusAndDataJSON(c, constants.ErrNotFound, nil)
-	} else if err == nil {
+	_, err = repos.Service.GetByOwnerAndName(&slice[0], &slice[1])
+	if err == nil {
 		return core.WriteStatusAndDataJSON(c, constants.ErrDuplicate, nil)
+	} else if err != mgo.ErrNotFound {
+		return core.WriteStatusAndDataJSON(c, constants.ErrMongoDB, nil)
 	}
 
 	ri, err := getRepositoryInformation(slice[0], slice[1], pool.Tag)
@@ -373,7 +375,7 @@ func ReadmeURL(c *server.Context) error {
 		return core.WriteStatusAndDataJSON(c, constants.ErrInvalidParam, nil)
 	}
 
-	r, err = repos.Service.GetByName(req.RepoName)
+	r, err = repos.Service.GetByOwnerAndName(req.RepoOwner, req.RepoName)
 	if err != nil {
 		logger.Error(err)
 		if err == mgo.ErrNotFound {

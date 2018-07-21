@@ -77,7 +77,7 @@ func register(r *server.Router) {
 	r.Post("/api/v1/techcats/news/info", news.Everything, filter.LoginFilter)
 
 	// ReposV1 - for Wechat Mini Programs
-	r.Get("/api/v1/techcats/repos/activelist", repos.ActiveList)
+	r.Get("/api/v1/techcats/repos/activelist", repos.ActiveListV1)
 	// ReposV2
 	r.Post("/api/v2/techcats/repos/create", repos.Create, filter.LoginFilter)
 	r.Post("/api/v2/techcats/repos/modify/active", repos.ModifyActive, filter.LoginFilter)

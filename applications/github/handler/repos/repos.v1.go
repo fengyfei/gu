@@ -26,7 +26,7 @@ type (
 	}
 )
 
-// ActiveList - for Wechat Mini Programs
+// ActiveListV1 - for Wechat Mini Programs
 func ActiveListV1(c *server.Context) error {
 	var resp = make([]infoRespV1, 0)
 
@@ -41,9 +41,12 @@ func ActiveListV1(c *server.Context) error {
 	}
 
 	for _, r := range rlist {
-		lang := make([]string, len(r.Languages))
+		lang := make([]string, 0)
 		for index := range r.Languages {
-			lang[index] = r.Languages[index].Language
+			if r.Languages[index].Proportion < 0.3 {
+				break
+			}
+			lang = append(lang, r.Languages[index].Language)
 		}
 		info := infoRespV1{
 			ID:      r.ID.Hex(),

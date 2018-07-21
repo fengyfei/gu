@@ -62,8 +62,8 @@ func init() {
 
 	s.SetMode(mgo.Monotonic, true)
 	s.DB(github.Database).C(cname).EnsureIndex(mgo.Index{
-		Key:        []string{"Name"},
-		Unique:     true,
+		Key:        []string{"Owner", "Name"},
+		Unique:     false,
 		Background: true,
 		Sparse:     true,
 	})
@@ -186,7 +186,7 @@ func (sp *serviceProvider) GetByID(id *string) ([]Repos, error) {
 }
 
 // GetByName get a record by name.
-func (sp *serviceProvider) GetByName(name *string) (*Repos, error) {
+func (sp *serviceProvider) GetByOwnerAndName(owner, name *string) (*Repos, error) {
 	var (
 		err error
 		doc Repos
@@ -199,7 +199,7 @@ func (sp *serviceProvider) GetByName(name *string) (*Repos, error) {
 		return nil, errors.New("name cann't be empty")
 	}
 
-	err = conn.GetUniqueOne(bson.M{"Name": *name}, &doc)
+	err = conn.GetUniqueOne(bson.M{"Owner": *owner, "Name": *name}, &doc)
 
 	return &doc, err
 }
