@@ -51,8 +51,8 @@ import (
 const (
 	WechatURL   = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=%s&secret=%s&code=%s&grant_type=authorization_code"
 	UserInfoURL = "https://api.weixin.qq.com/sns/userinfo?access_token=%s&openid=%s&lang=zh_CN"
-	APPID       = ""
-	SECRET      = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+	APPID       = " "
+	SECRET      = " "
 )
 
 type (
@@ -64,6 +64,7 @@ type (
 		Sex        uint8
 		ArticleNum int
 		CommentNum int
+		Created    time.Time
 		LastLogin  time.Time
 	}
 
@@ -72,8 +73,8 @@ type (
 	}
 
 	wechatData struct {
-		AccessToken string
-		OpenID      string
+		AccessToken string `json:"access_token"`
+		OpenID      string `json:"openid"`
 	}
 
 	userData struct {
@@ -81,6 +82,8 @@ type (
 		UserName string `json:"nickname"`
 		Avatar   string `json:"headimgurl"`
 		Sex      uint8  `json:"sex"`
+		Uid      uint32 `json:"uid"`
+		Token    string `json:"token"`
 	}
 
 	wechatPhone struct {
@@ -169,7 +172,6 @@ func WechatLogin(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrMysql, nil)
 	}
 
-	userData.OpenID = wechatData.OpenID
 	u, err := user.UserService.WeChatLogin(conn, userData.OpenID, userData.UserName, userData.Avatar)
 	if err != nil {
 		logger.Error("Wechat login failed.")
@@ -182,7 +184,9 @@ func WechatLogin(this *server.Context) error {
 		return core.WriteStatusAndDataJSON(this, constants.ErrInvalidParam, nil)
 	}
 
-	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, token)
+	userData.Token = token
+	userData.Uid = u.UserID
+	return core.WriteStatusAndDataJSON(this, constants.ErrSucceed, userData)
 }
 
 // AddPhone add phone.
@@ -365,6 +369,7 @@ func BbsUserInfo(c *server.Context) error {
 		Sex:        u.Sex,
 		ArticleNum: artNum,
 		CommentNum: comNum,
+		Created:    u.Created,
 		LastLogin:  u.LastLogin,
 	}
 	return core.WriteStatusAndDataJSON(c, constants.ErrSucceed, bbsUserInfo)
