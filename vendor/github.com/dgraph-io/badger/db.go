@@ -100,7 +100,7 @@ func replayFunction(out *DB) func(Entry, valuePointer) error {
 	first := true
 	return func(e Entry, vp valuePointer) error { // Function for replaying.
 		if first {
-			out.elog.Printf("First key=%s\n", e.Key)
+			out.elog.Printf("First key=%q\n", e.Key)
 		}
 		first = false
 
@@ -596,7 +596,7 @@ func (db *DB) writeRequests(reqs []*request) error {
 		}
 		count += len(b.Entries)
 		var i uint64
-		for err := db.ensureRoomForWrite(); err != nil; err = db.ensureRoomForWrite() {
+		for err := db.ensureRoomForWrite(); err == errNoRoom; err = db.ensureRoomForWrite() {
 			i++
 			if i%100 == 0 {
 				db.elog.Printf("Making room for writes")
@@ -772,7 +772,7 @@ func arenaSize(opt Options) int64 {
 	return opt.MaxTableSize + opt.maxBatchSize + opt.maxBatchCount*int64(skl.MaxNodeSize)
 }
 
-// WriteLevel0Table flushes memtable. It drops deleteValues.
+// WriteLevel0Table flushes memtable.
 func writeLevel0Table(s *skl.Skiplist, f *os.File) error {
 	iter := s.NewIterator()
 	defer iter.Close()
@@ -927,12 +927,11 @@ func (db *DB) updateSize(lc *y.Closer) {
 // RunValueLogGC triggers a value log garbage collection.
 //
 // It picks value log files to perform GC based on statistics that are collected
-// duing the session, when DB.PurgeOlderVersions() and DB.PurgeVersions() is
-// called. If no such statistics are available, then log files are picked in
-// random order. The process stops as soon as the first log file is encountered
-// which does not result in garbage collection.
+// duing compactions.  If no such statistics are available, then log files are
+// picked in random order. The process stops as soon as the first log file is
+// encountered which does not result in garbage collection.
 //
-// When a log file is picked, it is first sampled If the sample shows that we
+// When a log file is picked, it is first sampled. If the sample shows that we
 // can discard at least discardRatio space of that file, it would be rewritten.
 //
 // If a call to RunValueLogGC results in no rewrites, then an ErrNoRewrite is
@@ -1122,6 +1121,8 @@ func (op *MergeOperator) iterateAndMerge(txn *Txn) (val []byte, err error) {
 	opt := DefaultIteratorOptions
 	opt.AllVersions = true
 	it := txn.NewIterator(opt)
+	defer it.Close()
+
 	var numVersions int
 	for it.Rewind(); it.ValidForPrefix(op.key); it.Next() {
 		item := it.Item()

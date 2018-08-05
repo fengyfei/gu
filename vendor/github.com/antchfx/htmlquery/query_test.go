@@ -37,7 +37,7 @@ const htmlSample = `<!DOCTYPE html><html lang="en-US">
 </html>
 `
 
-var doc = loadHTML(htmlSample)
+var testDoc = loadHTML(htmlSample)
 
 func TestHttpLoad(t *testing.T) {
 	doc, err := LoadURL("http://www.bing.com")
@@ -50,7 +50,7 @@ func TestHttpLoad(t *testing.T) {
 }
 
 func TestNavigator(t *testing.T) {
-	top := FindOne(doc, "//html")
+	top := FindOne(testDoc, "//html")
 	nav := &NodeNavigator{curr: top, root: top, attr: -1}
 	nav.MoveToChild() // HEAD
 	nav.MoveToNext()
@@ -58,7 +58,7 @@ func TestNavigator(t *testing.T) {
 		t.Fatalf("expectd node type is TextNode,but got %s", nav.NodeType())
 	}
 	nav.MoveToNext() // <BODY>
-	if nav.Value() != InnerText(FindOne(doc, "//body")) {
+	if nav.Value() != InnerText(FindOne(testDoc, "//body")) {
 		t.Fatal("body not equal")
 	}
 	nav.MoveToPrevious() //
@@ -79,19 +79,19 @@ func TestNavigator(t *testing.T) {
 }
 
 func TestXPath(t *testing.T) {
-	node := FindOne(doc, "//html")
+	node := FindOne(testDoc, "//html")
 	if SelectAttr(node, "lang") != "en-US" {
 		t.Fatal("//html[@lang] != en-Us")
 	}
 
 	var c int
-	FindEach(doc, "//li", func(i int, node *html.Node) {
+	FindEach(testDoc, "//li", func(i int, node *html.Node) {
 		c++
 	})
-	if c != len(Find(doc, "//li")) {
+	if c != len(Find(testDoc, "//li")) {
 		t.Fatal("li node count != 3")
 	}
-	node = FindOne(doc, "//header")
+	node = FindOne(testDoc, "//header")
 	if strings.Index(InnerText(node), "Logo") > 0 {
 		t.Fatal("InnerText() have comment node text")
 	}

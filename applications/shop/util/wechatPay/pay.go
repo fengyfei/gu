@@ -30,16 +30,16 @@
 package wechatPay
 
 import (
-	"time"
-	"math/rand"
 	"bytes"
 	"crypto/md5"
-	"io"
 	"fmt"
+	"io"
+	"math/rand"
 	"strconv"
+	"time"
 
-	"github.com/chanxuehong/wechat.v2/mch/core"
-	"github.com/chanxuehong/wechat.v2/mch/pay"
+	"gopkg.in/chanxuehong/wechat.v2/mch/core"
+	"gopkg.in/chanxuehong/wechat.v2/mch/pay"
 )
 
 var (
@@ -113,7 +113,7 @@ func RandomString(randLength int) (result string) {
 	return
 }
 
-func GenerateBillID() string{
+func GenerateBillID() string {
 	str := "shop"
 	now := strconv.Itoa(time.Now().Nanosecond())
 	str += now

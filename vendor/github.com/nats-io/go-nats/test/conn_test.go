@@ -437,7 +437,7 @@ func TestMoreErrOnConnect(t *testing.T) {
 				// Stick around a bit
 				<-case1
 			case 2:
-				info := fmt.Sprintf("INFO {\"server_id\":\"foobar\",\"version\":\"0.7.3\",\"go\":\"go1.5.1\",\"host\":\"%s\",\"port\":%d,\"auth_required\":false,\"ssl_required\":false,\"max_payload\":1048576}\r\n", addr.IP, addr.Port)
+				info := fmt.Sprintf("INFO {\"server_id\":\"foobar\",\"host\":\"%s\",\"port\":%d,\"auth_required\":false,\"tls_required\":false,\"max_payload\":1048576}\r\n", addr.IP, addr.Port)
 				// Send complete INFO
 				conn.Write([]byte(info))
 				// Read connect and ping commands sent from the client
@@ -453,7 +453,7 @@ func TestMoreErrOnConnect(t *testing.T) {
 				// Stick around a bit
 				<-case2
 			case 3:
-				info := fmt.Sprintf("INFO {\"server_id\":\"foobar\",\"version\":\"0.7.3\",\"go\":\"go1.5.1\",\"host\":\"%s\",\"port\":%d,\"auth_required\":false,\"ssl_required\":false,\"max_payload\":1048576}\r\n", addr.IP, addr.Port)
+				info := fmt.Sprintf("INFO {\"server_id\":\"foobar\",\"host\":\"%s\",\"port\":%d,\"auth_required\":false,\"tls_required\":false,\"max_payload\":1048576}\r\n", addr.IP, addr.Port)
 				// Send complete INFO
 				conn.Write([]byte(info))
 				// Read connect and ping commands sent from the client
@@ -532,7 +532,7 @@ func TestMoreErrOnConnect(t *testing.T) {
 
 func TestErrOnMaxPayloadLimit(t *testing.T) {
 	expectedMaxPayload := int64(10)
-	serverInfo := "INFO {\"server_id\":\"foobar\",\"version\":\"0.6.6\",\"go\":\"go1.5.1\",\"host\":\"%s\",\"port\":%d,\"auth_required\":false,\"ssl_required\":false,\"max_payload\":%d}\r\n"
+	serverInfo := "INFO {\"server_id\":\"foobar\",\"host\":\"%s\",\"port\":%d,\"auth_required\":false,\"tls_required\":false,\"max_payload\":%d}\r\n"
 
 	l, e := net.Listen("tcp", "127.0.0.1:0")
 	if e != nil {
@@ -607,28 +607,35 @@ func TestConnectVerbose(t *testing.T) {
 	nc.Close()
 }
 
-func isRunningInAsyncCBDispatcher() error {
-	var stacks []byte
-
-	stacksSize := 10000
-
+func getStacks(all bool) string {
+	var (
+		stacks     []byte
+		stacksSize = 10000
+		n          int
+	)
 	for {
 		stacks = make([]byte, stacksSize)
-		n := runtime.Stack(stacks, false)
+		n = runtime.Stack(stacks, all)
 		if n == stacksSize {
-			stacksSize *= stacksSize
+			stacksSize *= 2
 			continue
 		}
 		break
 	}
+	return string(stacks[:n])
+}
 
-	strStacks := string(stacks)
-
-	if strings.Contains(strStacks, "asyncDispatch") {
+func isRunningInAsyncCBDispatcher() error {
+	strStacks := getStacks(false)
+	if strings.Contains(strStacks, "asyncCBDispatcher") {
 		return nil
 	}
-
 	return fmt.Errorf("callback not executed from dispatcher:\n %s", strStacks)
+}
+
+func isAsyncDispatcherRunning() bool {
+	strStacks := getStacks(true)
+	return strings.Contains(strStacks, "asyncCBDispatcher")
 }
 
 func TestCallbacksOrder(t *testing.T) {
@@ -817,10 +824,25 @@ func TestCallbacksOrder(t *testing.T) {
 	if rtime.Before(dtime1) || dtime2.Before(rtime) || atime2.Before(atime1) || ctime.Before(atime2) {
 		t.Fatalf("Wrong callback order:\n%v\n%v\n%v\n%v\n%v\n%v", dtime1, rtime, atime1, atime2, dtime2, ctime)
 	}
+
+	// Close the other connection
+	ncp.Close()
+
+	// Check that the go routine is gone. Allow plenty of time
+	// to avoid flappers.
+	timeout := time.Now().Add(5 * time.Second)
+	for time.Now().Before(timeout) {
+		if !isAsyncDispatcherRunning() {
+			// Good, we are done!
+			return
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	t.Fatalf("The async callback dispatcher(s) should have stopped")
 }
 
 func TestFlushReleaseOnClose(t *testing.T) {
-	serverInfo := "INFO {\"server_id\":\"foobar\",\"version\":\"0.7.3\",\"go\":\"go1.5.1\",\"host\":\"%s\",\"port\":%d,\"auth_required\":false,\"ssl_required\":false,\"max_payload\":1048576}\r\n"
+	serverInfo := "INFO {\"server_id\":\"foobar\",\"host\":\"%s\",\"port\":%d,\"auth_required\":false,\"tls_required\":false,\"max_payload\":1048576}\r\n"
 
 	l, e := net.Listen("tcp", "127.0.0.1:0")
 	if e != nil {
@@ -886,7 +908,7 @@ func TestFlushReleaseOnClose(t *testing.T) {
 }
 
 func TestMaxPendingOut(t *testing.T) {
-	serverInfo := "INFO {\"server_id\":\"foobar\",\"version\":\"0.7.3\",\"go\":\"go1.5.1\",\"host\":\"%s\",\"port\":%d,\"auth_required\":false,\"ssl_required\":false,\"max_payload\":1048576}\r\n"
+	serverInfo := "INFO {\"server_id\":\"foobar\",\"host\":\"%s\",\"port\":%d,\"auth_required\":false,\"tls_required\":false,\"max_payload\":1048576}\r\n"
 
 	l, e := net.Listen("tcp", "127.0.0.1:0")
 	if e != nil {
@@ -952,7 +974,7 @@ func TestMaxPendingOut(t *testing.T) {
 }
 
 func TestErrInReadLoop(t *testing.T) {
-	serverInfo := "INFO {\"server_id\":\"foobar\",\"version\":\"0.7.3\",\"go\":\"go1.5.1\",\"host\":\"%s\",\"port\":%d,\"auth_required\":false,\"ssl_required\":false,\"max_payload\":1048576}\r\n"
+	serverInfo := "INFO {\"server_id\":\"foobar\",\"host\":\"%s\",\"port\":%d,\"auth_required\":false,\"tls_required\":false,\"max_payload\":1048576}\r\n"
 
 	l, e := net.Listen("tcp", "127.0.0.1:0")
 	if e != nil {
@@ -1029,7 +1051,7 @@ func TestErrInReadLoop(t *testing.T) {
 }
 
 func TestErrStaleConnection(t *testing.T) {
-	serverInfo := "INFO {\"server_id\":\"foobar\",\"version\":\"0.7.3\",\"go\":\"go1.5.1\",\"host\":\"%s\",\"port\":%d,\"auth_required\":false,\"ssl_required\":false,\"max_payload\":1048576}\r\n"
+	serverInfo := "INFO {\"server_id\":\"foobar\",\"host\":\"%s\",\"port\":%d,\"auth_required\":false,\"tls_required\":false,\"max_payload\":1048576}\r\n"
 
 	l, e := net.Listen("tcp", "127.0.0.1:0")
 	if e != nil {
@@ -1133,7 +1155,7 @@ func TestErrStaleConnection(t *testing.T) {
 }
 
 func TestServerErrorClosesConnection(t *testing.T) {
-	serverInfo := "INFO {\"server_id\":\"foobar\",\"version\":\"0.7.3\",\"go\":\"go1.5.1\",\"host\":\"%s\",\"port\":%d,\"auth_required\":false,\"ssl_required\":false,\"max_payload\":1048576}\r\n"
+	serverInfo := "INFO {\"server_id\":\"foobar\",\"host\":\"%s\",\"port\":%d,\"auth_required\":false,\"tls_required\":false,\"max_payload\":1048576}\r\n"
 
 	l, e := net.Listen("tcp", "127.0.0.1:0")
 	if e != nil {
@@ -1342,8 +1364,8 @@ func TestUseCustomDialer(t *testing.T) {
 	// should take precedence. That means that the connection
 	// should fail for these two set of options.
 	options := []*nats.Options{
-		&nats.Options{Dialer: dialer, CustomDialer: cdialer},
-		&nats.Options{CustomDialer: cdialer},
+		{Dialer: dialer, CustomDialer: cdialer},
+		{CustomDialer: cdialer},
 	}
 	for _, o := range options {
 		o.Servers = []string{nats.DefaultURL}
@@ -1364,8 +1386,8 @@ func TestUseCustomDialer(t *testing.T) {
 	}
 	// Same with variadic
 	foptions := [][]nats.Option{
-		[]nats.Option{nats.Dialer(dialer), nats.SetCustomDialer(cdialer)},
-		[]nats.Option{nats.SetCustomDialer(cdialer)},
+		{nats.Dialer(dialer), nats.SetCustomDialer(cdialer)},
+		{nats.SetCustomDialer(cdialer)},
 	}
 	for _, fos := range foptions {
 		nc, err := nats.Connect(nats.DefaultURL, fos...)

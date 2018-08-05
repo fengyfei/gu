@@ -1,0 +1,9 @@
+package: github.com/TechCatsLab/firmness
+import:
+- package: github.com/nlopes/slack
+  version: ~0.2.0
+- package: github.com/google/go-github
+  version: ^15.0.0
+- package: golang.org/x/net
+  subpackages:
+  - context

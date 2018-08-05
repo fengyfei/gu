@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -4446,6 +4447,39 @@ func TestBase64URLValidation(t *testing.T) {
 	}
 }
 
+func TestFileValidation(t *testing.T) {
+	validate := New()
+
+	tests := []struct {
+		title    string
+		param    string
+		expected bool
+	}{
+		{"empty path", "", false},
+		{"regular file", filepath.Join("testdata", "a.go"), true},
+		{"missing file", filepath.Join("testdata", "no.go"), false},
+		{"directory, not a file", "testdata", false},
+	}
+
+	for _, test := range tests {
+		errs := validate.Var(test.param, "file")
+
+		if test.expected {
+			if !IsEqual(errs, nil) {
+				t.Fatalf("Test: '%s' failed Error: %s", test.title, errs)
+			}
+		} else {
+			if IsEqual(errs, nil) {
+				t.Fatalf("Test: '%s' failed Error: %s", test.title, errs)
+			}
+		}
+	}
+
+	PanicMatches(t, func() {
+		validate.Var(6, "file")
+	}, "Bad field type int")
+}
+
 func TestEthereumAddressValidation(t *testing.T) {
 
 	validate := New()
@@ -7756,6 +7790,129 @@ func TestUniqueValidation(t *testing.T) {
 		}
 	}
 	PanicMatches(t, func() { validate.Var(1.0, "unique") }, "Bad field type float64")
+}
+
+func TestHTMLValidation(t *testing.T) {
+	tests := []struct {
+		param    string
+		expected bool
+	}{
+		{"<html>", true},
+		{"<script>", true},
+		{"<stillworks>", true},
+		{"</html", false},
+		{"</script>", true},
+		{"<//script>", false},
+		{"<123nonsense>", false},
+		{"test", false},
+		{"&example", false},
+	}
+
+	validate := New()
+
+	for i, test := range tests {
+
+		errs := validate.Var(test.param, "html")
+
+		if test.expected {
+			if !IsEqual(errs, nil) {
+				t.Fatalf("Index: %d html failed Error: %v", i, errs)
+			}
+		} else {
+			if IsEqual(errs, nil) {
+				t.Fatalf("Index: %d html failed Error: %v", i, errs)
+			} else {
+				val := getError(errs, "", "")
+				if val.Tag() != "html" {
+					t.Fatalf("Index: %d html failed Error: %v", i, errs)
+				}
+			}
+		}
+	}
+}
+
+func TestHTMLEncodedValidation(t *testing.T) {
+	tests := []struct {
+		param    string
+		expected bool
+	}{
+		{"&#x3c;", true},
+		{"&#xaf;", true},
+		{"&#x00;", true},
+		{"&#xf0;", true},
+		{"&#x3c", true},
+		{"&#xaf", true},
+		{"&#x00", true},
+		{"&#xf0", true},
+		{"&#ab", true},
+		{"&lt;", true},
+		{"&gt;", true},
+		{"&quot;", true},
+		{"&amp;", true},
+		{"#x0a", false},
+		{"&x00", false},
+		{"&#x1z", false},
+	}
+
+	validate := New()
+
+	for i, test := range tests {
+
+		errs := validate.Var(test.param, "html_encoded")
+
+		if test.expected {
+			if !IsEqual(errs, nil) {
+				t.Fatalf("Index: %d html_encoded failed Error: %v", i, errs)
+			}
+		} else {
+			if IsEqual(errs, nil) {
+				t.Fatalf("Index: %d html_enocded failed Error: %v", i, errs)
+			} else {
+				val := getError(errs, "", "")
+				if val.Tag() != "html_encoded" {
+					t.Fatalf("Index: %d html_encoded failed Error: %v", i, errs)
+				}
+			}
+		}
+	}
+}
+
+func TestURLEncodedValidation(t *testing.T) {
+	tests := []struct {
+		param    string
+		expected bool
+	}{
+		{"%20", true},
+		{"%af", true},
+		{"%ff", true},
+		{"<%az", false},
+		{"%test%", false},
+		{"a%b", false},
+		{"1%2", false},
+		{"%%a%%", false},
+	}
+
+	validate := New()
+
+	for i, test := range tests {
+
+		errs := validate.Var(test.param, "url_encoded")
+
+		if test.expected {
+			if !IsEqual(errs, nil) {
+				t.Fatalf("Index: %d url_encoded failed Error: %v", i, errs)
+			}
+		} else {
+			if IsEqual(errs, nil) {
+				t.Fatalf("Index: %d url_enocded failed Error: %v", i, errs)
+			} else {
+				val := getError(errs, "", "")
+				if val.Tag() != "url_encoded" {
+					t.Fatalf("Index: %d url_encoded failed Error: %v", i, errs)
+				}
+			}
+		}
+	}
 }
 
 func TestKeys(t *testing.T) {

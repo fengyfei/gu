@@ -1,5 +1,5 @@
-hash: 50eca34bb030c36aebf4eda9f0a05f6f0101f56841aceb22ac451c893b030916
-updated: 2018-05-14T11:34:10.110375957+08:00
+hash: 496d75a7ae155a5d7bfc08c0dd61e173d94004154d559af88d62a695f849656d
+updated: 2018-08-05T20:33:52.776051+08:00
 imports:
 - name: github.com/allegro/bigcache
   version: f31987a23e44c5121ef8c8b2f2ea2e8ffa37b068
@@ -10,13 +10,13 @@ imports:
 - name: github.com/andybalholm/cascadia
   version: 901648c87902174f774fac311d7f176f8647bdaa
 - name: github.com/antchfx/htmlquery
-  version: 9f7717ac9bac5f660391c57e3d496b3c7cf9741f
+  version: 496ad84c8a0c36a9570ffc6e05b3b974891d39ff
 - name: github.com/antchfx/xmlquery
-  version: 3b6128f0092aaf2a8f4b72654cc00bc1cc9f5cbd
+  version: 2805f22c26c4982685be4ae0f80bf3a5b34791e5
 - name: github.com/antchfx/xpath
-  version: 7148e5d6bb845772731e3979df279a1b0e8e90ac
+  version: 077bca4d2caaf391ee780136adae00f59153dcd2
 - name: github.com/asciimoo/colly
-  version: 679bc05d92965819d44bfd01f62be325959776e1
+  version: 0f78ed3f6bbc7fe874ed7f237eef07a08ad83467
 - name: github.com/asdine/storm
   version: 68fc73b635f890fe7ba2f3b15ce80c85b28a744f
 - name: github.com/astaxie/beego
@@ -31,6 +31,8 @@ imports:
   - session
   - toolbox
   - utils
+- name: github.com/auth0/go-jwt-middleware
+  version: 5493cabe49f7bfa6e2ec444a09d334d90cd4e2bd
 - name: github.com/boltdb/bolt
   version: fd01fc79c553a8e99d512a07e8e0c63d4a3ccfc5
 - name: github.com/cespare/xxhash
@@ -41,14 +43,6 @@ imports:
   version: 3283ef9c9f257d87e79ade33fc113ec8a22c3b00
   subpackages:
   - security
-- name: github.com/chanxuehong/wechat.v2
-  version: c000758dbfd1894160907ffa320d01a10925dbdf
-  subpackages:
-  - internal/debug/mch/api
-  - internal/debug/mch/callback
-  - mch/core
-  - mch/pay
-  - util
 - name: github.com/coreos/bbolt
   version: 48ea1b39c25fc1bab3506fbc712ecbaa842c4d2d
 - name: github.com/davecgh/go-spew
@@ -56,7 +50,7 @@ imports:
   subpackages:
   - spew
 - name: github.com/dgraph-io/badger
-  version: 3ff1bfbb11c02c78c11269096669396c2d2cbbd3
+  version: 391b6d3b93e6014fe8c2971fcc0c1266e47dbbd9
   subpackages:
   - options
   - protos
@@ -64,13 +58,13 @@ imports:
   - table
   - "y"
 - name: github.com/dgrijalva/jwt-go
-  version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
+  version: 0b96aaa707760d6ab28d9b9d1913ff5993328bae
 - name: github.com/dgryski/go-farm
   version: 2de33835d10275975374b37b2dcfd22c9020a1f5
 - name: github.com/fsnotify/fsnotify
   version: c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9
 - name: github.com/go-ini/ini
-  version: 6529cf7c58879c08d927016dde4477f18a0634cb
+  version: 358ee7663966325963d4e8b2e1fbd570c5195153
 - name: github.com/go-playground/locales
   version: f63010822830b6fe52288ee52d5a1151088ce039
   subpackages:
@@ -78,7 +72,7 @@ imports:
 - name: github.com/go-playground/universal-translator
   version: b32fa301c9fe55953584134cb6853a13c87ec0a1
 - name: github.com/go-sql-driver/mysql
-  version: a0583e0143b1624142adab07e0e97fe106d99561
+  version: d523deb1b23d913de5bdada721a6071e71283618
 - name: github.com/go-stack/stack
   version: 259ab82a6cad3992b4e21ff5cac294ccb06474bc
 - name: github.com/gobwas/glob
@@ -92,26 +86,26 @@ imports:
   - util/runes
   - util/strings
 - name: github.com/gocolly/colly
-  version: 488e630e04cad96fb3b64bf6cdb0ee6aec19a5a5
+  version: 6a6c7848ba3d0690ed9b77a68626f3e0e45493f3
   subpackages:
   - debug
   - storage
 - name: github.com/godbus/dbus
   version: a389bdde4dd695d414e47b755e95e72b7826432c
 - name: github.com/gogo/protobuf
-  version: c0656edd0d9eab7c66d1eb0c568f9039345796f7
+  version: baf2ea5cdb7ce2d399176f925052690c3dad1f56
   subpackages:
   - gogoproto
   - proto
   - protoc-gen-gogo/descriptor
 - name: github.com/golang/glog
-  version: 44145f04b68cf362d9c4df2182967c2275eaefed
+  version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
 - name: github.com/golang/groupcache
-  version: 66deaeb636dff1ac7d938ce666d090556056a4b0
+  version: 24b0969c4cb722950103eed87108c8d291a8df00
   subpackages:
   - lru
 - name: github.com/golang/protobuf
-  version: 1643683e1b54a9e88ad26d98f81400c8c9d9f4f9
+  version: 89a0c16f4dc2a70c0ed864d8ef64878f24fdaa51
   subpackages:
   - proto
   - protoc-gen-go/descriptor
@@ -120,7 +114,7 @@ imports:
   - ptypes/duration
   - ptypes/timestamp
 - name: github.com/golang/snappy
-  version: 553a641470496b2327abcac10b36396bd98e45c9
+  version: 2e65f85255dbc3072edf28d6b5b8efc472979f5a
 - name: github.com/google/go-github
   version: e48060a28fac52d0f1cb758bc8b87c07bac4a87d
   subpackages:
@@ -140,9 +134,9 @@ imports:
 - name: github.com/gorilla/mux
   version: 7f08801859139f86dfafd1c296e2cba9a80d292e
 - name: github.com/gorilla/websocket
-  version: ea4d1f681babbce9545c9c5f3d5194a789c89f5b
+  version: 5ed622c449da6d44c3c8329331ff47a9e5844f71
 - name: github.com/grpc-ecosystem/go-grpc-middleware
-  version: bc372cc64f55abd91995ba3f219b380ffbc59e9d
+  version: e9c5d9645c437ab1b204cff969a2c0fb16cd4276
   subpackages:
   - recovery
 - name: github.com/hashicorp/golang-lru
@@ -154,6 +148,7 @@ imports:
   subpackages:
   - hcl/ast
   - hcl/parser
+  - hcl/printer
   - hcl/scanner
   - hcl/strconv
   - hcl/token
@@ -163,7 +158,7 @@ imports:
 - name: github.com/jinzhu/gorm
   version: 5174cc5c242a728b435ea2be8a2f7f998e15429b
 - name: github.com/jinzhu/inflection
-  version: 1c35d901db3da928c72a72d8458480cc9ade058f
+  version: 04140366298a54a039076d798123ffa108fff46c
 - name: github.com/json-iterator/go
   version: 6240e1e7983a85228f7fd9c3e1b6932d46ec58e2
 - name: github.com/kaelanb/newsapi-go
@@ -177,7 +172,7 @@ imports:
   subpackages:
   - '...'
 - name: github.com/magiconair/properties
-  version: 2c9e9502788518c97fe44e8955cd069417ee89df
+  version: c2353362d570a7bfa228149c62842019201cfb71
 - name: github.com/minio/minio-go
   version: 06dcf064d9e3b1dfd21b9a01a822da7665a9c971
   subpackages:
@@ -188,11 +183,15 @@ imports:
   - pkg/s3utils
   - pkg/set
 - name: github.com/mitchellh/go-homedir
-  version: b8bc1bf767474819792c23f32d8286a45736f1c6
+  version: 58046073cbffe2f25d425fe1331102f55cf719de
 - name: github.com/mitchellh/mapstructure
-  version: bb74f1db0675b241733089d5a1faa5dd8b0ef57b
+  version: f15292f7a699fcc1a38a80977f80a046874ba8ac
+- name: github.com/modern-go/concurrent
+  version: bacd9c7ef1dd9b15be4a9909b8ac7a4e313eec94
+- name: github.com/modern-go/reflect2
+  version: 94122c33edd36123c84d5368cfb2b69df93a0ec8
 - name: github.com/nats-io/go-nats
-  version: 997d01c243192e6c27011e674fd5992072f6f8d7
+  version: ff578ff05d4180a259da6d729af7b55285d24b78
   subpackages:
   - encoders/builtin
   - util
@@ -201,27 +200,29 @@ imports:
   subpackages:
   - pb
 - name: github.com/nats-io/nuid
-  version: 3e58d42c9cfe5cd9429f1a21ad8f35cd859ba829
+  version: 3024a71c3cbe30667286099921591e6fcc328230
 - name: github.com/nlopes/slack
-  version: 8ab4d0b364ef1e9af5d102531da20d5ec902b6c4
+  version: 0db1d5eae1116bf7c8ed96c6749acfbf4daaec3e
 - name: github.com/nsqio/go-nsq
   version: eee57a3ac4174c55924125bb15eeeda8cffb6e6f
 - name: github.com/op/go-logging
   version: b2cb9fa56473e98db8caba80237377e83fe44db5
 - name: github.com/pelletier/go-toml
-  version: 66540cf1fcd2c3aee6f6787dfa32a6ae9a870f12
+  version: c01d1270ff3e442a8a57cddc1c92dc1138598194
 - name: github.com/pkg/errors
   version: 816c9085562cd7ee03e7f8188a1cfd942858cded
 - name: github.com/PuerkitoBio/goquery
-  version: ea1bc64a63088ac2bbf1a2edcae38413794a7710
+  version: dc2ec5c7ca4d9aae063b79b9f581dd3ea6afd2b2
 - name: github.com/RoaringBitmap/roaring
   version: 579959187317130bda443ec40f81c914e24b1396
 - name: github.com/robfig/cron
   version: b41be1df696709bb6395fe435af20370037c0b4c
+- name: github.com/rs/cors
+  version: ca016a06a5753f8ba03029c0aa5e54afb1bf713f
 - name: github.com/saintfish/chardet
   version: 3af4cd4741ca4f3eb0c407c034571a6fb0ea529c
 - name: github.com/spf13/afero
-  version: 63644898a8da0bc22138abf860edaf5277b6102e
+  version: 787d034dfe70e44075ccc060d346146ef53270ad
   subpackages:
   - mem
 - name: github.com/spf13/cast
@@ -229,7 +230,7 @@ imports:
 - name: github.com/spf13/jwalterweatherman
   version: 7c0cea34c8ece3fbeb2b27ab9b59511d360fb394
 - name: github.com/spf13/pflag
-  version: 583c0c0531f06d5278b7d917446061adc344b5cd
+  version: 3ebe029320b2676d667ae88da602a5f854788a8a
 - name: github.com/spf13/viper
   version: 25b30aa063fc18e48662b86996252eabdcf2f0c7
 - name: github.com/stretchr/testify
@@ -237,7 +238,7 @@ imports:
   subpackages:
   - assert
 - name: github.com/syndtr/goleveldb
-  version: 714f901b98fdb3aa954b4193d8cbd64a28d80cad
+  version: c4c61651e9e37fa117f53c5a906d3b63090d8445
   subpackages:
   - leveldb
   - leveldb/cache
@@ -251,6 +252,16 @@ imports:
   - leveldb/storage
   - leveldb/table
   - leveldb/util
+- name: github.com/TechCatsLab/apix
+  version: a001e212027db82d53bec6058756798e7306ab4a
+  subpackages:
+  - http/server
+  - http/server/middleware
+- name: github.com/TechCatsLab/firmness
+  version: 06fd4981ec9862be04dbd635e3022272455ad8a9
+  subpackages:
+  - github/base
+  - github/pool
 - name: github.com/temoto/robotstxt
   version: 9e4646fa705336d5b2fa9dddfafbe0a1a965acd7
 - name: github.com/urfave/negroni
@@ -260,34 +271,34 @@ imports:
 - name: go.uber.org/multierr
   version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
 - name: golang.org/x/crypto
-  version: 9ef620b9ca2f82b55030ffd4f41327fa9e77a92c
+  version: 56440b844dfe139a8ac053f4ecac0b20b79058f4
   subpackages:
   - bcrypt
   - blowfish
 - name: golang.org/x/net
-  version: 1c05540f6879653db88113bc4a2b70aec4bd491f
+  version: f4c29de78a2a91c00474a2e689954305c350adf9
   subpackages:
   - context
   - context/ctxhttp
   - html
   - html/atom
   - html/charset
+  - http/httpguts
   - http2
   - http2/hpack
   - idna
   - internal/timeseries
-  - lex/httplex
   - trace
 - name: golang.org/x/oauth2
-  version: 9a379c6b3e95a790ffc43293c2a78dee0d7b6e20
+  version: 3d292e4d0cdc3a0113e6d207bb137145ef1de42f
   subpackages:
   - internal
 - name: golang.org/x/sys
-  version: 43e60d72a8e2bd92ee98319ba9a384a0e9837c08
+  version: 0ffbfd41fbef8ffcf9b62b0b0aa3a5873ed7a4fe
   subpackages:
   - unix
 - name: golang.org/x/text
-  version: b19bf474d317b857955b12035d2c5acb57ce8b01
+  version: cb6730876b985e110843c1842a7a63a63677cf08
   subpackages:
   - encoding
   - encoding/charmap
@@ -299,6 +310,8 @@ imports:
   - encoding/simplifiedchinese
   - encoding/traditionalchinese
   - encoding/unicode
+  - internal/language
+  - internal/language/compact
   - internal/tag
   - internal/utf8internal
   - language
@@ -308,8 +321,9 @@ imports:
   - unicode/bidi
   - unicode/norm
 - name: google.golang.org/appengine
-  version: d9a072cfa7b9736e44311ef77b3e09d804bfa599
+  version: 4216e58b9158e5f1c906f1aca75162a46a2ec88a
   subpackages:
+  - cloudsql
   - internal
   - internal/app_identity
   - internal/base
@@ -320,7 +334,7 @@ imports:
   - internal/urlfetch
   - urlfetch
 - name: google.golang.org/genproto
-  version: ce84044298496ef4b54b4a0a0909ba593cc60e30
+  version: daca94659cb50e9f37c1b834680f2e46358f10b0
   subpackages:
   - googleapis/rpc/status
 - name: google.golang.org/grpc
@@ -348,10 +362,18 @@ imports:
   - status
   - tap
   - transport
+- name: gopkg.in/chanxuehong/wechat.v2
+  version: d901fc2b67e485cc1840bab13744effdd7a5b53b
+  subpackages:
+  - internal/debug/mch/api
+  - internal/debug/mch/callback
+  - mch/core
+  - mch/pay
+  - util
 - name: gopkg.in/go-playground/validator.v9
-  version: ffe836d7363bc7ab3f56d2fc90ce09bfb5a0c2c5
+  version: ab2a8a99087e827c9af87ed6777ba897348fb178
 - name: gopkg.in/mgo.v2
-  version: 3f83fa5005286a7fe593b055f0d7771a7dce4655
+  version: 9856a29383ce1c59f308dd1cf0363a79b5bef6b5
   subpackages:
   - bson
   - internal/json
@@ -361,7 +383,7 @@ imports:
   version: 5420a8b6744d3b0345ab293f6fcba19c978f1183
 testImports:
 - name: github.com/pmezard/go-difflib
-  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  version: 792786c7400a136282c1664665ae0a8db921c6c2
   subpackages:
   - difflib
 - name: github.com/smartystreets/goconvey

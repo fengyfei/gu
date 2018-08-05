@@ -27,6 +27,8 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -1102,31 +1104,121 @@ func TestConnServers(t *testing.T) {
 	validateURLs(c.Servers(), "nats://localhost:4333", "nats://localhost:4444")
 }
 
-func TestProcessErrAuthorizationError(t *testing.T) {
-	ach := make(chan asyncCB, 1)
-	called := make(chan error, 1)
-	c := &Conn{
-		ach: ach,
-		Opts: Options{
-			AsyncErrorCB: func(nc *Conn, sub *Subscription, err error) {
-				called <- err
-			},
-		},
+func TestConnAsyncCBDeadlock(t *testing.T) {
+	s := RunServerOnPort(TEST_PORT)
+	defer s.Shutdown()
+
+	ch := make(chan bool)
+	o := GetDefaultOptions()
+	o.Url = fmt.Sprintf("nats://127.0.0.1:%d", TEST_PORT)
+	o.ClosedCB = func(_ *Conn) {
+		ch <- true
 	}
-	c.processErr("Authorization Violation")
-	select {
-	case cb := <-ach:
-		cb()
-	default:
-		t.Fatal("Expected callback on channel")
+	o.AsyncErrorCB = func(nc *Conn, sub *Subscription, err error) {
+		// do something with nc that requires locking behind the scenes
+		_ = nc.LastError()
+	}
+	nc, err := o.Connect()
+	if err != nil {
+		t.Fatalf("Should have connected ok: %v", err)
 	}
 
-	select {
-	case err := <-called:
-		if err != ErrAuthorization {
-			t.Fatalf("Expected ErrAuthorization, got: %v", err)
-		}
-	default:
-		t.Fatal("Expected error on channel")
+	total := 300
+	wg := &sync.WaitGroup{}
+	wg.Add(total)
+	for i := 0; i < total; i++ {
+		go func() {
+			// overwhelm asyncCB with errors
+			nc.processErr(AUTHORIZATION_ERR)
+			wg.Done()
+		}()
+	}
+	wg.Wait()
+
+	nc.Close()
+	if e := Wait(ch); e != nil {
+		t.Fatal("Deadlock")
+	}
+}
+
+func TestPingTimerLeakedOnClose(t *testing.T) {
+	s := RunServerOnPort(TEST_PORT)
+	defer s.Shutdown()
+
+	nc, err := Connect(fmt.Sprintf("nats://127.0.0.1:%d", TEST_PORT))
+	if err != nil {
+		t.Fatalf("Error on connect: %v", err)
+	}
+	nc.Close()
+	// There was a bug (issue #338) that if connection
+	// was created and closed quickly, the pinger would
+	// be created from a go-routine and would cause the
+	// connection object to be retained until the ping
+	// timer fired.
+	// Wait a little bit and check if the timer is set.
+	// With the defect it would be.
+	time.Sleep(100 * time.Millisecond)
+	nc.mu.Lock()
+	pingTimerSet := nc.ptmr != nil
+	nc.mu.Unlock()
+	if pingTimerSet {
+		t.Fatal("Pinger timer should not be set")
+	}
+}
+
+func TestNoEcho(t *testing.T) {
+	s := RunServerOnPort(TEST_PORT)
+	defer s.Shutdown()
+
+	url := fmt.Sprintf("nats://127.0.0.1:%d", TEST_PORT)
+
+	nc, err := Connect(url, NoEcho())
+	if err != nil {
+		t.Fatalf("Error on connect: %v", err)
+	}
+	defer nc.Close()
+
+	r := int32(0)
+	_, err = nc.Subscribe("foo", func(m *Msg) {
+		atomic.AddInt32(&r, 1)
+	})
+	if err != nil {
+		t.Fatalf("Error on subscribe: %v", err)
+	}
+
+	err = nc.Publish("foo", []byte("Hello World"))
+	if err != nil {
+		t.Fatalf("Error on publish: %v", err)
+	}
+	nc.Flush()
+	nc.Flush()
+
+	if nr := atomic.LoadInt32(&r); nr != 0 {
+		t.Fatalf("Expected no messages echoed back, received %d\n", nr)
+	}
+}
+
+func TestNoEchoOldServer(t *testing.T) {
+	opts := GetDefaultOptions()
+	opts.Url = DefaultURL
+	opts.NoEcho = true
+
+	nc := &Conn{Opts: opts}
+	if err := nc.setupServerPool(); err != nil {
+		t.Fatalf("Problem setting up Server Pool: %v\n", err)
+	}
+
+	// Old style with no proto, meaning 0. We need Proto:1 for NoEcho support.
+	oldInfo := "{\"server_id\":\"22\",\"version\":\"1.1.0\",\"go\":\"go1.10.2\",\"port\":4222,\"max_payload\":1048576}"
+
+	err := nc.processInfo(oldInfo)
+	if err != nil {
+		t.Fatalf("Error processing old style INFO: %v\n", err)
+	}
+
+	// Make sure connectProto generates an error.
+	_, err = nc.connectProto()
+	if err == nil {
+		t.Fatalf("Expected an error but got none\n")
 	}
 }

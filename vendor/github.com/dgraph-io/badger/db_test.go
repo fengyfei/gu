@@ -675,7 +675,7 @@ func TestDeleteWithoutSyncWrite(t *testing.T) {
 
 	require.NoError(t, kv.View(func(txn *Txn) error {
 		_, err := txn.Get(key)
-		require.Error(t, ErrKeyNotFound, err)
+		require.Equal(t, ErrKeyNotFound, err)
 		return nil
 	}))
 }
@@ -862,6 +862,7 @@ func TestDiscardVersionsBelow(t *testing.T) {
 		// Verify that there are 4 versions, and record 3rd version (2nd from top in iteration)
 		db.View(func(txn *Txn) error {
 			it := txn.NewIterator(opts)
+			defer it.Close()
 			var count int
 			for it.Rewind(); it.Valid(); it.Next() {
 				count++
@@ -885,6 +886,7 @@ func TestDiscardVersionsBelow(t *testing.T) {
 		// below ts have been deleted.
 		db.View(func(txn *Txn) error {
 			it := txn.NewIterator(opts)
+			defer it.Close()
 			var count int
 			for it.Rewind(); it.Valid(); it.Next() {
 				count++
@@ -921,7 +923,7 @@ func TestExpiry(t *testing.T) {
 			require.NoError(t, err)
 
 			_, err = txn.Get([]byte("answer2"))
-			require.Error(t, ErrKeyNotFound, err)
+			require.Equal(t, ErrKeyNotFound, err)
 			return nil
 		})
 		require.NoError(t, err)
@@ -931,6 +933,7 @@ func TestExpiry(t *testing.T) {
 		opts.PrefetchValues = false
 		err = db.View(func(txn *Txn) error {
 			it := txn.NewIterator(opts)
+			defer it.Close()
 			var count int
 			for it.Rewind(); it.Valid(); it.Next() {
 				count++
@@ -1099,6 +1102,7 @@ func TestWriteDeadlock(t *testing.T) {
 		opt := DefaultIteratorOptions
 		opt.PrefetchValues = false
 		it := txn.NewIterator(opt)
+		defer it.Close()
 		for it.Rewind(); it.Valid(); it.Next() {
 			item := it.Item()
 
@@ -1235,7 +1239,7 @@ func TestMergeOperatorGetBeforeAdd(t *testing.T) {
 		defer m.Stop()
 
 		_, err := m.Get()
-		require.Error(t, ErrKeyNotFound, err)
+		require.Equal(t, ErrKeyNotFound, err)
 	})
 }
 
@@ -1394,20 +1398,27 @@ func TestLSMOnly(t *testing.T) {
 	_, err = Open(dopts)
 	require.Equal(t, ErrValueThreshold, err)
 
+	opts.ValueLogMaxEntries = 100
 	db, err := Open(opts)
 	require.NoError(t, err)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
 
-	for i := 0; i < 5000; i++ {
-		value := make([]byte, 64000)
-		_, err = rand.Read(value)
+	value := make([]byte, 128)
+	_, err = rand.Read(value)
+	for i := 0; i < 500; i++ {
 		require.NoError(t, err)
-
 		txnSet(t, db, []byte(fmt.Sprintf("key%d", i)), value, 0x00)
 	}
+	require.NoError(t, db.Close()) // Close to force compactions, so Value log GC would run.
+
+	db, err = Open(opts)
+	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
 	require.NoError(t, db.RunValueLogGC(0.2))
 }
 
@@ -1551,6 +1562,7 @@ func ExampleTxn_NewIterator() {
 	var count int
 	err = db.View(func(txn *Txn) error {
 		it := txn.NewIterator(opt)
+		defer it.Close()
 		for it.Rewind(); it.Valid(); it.Next() {
 			count++
 		}

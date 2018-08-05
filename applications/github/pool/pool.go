@@ -15,7 +15,7 @@ var (
 	// Tag -
 	Tag = "default"
 	// GithubTokens -
-	GithubTokens = []*pool.Token{&pool.Token{Tag: Tag, Token: "e32d654e6fd756a8f5a5df156f3313f6e3a6ff21"}}
+	GithubTokens = []*pool.Token{&pool.Token{Tag: Tag, Token: "3c8bf037bd6bfe3858ad8649099b0ee82f7d6cf0"}}
 	// GithubPool -
 	GithubPool pool.Pool
 )
