@@ -15,7 +15,9 @@ var (
 	// Tag -
 	Tag = "default"
 	// GithubTokens -
-	GithubTokens = []*pool.Token{&pool.Token{Tag: Tag, Token: "3c8bf037bd6bfe3858ad8649099b0ee82f7d6cf0"}}
+	// account  inxchina@hotmail.com
+	// password db8a7d70f823543be01411588ad6e2e5ad5b62df
+	GithubTokens = []*pool.Token{&pool.Token{Tag: Tag, Token: "db8a7d70f823543be01411588ad6e2e5ad5b62df"}}
 	// GithubPool -
 	GithubPool pool.Pool
 )
